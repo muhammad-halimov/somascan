@@ -5,6 +5,7 @@ import type { Language } from '@/i18n/languages'
 import type { ThemePreference } from '@/lib/theme/theme'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import type { ProviderId } from '@/features/recognition/types'
+import { cleanSupplierName, DEFAULT_KNOWN_SUPPLIERS, normalizeSuppliers, supplierKey } from '@/features/recognition/label/knownSuppliers'
 import { createDefaultLabelFields, createLabelKey, isEnabledByDefault, type LabelFieldDefinition, type LabelKey } from '@/features/recognition/label/labelFields'
 import { DEFAULT_LABEL_INSTRUCTIONS } from '@/features/recognition/label/labelPrompt'
 import { clearLegacySettings, readLegacySettings } from './legacySettings'
@@ -174,9 +175,46 @@ export class SettingsStore extends Store<AppSettings> {
     this.updateAdvanced({ labelFields: fields })
   }
 
-  /** Возвращает поля по умолчанию: свои поля удаляются, названия встроенных — по умолчанию, включены пять основных. */
+  /** Возвращает поля по умолчанию: свои поля удаляются, названия встроенных — по умолчанию, включены четыре основных. */
   resetLabelFields() {
     this.updateAdvanced({ labelFields: createDefaultLabelFields() })
+  }
+
+  /**
+   * Добавляет известного поставщика (список остаётся по алфавиту).
+   * @returns `false`, если название пустое или такой поставщик уже есть.
+   */
+  addKnownSupplier(name: string): boolean {
+    const suppliers = this.getSnapshot().advanced.knownSuppliers
+    if (!cleanSupplierName(name) || suppliers.some((current) => supplierKey(current) === supplierKey(name))) return false
+    this.updateAdvanced({ knownSuppliers: normalizeSuppliers([...suppliers, name]) })
+    return true
+  }
+
+  /**
+   * Переименовывает известного поставщика.
+   * @returns `false`, если новое название пустое или совпадает с другим поставщиком.
+   */
+  renameKnownSupplier(name: string, next: string): boolean {
+    const suppliers = this.getSnapshot().advanced.knownSuppliers
+    if (!cleanSupplierName(next) || suppliers.some((current) => current !== name && supplierKey(current) === supplierKey(next))) return false
+    this.updateAdvanced({ knownSuppliers: normalizeSuppliers(suppliers.map((current) => current === name ? next : current)) })
+    return true
+  }
+
+  /** Удаляет известного поставщика. */
+  removeKnownSupplier(name: string) {
+    this.updateAdvanced({ knownSuppliers: this.getSnapshot().advanced.knownSuppliers.filter((current) => current !== name) })
+  }
+
+  /** Заменяет список поставщиков целиком (отмена правки: возврат к снимку, сделанному при её начале). */
+  setKnownSuppliers(names: readonly string[]) {
+    this.updateAdvanced({ knownSuppliers: normalizeSuppliers(names) })
+  }
+
+  /** Возвращает список поставщиков по умолчанию. */
+  resetKnownSuppliers() {
+    this.updateAdvanced({ knownSuppliers: [...DEFAULT_KNOWN_SUPPLIERS] })
   }
 
   /** Сохраняет инструкцию для модели; совпадающая с инструкцией по умолчанию хранится как пустая. */

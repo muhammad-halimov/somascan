@@ -136,7 +136,7 @@ final class SmbShareClient: @unchecked Sendable {
         }
         do {
             return Self.stat(try await manager.attributesOfItem(atPath: path))
-        } catch let error as POSIXError where error.code == .ENOENT {
+        } catch where Self.isNotFound(error) {
             return Self.stat(exists: false, isDirectory: false, size: 0, modifiedAt: 0)
         }
     }
@@ -215,7 +215,7 @@ final class SmbShareClient: @unchecked Sendable {
             current += (current.isEmpty ? "" : "/") + segment
             do {
                 try await manager.createDirectory(atPath: current)
-            } catch let error as POSIXError where error.code == .EEXIST {
+            } catch where Self.isAlreadyExists(error) {
                 continue
             }
         }
@@ -235,7 +235,7 @@ final class SmbShareClient: @unchecked Sendable {
     private func removeIfExists(_ manager: SMB2Manager, path: String) async throws {
         do {
             try await manager.removeItem(atPath: path)
-        } catch let error as POSIXError where error.code == .ENOENT {
+        } catch where Self.isNotFound(error) {
             return
         }
     }
@@ -268,8 +268,27 @@ final class SmbShareClient: @unchecked Sendable {
         return [nsError.localizedDescription, nsError.localizedFailureReason].compactMap { $0 }.joined(separator: " — ")
     }
 
+    /**
+     Путь уже существует. libsmb2 создаёт и удаляет папки и файлы составным запросом «открыть + закрыть»:
+     если открытие отклонено (`STATUS_OBJECT_NAME_COLLISION`), код ошибки берётся у закрытия —
+     `ENETRESET` («соединение сброшено»), а настоящий статус остаётся только в тексте. Поэтому смотрим и на текст.
+     */
+    private static func isAlreadyExists(_ error: Error) -> Bool {
+        if let posix = error as? POSIXError, posix.code == .EEXIST { return true }
+        return describe(error).uppercased().contains("OBJECT_NAME_COLLISION")
+    }
+
+    /// Пути нет — по коду `ENOENT` или, как с `isAlreadyExists`, по статусу SMB в тексте ошибки.
+    private static func isNotFound(_ error: Error) -> Bool {
+        if let posix = error as? POSIXError, posix.code == .ENOENT { return true }
+        let text = describe(error).uppercased()
+        return ["OBJECT_NAME_NOT_FOUND", "OBJECT_PATH_NOT_FOUND", "NO_SUCH_FILE"].contains { text.contains($0) }
+    }
+
     /// Ошибки, после которых стоит пересоздать подключение и повторить операцию.
     private static func isConnectionLoss(_ error: Error) -> Bool {
+        // Ответ сервера «уже есть» / «нет такого пути» — не обрыв, даже если код ENETRESET.
+        if isAlreadyExists(error) || isNotFound(error) { return false }
         guard let posix = error as? POSIXError else { return false }
         switch posix.code {
         case .ENOTCONN, .ECONNRESET, .EPIPE, .ECONNABORTED, .EBADF, .ENETDOWN, .ENETRESET, .EIO:
@@ -285,14 +304,16 @@ final class SmbShareClient: @unchecked Sendable {
             return failure
         }
         let message = describe(error)
+        if isAlreadyExists(error) {
+            return Failure(code: "exists", message: message)
+        }
+        if isNotFound(error) {
+            return Failure(code: "notFound", message: message)
+        }
         guard let posix = error as? POSIXError else {
             return Failure(code: "io", message: message)
         }
         switch posix.code {
-        case .ENOENT:
-            return Failure(code: "notFound", message: message)
-        case .EEXIST:
-            return Failure(code: "exists", message: message)
         case .EACCES, .EPERM:
             return Failure(code: "accessDenied", message: message)
         case .ETXTBSY, .EDEADLK, .EBUSY, .EAGAIN:

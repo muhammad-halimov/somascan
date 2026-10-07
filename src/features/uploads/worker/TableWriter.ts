@@ -1,105 +1,128 @@
 /**
- * Запись одной бирки в таблицу — полный цикл с защитой от потери данных, одинаковый для
+ * Запись одной бирки в журнал — полный цикл с защитой от потери данных, одинаковый для
  * сетевого диска и Google Drive (различия — в `TableBackend`).
  *
- * 1. Блокировка: пока таблицу пишет другое устройство — `busy` (запись повторится).
- * 2. Чтение текущей таблицы (каждый раз заново: её могли изменить в Excel или с другого телефона).
- * 3. Если строка с этим номером записи уже есть — запись считается выполненной (повтор после обрыва).
- * 4. Строка дописывается, книга сериализуется.
- * 5. Атомарная замена в хранилище: прежний файл — в резервную копию, новый сверяется по хешу.
- * 6. Проверка: таблица перечитывается, записанная строка сверяется по каждой ячейке.
- * 7. Резервные копии старше недели удаляются; блокировка снимается.
+ * 1. Блокировка: пока журнал пишет другое устройство — `busy` (запись повторится).
+ * 2. Чтение текущего журнала (каждый раз заново: его могли изменить в Excel или с другого телефона).
+ *    Файла нет — новый журнал из пустого шаблона.
+ * 3. Если бирка с этим номером записи уже в журнале — запись считается выполненной (повтор после обрыва).
+ * 4. Строка дописывается в лист года, книга сериализуется.
+ * 5. Сверка до замены: новая книга перечитывается, и все значения, кроме записанной строки,
+ *    должны совпасть с прежними — иначе файл на сервере не трогается.
+ * 6. Атомарная замена в хранилище: прежний файл — в резервную копию, новый сверяется по хешу.
+ * 7. Проверка: журнал перечитывается с сервера, записанная строка сверяется по каждой ячейке.
+ * 8. Резервные копии старше недели удаляются; блокировка снимается.
+ *
+ * Отмена (`signal`) проверяется между шагами до замены файла (6) — после неё бирка уже в журнале,
+ * и запись доводится до конца.
  */
 import type { UploadRecord } from '../store/UploadStore'
 import { UploadError } from '../UploadError'
 import { BackupPolicy } from '../xlsx/BackupPolicy'
-import { LabelWorkbook, type ColumnMap } from '../xlsx/LabelWorkbook'
-import { excelDateTime, sameCell, toTableCell, type TableCell } from '../xlsx/tableCell'
-import { RECORD_NUMBER_KEY } from '../xlsx/uploadColumns'
+import { LabelWorkbook, snapshotKey, type PlannedRow, type WorkbookSnapshot } from '../xlsx/LabelWorkbook'
+import { sameCell } from '../xlsx/tableCell'
 import type { TableBackend } from './TableBackend'
 
 /** Итог записи. */
 export interface TableWriteResult {
-  /** Номер строки в таблице. */
+  /** Лист журнала (год). */
+  sheet: string
+  /** Номер строки на листе. */
   rowNumber: number
-  /** Строка уже была в таблице (повтор после обрыва), ничего не записывалось. */
+  /** Строка уже была в журнале (повтор после обрыва), ничего не записывалось. */
   duplicate: boolean
 }
 
-/** Пишет бирки в таблицу через `TableBackend`. */
+/** Пустой шаблон журнала (байты `.xlsx`). */
+export type TemplateLoader = () => Promise<Uint8Array>
+
+/** Пишет бирки в журнал через `TableBackend`. */
 export class TableWriter {
   /** Идентификатор устройства — владелец блокировки. */
   private readonly owner: string
+  /** Пустой шаблон журнала — для первой записи, когда файла ещё нет. */
+  private readonly template: TemplateLoader
   /** Текущее время (подменяется в тестах). */
   private readonly now: () => number
 
   /**
    * @param owner Идентификатор устройства.
+   * @param template Пустой шаблон журнала.
    * @param now Текущее время.
    */
-  constructor(owner: string, now: () => number = Date.now) {
+  constructor(owner: string, template: TemplateLoader, now: () => number = Date.now) {
     this.owner = owner
+    this.template = template
     this.now = now
   }
 
   /**
-   * Дописывает запись в таблицу.
+   * Дописывает запись в журнал.
    * @throws {UploadError} Любой сбой; по коду `UploadWorker` решает, повторять ли попытку.
    */
-  async write(record: UploadRecord, backend: TableBackend): Promise<TableWriteResult> {
+  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal): Promise<TableWriteResult> {
+    /** Останавливает запись, если её отменили: до замены файла журнал не тронут. */
+    const checkCancelled = () => {
+      if (signal?.aborted) throw new UploadError('cancelled')
+    }
+    checkCancelled()
     await backend.acquireLock(this.owner)
     try {
+      checkCancelled()
       const current = await backend.read()
-      const workbook = current ? await LabelWorkbook.open(current) : await LabelWorkbook.create()
-      const map = workbook.ensureColumns(record.columns)
-      const numberColumn = map.get(RECORD_NUMBER_KEY)
-      if (numberColumn === undefined) throw new UploadError('io', { detail: 'record has no number column' })
-      const existing = workbook.findRow(numberColumn, record.localNumber)
-      if (existing !== null) return { rowNumber: existing, duplicate: true }
-      const cells = TableWriter.cellsOf(record, map, this.now())
-      const rowNumber = workbook.appendRow(cells)
+      checkCancelled()
+      const writtenAt = this.now()
+      const workbook = current
+        ? await LabelWorkbook.open(current)
+        : await LabelWorkbook.fromTemplate(await this.template(), new Date(writtenAt).getFullYear())
+      const existing = workbook.locate(record.localNumber)
+      if (existing) return { sheet: existing.sheet, rowNumber: existing.row, duplicate: true }
+      const before = workbook.snapshot()
+      const planned = workbook.append(record, writtenAt)
       const bytes = await workbook.toBytes()
+      await TableWriter.checkIntact(before, bytes, planned)
+      checkCancelled()
       const policy = new BackupPolicy(backend.stem, backend.extension)
-      await backend.replace(bytes, current ? policy.backupName(new Date(this.now())) : undefined)
-      await TableWriter.verify(await backend.readBack(), record, cells)
+      await backend.replace(bytes, current ? policy.backupName(new Date(writtenAt)) : undefined)
+      await TableWriter.verify(await backend.readBack(), record, planned)
       await backend.pruneBackups(policy, this.now())
-      return { rowNumber, duplicate: false }
+      return { sheet: planned.sheet, rowNumber: planned.row, duplicate: false }
     } finally {
       await backend.releaseLock()
     }
   }
 
   /**
-   * Ячейки строки по колонкам записи.
-   * @param writtenAt Момент записи в таблицу — он попадает в колонку «Дата записи» (а не момент
-   *   нажатия «Далее»: без сети запись может уйти в таблицу позже).
+   * Сверяет новую книгу с прежней до замены файла: каждое прежнее значение на месте,
+   * новые — только в записанной строке (и в шапке листа нового года, если он создан этой записью).
+   * @throws {UploadError} `integrityFailed` — файл на сервере не трогается.
    */
-  private static cellsOf(record: UploadRecord, map: ColumnMap, writtenAt: number): Map<number, TableCell> {
-    const cells = new Map<number, TableCell>()
-    for (const column of record.columns) {
-      const number = map.get(column.key)
-      if (number === undefined) continue
-      if (column.kind === 'record_number') cells.set(number, record.localNumber)
-      else if (column.kind === 'recorded_at') cells.set(number, excelDateTime(writtenAt))
-      else cells.set(number, toTableCell(column.kind, record.label[column.key]))
+  private static async checkIntact(before: WorkbookSnapshot, bytes: Uint8Array, planned: PlannedRow) {
+    const after = (await LabelWorkbook.open(bytes)).snapshot()
+    const written = new Set([...planned.cells.keys()].map((column) => snapshotKey(planned.sheet, planned.row, column)))
+    for (const [key, value] of before) {
+      if (!written.has(key) && after.get(key) !== value) throw new UploadError('integrityFailed', { detail: `cell ${key} would change` })
     }
-    return cells
+    for (const key of after.keys()) {
+      const inNewSheet = planned.newSheet && key.startsWith(`${planned.sheet}!`)
+      if (!before.has(key) && !written.has(key) && !inNewSheet) throw new UploadError('integrityFailed', { detail: `unexpected cell ${key}` })
+    }
   }
 
   /**
-   * Сверяет записанную строку в перечитанной таблице по каждой ячейке.
+   * Сверяет записанную строку в перечитанном журнале по каждой ячейке.
    * @throws {UploadError} `verifyFailed`, если строки нет или значения отличаются.
    */
-  private static async verify(bytes: Uint8Array, record: UploadRecord, cells: ReadonlyMap<number, TableCell>) {
+  private static async verify(bytes: Uint8Array, record: UploadRecord, planned: PlannedRow) {
     const workbook = await LabelWorkbook.open(bytes)
-    const map = workbook.ensureColumns(record.columns)
-    const numberColumn = map.get(RECORD_NUMBER_KEY)
-    const row = numberColumn === undefined ? null : workbook.findRow(numberColumn, record.localNumber)
-    if (row === null) throw new UploadError('verifyFailed', { detail: `row ${record.localNumber} not found after save` })
-    const columns = [...cells.keys()]
-    const actual = workbook.readRow(row, columns)
+    const location = workbook.locate(record.localNumber)
+    if (!location || location.sheet !== planned.sheet || location.row !== planned.row) {
+      throw new UploadError('verifyFailed', { detail: `row ${record.localNumber} not found after save` })
+    }
+    const columns = [...planned.cells.keys()]
+    const actual = workbook.readCells(location, columns)
     columns.forEach((column, index) => {
-      if (!sameCell(cells.get(column)!, actual[index]!)) {
+      if (!sameCell(planned.cells.get(column)!, actual[index]!)) {
         throw new UploadError('verifyFailed', { detail: `column ${column} differs after save` })
       }
     })

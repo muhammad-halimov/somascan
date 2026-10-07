@@ -10,7 +10,8 @@
     "queued": "În așteptare",
     "uploading": "Se scrie în tabel…",
     "completed": "Scris în tabel",
-    "failed": "Nescris"
+    "failed": "Nescris",
+    "cancelling": "Se anulează…"
   },
   "delete": "Șterge înregistrarea",
   "clearDialog": {
@@ -25,14 +26,19 @@
     "message": "«{{title}}» va fi eliminată din istoric.",
     "confirm": "Șterge"
   },
+  "cancel": "Anulați încărcarea",
+  "cancelCaption": "Anulare",
+  "cancelDialog": {
+    "title": "Anulați încărcarea?",
+    "message": "„{{title}}” nu va fi scrisă în tabel.",
+    "confirm": "Anulați încărcarea",
+    "keep": "Nu anulați"
+  },
   "queuedAfterError": "În așteptare, se va reîncerca · {{error}}",
   "completedRow": "Scris în tabel · rândul {{row}}",
   "retry": "Reîncearcă scrierea",
   "retryCaption": "Reia",
   "retryAll": "Reîncearcă toate cele nescrise",
   "retryAllCaption": "Reia",
-  "columns": {
-    "number": "Nr. înregistrare",
-    "recordedAt": "Data înregistrării"
-  }
+  "completedSheetRow": "Scris în tabel · foaia {{sheet}}, rândul {{row}}"
 }

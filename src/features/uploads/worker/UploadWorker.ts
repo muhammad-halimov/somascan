@@ -10,6 +10,10 @@
  * приложения на передний план и через полторы секунды после изменения настроек хранилища
  * (тогда все незаписанные записи возвращаются в очередь без паузы).
  *
+ * Незаписанную запись можно отменить (`cancel`): ждущая просто убирается из очереди, пишущаяся
+ * останавливается на ближайшем безопасном шаге — до замены файла в хранилище. Если файл уже
+ * заменяется, отменять нечего: запись допишется и будет отмечена завершённой.
+ *
  * В браузере нативного плагина нет: записи получают постоянный сбой `unavailable`.
  */
 import { App } from '@capacitor/app'
@@ -22,6 +26,7 @@ import { googleDriveSession } from '../drive/GoogleDriveAuth'
 import { uploadStore, type UploadRecord, type UploadStore } from '../store/UploadStore'
 import { isTransientUploadError, toUploadError } from '../UploadError'
 import { RetryPolicy } from './RetryPolicy'
+import { loadTableTemplate } from '../xlsx/tableTemplate'
 import { backendFor, defaultBackendDeps, type TableBackendDeps } from './tableBackends'
 import { TableWriter } from './TableWriter'
 
@@ -66,6 +71,8 @@ export class UploadWorker {
   private settingsTimer: number | null = null
   /** Последний виденный раздел настроек хранилища — чтобы реагировать только на его изменения. */
   private lastStorage: StorageSettings | null = null
+  /** Отмена текущей записи (пока она пишется). */
+  private current: { id: string; controller: AbortController } | null = null
   /** Отписки для `stop()`. */
   private readonly cleanups: Array<() => void> = []
 
@@ -111,6 +118,21 @@ export class UploadWorker {
   retry(id: string) {
     this.store.requeue(id)
     this.tick()
+  }
+
+  /**
+   * Отменяет незаписанную запись: ждущую или сбойную убирает сразу, пишущуюся — когда запись
+   * остановится (см. описание класса).
+   */
+  cancel(id: string) {
+    const record = this.store.getSnapshot().find((candidate) => candidate.id === id)
+    if (!record || record.status === 'completed') return
+    if (record.status !== 'uploading') {
+      this.store.remove(id)
+      return
+    }
+    this.store.requestCancel(id)
+    if (this.current?.id === id) this.current.controller.abort()
   }
 
   /** Повторяет все незаписанные записи без паузы. */
@@ -211,12 +233,20 @@ export class UploadWorker {
   /** Пишет одну запись и переводит её в итоговый статус. */
   private async run(job: UploadRecord) {
     this.running = true
+    const controller = new AbortController()
+    this.current = { id: job.id, controller }
     this.store.markUploading(job.id)
     try {
       const backend = await backendFor(this.settings.getSnapshot().storage, this.backends)
-      const result = await this.writer.write(job, backend)
-      this.store.markCompleted(job.id, result.rowNumber)
+      const result = await this.writer.write(job, backend, controller.signal)
+      // Отмена пришла, когда файл уже заменялся: бирка в журнале — запись завершена.
+      this.store.markCompleted(job.id, result.rowNumber, result.sheet)
     } catch (error) {
+      // Отменили — запись остановлена до замены файла, журнал не тронут: убираем её из очереди.
+      if (controller.signal.aborted) {
+        this.store.discard(job.id)
+        return
+      }
       const failure = toUploadError(error)
       const attempts = job.attempts + 1
       if (isTransientUploadError(failure.code)) {
@@ -226,6 +256,7 @@ export class UploadWorker {
       }
       console.warn('[uploads]', job.localNumber, failure.code, failure.params.detail ?? '')
     } finally {
+      this.current = null
       this.running = false
       this.tick()
     }
@@ -236,7 +267,7 @@ export class UploadWorker {
 export const uploadWorker = new UploadWorker({
   store: uploadStore,
   settings: settingsStore,
-  writer: new TableWriter(getDeviceId()),
+  writer: new TableWriter(getDeviceId(), loadTableTemplate),
   backends: defaultBackendDeps(googleDriveSession),
   retry: new RetryPolicy(),
 })

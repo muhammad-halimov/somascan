@@ -17,7 +17,7 @@
   "upload": {
     "notConfigured": "Network share is not set up: enter the server, shared folder and table path in Settings → Storage.",
     "targetUnsupported": "Only the network share is supported for now. Choose it in Settings → Storage.",
-    "invalidPath": "The table path must end with .xlsx, e.g. Somascan\\labels.xlsx.",
+    "invalidPath": "The table path must end with .xlsx, e.g. Probe si Sarje Otel\\Probe otel.xlsx.",
     "unavailable": "Writing to the network share works only in the mobile app.",
     "offline": "No network connection.",
     "hostUnreachable": "Server {{host}} is not responding. Check the address, the Wi-Fi network and that port 445 is open.",
@@ -31,6 +31,8 @@
     "busy": "Another device is writing to the table right now. The upload will retry shortly.",
     "corruptWorkbook": "The table could not be opened: the file is damaged or is not an .xlsx workbook.",
     "verifyFailed": "Verification after saving failed; the upload will retry.",
+    "integrityFailed": "Upload stopped: re-saving the log would have changed other data. The file was not touched — contact the developer.",
+    "unknownLayout": "The steel sample log was not found in the table: no header with Nr. Crt., Sarja, Producator, Bobina/Bara columns. Check the file path.",
     "io": "Network share error: {{detail}}",
     "authRequired": "No access to Google Drive: sign in with Google in Settings → Storage.",
     "driveNotConfigured": "Google sign-in is not set up in this build of the app (no Google OAuth client).",

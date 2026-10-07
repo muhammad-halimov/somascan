@@ -93,13 +93,27 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
       case 'queued':
         return { text: record.error ? t('queuedAfterError', { error: errorText(record.error) }) : t('status.queued'), isError: false }
       case 'completed':
-        return { text: record.rowNumber ? t('completedRow', { row: record.rowNumber }) : t('status.completed'), isError: false }
+        if (!record.rowNumber) return { text: t('status.completed'), isError: false }
+        return { text: record.sheet ? t('completedSheetRow', { sheet: record.sheet, row: record.rowNumber }) : t('completedRow', { row: record.rowNumber }), isError: false }
       default:
-        return { text: t('status.uploading'), isError: false }
+        return { text: record.cancelRequested ? t('status.cancelling') : t('status.uploading'), isError: false }
     }
   }
 
-  /** После подтверждения (нативный диалог) удаляет одну запись. */
+  /** Проигрывает уход строки, потом выполняет `action` (убирает запись из хранилища). */
+  const removeAnimated = (id: string, action: () => void) => {
+    setRemoving((current) => new Set(current).add(id))
+    window.setTimeout(() => {
+      action()
+      setRemoving((current) => {
+        const next = new Set(current)
+        next.delete(id)
+        return next
+      })
+    }, EXIT_ANIMATION_MS)
+  }
+
+  /** «Удалить» у записанной бирки: после подтверждения (нативный диалог) убирает её из истории. */
   const removeRecord = async (record: UploadRecord) => {
     const confirmed = await NativeDialogs.confirm({
       title: t('deleteDialog.title'),
@@ -107,17 +121,25 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
       okButtonTitle: t('deleteDialog.confirm'),
       cancelButtonTitle: t('common:cancel'),
     })
+    if (confirmed) removeAnimated(record.id, () => uploadStore.remove(record.id))
+  }
+
+  /**
+   * «Отмена» у незаписанной бирки: после подтверждения бирка не попадёт в журнал. Ждущая убирается
+   * сразу; пишущаяся — когда запись остановится (до замены файла), а если файл уже заменяется,
+   * запись завершится как обычно.
+   */
+  const cancelRecord = async (record: UploadRecord) => {
+    const confirmed = await NativeDialogs.confirm({
+      title: t('cancelDialog.title'),
+      message: t('cancelDialog.message', { title: titleOf(record) }),
+      okButtonTitle: t('cancelDialog.confirm'),
+      cancelButtonTitle: t('cancelDialog.keep'),
+    })
     if (!confirmed) return
-    // Сначала проигрываем уход строки, потом удаляем запись из хранилища.
-    setRemoving((current) => new Set(current).add(record.id))
-    window.setTimeout(() => {
-      uploadStore.remove(record.id)
-      setRemoving((current) => {
-        const next = new Set(current)
-        next.delete(record.id)
-        return next
-      })
-    }, EXIT_ANIMATION_MS)
+    const current = uploadStore.getSnapshot().find((candidate) => candidate.id === record.id)
+    if (current?.status === 'uploading') uploadWorker.cancel(record.id)
+    else if (current && current.status !== 'completed') removeAnimated(record.id, () => uploadWorker.cancel(record.id))
   }
 
   return (
@@ -153,7 +175,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
               const status = statusOf(record)
               const form = record.label[PRODUCT_FORM_KEY]
               const lines = [
-                join([isProductForm(form) && t(`label:productForm.${form}`), text(record, 'grade'), text(record, 'size'), weight && formatter.value('weight', weight)]),
+                join([isProductForm(form) && t(`label:productForm.${form}`), text(record, 'grade'), text(record, 'size') && formatter.value('code', text(record, 'size'), 'size'), weight && formatter.value('weight', weight)]),
                 join([heat && `${t('label:fields.heat')} ${heat}`, batch && `${t('label:fields.batch')} ${batch}`]),
                 join([text(record, 'destination'), dateTimeFormat.format(record.createdAt)]),
               ].filter(Boolean)
@@ -174,8 +196,11 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
                       {record.status === 'failed' && (
                         <ActionButton size={46} icon={<ResetIcon />} caption={t('retryCaption')} label={t('retry')} onClick={() => uploadWorker.retry(record.id)} />
                       )}
-                      {record.status !== 'uploading' && (
+                      {record.status === 'completed' ? (
                         <ActionButton size={46} icon={<TrashIcon />} caption={t('deleteCaption')} label={t('delete')} onClick={() => void removeRecord(record)} />
+                      ) : (
+                        // Незаписанную бирку не удаляют, а отменяют: она не попадёт в журнал.
+                        <ActionButton size={46} icon={<CloseIcon />} caption={t('cancelCaption')} label={t('cancel')} busy={record.cancelRequested} disabled={record.cancelRequested} onClick={() => void cancelRecord(record)} />
                       )}
                     </span>
                   )}

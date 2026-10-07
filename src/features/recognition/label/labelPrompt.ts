@@ -44,6 +44,16 @@ export const PHOTO_ASSESSMENT_KEY = '_photo'
 /** Правило оценки качества фото — добавляется к любой инструкции, в том числе своей. */
 const PHOTO_ASSESSMENT_RULE = `Also judge the photo itself in "${PHOTO_ASSESSMENT_KEY}": "ok" is false only when a photo problem that a retake could fix makes at least one value printed on the tag unreadable or uncertain; otherwise true. "issues" lists the problems using only these codes: "blurry" (out of focus or motion blur), "glare" (reflection or flash hides text), "dark", "overexposed", "cropped" (part of the tag is outside the frame), "angle" (strong tilt or perspective distorts text), "far" (tag too small in the frame), "obstructed" (fingers, objects or shadow cover text), "noTag" (no identification tag in the photo). Rust, dirt or damage on the tag itself is not a photo problem.`
 
+/**
+ * Правило известных поставщиков: список — подсказка для плохо читаемых названий заводов, а не замена
+ * прочитанному. Чётко напечатанное название переписывается как есть, ничего не указывающее
+ * на поставщика — `null`, а не угаданное название из списка.
+ */
+function knownSuppliersRule(suppliers: readonly string[]): string {
+  const list = suppliers.map((name) => `- ${name}`).join('\n')
+  return `Known suppliers (steel mills this warehouse receives from):\n${list}\nUse this list only for fields that name the manufacturer / steel mill. If the printed name is partly unreadable, worn or you are unsure of some letters, and what you can read clearly points to one supplier above (similar spelling, abbreviation, logo text), return that supplier's name as written in the list instead of guessing letters. If the name is clearly legible, copy it as printed even when it differs from the list — a new supplier is possible. Never pick a supplier when nothing on the tag points to it; use null instead.`
+}
+
 /** JSON-заготовка с полями, равными `null`, в порядке списка, и оценкой фото в конце. */
 export function labelJsonTemplate(fields: readonly LabelFieldDefinition[]): string {
   const shape = Object.fromEntries<unknown>(fields.map((field) => [field.key, null]))
@@ -54,11 +64,12 @@ export function labelJsonTemplate(fields: readonly LabelFieldDefinition[]): stri
 /**
  * Полный промпт: инструкция (своя или по умолчанию), список полей с английскими названиями,
  * форматом и пояснениями, правило оценки качества фото и JSON-заготовка. Часть про поля строится автоматически, поэтому промпт
- * никогда не расходится с выбранными полями.
+ * никогда не расходится с выбранными полями. Если задан список известных поставщиков, он идёт после полей.
  * @param instructions Инструкция из настроек; пустая строка — инструкция по умолчанию.
  * @param fields Включённые поля в порядке показа.
+ * @param suppliers Известные поставщики из настроек; пустой список — правило не добавляется.
  */
-export function buildLabelPrompt(instructions: string, fields: readonly LabelFieldDefinition[]): string {
+export function buildLabelPrompt(instructions: string, fields: readonly LabelFieldDefinition[], suppliers: readonly string[] = []): string {
   const text = instructions.trim() || DEFAULT_LABEL_INSTRUCTIONS
   const list = fields
     .map((field) => {
@@ -67,5 +78,6 @@ export function buildLabelPrompt(instructions: string, fields: readonly LabelFie
       return `- "${field.key}" — ${name} (${KIND_FORMAT[field.kind]})${hint ? `: ${hint}` : ''}`
     })
     .join('\n')
-  return `${text}\n\nFields:\n${list}\n\n${PHOTO_ASSESSMENT_RULE}\n\nReturn exactly this JSON shape, with null for every field you cannot read:\n${labelJsonTemplate(fields)}`
+  const supplierRule = suppliers.length > 0 ? `\n\n${knownSuppliersRule(suppliers)}` : ''
+  return `${text}\n\nFields:\n${list}${supplierRule}\n\n${PHOTO_ASSESSMENT_RULE}\n\nReturn exactly this JSON shape, with null for every field you cannot read:\n${labelJsonTemplate(fields)}`
 }

@@ -5,5 +5,5 @@ import { LabelFormatter } from './LabelFormatter'
 /** `LabelFormatter`, привязанный к текущему языку интерфейса. */
 export function useLabelFormatter() {
   const { t } = useTranslation('label')
-  return useMemo(() => new LabelFormatter({ notRecognized: t('notRecognized'), weightUnit: t('weightUnit') }), [t])
+  return useMemo(() => new LabelFormatter({ notRecognized: t('notRecognized'), weightUnit: t('weightUnit'), lengthUnit: t('lengthUnit') }), [t])
 }

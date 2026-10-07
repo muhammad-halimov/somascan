@@ -1,0 +1,20 @@
+/*
+ * Известные поставщики: строки и форма — как у полей бирки (`LabelFieldsPicker.css`, `LabelFieldEditor.css`).
+ */
+
+/* Такой поставщик уже есть — под полем ввода, цветом ошибки. */
+.known-supplier-taken {
+  margin-top: -6px;
+  color: var(--danger);
+  font-size: 12.5px;
+}
+
+/* Форма у́же формы поля (одно поле ввода внутри строки): кнопки плотнее, чтобы все три уместились в ряд. */
+.known-supplier-editor .label-field-editor-actions {
+  gap: 0;
+}
+
+.known-supplier-editor .label-field-editor-actions .button {
+  gap: 6px;
+  padding: 0 8px;
+}

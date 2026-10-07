@@ -1,0 +1,4 @@
+/* Тексты системных запросов разрешений; язык выбирается по языку устройства. */
+"NSCameraUsageDescription" = "The camera is used to take a photo for SomaScan.";
+"NSPhotoLibraryUsageDescription" = "Photo access is needed to choose a picture for SomaScan.";
+"NSLocalNetworkUsageDescription" = "Local network access is needed to write the table to the network share (SMB) and to recognize with LM Studio.";

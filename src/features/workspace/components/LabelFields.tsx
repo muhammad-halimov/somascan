@@ -53,11 +53,10 @@ export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProp
     <div className={`label-fields anim-enter${isEditing ? ' is-editing' : ''}`} aria-label={t('title')}>
       <div className="label-fields-list">
         <ProductFormField value={label[PRODUCT_FORM_KEY]} isEditing={isEditing} onChange={(value) => onFieldChange(PRODUCT_FORM_KEY, value)} />
-        {fields.map((field, index) => {
+        {fields.map((field) => {
           const { key } = field
           const value = label[key] ?? null
           const name = fieldName(field)
-          const isLast = index === fields.length - 1
           return (
             <label className="label-field" key={key}>
               <span className="label-field-name">{name}</span>
@@ -65,19 +64,20 @@ export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProp
                 <input
                   className="label-field-input"
                   aria-label={name}
-                  value={value ?? ''}
+                  // У размера и веса в правке — только число: единицы и пометки показывает просмотр.
+                  value={formatter.editValue(field.kind, value, key)}
                   placeholder={t('notRecognized')}
                   onChange={(event) => onFieldChange(key, event.target.value)}
                   onKeyDown={moveToNextField}
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
-                  enterKeyHint={isLast ? 'done' : 'next'}
-                  {...FIELD_KEYBOARD[field.kind]}
+                  enterKeyHint="next"
+                  {...(key === 'size' ? FIELD_KEYBOARD.weight : FIELD_KEYBOARD[field.kind])}
                 />
               ) : (
                 <span className={`label-field-value${isMissingValue(value) ? ' is-missing' : ''}`}>
-                  {formatter.value(field.kind, value)}
+                  {formatter.value(field.kind, value, key)}
                 </span>
               )}
             </label>

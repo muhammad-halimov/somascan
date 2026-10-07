@@ -40,6 +40,10 @@ export type UploadErrorCode =
   | 'corruptWorkbook'
   /** Проверка после записи не прошла: прочитанное не совпало с записанным. */
   | 'verifyFailed'
+  /** Пересохранение журнала изменило бы чужие значения — запись остановлена, файл не тронут. */
+  | 'integrityFailed'
+  /** В книге не нашлось шапки журнала проб (Nr. Crt., Sarja, Producator…). */
+  | 'unknownLayout'
   /** Прочая ошибка ввода-вывода. */
   | 'io'
   /** Google: вход не выполнен или доступ к Drive отозван — нужно войти заново в настройках. */
@@ -48,14 +52,14 @@ export type UploadErrorCode =
   | 'driveNotConfigured'
   /** Google: папки с таким id нет или нет доступа к ней. */
   | 'folderNotFound'
-  /** Пользователь закрыл окно входа. */
+  /** Отменено пользователем: закрыл окно входа Google или отменил запись в «Загрузках». */
   | 'cancelled'
 
 /** Все коды — для проверки сохранённых записей (объект, а не список, чтобы компилятор требовал полноты). */
 const CODES: Record<UploadErrorCode, true> = {
   notConfigured: true, targetUnsupported: true, invalidPath: true, unavailable: true, offline: true, hostUnreachable: true,
   timeout: true, authFailed: true, shareNotFound: true, notFound: true, exists: true, accessDenied: true, locked: true,
-  busy: true, corruptWorkbook: true, verifyFailed: true, io: true, authRequired: true, driveNotConfigured: true,
+  busy: true, corruptWorkbook: true, verifyFailed: true, integrityFailed: true, unknownLayout: true, io: true, authRequired: true, driveNotConfigured: true,
   folderNotFound: true, cancelled: true,
 }
 

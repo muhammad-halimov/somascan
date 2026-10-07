@@ -25,9 +25,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Камера используется, чтобы сделать снимок для SomaScan.</string>
+	<string>The camera is used to take a photo for SomaScan.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Доступ к фото нужен, чтобы выбрать снимок для SomaScan.</string>
+	<string>Photo access is needed to choose a picture for SomaScan.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- http к серверам в локальной сети (LM Studio по IP или имени .local); облако остаётся только по HTTPS. -->
@@ -38,7 +38,7 @@
 	<key>GIDClientID</key>
 	<string></string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Доступ к локальной сети нужен, чтобы записывать таблицу на сетевой диск (SMB) и распознавать через LM Studio.</string>
+	<string>Local network access is needed to write the table to the network share (SMB) and to recognize with LM Studio.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

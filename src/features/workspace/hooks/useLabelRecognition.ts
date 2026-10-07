@@ -97,6 +97,7 @@ export function useLabelRecognition() {
         maxImageSide: advanced.maxImageSide,
         instructions: advanced.prompt,
         fields: enabledLabelFields(advanced.labelFields),
+        suppliers: advanced.knownSuppliers,
       })
       if (controller.signal.aborted) return
       setStatus({ kind: 'done', label: { ...label, [PRODUCT_FORM_KEY]: productFormRef.current }, photo })

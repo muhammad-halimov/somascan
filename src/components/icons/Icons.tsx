@@ -434,6 +434,17 @@ export function TagIcon() {
   )
 }
 
+/** Завод: известные поставщики. */
+export function FactoryIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2 20V9l6 4V9l6 4V4h6v16Z" />
+      <path d="M2 20h20" />
+      <path d="M7 16h1M12 16h1M17 16h1" />
+    </svg>
+  )
+}
+
 /** Палитра: тема оформления. */
 export function PaletteIcon() {
   return (

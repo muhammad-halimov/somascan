@@ -10,7 +10,8 @@
     "queued": "В очереди",
     "uploading": "Запись в таблицу…",
     "completed": "Записано в таблицу",
-    "failed": "Не записано"
+    "failed": "Не записано",
+    "cancelling": "Отмена…"
   },
   "delete": "Удалить запись",
   "clearDialog": {
@@ -25,14 +26,19 @@
     "message": "Запись «{{title}}» будет удалена из истории.",
     "confirm": "Удалить"
   },
+  "cancel": "Отменить загрузку",
+  "cancelCaption": "Отмена",
+  "cancelDialog": {
+    "title": "Отменить загрузку?",
+    "message": "«{{title}}» не будет записана в таблицу.",
+    "confirm": "Отменить загрузку",
+    "keep": "Не отменять"
+  },
   "queuedAfterError": "В очереди, будет повтор · {{error}}",
   "completedRow": "Записано в таблицу · строка {{row}}",
   "retry": "Повторить запись",
   "retryCaption": "Повтор",
   "retryAll": "Повторить все незаписанные",
   "retryAllCaption": "Повтор",
-  "columns": {
-    "number": "№ записи",
-    "recordedAt": "Дата записи"
-  }
+  "completedSheetRow": "Записано в таблицу · лист {{sheet}}, строка {{row}}"
 }

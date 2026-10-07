@@ -1,0 +1,4 @@
+/* Тексты системных запросов разрешений; язык выбирается по языку устройства. */
+"NSCameraUsageDescription" = "Camera este folosită pentru a face o fotografie pentru SomaScan.";
+"NSPhotoLibraryUsageDescription" = "Accesul la poze este necesar pentru a alege o fotografie pentru SomaScan.";
+"NSLocalNetworkUsageDescription" = "Accesul la rețeaua locală este necesar pentru a scrie tabelul pe partajarea de rețea (SMB) și pentru recunoaștere prin LM Studio.";

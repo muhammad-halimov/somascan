@@ -22,6 +22,8 @@ export interface LabelRecognitionRequest {
   instructions: string
   /** Включённые поля, которые нужно прочитать с фото. */
   fields: readonly LabelFieldDefinition[]
+  /** Известные поставщики — подсказка модели для плохо читаемых названий заводов. */
+  suppliers?: readonly string[]
 }
 
 /** Результат распознавания. */
@@ -59,10 +61,13 @@ export class LabelRecognizer {
     this.parser = parser
   }
 
-  /** Распознаёт одно фото: промпт собирается из инструкции и выбранных полей; заодно оценивается качество фото. */
-  async recognize({ providerId, model, access, imageUrl, maxImageSide, instructions, fields }: LabelRecognitionRequest): Promise<LabelRecognition> {
+  /**
+   * Распознаёт одно фото: промпт собирается из инструкции, выбранных полей и известных поставщиков;
+   * заодно оценивается качество фото.
+   */
+  async recognize({ providerId, model, access, imageUrl, maxImageSide, instructions, fields, suppliers }: LabelRecognitionRequest): Promise<LabelRecognition> {
     const image = await InlineImage.fromUrl(imageUrl, { maxSide: maxImageSide })
-    const prompt = buildLabelPrompt(instructions, fields)
+    const prompt = buildLabelPrompt(instructions, fields, suppliers)
     const text = await this.registry.get(providerId).recognize({ image, model, prompt, access })
     const { label, photo } = this.parser.parseAnswer(text, fields.map((field) => field.key))
     // Проблемы, названные моделью, учитываем, только если она сочла фото непригодным.

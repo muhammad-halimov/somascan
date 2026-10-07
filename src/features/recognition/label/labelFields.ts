@@ -63,6 +63,7 @@ export const BUILT_IN_FIELDS: readonly BuiltInField[] = [
   { key: 'grade', kind: 'code', hint: 'Steel grade / class / quality (Grade, Class, Clasa, Quality, Minőség, Jakość), e.g. "B500C". Do not include standards.' },
   { key: 'standard', kind: 'code', hint: 'Standard(s) the product conforms to, e.g. "ST 009:2011", "EN ISO 15630-1:2019", "DIN 488". Several standards: join with "; ".' },
   { key: 'technical_approval', kind: 'code', hint: 'Technical approval / agreement / technical documentation number, often "AT 016-01/600-2025" or "016-01-584-2025" (labels: AT, Technical agreement no., Technical doc., Agrement Tehnic).' },
+  { key: 'quality_doc', kind: 'code', hint: 'Quality certificate / inspection document number, only if printed on the tag (Certificate No., Inspection certificate 3.1, Certificat de calitate, Сертификат качества), e.g. "3.1 No 125478". Usually absent — then null.' },
   { key: 'size', kind: 'code', hint: 'Bar size / nominal diameter with unit as on the tag (Size, Dimensiune, Diameter, Átmérő, Przekrój), e.g. "8 mm", "12 mm", "R20". A bare number in a "mm" row becomes "<n> mm".' },
   { key: 'heat', kind: 'code', hint: 'Heat (melt) number: Heat, Heat No, Charge, Șarjă/Sarja, Adag, Wytop, Плавка. E.g. "251216", "25R00581".' },
   { key: 'batch', kind: 'code', hint: 'Batch / coil / bundle / package / lot number (Batch, Coil No, Partea/Numărul rulului, Package, Köteg, Paczka, Lot), e.g. "4657 / 30", "581".' },
@@ -86,15 +87,16 @@ export const BUILT_IN_FIELDS: readonly BuiltInField[] = [
 export const BUILT_IN_KEYS: readonly LabelKey[] = BUILT_IN_FIELDS.map((field) => field.key)
 
 /**
- * Поля, включённые по умолчанию: главное для приёмки бирки — производитель, марка стали,
- * размер, номер плавки и вес. Остальные встроенные поля есть в списке, но выключены.
+ * Поля, включённые по умолчанию: то, что идёт в журнал проб, — производитель, размер, номер плавки
+ * и вес. Остальные встроенные поля (в том числе марка стали и документ качества) есть в списке,
+ * но выключены — их включают по желанию.
  */
-export const DEFAULT_ENABLED_KEYS: readonly LabelKey[] = ['producer', 'grade', 'size', 'heat', 'weight_kg']
+export const DEFAULT_ENABLED_KEYS: readonly LabelKey[] = ['producer', 'size', 'heat', 'weight_kg']
 
 /** Включено ли встроенное поле по умолчанию. */
 export const isEnabledByDefault = (key: LabelKey) => DEFAULT_ENABLED_KEYS.includes(key)
 
-/** Набор полей по умолчанию: все встроенные поля, включены пять основных, названия — из переводов. */
+/** Набор полей по умолчанию: все встроенные поля, включены четыре основных, названия — из переводов. */
 export function createDefaultLabelFields(): LabelFieldDefinition[] {
   return BUILT_IN_FIELDS.map((field) => ({ ...field, names: {}, enabled: isEnabledByDefault(field.key), builtIn: true }))
 }

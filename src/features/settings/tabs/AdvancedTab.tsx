@@ -15,13 +15,14 @@ import { getProviderAccess } from '../store/providerAccess'
 import { settingsStore } from '../store/SettingsStore'
 import { IMAGE_SIZE_LIMITS } from '../store/settingsSchema'
 import { useSettings } from '../store/useSettings'
+import { KnownSuppliersPicker } from '../components/KnownSuppliersPicker'
 import { LabelFieldsPicker } from '../components/LabelFieldsPicker'
 import { PromptEditor } from '../components/PromptEditor'
 import { PROVIDER_ICONS } from '../components/providerIcons'
 import './AdvancedTab.css'
 
 /**
- * Вкладка «Расширенные»: сначала то, что определяет распознавание, — промпт и поля бирки;
+ * Вкладка «Расширенные»: сначала то, что определяет распознавание, — промпт, поля бирки и известные поставщики;
  * затем фильтр возраста моделей, состояние списков моделей с обновлением,
  * размер фото для распознавания и версия приложения.
  */
@@ -41,6 +42,8 @@ export function AdvancedTab() {
       <PromptEditor value={advanced.prompt} />
 
       <LabelFieldsPicker value={advanced.labelFields} />
+
+      <KnownSuppliersPicker value={advanced.knownSuppliers} />
 
       <FormSection title={t('advanced.models')} icon={<LayersIcon />}>
         <span className="form-section-hint">{t('advanced.maxAge')}</span>

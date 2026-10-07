@@ -62,6 +62,10 @@ export interface UploadRecord {
   completedAt?: number
   /** Номер строки в таблице. */
   rowNumber?: number
+  /** Лист журнала (год), куда записана бирка. */
+  sheet?: string
+  /** Пользователь отменил запись, пока она писалась: её уберут, как только запись остановится. */
+  cancelRequested?: boolean
 }
 
 /** Двузначное число с ведущим нулём. */
@@ -132,6 +136,8 @@ function readRecord(value: unknown): UploadRecord | null {
   if (completedAt !== undefined) record.completedAt = completedAt
   const rowNumber = optionalNumber(value.rowNumber)
   if (rowNumber !== undefined) record.rowNumber = rowNumber
+  if (isString(value.sheet)) record.sheet = value.sheet
+  if (value.cancelRequested === true) record.cancelRequested = true
   return record
 }
 
@@ -241,8 +247,8 @@ export class UploadStore extends Store<UploadRecord[]> {
   }
 
   /** Запись попала в таблицу и проверена. */
-  markCompleted(id: string, rowNumber: number) {
-    this.patch(id, (record) => ({ ...record, status: 'completed', completedAt: Date.now(), rowNumber, error: undefined, nextAttemptAt: undefined }))
+  markCompleted(id: string, rowNumber: number, sheet?: string) {
+    this.patch(id, (record) => ({ ...record, status: 'completed', completedAt: Date.now(), rowNumber, sheet, error: undefined, nextAttemptAt: undefined, cancelRequested: undefined }))
   }
 
   /** Временный сбой: запись вернётся в очередь и повторится не раньше `nextAttemptAt`. */
@@ -276,14 +282,29 @@ export class UploadStore extends Store<UploadRecord[]> {
     )))
   }
 
-  /** После перезапуска: записи, оборванные на середине, возвращаются в очередь. */
+  /**
+   * После перезапуска: записи, оборванные на середине, возвращаются в очередь, а те, что пользователь
+   * успел отменить, убираются (до замены файла запись не дошла: иначе она была бы завершена).
+   */
   resetInterrupted() {
-    this.setState((records) => records.map((record) => (record.status === 'uploading' ? { ...record, status: 'queued' as const } : record)))
+    this.setState((records) => records
+      .filter((record) => !(record.status === 'uploading' && record.cancelRequested))
+      .map((record) => (record.status === 'uploading' ? { ...record, status: 'queued' as const } : record)))
   }
 
-  /** Удаляет одну запись. Пишущуюся сейчас удалить нельзя — она допишется и будет отмечена завершённой. */
+  /** Удаляет одну запись. Пишущуюся сейчас удалить нельзя — её отменяют (`requestCancel`). */
   remove(id: string) {
     this.setState((records) => records.filter((record) => record.id !== id || record.status === 'uploading'))
+  }
+
+  /** Отмечает, что пишущуюся запись отменили; `UploadWorker` остановит её и уберёт. */
+  requestCancel(id: string) {
+    this.patch(id, (record) => (record.status === 'uploading' ? { ...record, cancelRequested: true } : record))
+  }
+
+  /** Убирает отменённую запись после того, как запись остановилась (в любом статусе). */
+  discard(id: string) {
+    this.setState((records) => records.filter((record) => record.id !== id))
   }
 
   /** Удаляет все завершённые записи. */

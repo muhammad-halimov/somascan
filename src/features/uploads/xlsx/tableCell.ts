@@ -19,6 +19,9 @@ export interface TableDate {
 /** Что мы записываем в ячейку и что ожидаем прочитать обратно. */
 export type TableCell = string | number | TableDate | null
 
+/** Заголовок для сравнения: без регистра, лишних пробелов и различий в нормализации Unicode. */
+export const normalizeHeader = (text: string) => text.normalize('NFKC').trim().replace(/\s+/g, ' ').toLowerCase()
+
 /** Число с ведущими нулями. */
 const pad = (value: number) => String(value).padStart(2, '0')
 

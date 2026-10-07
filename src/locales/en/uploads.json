@@ -10,7 +10,8 @@
     "queued": "Queued",
     "uploading": "Writing to the table…",
     "completed": "Written to the table",
-    "failed": "Not written"
+    "failed": "Not written",
+    "cancelling": "Cancelling…"
   },
   "delete": "Delete entry",
   "clearDialog": {
@@ -25,14 +26,19 @@
     "message": "«{{title}}» will be removed from the history.",
     "confirm": "Delete"
   },
+  "cancel": "Cancel upload",
+  "cancelCaption": "Cancel",
+  "cancelDialog": {
+    "title": "Cancel upload?",
+    "message": "“{{title}}” will not be written to the table.",
+    "confirm": "Cancel upload",
+    "keep": "Keep"
+  },
   "queuedAfterError": "Queued, will retry · {{error}}",
   "completedRow": "Written to the table · row {{row}}",
   "retry": "Retry upload",
   "retryCaption": "Retry",
   "retryAll": "Retry all failed uploads",
   "retryAllCaption": "Retry",
-  "columns": {
-    "number": "Record no.",
-    "recordedAt": "Recorded at"
-  }
+  "completedSheetRow": "Written to the table · sheet {{sheet}}, row {{row}}"
 }

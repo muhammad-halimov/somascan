@@ -1,6 +1,7 @@
 /**
- * Поля по умолчанию: включены пять основных; нетронутый выбор прежней версии («включено всё»)
- * переводится на них, изменённый пользователем — сохраняется.
+ * Поля по умолчанию: включены четыре основных (производитель, размер, плавка, вес); марка стали
+ * и документ качества — необязательные. Нетронутый выбор прежних версий переводится на текущий
+ * набор, изменённый пользователем — сохраняется.
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
@@ -10,22 +11,31 @@ import { createDefaultSettings, LABEL_FIELDS_VERSION, parseSettings, type AppSet
 
 const enabledKeys = (settings: AppSettings) => enabledLabelFields(settings.advanced.labelFields).map((field) => field.key)
 const defaults = createDefaultSettings(providerRegistry)
+const MAIN = ['producer', 'size', 'heat', 'weight_kg']
+/** Сохранённый список прежней версии: без поля «Док. качества», с заданными включёнными полями. */
+const saved = (enabled: (key: string) => boolean) =>
+  createDefaultLabelFields().filter((field) => field.key !== 'quality_doc').map((field) => ({ ...field, enabled: enabled(field.key) }))
 
-test('по умолчанию — пять основных полей', () => {
-  assert.deepEqual(enabledLabelFields(createDefaultLabelFields()).map((field) => field.key), ['producer', 'grade', 'size', 'heat', 'weight_kg'])
-  assert.ok(isDefaultLabelFields(createDefaultLabelFields()))
+test('по умолчанию — четыре основных поля; марка стали и документ качества выключены', () => {
+  const fields = createDefaultLabelFields()
+  assert.deepEqual(enabledLabelFields(fields).map((field) => field.key), MAIN)
+  assert.ok(fields.some((field) => field.key === 'grade' && !field.enabled))
+  assert.ok(fields.some((field) => field.key === 'quality_doc' && !field.enabled))
+  assert.ok(isDefaultLabelFields(fields))
 })
 
-test('нетронутый выбор версии 1 переходит на новые значения по умолчанию', () => {
-  const allEnabled = createDefaultLabelFields().map((field) => ({ ...field, enabled: true }))
-  const migrated = parseSettings({ advanced: { labelFields: allEnabled } }, defaults)
-  assert.deepEqual(enabledKeys(migrated), ['producer', 'grade', 'size', 'heat', 'weight_kg'])
-  assert.equal(migrated.advanced.labelFieldsVersion, LABEL_FIELDS_VERSION)
+test('нетронутый выбор версий 1 и 2 переходит на новые значения по умолчанию', () => {
+  const v1 = parseSettings({ advanced: { labelFields: saved(() => true) } }, defaults)
+  assert.deepEqual(enabledKeys(v1), MAIN)
+  assert.equal(v1.advanced.labelFieldsVersion, LABEL_FIELDS_VERSION)
+  const v2 = parseSettings({ advanced: { labelFields: saved((key) => [...MAIN, 'grade'].includes(key)), labelFieldsVersion: 2 } }, defaults)
+  assert.deepEqual(enabledKeys(v2), MAIN)
+  assert.ok(isDefaultLabelFields(v2.advanced.labelFields), 'новое поле встало на своё место')
 })
 
-test('изменённый выбор и выбор новой версии сохраняются', () => {
-  const custom = createDefaultLabelFields().map((field) => ({ ...field, enabled: field.key === 'contract' || field.key === 'heat' }))
-  assert.deepEqual(enabledKeys(parseSettings({ advanced: { labelFields: custom } }, defaults)), ['heat', 'contract'])
-  const allEnabledV2 = createDefaultLabelFields().map((field) => ({ ...field, enabled: true }))
-  assert.equal(enabledKeys(parseSettings({ advanced: { labelFields: allEnabledV2, labelFieldsVersion: 2 } }, defaults)).length, allEnabledV2.length)
+test('изменённый выбор и выбор текущей версии сохраняются', () => {
+  const custom = saved((key) => key === 'contract' || key === 'heat')
+  assert.deepEqual(enabledKeys(parseSettings({ advanced: { labelFields: custom, labelFieldsVersion: 2 } }, defaults)), ['heat', 'contract'])
+  const withGrade = createDefaultLabelFields().map((field) => ({ ...field, enabled: [...MAIN, 'grade', 'quality_doc'].includes(field.key) }))
+  assert.deepEqual(enabledKeys(parseSettings({ advanced: { labelFields: withGrade, labelFieldsVersion: LABEL_FIELDS_VERSION } }, defaults)), ['producer', 'grade', 'quality_doc', 'size', 'heat', 'weight_kg'])
 })
