@@ -1,0 +1,36 @@
+{
+  "title": "Date de pe etichetă",
+  "notRecognized": "Nerecunoscut",
+  "weightUnit": "kg",
+  "fields": {
+    "producer": "Producător",
+    "product": "Produs",
+    "grade": "Marcă oțel",
+    "standard": "Standard",
+    "technical_approval": "Agrement tehnic",
+    "size": "Dimensiune",
+    "heat": "Număr șarjă",
+    "batch": "Lot / colac",
+    "weight_kg": "Greutate",
+    "bar_count": "Număr de bare",
+    "production_date": "Data producției",
+    "production_time": "Ora producției",
+    "shift": "Schimb",
+    "contract": "Contract",
+    "work_order": "Comandă de lucru",
+    "customer_name": "Client",
+    "destination": "Destinație",
+    "customer_ref": "Referință client",
+    "serial_number": "Număr de serie",
+    "mark": "Marcaj",
+    "packing": "Ambalare",
+    "origin_country": "Țara de origine"
+  },
+  "productForm": {
+    "name": "Formă",
+    "placeholder": "Neselectată",
+    "bara": "Bară",
+    "bobina": "Bobină",
+    "required": "Alegeți forma: bară sau bobină"
+  }
+}

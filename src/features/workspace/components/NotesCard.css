@@ -1,0 +1,107 @@
+/*
+ * Карточка результата: шапка (заголовок + кнопки правки), распознанные поля или сообщение,
+ * панель действий снизу. Без тяжёлых рамок: разделение — отступами и тонкими линиями.
+ */
+
+.notes-card {
+  display: flex;
+  width: min(100%, 380px);
+  min-height: 104px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  margin-top: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  /* Размеры не анимируются: иначе при входе в правку контент съезжает во время анимации. */
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+/* Режим правки: карточка на всю высоту видимой области и прилипает к верху. */
+.notes-card.is-text-editing {
+  width: 100%;
+  max-width: 600px;
+  min-height: calc(var(--visual-viewport-height, 100dvh) - 80px - var(--safe-top));
+  flex: 0 0 auto;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+  scroll-snap-align: start;
+}
+
+.notes-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 4px 18px;
+}
+
+/* Заголовок как у групп в настройках: небольшой, акцентного цвета. */
+.notes-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notes-header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Сообщение вместо полей: подсказка или ошибка. */
+.notes-message {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin: 0;
+  padding: 8px 18px 16px;
+  color: var(--text-h);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.notes-message.is-placeholder {
+  color: var(--text);
+  opacity: .8;
+}
+
+.notes-message-title {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.notes-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 22px;
+  padding: 12px 12px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.notes-title svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

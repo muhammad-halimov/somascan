@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ночной вариант системного диалога (см. values/styles.xml). -->
+    <style name="AppDialog" parent="@android:style/Theme.DeviceDefault.Dialog.Alert" />
+
+    <!-- Ночной вариант стартовой темы: светлые значки статус-бара на тёмном фоне сплэша. -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

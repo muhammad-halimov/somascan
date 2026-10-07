@@ -1,0 +1,128 @@
+/*
+ * Поля ввода в стиле Material 3 «filled»: мягкая заливка, скругление сверху
+ * и линия снизу, которая при фокусе становится акцентной и толще —
+ * та же «линия-индикатор», что у вкладок. Секретный вариант (пароль, API-ключ)
+ * добавляет кнопку-глазок справа.
+ */
+
+.secret-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.text-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  color: var(--text-h);
+  background: var(--field-bg);
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  /* Линия снизу рисуется тенью, чтобы смена толщины при фокусе не сдвигала текст. */
+  box-shadow: inset 0 -1px 0 var(--field-line);
+  /* Не меньше 16 px: иначе iOS увеличивает страницу при фокусе на поле. */
+  font-size: 16px;
+  outline: none;
+  transition: box-shadow 140ms ease, background-color 140ms ease;
+}
+
+/* Автозаполнение не красит поле в цвета браузера: заливка поверх, линия снизу сохраняется. */
+.text-input:-webkit-autofill,
+.text-input:-webkit-autofill:hover,
+.text-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-h);
+  caret-color: var(--accent);
+  box-shadow: inset 0 -1px 0 var(--field-line), inset 0 0 0 1000px var(--field-bg);
+}
+
+.text-input:-webkit-autofill:focus {
+  box-shadow: inset 0 -2px 0 var(--accent), inset 0 0 0 1000px color-mix(in srgb, var(--accent) 6%, var(--field-bg));
+}
+
+.text-input::placeholder {
+  color: var(--text);
+  opacity: .7;
+}
+
+.text-input:focus {
+  background: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Место под глазок; моноширинный шрифт упрощает проверку ключей и паролей. */
+.secret-input .text-input {
+  padding-right: 48px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 16px;
+}
+
+/* Скрытый токен: точки вместо символов, но поле остаётся текстовым (без менеджеров паролей). */
+.secret-input .text-input.is-masked {
+  -webkit-text-security: disc;
+}
+
+.secret-input-toggle {
+  position: absolute;
+  right: 4px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
+:root:not([data-press]) .secret-input-toggle:active {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+/* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
+:root:not([data-press]) .secret-input-toggle:focus-visible,
+:root[data-keyboard] .secret-input-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.secret-input-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/*
+ * Многострочное поле (TextArea): растёт по содержимому (высоту ставит TextArea), своей прокрутки нет —
+ * свайп по полю прокручивает окно, а не застревает внутри поля.
+ */
+.text-input.is-multiline {
+  display: block;
+  min-height: 0;
+  padding: 12px 14px;
+  overflow: hidden;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  resize: none;
+}
+
+/* Только для чтения: приглушённый текст; касание (например, чтобы прокрутить) не подсвечивает поле как активное. */
+.text-input.is-multiline:read-only,
+.text-input.is-multiline:read-only:focus {
+  color: var(--text);
+  background: var(--field-bg);
+  box-shadow: inset 0 -1px 0 var(--field-line);
+}
+
+:root[data-platform='ios'] .text-input.is-multiline:read-only,
+:root[data-platform='ios'] .text-input.is-multiline:read-only:focus {
+  box-shadow: none;
+}

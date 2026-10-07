@@ -28,6 +28,17 @@
 	<string>Камера используется, чтобы сделать снимок для SomaScan.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Доступ к фото нужен, чтобы выбрать снимок для SomaScan.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- http к серверам в локальной сети (LM Studio по IP или имени .local); облако остаётся только по HTTPS. -->
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<!-- Вход через Google (Drive): client ID OAuth-клиента iOS; пустой — вход отключён. Обратный ID добавить в CFBundleURLTypes (см. README). -->
+	<key>GIDClientID</key>
+	<string></string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Доступ к локальной сети нужен, чтобы записывать таблицу на сетевой диск (SMB) и распознавать через LM Studio.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

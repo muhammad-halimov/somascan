@@ -1,0 +1,22 @@
+/*
+ * Поле формы с подписью: подпись сверху, элемент управления снизу.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  color: var(--text-h);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Два поля рядом на широких экранах (например, домен + пользователь). */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Акцент приложения (токен accent в tokens.css); ночной вариант — в values-night/colors.xml. -->
+    <color name="colorPrimary">#536DFE</color>
+    <color name="colorPrimaryDark">#3F51B5</color>
+    <color name="colorAccent">#536DFE</color>
+    <!-- Панель действий: поверхность и текст (токены bg / text-h / text / danger). -->
+    <color name="sheet_surface">#FFFFFF</color>
+    <color name="sheet_text">#202124</color>
+    <color name="sheet_text_secondary">#5F6368</color>
+    <color name="sheet_error">#D93025</color>
+</resources>

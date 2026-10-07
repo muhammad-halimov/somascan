@@ -1,0 +1,223 @@
+/*
+ * Карточка фото: пустое состояние «Добавить фото», фото с жестами,
+ * оверлей загрузки/распознавания и кнопки масштаба и поворота.
+ */
+
+.photo-card {
+  position: relative;
+  display: grid;
+  width: min(100%, 380px, calc(44svh * 1.08));
+  flex: 0 0 auto;
+  aspect-ratio: 1.08 / 1;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+  color: var(--text-h);
+  background: var(--photo-empty-bg);
+  border: 0;
+  border-radius: 12px;
+  /* Пока фото не увеличено, вертикальный свайп прокручивает страницу, щипок — наш. */
+  touch-action: pan-y;
+  transition: box-shadow 280ms ease;
+}
+
+.photo-card.has-photo {
+  background: var(--photo-backdrop);
+}
+
+/* Увеличенное фото: все жесты наши (перетаскивание в любую сторону). */
+.photo-card.is-zoomed {
+  touch-action: none;
+}
+
+/* Рамка фото — кнопка: нажатие (без перетаскивания) открывает просмотр на весь экран. */
+.photo-image-action {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: zoom-in;
+  touch-action: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Курсоры — только для мыши: на сенсорных платформах :active не участвует в отрисовке. */
+@media (hover: hover) and (pointer: fine) {
+  .photo-card.is-zoomed .photo-image-action {
+    cursor: grab;
+  }
+
+  .photo-card.is-zoomed .photo-image-action:active {
+    cursor: grabbing;
+  }
+}
+
+/* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
+:root:not([data-press]) .photo-image-action:focus-visible,
+:root:not([data-press]) .photo-empty:focus-visible,
+:root[data-keyboard] .photo-image-action:focus-visible,
+:root[data-keyboard] .photo-empty:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -4px;
+}
+
+.photo-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Круглый «плюс», нарисованный псевдоэлементами. */
+.photo-plus {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--photo-empty-plus-bg);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%), inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 12%, transparent);
+}
+
+.photo-plus::before,
+.photo-plus::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--photo-empty-plus);
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.photo-plus::before {
+  width: 22px;
+  height: 2.6px;
+}
+
+.photo-plus::after {
+  width: 2.6px;
+  height: 22px;
+}
+
+/* Подпись под «плюсом» и под спиннером — один стиль. */
+.photo-label {
+  max-width: 240px;
+  color: var(--photo-empty-text);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Внешний слой двигает фото, внутренний поворачивает и масштабирует его вокруг центра. */
+.photo-pan-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  will-change: transform;
+  /* До загрузки фото скрыто: его пропорции ещё неизвестны (см. PhotoFrame). */
+  visibility: hidden;
+}
+
+/* Загруженное фото проявляется, а не появляется скачком. */
+.photo-pan-layer.is-loaded {
+  visibility: visible;
+  animation: backdrop-enter 260ms ease-out backwards;
+}
+
+.photo-transform {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.photo-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.photo-controls {
+  position: absolute;
+  z-index: 2;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* Один оверлей на всё ожидание: загрузка фото и распознавание. */
+.photo-loading {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  background: rgb(0 0 0 / 60%);
+  animation: backdrop-enter 200ms ease-out both;
+}
+
+.photo-loading.is-closing {
+  animation: fade-exit 200ms ease-in both;
+}
+
+.photo-loading .photo-label {
+  color: #e8eaed;
+}
+
+.photo-spinner {
+  width: 52px;
+  height: 52px;
+  border: 5px solid rgb(255 255 255 / 35%);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: photo-spin 750ms linear infinite;
+}
+
+/* Наведение — только на десктопе с мышью (без data-press): на сенсорных платформах отклик ведёт код. */
+@media (hover: hover) and (pointer: fine) {
+  :root:not([data-press]) .photo-card:hover {
+    box-shadow: 0 8px 28px rgb(0 0 0 / 16%);
+  }
+}
+
+/* Ожидание без фото (обработка выбранного снимка): без затемнения, цвета темы. */
+.photo-card:not(.has-photo) .photo-loading {
+  background: transparent;
+}
+
+.photo-card:not(.has-photo) .photo-spinner {
+  border-color: color-mix(in srgb, var(--photo-empty-text) 30%, transparent);
+  border-top-color: var(--accent);
+}
+
+.photo-card:not(.has-photo) .photo-loading .photo-label {
+  color: var(--photo-empty-text);
+}

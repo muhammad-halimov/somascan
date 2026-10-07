@@ -1,0 +1,30 @@
+/*
+ * Список полей бирки: форма поля раскрывается прямо под строкой, кнопки — под списком.
+ */
+
+.label-fields-picker-form {
+  padding: 0 12px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+/* Карандаш справа в строке — того же размера, что и галочка. */
+.label-fields-picker .list-item-trailing svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.label-fields-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: -10px;
+}
+
+.label-fields-picker-actions:empty {
+  display: none;
+}

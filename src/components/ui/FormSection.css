@@ -1,0 +1,94 @@
+/*
+ * Группа элементов управления с заголовком в формах настроек.
+ */
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Заголовок группы как в настройках Android: небольшой, акцентного цвета. */
+.form-section-title {
+  margin: 0;
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+/*
+ * Кнопки правки у заголовка («Изменить» или «Сбросить», «Отмена», «Готово») — иконки с подписью
+ * снизу, как в шапке листа настроек. Компактнее обычных: пилюля 48×28, иконка 18.
+ */
+.form-section-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 2px;
+  margin-right: -6px;
+}
+
+.form-section-actions .action-button.is-ghost {
+  width: 52px;
+}
+
+.form-section-actions .action-button.is-ghost .action-button-icon {
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  color: var(--accent);
+}
+
+.form-section-actions .action-button.is-ghost .action-button-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.form-section-actions .action-button-caption {
+  color: var(--accent);
+}
+
+.form-section-hint {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Иконка у заголовка — того же акцентного цвета; фирменные знаки сохраняют свои цвета. */
+.form-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-section-icon {
+  display: inline-grid;
+  place-items: center;
+}
+
+.form-section-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.form-section-icon svg.brand-icon {
+  stroke: none;
+}
+
+.form-section-icon .brand-image {
+  width: 18px;
+  height: 18px;
+}

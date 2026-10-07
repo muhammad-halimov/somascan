@@ -1,0 +1,119 @@
+/*
+ * Кнопки Material 3: текстовая, тональная «таблетка» и кнопка входа через Google.
+ * Скругления «таблеткой», без тяжёлых рамок, отклик — подсветкой фона.
+ */
+
+.button {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, opacity 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
+:root:not([data-press]) .button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
+.button[aria-busy='true'] {
+  cursor: progress;
+  opacity: .8;
+}
+
+/* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
+:root:not([data-press]) .button:focus-visible,
+:root[data-keyboard] .button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.button-icon-wrap {
+  display: inline-grid;
+  place-items: center;
+}
+
+/* Контурные иконки; у логотипа Google свои фирменные заливки — его не трогаем. */
+.button-icon-wrap svg:not(.google-logo) {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Пока идёт действие (обновление списков), иконка вращается. */
+.button[aria-busy='true'] .button-icon-wrap svg {
+  animation: photo-spin 900ms linear infinite;
+}
+
+/* Текстовая кнопка рядом с заголовком секции не должна раздувать строку. */
+.button.is-text {
+  min-height: 32px;
+  margin-right: -8px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+/* Тональная: мягкая акцентная заливка во всю ширину. */
+.button.is-tonal {
+  width: 100%;
+  min-height: 44px;
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+}
+
+:root:not([data-press]) .button.is-tonal:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 24%, var(--bg));
+}
+
+/* Google: светлая — белая с серой рамкой, тёмная — #131314 (по фирменным правилам Google). */
+.button.is-google {
+  width: 100%;
+  min-height: 44px;
+  color: #1f1f1f;
+  background: #fff;
+  border: 1px solid #747775;
+  font-family: Roboto, Inter, system-ui, sans-serif;
+  font-weight: 500;
+}
+
+:root:not([data-press]) .button.is-google:active:not(:disabled) {
+  background: #f2f2f2;
+}
+
+:root[data-theme='dark'] .button.is-google {
+  color: #e3e3e3;
+  background: #131314;
+  border-color: #8e918f;
+}
+
+:root:not([data-press])[data-theme='dark'] .button.is-google:active:not(:disabled) {
+  background: #1f1f20;
+}
+
+/* Наведение — только на десктопе с мышью (без data-press): на сенсорных платформах отклик ведёт код. */
+@media (hover: hover) and (pointer: fine) {
+  :root:not([data-press]) .button.is-text:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+}

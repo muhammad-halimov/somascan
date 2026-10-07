@@ -1,0 +1,109 @@
+/*
+ * Поля распознанной бирки.
+ * Просмотр: две колонки (название / значение), крупное значение, тонкие разделители.
+ * Правка: название над полем ввода в стиле Material 3 (заливка + линия снизу).
+ */
+
+.label-fields {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0 18px 8px;
+  /*
+   * overscroll-behavior: contain здесь нельзя: в режиме правки список полей сам не прокручивается
+   * (карточка растёт по содержимому), и contain не пускал свайп по полям к прокрутке экрана.
+   */
+}
+
+.label-fields-list {
+  margin: 0;
+}
+
+.label-field {
+  display: grid;
+  grid-template-columns: minmax(104px, 40%) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.label-field:last-child {
+  border-bottom: 0;
+}
+
+.label-field-name {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.label-field-value {
+  min-width: 0;
+  color: var(--text-h);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.label-field-value.is-missing {
+  color: var(--text);
+  font-weight: 400;
+  opacity: .7;
+}
+
+/* В правке поле ввода во всю ширину под названием. */
+.label-fields.is-editing .label-field {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 0;
+}
+
+.label-field-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 12px;
+  color: var(--text-h);
+  background: var(--field-bg);
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: inset 0 -1px 0 var(--field-line);
+  outline: 0;
+  font: inherit;
+  font-size: 16px;
+  transition: box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.label-field-input::placeholder {
+  color: var(--text);
+  opacity: .7;
+}
+
+.label-field-input:focus {
+  background: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Форма поставки не выбрана: значение цветом ошибки — без него бирку не отправить. */
+.label-field-value.is-missing.is-required {
+  color: var(--danger);
+  opacity: 1;
+}
+
+/* Системный выбор формы — в стиле полей ввода; стрелка справа рисуется фоном. */
+.label-field-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text) 50%), linear-gradient(135deg, var(--text) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+  background-repeat: no-repeat;
+  background-size: 6px 6px, 6px 6px;
+}
+
+.label-field.is-required .label-field-select {
+  box-shadow: inset 0 -2px 0 var(--danger);
+}

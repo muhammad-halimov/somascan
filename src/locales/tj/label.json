@@ -1,0 +1,36 @@
+{
+  "title": "Маълумот аз барчасп",
+  "notRecognized": "Шинохта нашуд",
+  "weightUnit": "кг",
+  "fields": {
+    "producer": "Истеҳсолкунанда",
+    "product": "Маҳсулот",
+    "grade": "Навъи пӯлод",
+    "standard": "Стандарт",
+    "technical_approval": "Созишномаи техникӣ",
+    "size": "Андоза",
+    "heat": "Рақами гудохт",
+    "batch": "Партия / печ",
+    "weight_kg": "Вазн",
+    "bar_count": "Шумораи милаҳо",
+    "production_date": "Санаи истеҳсол",
+    "production_time": "Вақти истеҳсол",
+    "shift": "Баст",
+    "contract": "Шартнома",
+    "work_order": "Фармоиши корӣ",
+    "customer_name": "Фармоишгар",
+    "destination": "Таъинот",
+    "customer_ref": "Истиноди фармоишгар",
+    "serial_number": "Рақами силсилавӣ",
+    "mark": "Тамға",
+    "packing": "Бастабандӣ",
+    "origin_country": "Кишвари истеҳсол"
+  },
+  "productForm": {
+    "name": "Шакл",
+    "placeholder": "Интихоб нашудааст",
+    "bara": "Чубча",
+    "bobina": "Ғалтак",
+    "required": "Шаклро интихоб кунед: чубча ё ғалтак"
+  }
+}

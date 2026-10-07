@@ -1,0 +1,37 @@
+/*
+ * Шапка приложения: логотип и кнопки «Загрузки» и «Настройки» с подписями.
+ * Учитывает безопасную зону статус-бара на телефонах с вырезом.
+ */
+
+.app-header {
+  z-index: 4;
+  display: flex;
+  flex: 0 0 auto;
+  min-height: calc(60px + var(--safe-top));
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--safe-top) max(8px, var(--safe-right)) 0 max(16px, var(--safe-left));
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: inline-flex;
+  min-width: 88px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand img {
+  display: block;
+  width: 88px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

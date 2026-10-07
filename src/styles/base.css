@@ -1,0 +1,100 @@
+/*
+ * Глобальные значения по умолчанию для элементов: box-sizing, поведение касаний как в нативном приложении, элементы форм.
+ */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Документ не прокручивается: вся прокрутка — внутри экранов и панелей. Иначе WebView мог бы
+ * сдвинуть страницу целиком (например, показывая поле под клавиатурой) и оставить её сдвинутой.
+ */
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  color: var(--text);
+  background: var(--bg);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"],
+[data-selectable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+input,
+textarea,
+select {
+  min-width: 0;
+  font: inherit;
+  font-size: max(16px, 1em);
+  /* Каретка акцентного цвета, как у нативных полей. */
+  caret-color: var(--accent);
+}
+
+/* Выделение текста есть только в полях ввода — цвет как у системного тинта. */
+input::selection,
+textarea::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+button {
+  font: inherit;
+  touch-action: manipulation;
+}
+
+a {
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ссылки и кнопки не перетаскиваются по долгому нажатию. */
+a,
+button {
+  -webkit-user-drag: none;
+}
+
+/* Закрывающиеся оверлеи не должны перехватывать касания во время анимации выхода. */
+.is-closing {
+  pointer-events: none;
+}
+
+/* Учитываем системную настройку «уменьшить движение». */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Нативное поведение: картинки не перетаскиваются и не открывают меню по долгому нажатию. */
+img {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}

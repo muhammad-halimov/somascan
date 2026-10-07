@@ -1,0 +1,36 @@
+{
+  "title": "Данные с бирки",
+  "notRecognized": "Не распознано",
+  "weightUnit": "кг",
+  "fields": {
+    "producer": "Производитель",
+    "product": "Продукция",
+    "grade": "Марка стали",
+    "standard": "Стандарт",
+    "technical_approval": "Тех. соглашение",
+    "size": "Размер",
+    "heat": "Номер плавки",
+    "batch": "Партия / бунт",
+    "weight_kg": "Вес",
+    "bar_count": "Кол-во прутков",
+    "production_date": "Дата производства",
+    "production_time": "Время производства",
+    "shift": "Смена",
+    "contract": "Контракт",
+    "work_order": "Заказ-наряд",
+    "customer_name": "Заказчик",
+    "destination": "Назначение",
+    "customer_ref": "Ссылка заказчика",
+    "serial_number": "Серийный номер",
+    "mark": "Маркировка",
+    "packing": "Упаковка",
+    "origin_country": "Страна происхождения"
+  },
+  "productForm": {
+    "name": "Форма",
+    "placeholder": "Не выбрана",
+    "bara": "Пруток",
+    "bobina": "Катушка",
+    "required": "Выберите форму: пруток или катушка"
+  }
+}

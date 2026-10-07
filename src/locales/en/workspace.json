@@ -1,0 +1,87 @@
+{
+  "region": "Scanning workspace",
+  "photo": {
+    "add": "Add photo",
+    "take": "Take photo",
+    "chooseFromGallery": "Choose from gallery",
+    "alt": "Selected photo",
+    "failedToOpen": "Failed to open photo. Please try again",
+    "controls": "Photo controls",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "rotate": "Rotate 90 degrees",
+    "recognizing": "Recognizing…",
+    "open": "Open photo full screen",
+    "chooseFromFiles": "Choose from files"
+  },
+  "notes": {
+    "label": "Result",
+    "placeholder": "Text will appear here",
+    "cancelled": "Recognition cancelled. The photo is kept — tap “Retry” to recognize it again."
+  },
+  "editing": {
+    "edit": "Edit text",
+    "finish": "Finish editing",
+    "close": "Close editing",
+    "editCaption": "Edit",
+    "closeCaption": "Done"
+  },
+  "actions": {
+    "group": "Actions",
+    "add": "Photo",
+    "addLabel": "Add photo",
+    "clear": "Reset",
+    "clearLabel": "Reset workspace",
+    "retry": "Retry",
+    "retryLabel": "Recognize again",
+    "next": "Next",
+    "nextLabel": "Send to the table",
+    "uploading": "Sending…",
+    "cancelLabel": "Cancel recognition"
+  },
+  "resetDialog": {
+    "title": "Reset workspace?",
+    "message": "Photo and recognized text will be removed.",
+    "confirm": "Reset"
+  },
+  "controls": {
+    "zoomOut": "Smaller",
+    "zoomIn": "Larger",
+    "rotate": "Rotate",
+    "reset": "Reset",
+    "resetLabel": "Reset zoom and rotation"
+  },
+  "viewer": {
+    "title": "Photo",
+    "close": "Close photo"
+  },
+  "replaceDialog": {
+    "title": "Replace photo?",
+    "message": "The current photo and recognized data will be removed.",
+    "confirm": "Replace"
+  },
+  "uploadDialog": {
+    "unconfiguredTitle": "Storage is not set up",
+    "unconfiguredMessage": "The tag is saved in the upload queue and will be written to the table once storage is set up in Settings → Storage."
+  },
+  "qualityDialog": {
+    "title": "Poor photo quality",
+    "message": "Retaking the photo is recommended: {{issues}}. Check the recognized values.",
+    "messageGeneric": "Some values are uncertain. Retaking the photo is recommended; check the recognized values."
+  },
+  "photoIssues": {
+    "noTag": "no tag is visible",
+    "blurry": "the photo is blurry",
+    "glare": "glare covers the text",
+    "dark": "too dark",
+    "overexposed": "overexposed",
+    "cropped": "the tag is not fully in the frame",
+    "angle": "strong tilt",
+    "far": "the tag is too far away",
+    "obstructed": "something covers the text"
+  },
+  "formDialog": {
+    "title": "Form not selected",
+    "message": "Before sending, choose what the tag is for: bar or coil. The field is open for editing."
+  }
+}

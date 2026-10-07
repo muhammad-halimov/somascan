@@ -1,0 +1,513 @@
+/*
+ * Адаптация под iOS. Включается атрибутом <html data-platform="ios"> (см. lib/platform/platform.ts).
+ *
+ * Два поколения дизайна:
+ * - classic (iOS 18 и раньше): полупрозрачные «материалы» с размытием и тонкими разделителями;
+ * - glass (iOS 26+, Liquid Glass в духе iOS 27): более прозрачное «стекло» с бликом по краю, парящие панели,
+ *   крупные скругления.
+ *
+ * Общее для обоих: системный шрифт San Francisco, шапка поверх прокручиваемого содержимого,
+ * сгруппированные списки и поля ввода в стиле iOS.
+ */
+
+/* ---------- Токены стекла ---------- */
+
+:root[data-platform='ios'] {
+  /* Подложка сегментированного переключателя и «плашка» выбранного сегмента (цвета UIKit). */
+  --ios-segment-track: rgb(118 118 128 / 12%);
+  --ios-segment-thumb: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+
+  /* Высота шапки: от неё отступает содержимое, которое прокручивается под ней. */
+  --ios-header-height: calc(60px + var(--safe-top));
+
+  /*
+   * Скругления — одна шкала для всех версий iOS, в духе iOS 27: мягкие, но без капсул iOS 26.
+   * У элементов одного уровня один радиус, вложенные концентричны (внутренний = внешний − отступ).
+   * Поля, списки и кнопки 17; парящие панели (шапка, панель действий) 26, кнопка в них 20;
+   * карточки 24; окна 28; сегменты 15/13. Внутри окон «Настройки» и «Загрузки» — своя шкала, ниже.
+   */
+  --ios-radius-field: 17px;
+  --ios-radius-group: 17px;
+  --ios-radius-button: 17px;
+  --ios-radius-bar: 26px;
+  --ios-radius-bar-item: 20px;
+  --ios-radius-card: 24px;
+  --ios-radius-sheet: 28px;
+  --ios-radius-segment: 15px;
+  --ios-radius-thumb: 13px;
+  /* Высота сегмента: 30 + 2×2 отступа дорожки. */
+  --ios-segment-height: 30px;
+
+  /* classic: плотный материал, тонкий разделитель, без бликов. */
+  --glass-bg: color-mix(in srgb, var(--bg) 80%, transparent);
+  --glass-blur: saturate(180%) blur(20px);
+  --glass-border: color-mix(in srgb, var(--border) 90%, transparent);
+  --glass-shadow: 0 1px 0 color-mix(in srgb, var(--border) 60%, transparent);
+  --glass-control: color-mix(in srgb, var(--text-h) 8%, transparent);
+  /* Окна с текстом плотнее панелей: содержимое под ними не должно мешать читать. */
+  --glass-sheet-bg: color-mix(in srgb, var(--bg) 92%, transparent);
+}
+
+/* Окна «Настройки» и «Загрузки» — чуть круглее главного экрана: поля, списки и кнопки 18, окно 30, сегменты 16/14. */
+:root[data-platform='ios'] :is(.settings-modal, .uploads-popover) {
+  --ios-radius-field: 18px;
+  --ios-radius-group: 18px;
+  --ios-radius-button: 18px;
+  --ios-radius-sheet: 30px;
+  --ios-radius-segment: 16px;
+  --ios-radius-thumb: 14px;
+}
+
+/* Окна «Настройки» и «Загрузки» — стекло iOS 27 на всех версиях iOS (в том числе iOS 18). */
+:root[data-platform='ios'][data-ios-design='glass'],
+:root[data-platform='ios'] :is(.settings-modal, .uploads-popover) {
+  /* glass: прозрачнее, сильнее размытие, светлый блик по верхней кромке и мягкая тень. */
+  --glass-bg: color-mix(in srgb, var(--bg) 58%, transparent);
+  --glass-blur: saturate(190%) blur(26px);
+  --glass-border: rgb(255 255 255 / 55%);
+  --glass-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 70%),
+    inset 0 -1px 0 rgb(255 255 255 / 18%),
+    0 10px 30px rgb(0 0 0 / 12%);
+  --glass-control: rgb(255 255 255 / 35%);
+  --glass-sheet-bg: color-mix(in srgb, var(--bg) 90%, transparent);
+}
+
+:root[data-platform='ios'][data-theme='dark'] {
+  --ios-segment-track: rgb(118 118 128 / 24%);
+  --ios-segment-thumb: #636366;
+}
+
+:root[data-platform='ios'][data-ios-design='glass'][data-theme='dark'],
+:root[data-platform='ios'][data-theme='dark'] :is(.settings-modal, .uploads-popover) {
+  --glass-bg: color-mix(in srgb, var(--bg) 52%, transparent);
+  --glass-border: rgb(255 255 255 / 16%);
+  --glass-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 22%),
+    inset 0 -1px 0 rgb(255 255 255 / 6%),
+    0 10px 30px rgb(0 0 0 / 40%);
+  --glass-control: rgb(255 255 255 / 10%);
+  --glass-sheet-bg: color-mix(in srgb, var(--bg) 88%, transparent);
+}
+
+/* ---------- Шапка поверх содержимого ---------- */
+
+/* Содержимое прокручивается под полупрозрачной шапкой, как в нативных приложениях. */
+:root[data-platform='ios'] .app-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  background: var(--glass-bg);
+  border-bottom: .5px solid var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+:root[data-platform='ios'] .scan-workspace {
+  padding-top: calc(var(--ios-header-height) + 12px);
+  scroll-padding-top: calc(var(--ios-header-height) + 8px);
+}
+
+:root[data-platform='ios'] .offline-banner {
+  position: absolute;
+  z-index: 4;
+  top: var(--ios-header-height);
+  right: 0;
+  left: 0;
+}
+
+/*
+ * Liquid Glass: у шапки нет своего фона — кнопки собраны в парящую стеклянную панель.
+ * Вместо заливки — «мягкий край прокрутки», как в iOS 26: содержимое под шапкой размывается
+ * и плавно растворяется. Пока под шапкой ничего нет, размывать нечего, и край не виден,
+ * поэтому шапка не выглядит двухцветной.
+ */
+:root[data-platform='ios'][data-ios-design='glass'] .app-header {
+  background: transparent;
+  border-bottom: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .app-header::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 -12px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+/* Подписи «Загрузки» и «Настройки» помещаются целиком: кнопки в шапке шире круга-пилюли. */
+:root[data-platform='ios'] .header-actions .action-button.is-ghost {
+  /*
+   * Ширина — по подписи (но не уже круга значка) с одинаковыми полями: тогда от края панели
+   * до «Загрузки» и до «Настройки» одинаковое расстояние. При равной ширине кнопок короткая
+   * подпись отступала от края дальше длинной, и содержимое казалось сдвинутым вправо.
+   */
+  width: auto;
+  min-width: 0;
+  padding: 0 6px;
+}
+
+/* Подложка значка — по ширине подписи, чтобы не раздвигать кнопку с короткой подписью. */
+:root[data-platform='ios'] .header-actions .action-button.is-ghost .action-button-icon {
+  width: 100%;
+  min-width: 44px;
+}
+
+:root[data-platform='ios'] .header-actions .action-button-caption {
+  font-size: 11px;
+}
+
+/* Открытая панель: кнопка в шапке подсвечена цветом, а не серой «пилюлей» Material — у кнопок панели инструментов iOS её нет. */
+:root[data-platform='ios'] .action-button.is-ghost.is-active .action-button-icon {
+  color: var(--accent);
+  background: transparent;
+}
+
+:root[data-platform='ios'] .action-button.is-ghost.is-active .action-button-caption {
+  color: var(--accent);
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .header-actions {
+  gap: 0;
+  padding: 5px 6px 4px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  /* Чуть меньше, чем у нижней панели: подпись «Настройки» не должна упираться в скруглённый край. */
+  border-radius: calc(var(--ios-radius-bar) - 2px);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* Подложка кнопки в стеклянной панели — концентрична панели (радиус панели минус отступ). */
+:root[data-platform='ios'][data-ios-design='glass'] .header-actions .action-button.is-ghost .action-button-icon {
+  border-radius: var(--ios-radius-bar-item);
+}
+
+/* ---------- Карточки ---------- */
+
+:root[data-platform='ios'] .photo-card,
+:root[data-platform='ios'] .notes-card {
+  border-radius: var(--ios-radius-card);
+}
+
+/* Панель действий: classic — полоса материала, glass — парящая стеклянная панель. */
+:root[data-platform='ios'] .notes-actions {
+  background: var(--glass-bg);
+  border-top: .5px solid var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .notes-actions {
+  gap: 14px;
+  align-self: center;
+  margin: 2px auto 8px;
+  padding: 6px 14px 4px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--ios-radius-bar);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Тональные кнопки на стекле — полупрозрачные, а не сплошные. */
+:root[data-platform='ios'] .notes-actions .action-button.is-tonal .action-button-icon {
+  background: var(--glass-control);
+}
+
+/* Кнопки поверх фото — стеклянные круги с бликом. */
+:root[data-platform='ios'][data-ios-design='glass'] .action-button.is-overlay .action-button-icon {
+  background: rgb(30 32 38 / 42%);
+  border-color: rgb(255 255 255 / 38%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 45%), 0 6px 18px rgb(0 0 0 / 25%);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
+}
+
+/* ---------- Окна и панели ---------- */
+
+:root[data-platform='ios'] .settings-backdrop {
+  background: rgb(0 0 0 / 28%);
+}
+
+:root[data-platform='ios'] .settings-modal,
+:root[data-platform='ios'] .uploads-popover {
+  background: var(--glass-sheet-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--ios-radius-sheet);
+  box-shadow: var(--glass-shadow), 0 24px 80px rgb(0 0 0 / 22%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+:root[data-platform='ios'] .panel-header {
+  border-bottom-color: var(--glass-border);
+}
+
+/*
+ * «Загрузки»: список — вставной сгруппированный блок с отступом 12 от краёв окна, скругления
+ * концентричны (окно 30 = блок 18 + отступ 12). Без линии под заголовком: блок сам отделяет
+ * содержимое, как в листах iOS. Окно по высоте списка, без пустого стекла под ним.
+ */
+:root[data-platform='ios'] .uploads-popover {
+  min-height: 0;
+}
+
+:root[data-platform='ios'] .uploads-popover .panel-header {
+  border-bottom: 0;
+}
+
+:root[data-platform='ios'] .uploads-content {
+  padding: 0 12px 12px;
+  scroll-padding-bottom: 12px;
+}
+
+:root[data-platform='ios'] .uploads-list {
+  padding: 0;
+}
+
+/* Значок состояния и кнопки строки — по центру строки, без лишнего отступа слева. */
+:root[data-platform='ios'] .uploads-list .list-item {
+  gap: 12px;
+  padding: 12px 10px 12px 14px;
+}
+
+/* ---------- Списки и поля в стиле iOS ---------- */
+
+/* Сгруппированный список: строки в скруглённом блоке, разделители с отступом слева.
+   Углы режет clip-path, а не overflow: hidden — так не появляется лишняя область прокрутки. */
+:root[data-platform='ios'] .list {
+  clip-path: inset(0 round var(--ios-radius-group));
+  background: color-mix(in srgb, var(--social-bg) 70%, transparent);
+  border-radius: var(--ios-radius-group);
+}
+
+:root[data-platform='ios'] .list-item {
+  position: relative;
+  padding: 10px 14px;
+  border-bottom: 0;
+  border-radius: 0;
+}
+
+:root[data-platform='ios'] .list-item::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 14px;
+  height: .5px;
+  background: var(--border);
+}
+
+:root[data-platform='ios'] .list > li:last-child > .list-item::after,
+:root[data-platform='ios'] .list > .list-item:last-child::after {
+  display: none;
+}
+
+/* Выбранная строка: только галочка справа — без заливки и акцентного текста, как UITableViewCell с .checkmark. */
+:root[data-platform='ios'] .list-item.is-selected .list-item-primary {
+  color: var(--text-h);
+}
+
+/* Поле ввода: скруглённое, без нижней линии; в фокусе — только каретка и чуть светлее фон, как UITextField. */
+:root[data-platform='ios'] .text-input,
+:root[data-platform='ios'] .label-field-input {
+  border-radius: var(--ios-radius-field);
+  box-shadow: none;
+}
+
+/* Плашки-подсказки — того же скругления, что и сгруппированные списки. */
+:root[data-platform='ios'] .notice {
+  border-radius: var(--ios-radius-group);
+}
+
+/* Заливные кнопки — скруглённый прямоугольник из шкалы (--ios-radius-button). */
+:root[data-platform='ios'] :is(.button.is-tonal, .button.is-google) {
+  border-radius: var(--ios-radius-button);
+}
+
+:root[data-platform='ios'] .text-input:focus,
+:root[data-platform='ios'] .label-field-input:focus {
+  background: color-mix(in srgb, var(--text-h) 6%, var(--field-bg));
+  box-shadow: none;
+}
+
+/* Кнопки-«таблетки» на стекле. */
+:root[data-platform='ios'][data-ios-design='glass'] .button.is-tonal,
+:root[data-platform='ios'] :is(.settings-modal, .uploads-popover) .button.is-tonal {
+  background: var(--glass-control);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* ---------- Вкладки: сегментированный переключатель ---------- */
+
+/*
+ * На iOS ряд вкладок — UISegmentedControl: серая подложка, выбранный сегмент — светлая
+ * «плашка» с тенью, которая переезжает к выбранному сегменту (её положение считает Tabs.tsx).
+ * Переезд — translate в слое композитора, поэтому он плавный, даже пока монтируется новая вкладка;
+ * сегменты тоже в своих слоях — иначе на iPhone плашка рисовалась поверх подписей.
+ * Сегменты равной ширины и не прокручиваются; если подписи не помещаются — см. fitSegments в Tabs.tsx.
+ * Скругления дорожки и плашки — из шкалы --ios-radius-* (classic 11/9, glass 17/15).
+ */
+:root[data-platform='ios'] .tabs {
+  overflow: hidden;
+  padding: 2px;
+  background: var(--ios-segment-track);
+  border-bottom: 0;
+  border-radius: var(--ios-radius-segment);
+}
+
+:root[data-platform='ios'] .tab {
+  position: relative;
+  z-index: 1;
+  /* Свой слой: подпись всегда над плашкой, которая едет в слое композитора. */
+  will-change: transform;
+  min-width: 0;
+  height: var(--ios-segment-height);
+  min-height: 0;
+  /* Сегменты равной ширины, как у UISegmentedControl по умолчанию. */
+  flex: 1 1 0;
+  align-items: center;
+  padding: 0 5px;
+  color: var(--text-h);
+  border-radius: var(--ios-radius-thumb);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -.01em;
+}
+
+:root[data-platform='ios'] .tab.is-active {
+  color: var(--text-h);
+}
+
+:root[data-platform='ios']:not([data-press]) .tab:focus-visible,
+:root[data-platform='ios'][data-keyboard] .tab:focus-visible {
+  outline-offset: 0;
+}
+
+/* Иконка слева от подписи, а не над ней: сегмент остаётся низким. */
+:root[data-platform='ios'] .tab-content {
+  min-width: 0;
+  flex-direction: row;
+  gap: 5px;
+  padding: 0;
+}
+
+:root[data-platform='ios'] .tab-icon {
+  height: 16px;
+  flex: 0 0 auto;
+  font-size: 14px;
+}
+
+:root[data-platform='ios'] .tab-icon :is(svg, img) {
+  width: 15px;
+  height: 15px;
+}
+
+/* Замер естественной ширины сегментов (fitSegments в Tabs.tsx): сегменты не сжимаются, подписи не обрезаются. */
+:root[data-platform='ios'] .tabs[data-measuring] .tab {
+  flex: 0 0 auto;
+}
+
+:root[data-platform='ios'] .tabs[data-measuring] .tab-label {
+  overflow: visible;
+}
+
+/*
+ * Подписи не поместились (см. fitSegments в Tabs.tsx) — сегменты плотнее: меньше отступы,
+ * трекинг и иконки (`compact`), затем и шрифт мельче (`tight`). Флаги и логотипы остаются;
+ * самая длинная подпись обрезается многоточием, только если не помогло и это.
+ */
+:root[data-platform='ios'] .tabs[data-density] .tab {
+  /* Размер шрифта тот же, что у остальных переключателей: плотнее только отступы, трекинг и иконки. */
+  padding: 0 2px;
+  letter-spacing: -.025em;
+}
+
+:root[data-platform='ios'] .tabs[data-density] .tab-content {
+  gap: 3px;
+}
+
+:root[data-platform='ios'] .tabs[data-density] .tab-icon {
+  font-size: 12px;
+}
+
+:root[data-platform='ios'] .tabs[data-density] .tab-icon :is(svg, img) {
+  width: 12px;
+  height: 12px;
+}
+
+:root[data-platform='ios'] .tabs[data-density='tight'] .tab {
+  font-size: 12px;
+}
+
+/*
+ * Подпись — две копии в одной ячейке сетки: обычная и жирная. Ширина — по жирной, поэтому при выборе
+ * текст не меняет размер; выбранный сегмент плавно проявляет жирную копию вместо мгновенной смены
+ * начертания (та сдвигала буквы на точку и выглядела как подёргивание).
+ */
+:root[data-platform='ios'] .tab-label {
+  display: grid;
+  min-width: 0;
+}
+
+:root[data-platform='ios'] :is(.tab-label-regular, .tab-label-bold) {
+  display: block;
+  grid-area: 1 / 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 200ms ease;
+}
+
+:root[data-platform='ios'] .tab-label-regular {
+  font-weight: 500;
+}
+
+:root[data-platform='ios'] .tab-label-bold {
+  font-weight: 600;
+  opacity: 0;
+}
+
+:root[data-platform='ios'] .tab.is-active .tab-label-regular {
+  opacity: 0;
+}
+
+:root[data-platform='ios'] .tab.is-active .tab-label-bold {
+  opacity: 1;
+}
+
+:root[data-platform='ios'] .tabs-indicator {
+  z-index: 0;
+  /*
+   * Постоянный слой: иначе WebKit выносит плашку в слой только на время анимации, а в конце рисует
+   * её обратно в общий слой с другим округлением — и она на долю секунды «отскакивала» на 1–2 точки.
+   */
+  will-change: translate, transform;
+  top: 2px;
+  bottom: 2px;
+  height: auto;
+  background: var(--ios-segment-thumb);
+  border-radius: var(--ios-radius-thumb);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 12%), 0 3px 1px rgb(0 0 0 / 4%);
+}
+
+:root[data-platform='ios'] .tabs-indicator.is-animated {
+  /* Плавное торможение без рывка на первом кадре, как у UISegmentedControl. */
+  transition: translate 300ms cubic-bezier(.3, .7, .2, 1), width 300ms cubic-bezier(.3, .7, .2, 1), scale 160ms ease-out;
+}
+
+/* Разделы настроек: переключатель с отступами под заголовком окна. */
+:root[data-platform='ios'] .settings-modal > .tabs {
+  margin: 4px 16px 6px;
+}

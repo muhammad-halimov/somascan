@@ -1,0 +1,163 @@
+/*
+ * Касания как в нативном приложении (см. lib/interaction).
+ *
+ * Включается атрибутом <html data-press="js">: отклик на нажатие ведёт код, а не браузер.
+ * Здесь — внешний вид этого отклика и запрет веб-поведения, которое выдаёт WebView:
+ * кольца фокуса после тапа, выделение текста долгим нажатием, двойной тап для масштабирования.
+ * Файл подключается последним: часть правил побеждает правила компонентов только порядком в каскаде.
+ */
+
+/* ---------- Общее для сенсорных платформ ---------- */
+
+/* Двойной тап не масштабирует страницу и не задерживает клик. */
+:root[data-press] {
+  touch-action: manipulation;
+}
+
+/*
+ * Кольцо фокуса — только при навигации с клавиатуры (<html data-keyboard>, ставит TouchDiscipline).
+ * После тапа кнопка может остаться в фокусе (Chromium), и браузерное кольцо появилось бы
+ * «квадратом» вокруг неё; на нативных платформах такого не бывает. Поля ввода не трогаем.
+ */
+:root[data-press]:not([data-keyboard]) :is(button, [role='button'], [role='tab'], [role='radio'], a, [tabindex]):focus-visible,
+:root[data-press]:not([data-keyboard]) .action-button:focus-visible .action-button-icon {
+  outline: none;
+}
+
+/*
+ * Элемент, в котором рисуется отклик, обрезает его по своей форме.
+ * Уже позиционированные элементы (.secret-input-toggle, .photo-empty — position: absolute) не трогаем,
+ * иначе они выпадут из раскладки.
+ */
+:root[data-press] :is(.tab, .list-item.is-interactive, .button, .action-button-icon) {
+  position: relative;
+}
+
+:root[data-press] :is(.tab, .list-item.is-interactive, .button, .action-button-icon, .secret-input-toggle, .photo-empty) {
+  overflow: hidden;
+}
+
+/*
+ * Выбранная строка списка: на сенсорных платформах выбор показывают галочка и цвет текста,
+ * а не постоянная заливка — у UITableViewCell и списков Material 3 залитых «выбранных» строк нет.
+ */
+:root[data-press] .list-item.is-selected {
+  background: transparent;
+}
+
+/* ---------- Android: волна Material 3 ---------- */
+
+/*
+ * Волна — круг, который RippleFeedback растит от точки касания до краёв элемента.
+ * Цвет — цвет содержимого (у вкладок — акцент, как у Material Tabs), прозрачность
+ * анимирует код (10% в нажатом состоянии).
+ */
+.ripple {
+  position: absolute;
+  z-index: 0;
+  background: var(--ripple-color, currentColor);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Содержимое кнопок остаётся над волной. */
+:root[data-platform='android'] :is(.tab, .list-item.is-interactive, .button, .action-button-icon, .secret-input-toggle, .photo-empty) > :not(.ripple) {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-platform='android'] .tab {
+  --ripple-color: var(--accent);
+}
+
+/* ---------- iOS: подсветка UIKit ---------- */
+
+:root[data-platform='ios'] {
+  /* Строка списка под пальцем — systemGray4 (UITableViewCell.selectedBackgroundView). */
+  --ios-row-pressed: #d1d1d6;
+}
+
+:root[data-platform='ios'][data-theme='dark'] {
+  --ios-row-pressed: #3a3a3c;
+}
+
+/* На стекле (iOS 26+, а также в окнах «Настройки» и «Загрузки» на всех версиях) подсветка строки полупрозрачная. */
+:root[data-platform='ios'][data-ios-design='glass'],
+:root[data-platform='ios'] :is(.settings-modal, .uploads-popover) {
+  --ios-row-pressed: rgb(120 120 128 / 22%);
+}
+
+/*
+ * Нажатая кнопка приглушается целиком — иконка и подпись, как UIButton с image + title.
+ * Подсветка появляется мгновенно, а гаснет плавно: transition действует только при снятии.
+ */
+:root[data-platform='ios'] :is(.action-button, .secret-input-toggle, .photo-empty) {
+  transition: opacity 200ms ease-out;
+}
+
+:root[data-platform='ios'] .tab {
+  transition: opacity 200ms ease-out, color 140ms ease, background-color 140ms ease;
+}
+
+:root[data-platform='ios'] .button {
+  transition: opacity 200ms ease-out, background-color 140ms ease, color 140ms ease;
+}
+
+:root[data-platform='ios'] :is(.tab, .button, .action-button, .secret-input-toggle)[data-pressed] {
+  opacity: .4;
+  transition: none;
+}
+
+:root[data-platform='ios'] .photo-empty[data-pressed] {
+  opacity: .6;
+  transition: none;
+}
+
+/* Заливные кнопки (тональная, Google) под пальцем темнеют меньше. */
+:root[data-platform='ios'] :is(.button.is-tonal, .button.is-google)[data-pressed] {
+  opacity: .75;
+}
+
+/*
+ * Сегменты под пальцем не гаснут и не подсвечиваются: откликом служит сама плашка, которая сразу
+ * едет к сегменту. Приглушение мигало, а подсветка рисовала «вторую плашку» на месте назначения,
+ * в которую въезжала настоящая, — переход казался дёрганым...
+ */
+:root[data-platform='ios'] .tab[data-pressed] {
+  opacity: 1;
+}
+
+/*
+ * ...а у выбранного «плашка» слегка сжимается, пока палец лежит на нём (класс ставит Tabs.tsx;
+ * не по data-pressed — подсветка держится после касания, и плашка нового сегмента дёргалась бы на ходу).
+ */
+:root[data-platform='ios'] .tabs.is-holding .tabs-indicator {
+  scale: .95;
+}
+
+/* Liquid Glass: кнопка в стеклянной панели не гаснет, а подсвечивается стеклом (тональная — темнеет). */
+:root[data-platform='ios'][data-ios-design='glass'] :is(.header-actions, .notes-actions) .action-button:is(.is-ghost, .is-tonal)[data-pressed] {
+  opacity: .85;
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] :is(.header-actions, .notes-actions) .action-button.is-ghost[data-pressed] .action-button-icon {
+  background: var(--glass-control);
+  transition: none;
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .notes-actions .action-button.is-tonal[data-pressed] .action-button-icon {
+  background: color-mix(in srgb, var(--text-h) 18%, transparent);
+  transition: none;
+}
+
+/* Строка списка: серая заливка, пока палец на экране, затем плавно гаснет. */
+:root[data-platform='ios'] .list-item.is-interactive {
+  transition: background-color 250ms ease-out;
+}
+
+:root[data-platform='ios'] .list-item.is-interactive[data-pressed] {
+  background: var(--ios-row-pressed);
+  transition: none;
+}

@@ -1,0 +1,20 @@
+/*
+ * Корневой макет: шапка сверху, рабочая область занимает остаток экрана.
+ */
+
+.app-shell {
+  position: relative;
+  display: flex;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* На сенсорных платформах экран сжимается под клавиатуру (как adjustResize), а не уезжает под неё;
+   в браузере iOS видимая область ещё и сдвигается — следуем за её верхом. */
+:root[data-press] .app-shell {
+  top: var(--visual-viewport-top, 0px);
+  height: var(--visual-viewport-height, 100dvh);
+}

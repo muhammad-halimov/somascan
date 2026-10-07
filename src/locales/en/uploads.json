@@ -1,0 +1,38 @@
+{
+  "title": "Uploads",
+  "close": "Close uploads",
+  "clear": "Clear completed",
+  "empty": {
+    "title": "No uploads yet",
+    "description": "Tags you send with “Next” appear here and are written to the table one by one"
+  },
+  "status": {
+    "queued": "Queued",
+    "uploading": "Writing to the table…",
+    "completed": "Written to the table",
+    "failed": "Not written"
+  },
+  "delete": "Delete entry",
+  "clearDialog": {
+    "title": "Clear completed?",
+    "message": "All completed uploads will be removed from the list.",
+    "confirm": "Clear"
+  },
+  "clearCaption": "Clear",
+  "deleteCaption": "Delete",
+  "deleteDialog": {
+    "title": "Delete entry?",
+    "message": "«{{title}}» will be removed from the history.",
+    "confirm": "Delete"
+  },
+  "queuedAfterError": "Queued, will retry · {{error}}",
+  "completedRow": "Written to the table · row {{row}}",
+  "retry": "Retry upload",
+  "retryCaption": "Retry",
+  "retryAll": "Retry all failed uploads",
+  "retryAllCaption": "Retry",
+  "columns": {
+    "number": "Record no.",
+    "recordedAt": "Recorded at"
+  }
+}

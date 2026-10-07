@@ -1,0 +1,163 @@
+/*
+ * Шторка: строка-заголовок и раскрывающееся содержимое. Высоту анимирует `useHeightTransition`.
+ * iOS — строка сгруппированного списка с уголком (её оформляет platform-ios.css).
+ * Android и браузер — выпадающий список Material 3 (exposed dropdown menu, вариант filled):
+ * заголовок оформлен как заполненное поле ввода (TextInput.css), содержимое — поверхность меню.
+ */
+
+.disclosure {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Подробности в заголовке — в одну строку с многоточием, чтобы шторка не росла. */
+.disclosure-toggle .list-item-secondary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.disclosure-chevron {
+  display: inline-grid;
+  place-items: center;
+  transition: rotate 280ms cubic-bezier(.3, 0, 0, 1);
+}
+
+.disclosure-chevron > svg {
+  grid-area: 1 / 1;
+  width: 20px;
+  height: 20px;
+}
+
+.disclosure.is-disabled .disclosure-chevron {
+  visibility: hidden;
+}
+
+/* Раскрывать нечего (одна модель): заголовок выглядит обычно, без приглушения недоступной кнопки. */
+.disclosure.is-disabled .disclosure-toggle .list-item:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.disclosure.is-open .disclosure-chevron {
+  rotate: 180deg;
+}
+
+.disclosure-content {
+  overflow: hidden;
+}
+
+.disclosure-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+/* ---- iOS: уголок ---- */
+
+:root[data-platform='ios'] .disclosure-chevron .arrow-drop-down-icon {
+  display: none;
+}
+
+:root[data-platform='ios'] .disclosure-chevron svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---- Material 3: выпадающий список ---- */
+
+:root:not([data-platform='ios']) .disclosure-chevron > svg:not(.arrow-drop-down-icon) {
+  display: none;
+}
+
+:root:not([data-platform='ios']) .disclosure-chevron .arrow-drop-down-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+/* Заголовок — заполненное поле: заливка, скругление сверху, линия-индикатор снизу. */
+:root:not([data-platform='ios']) .disclosure-toggle .list-item {
+  min-height: 56px;
+  gap: 12px;
+  padding: 8px 12px 8px 16px;
+  background: var(--field-bg);
+  border-radius: 8px 8px 0 0;
+  box-shadow: inset 0 -1px 0 var(--field-line);
+  transition: box-shadow 140ms ease, background-color 140ms ease;
+}
+
+:root:not([data-platform='ios']) .disclosure-toggle .list-item-primary {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+:root:not([data-platform='ios']) .disclosure-toggle .list-item-secondary {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Раскрыто — как поле в фокусе: акцентная линия потолще и лёгкий оттенок, треугольник акцентный. */
+:root:not([data-platform='ios']) .disclosure.is-open .disclosure-toggle .list-item {
+  background: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+:root:not([data-platform='ios']) .disclosure.is-disabled .disclosure-chevron {
+  visibility: hidden;
+}
+
+/* Раскрывать нечего (одна модель): заголовок выглядит обычно, без приглушения недоступной кнопки. */
+.disclosure.is-disabled .disclosure-toggle .list-item:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.disclosure.is-open .disclosure-chevron {
+  color: var(--accent);
+}
+
+/* Содержимое — поверхность меню: отступ 4 px от поля, скругление, мягкая тень (уровень 2). */
+:root:not([data-platform='ios']) .disclosure-inner {
+  padding: 4px 0 8px;
+}
+
+:root:not([data-platform='ios']) .disclosure-inner > .list {
+  padding: 4px 0;
+  /* Контейнер поверхности (surface container): чуть темнее фона листа, чтобы меню читалось и в светлой теме. */
+  background: color-mix(in srgb, var(--field-bg) 55%, var(--bg));
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 22%), 0 2px 6px 2px rgb(0 0 0 / 12%);
+}
+
+/* Отмеченные пункты меню — обычным цветом текста; выбор показывает галочка, как в меню Material. */
+:root:not([data-platform='ios']) .disclosure-inner > .list .list-item.is-selected .list-item-primary {
+  color: var(--text-h);
+}
+
+:root:not([data-platform='ios']) .disclosure-inner > .list .list-item-trailing {
+  color: var(--accent);
+}
+
+/* Пункты меню — без разделителей, с полями 16 px, как у Material-меню. */
+:root:not([data-platform='ios']) .disclosure-inner > .list .list-item {
+  min-height: 48px;
+  padding: 8px 12px 8px 16px;
+  border-bottom: 0;
+  border-radius: 0;
+}
+
+:root[data-theme='dark']:not([data-platform='ios']) .disclosure-inner > .list {
+  background: color-mix(in srgb, var(--text-h) 6%, var(--bg));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-chevron {
+    transition: none;
+  }
+}

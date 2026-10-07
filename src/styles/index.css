@@ -1,0 +1,11 @@
+/*
+ * Точка входа глобальных стилей, импортируется один раз в main.tsx ПОСЛЕ компонентов:
+ * platform-ios.css и native.css должны идти последними — часть их правил побеждает
+ * правила компонентов только порядком в каскаде.
+ * Стили компонентов лежат рядом с самими компонентами (Component.tsx + Component.css).
+ */
+@import './tokens.css';
+@import './base.css';
+@import './animations.css';
+@import './platform-ios.css';
+@import './native.css';

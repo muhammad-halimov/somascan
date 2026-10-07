@@ -1,0 +1,38 @@
+/*
+ * Заголовок окна или всплывающей панели: название слева, кнопки с подписями справа.
+ */
+
+.panel-header {
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px 6px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Если сразу под заголовком вкладки, линию рисуют они — вторая не нужна. */
+.panel-header:has(+ .tabs) {
+  border-bottom: 0;
+}
+
+.panel-header h1,
+.panel-header h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-h);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}

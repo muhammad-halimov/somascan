@@ -1,0 +1,9 @@
+{
+  "appName": "SomaScan",
+  "mainMenu": "Meniu principal",
+  "cancel": "Anulare",
+  "ok": "OK",
+  "close": "Închide",
+  "reset": "Resetare",
+  "offline": "Fără conexiune la internet"
+}

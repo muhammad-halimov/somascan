@@ -1,0 +1,130 @@
+/*
+ * Общие keyframes для оверлеев, баннеров и спиннеров.
+ * Анимации выхода длятся PANEL_CLOSE_MS (src/hooks/usePanel.ts).
+ */
+
+@keyframes backdrop-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes backdrop-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modal-exit {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(.99);
+  }
+}
+
+@keyframes popover-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes popover-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(.98);
+  }
+}
+
+@keyframes banner-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes photo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Появление содержимого: лёгкий подъём и проявление, как у окон. */
+@keyframes content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes content-exit {
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Уход строки списка вбок со схлопыванием по высоте. */
+@keyframes row-exit {
+  to {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+
+@keyframes fade-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes banner-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/*
+ * Классы-утилиты: вешаются на элемент, который монтируется заново (через `key`).
+ * Режим заполнения — backwards: конечный кадр равен обычным стилям, а fill-mode both
+ * удерживал бы opacity: 1 поверх состояний (например, приглушения нажатого элемента).
+ */
+.anim-enter {
+  animation: content-enter 240ms cubic-bezier(.2, .75, .25, 1) backwards;
+}
+
+.anim-fade {
+  animation: backdrop-enter 200ms ease-out backwards;
+}

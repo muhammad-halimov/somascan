@@ -1,0 +1,37 @@
+/*
+ * Точка состояния: размер и цвета как у точки `StatusBadge`; жёлтая мигает, пока идёт процесс.
+ */
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.status-dot.is-success {
+  background: var(--success);
+}
+
+.status-dot.is-danger {
+  background: var(--danger);
+}
+
+.status-dot.is-pending {
+  background: var(--warning);
+  animation: status-dot-blink 900ms ease-in-out infinite;
+}
+
+@keyframes status-dot-blink {
+  50% {
+    opacity: .25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-dot.is-pending {
+    animation: none;
+  }
+}

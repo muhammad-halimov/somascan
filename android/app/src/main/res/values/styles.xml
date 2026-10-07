@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Базовая тема приложения. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+        <!-- Здесь настраивается тема. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
@@ -13,12 +13,35 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Фон окна совпадает с фоном приложения (токен bg): он виден под статус-баром. Ночной вариант — в values-night. -->
+        <item name="android:windowBackground">@color/splash_background</item>
+        <!-- Акцент приложения для системных виджетов (кнопки диалогов и т. п.). -->
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <!-- Системные диалоги (подтверждения плагина Dialog) — в стиле устройства, а не в устаревшем Material 1 с прямыми углами. -->
+        <item name="android:alertDialogTheme">@style/AppDialog</item>
+        <item name="alertDialogTheme">@style/AppDialog</item>
+    </style>
+
+    <!-- Диалог в стиле устройства: скруглённые углы и цвета системы (Material You на Pixel, фирменный стиль у других производителей). Ночной вариант — в values-night. -->
+    <style name="AppDialog" parent="@android:style/Theme.DeviceDefault.Light.Dialog.Alert" />
+
+    <!-- Панель действий Material 3 (NativeSheetPlugin): цвета поверхности и акцента — токены приложения, тёмный вариант через values-night. -->
+    <style name="AppBottomSheet" parent="Theme.Material3.DayNight.BottomSheetDialog">
+        <item name="colorSurface">@color/sheet_surface</item>
+        <item name="colorSurfaceContainerLow">@color/sheet_surface</item>
+        <item name="colorPrimary">@color/colorAccent</item>
+        <item name="colorOnSurface">@color/sheet_text</item>
+        <item name="colorOnSurfaceVariant">@color/sheet_text_secondary</item>
+        <item name="android:textColorPrimary">@color/sheet_text</item>
+        <item name="android:textColorSecondary">@color/sheet_text_secondary</item>
+        <item name="android:colorError">@color/sheet_error</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/splash_icon</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:windowBackground">@color/splash_background</item>
         <item name="android:windowLightStatusBar">true</item>

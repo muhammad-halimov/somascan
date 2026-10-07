@@ -1,0 +1,36 @@
+/*
+ * Вкладка «Дополнительно»: строка с версией приложения.
+ */
+
+.app-version {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* Логотип провайдера слева в списке. */
+.provider-logo {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--social-bg);
+}
+
+.provider-logo svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--text-h);
+  stroke-width: 1.8;
+}
+
+.provider-logo svg.brand-icon {
+  stroke: none;
+}
+
+.provider-logo .brand-image {
+  width: 24px;
+  height: 24px;
+}

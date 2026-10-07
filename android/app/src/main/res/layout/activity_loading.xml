@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Переопределяет экран загрузки библиотеки камеры (io.ionic.libs:ioncamera-android,
+  IONCAMRLoadingActivity): он показывал затемнение на весь экран со своим спиннером
+  поверх приложения, пока обрабатывается выбранное фото. Ресурс приложения с тем же
+  именем заменяет ресурс библиотеки, поэтому экран становится прозрачным, а ожидание
+  показывает спиннер внутри приложения (карточка фото).
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent" />

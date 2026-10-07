@@ -1,0 +1,70 @@
+/*
+ * Окно настроек: затемнённая подложка, окно, вкладки под заголовком
+ * и прокручиваемое содержимое вкладки.
+ */
+
+.settings-backdrop {
+  position: fixed;
+  z-index: 10;
+  /* Верх следует за видимой областью: iOS сдвигает её, когда поднимает клавиатуру. */
+  top: var(--visual-viewport-top, 0px);
+  right: 0;
+  left: 0;
+  height: var(--visual-viewport-height, 100dvh);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: max(4vh, var(--safe-top)) max(12px, var(--safe-right)) max(4vh, var(--safe-bottom)) max(12px, var(--safe-left));
+  background: rgb(15 18 24 / 48%);
+  overscroll-behavior: contain;
+  animation: backdrop-enter 180ms ease-out both;
+}
+
+.settings-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  height: 100%;
+  max-height: 680px;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 22%);
+  animation: modal-enter 220ms cubic-bezier(.2, .75, .25, 1) both;
+}
+
+/* Вкладки разделов — во всю ширину окна сразу под заголовком, как в Android. */
+.settings-modal > .tabs {
+  flex: 0 0 auto;
+}
+
+/* Прокручивается только содержимое вкладки; прокрутка не передаётся странице. */
+.settings-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  padding: 20px 16px 28px;
+  overscroll-behavior: contain;
+}
+
+/* Группа секций внутри вкладки (например, форма выбранного хранилища). */
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-backdrop.is-closing {
+  animation: backdrop-exit 180ms ease-in both;
+}
+
+.settings-modal.is-closing {
+  animation: modal-exit 180ms ease-in both;
+}

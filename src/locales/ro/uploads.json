@@ -1,0 +1,38 @@
+{
+  "title": "Încărcări",
+  "close": "Închide încărcările",
+  "clear": "Șterge finalizate",
+  "empty": {
+    "title": "Nicio încărcare încă",
+    "description": "Etichetele trimise cu „Înainte” apar aici și se scriu în tabel una câte una"
+  },
+  "status": {
+    "queued": "În așteptare",
+    "uploading": "Se scrie în tabel…",
+    "completed": "Scris în tabel",
+    "failed": "Nescris"
+  },
+  "delete": "Șterge înregistrarea",
+  "clearDialog": {
+    "title": "Ștergeți cele finalizate?",
+    "message": "Toate încărcările finalizate vor fi eliminate din listă.",
+    "confirm": "Șterge"
+  },
+  "clearCaption": "Golește",
+  "deleteCaption": "Șterge",
+  "deleteDialog": {
+    "title": "Ștergeți înregistrarea?",
+    "message": "«{{title}}» va fi eliminată din istoric.",
+    "confirm": "Șterge"
+  },
+  "queuedAfterError": "În așteptare, se va reîncerca · {{error}}",
+  "completedRow": "Scris în tabel · rândul {{row}}",
+  "retry": "Reîncearcă scrierea",
+  "retryCaption": "Reia",
+  "retryAll": "Reîncearcă toate cele nescrise",
+  "retryAllCaption": "Reia",
+  "columns": {
+    "number": "Nr. înregistrare",
+    "recordedAt": "Data înregistrării"
+  }
+}

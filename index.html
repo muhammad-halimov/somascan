@@ -1,14 +1,21 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <link rel="icon" href="/src/assets/favicon.ico" />
+    <!-- interactive-widget: на Android раскладка следует за экранной клавиатурой (как adjustResize), а не плавает поверх неё. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#17181c" media="(prefers-color-scheme: dark)" />
     <script>
+      // Тема до первого рендера, чтобы не мигал белый экран: выбор из настроек
+      // (ключ SettingsStore), иначе — системная. Дальше тему ведёт хук useTheme.
       (() => {
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        let preference = 'system'
+        try {
+          preference = JSON.parse(localStorage.getItem('somascan.settings.v1') || '{}').general?.theme || 'system'
+        } catch {}
+        const dark = preference === 'dark' || (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
       })()

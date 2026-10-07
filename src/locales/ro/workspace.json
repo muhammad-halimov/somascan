@@ -1,0 +1,87 @@
+{
+  "region": "Zona de scanare",
+  "photo": {
+    "add": "Adaugă fotografie",
+    "take": "Fă o fotografie",
+    "chooseFromGallery": "Alege din galerie",
+    "alt": "Fotografia selectată",
+    "failedToOpen": "Fotografia nu a putut fi deschisă. Încercați din nou",
+    "controls": "Controale fotografie",
+    "zoomIn": "Mărește",
+    "zoomOut": "Micșorează",
+    "rotate": "Rotește cu 90 de grade",
+    "recognizing": "Recunoaștere…",
+    "open": "Deschide fotografia pe tot ecranul",
+    "chooseFromFiles": "Alege din fișiere"
+  },
+  "notes": {
+    "label": "Rezultat",
+    "placeholder": "Textul va apărea aici",
+    "cancelled": "Recunoașterea a fost anulată. Fotografia a rămas — apăsați „Reia” pentru a o recunoaște din nou."
+  },
+  "editing": {
+    "edit": "Editează textul",
+    "finish": "Finalizează editarea",
+    "close": "Închide editarea",
+    "editCaption": "Editare",
+    "closeCaption": "Gata"
+  },
+  "actions": {
+    "group": "Acțiuni",
+    "add": "Foto",
+    "addLabel": "Adaugă fotografie",
+    "clear": "Resetare",
+    "clearLabel": "Resetează zona de lucru",
+    "retry": "Reia",
+    "retryLabel": "Recunoaște din nou",
+    "next": "Înainte",
+    "nextLabel": "Trimite în tabel",
+    "uploading": "Se trimite…",
+    "cancelLabel": "Anulează recunoașterea"
+  },
+  "resetDialog": {
+    "title": "Resetați zona de lucru?",
+    "message": "Fotografia și textul recunoscut vor fi șterse.",
+    "confirm": "Resetare"
+  },
+  "controls": {
+    "zoomOut": "Mai mic",
+    "zoomIn": "Mai mare",
+    "rotate": "Rotește",
+    "reset": "Resetare",
+    "resetLabel": "Resetează mărirea și rotirea"
+  },
+  "viewer": {
+    "title": "Fotografie",
+    "close": "Închide fotografia"
+  },
+  "replaceDialog": {
+    "title": "Înlocuiți fotografia?",
+    "message": "Fotografia curentă și datele recunoscute vor fi șterse.",
+    "confirm": "Înlocuiește"
+  },
+  "uploadDialog": {
+    "unconfiguredTitle": "Stocarea nu este configurată",
+    "unconfiguredMessage": "Eticheta este salvată în coadă și va fi scrisă în tabel după ce configurați stocarea în Setări → Stocare."
+  },
+  "qualityDialog": {
+    "title": "Fotografie de calitate slabă",
+    "message": "Se recomandă refacerea fotografiei: {{issues}}. Verificați valorile recunoscute.",
+    "messageGeneric": "Unele valori sunt nesigure. Se recomandă refacerea fotografiei; verificați valorile recunoscute."
+  },
+  "photoIssues": {
+    "noTag": "eticheta nu se vede",
+    "blurry": "fotografia este neclară",
+    "glare": "reflexiile acoperă textul",
+    "dark": "prea întunecată",
+    "overexposed": "supraexpusă",
+    "cropped": "eticheta nu este în întregime în cadru",
+    "angle": "înclinare puternică",
+    "far": "eticheta este prea departe",
+    "obstructed": "ceva acoperă textul"
+  },
+  "formDialog": {
+    "title": "Forma nu este aleasă",
+    "message": "Înainte de trimitere alegeți ce este pe etichetă: bară sau bobină. Câmpul este deschis pentru editare."
+  }
+}

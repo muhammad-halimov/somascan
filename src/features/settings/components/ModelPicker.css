@@ -1,0 +1,49 @@
+/*
+ * Список моделей во всю высоту, ниже — статус и пояснение. Своей прокрутки у списка нет:
+ * вложенная прокрутка внутри прокручиваемого окна перехватывала свайпы, и окно «застревало».
+ */
+
+.model-picker-note {
+  color: var(--text);
+  font-size: 11.5px;
+  opacity: .8;
+}
+
+.model-picker-status {
+  color: var(--text);
+  font-size: 12.5px;
+}
+
+.model-picker-status.is-error {
+  color: var(--danger);
+}
+
+/* Характеристики, рекомендация и описание модели под названием; описание — не длиннее трёх строк. */
+.model-picker-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.model-picker-description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 17px;
+  opacity: .85;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* Рекомендация для бирок — на языке интерфейса, заметнее описания из источника. */
+.model-picker-fit {
+  color: var(--text-h);
+  font-size: 12.5px;
+  line-height: 17px;
+}
+
+.list.is-disabled .model-picker-fit {
+  color: inherit;
+}

@@ -1,0 +1,17 @@
+/*
+ * Баннер под шапкой, пока устройство не в сети.
+ */
+
+.offline-banner {
+  padding: 8px 16px;
+  color: var(--offline-text);
+  background: var(--offline-bg);
+  text-align: center;
+  font-size: 14px;
+  line-height: 20px;
+  animation: banner-enter 180ms ease-out both;
+}
+
+.offline-banner.is-closing {
+  animation: banner-exit 200ms ease-in both;
+}

@@ -1,0 +1,229 @@
+/*
+ * Кнопка-иконка с подписью снизу (см. ActionButton.tsx).
+ * --action-size — диаметр круга; ширина кнопки и предел ширины подписи равны ему.
+ */
+
+.action-button {
+  --action-size: 52px;
+  display: inline-flex;
+  width: var(--action-size);
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  color: var(--text-h);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-button:disabled {
+  cursor: default;
+  opacity: .38;
+}
+
+.action-button-icon {
+  position: relative;
+  display: grid;
+  width: var(--action-size);
+  height: var(--action-size);
+  place-items: center;
+  border-radius: 50%;
+  transition: transform 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+/* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
+:root:not([data-press]) .action-button:active:not(:disabled) .action-button-icon {
+  transform: scale(.94);
+}
+
+.action-button:focus-visible {
+  outline: none;
+}
+
+/* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
+:root:not([data-press]) .action-button:focus-visible .action-button-icon,
+:root[data-keyboard] .action-button:focus-visible .action-button-icon {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.action-button-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Подпись никогда не шире кнопки: лишнее обрезается многоточием. */
+.action-button-caption {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: -.01em;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ghost: «пилюля» 56×32, как в навигационной панели Material 3. */
+.action-button.is-ghost {
+  width: 56px;
+}
+
+.action-button.is-ghost .action-button-icon {
+  width: 56px;
+  height: 32px;
+  border-radius: 16px;
+}
+
+.action-button.is-ghost .action-button-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
+}
+
+.action-button.is-ghost.is-active .action-button-icon,
+:root:not([data-press]) .action-button.is-ghost:active:not(:disabled) .action-button-icon {
+  background: var(--social-bg);
+}
+
+.action-button.is-ghost.is-active .action-button-caption {
+  color: var(--text-h);
+}
+
+/* Шестерня: залитое тело с настоящим отверстием (см. SettingsIcon). */
+.action-button .settings-glyph-body {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* tonal: приглушённый круг без рамки (тональная кнопка Material 3). */
+.action-button.is-tonal .action-button-icon {
+  color: var(--text-h);
+  background: var(--social-bg);
+}
+
+.action-button.is-tonal.is-active .action-button-icon {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg));
+}
+
+/* accent: главное действие. */
+.action-button.is-accent .action-button-icon {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+/* overlay: поверх фото — тёмный полупрозрачный круг, светлая подпись с тенью. */
+.action-button.is-overlay .action-button-icon {
+  color: #f1f3f4;
+  background: rgb(24 26 31 / 76%);
+  border: 1px solid rgb(255 255 255 / 16%);
+  backdrop-filter: blur(8px);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.action-button.is-overlay .action-button-caption {
+  padding: 0 3px;
+  color: #f1f3f4;
+  background: rgb(24 26 31 / 72%);
+  border-radius: 6px;
+}
+
+/* Наведение — только на десктопе с мышью (без data-press): на сенсорных платформах отклик ведёт код. */
+@media (hover: hover) and (pointer: fine) {
+  :root:not([data-press]) .action-button.is-ghost:hover:not(:disabled) .action-button-icon {
+    background: var(--social-bg);
+  }
+}
+
+/*
+ * Счётчик в правом верхнем углу иконки: число записей в очереди выгрузки; красный — есть незаписанные.
+ * Лежит вне круга иконки (тот обрезает содержимое ради волны нажатия) и позиционируется от кнопки.
+ */
+.action-button {
+  position: relative;
+}
+
+.action-button-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  top: -3px;
+  left: calc(50% + 5px);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 2px solid var(--bg);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--accent);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Со знаком — ровный круг 16×16. */
+.action-button-badge.is-glyph {
+  width: 16px;
+  padding: 0;
+}
+
+/* Восклицательный знак: черта и точка, ровно по центру круга. */
+.action-button-badge-glyph {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+}
+
+.action-button-badge-glyph path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+}
+
+.action-button-badge-glyph circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.action-button-badge.is-danger {
+  background: var(--danger);
+}
+
+/* Спиннер вместо иконки, пока идёт фоновая операция (запись в таблицу после «Далее»). */
+.action-button-spinner {
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 2.5px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: photo-spin 750ms linear infinite;
+}
+
+/* Пока крутится спиннер, кнопка не приглушается, даже если сейчас недоступна: процесс должен быть виден. */
+.action-button.is-busy:disabled {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-button-spinner {
+    animation-duration: 2s;
+  }
+}

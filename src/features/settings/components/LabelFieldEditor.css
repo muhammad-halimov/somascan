@@ -1,0 +1,26 @@
+/*
+ * Форма поля бирки: названия на языках, пояснение для модели и кнопки внизу.
+ */
+
+.label-field-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 4px 4px;
+}
+
+.label-field-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.label-field-editor-spacer {
+  flex: 1 1 auto;
+}
+
+/* Удаление — цветом ошибки. */
+.button.is-danger {
+  color: var(--danger);
+}

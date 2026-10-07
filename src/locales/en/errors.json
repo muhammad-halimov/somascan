@@ -1,0 +1,40 @@
+{
+  "recognitionFailed": "Recognition error",
+  "recognition": {
+    "requestFailed": "{{provider}}: {{detail}}",
+    "network": "No connection to {{provider}}. Check the network.",
+    "invalidResponse": "{{provider}} returned an unexpected response.",
+    "emptyAnswer": "{{provider}} returned no text.",
+    "refused": "{{provider}} declined to process the photo.",
+    "truncated": "{{provider}}'s answer was cut off.",
+    "answerNotJson": "The model's answer contains no tag data.",
+    "imageUnreadable": "Couldn't read the photo.",
+    "notAnImage": "The selected file is not an image.",
+    "noApiKey": "Enter an API key for {{provider}} in settings.",
+    "noModel": "No model available for {{provider}}. Refresh the list in settings."
+  },
+  "uploadFailed": "Upload error",
+  "upload": {
+    "notConfigured": "Network share is not set up: enter the server, shared folder and table path in Settings → Storage.",
+    "targetUnsupported": "Only the network share is supported for now. Choose it in Settings → Storage.",
+    "invalidPath": "The table path must end with .xlsx, e.g. Somascan\\labels.xlsx.",
+    "unavailable": "Writing to the network share works only in the mobile app.",
+    "offline": "No network connection.",
+    "hostUnreachable": "Server {{host}} is not responding. Check the address, the Wi-Fi network and that port 445 is open.",
+    "timeout": "The server took too long to respond.",
+    "authFailed": "The server rejected the user name or password.",
+    "shareNotFound": "Shared folder “{{share}}” was not found on {{host}}.",
+    "notFound": "The file or folder was not found on the share.",
+    "exists": "The file already exists.",
+    "accessDenied": "No permission to read or write the table. Check the account rights on the shared folder.",
+    "locked": "The table is open in another program (Excel). Close it; the upload will retry.",
+    "busy": "Another device is writing to the table right now. The upload will retry shortly.",
+    "corruptWorkbook": "The table could not be opened: the file is damaged or is not an .xlsx workbook.",
+    "verifyFailed": "Verification after saving failed; the upload will retry.",
+    "io": "Network share error: {{detail}}",
+    "authRequired": "No access to Google Drive: sign in with Google in Settings → Storage.",
+    "driveNotConfigured": "Google sign-in is not set up in this build of the app (no Google OAuth client).",
+    "folderNotFound": "The Google Drive folder was not found or this account has no access to it.",
+    "cancelled": "Sign-in cancelled."
+  }
+}

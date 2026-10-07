@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Сеть приложения. Открытый http нужен для серверов в локальной сети завода: LM Studio
+  слушает http://<IP>:1234 и HTTPS не поддерживает, а адрес вводит пользователь, поэтому
+  заранее перечислить хосты нельзя. Облачные провайдеры (Gemini, Claude, OpenAI) работают по HTTPS.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

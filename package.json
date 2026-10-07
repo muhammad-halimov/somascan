@@ -12,7 +12,8 @@
     "cap:android": "npm run build && npx cap sync android && npx cap open android",
     "cap:ios": "npm run build && npx cap sync ios && npx cap open ios",
     "cap:run:android": "npm run build && npx cap sync android && npx cap run android",
-    "cap:run:ios": "npm run build && npx cap sync ios && npx cap run ios"
+    "cap:run:ios": "npm run build && npx cap sync ios && npx cap run ios",
+    "test": "tsx --tsconfig tsconfig.app.json --test tests/*.test.ts"
   },
   "dependencies": {
     "@capacitor/action-sheet": "^8.1.1",
@@ -20,21 +21,28 @@
     "@capacitor/app": "^8.1.1",
     "@capacitor/camera": "^8.2.5",
     "@capacitor/core": "^8.5.2",
+    "@capacitor/device": "^8.0.3",
     "@capacitor/dialog": "^8.0.1",
     "@capacitor/ios": "^8.5.2",
+    "@capacitor/keyboard": "^8.0.6",
     "@capacitor/network": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.2",
-    "@capacitor/status-bar": "^8.0.3",
+    "@capawesome/capacitor-file-picker": "^8.1.0",
+    "exceljs": "^4.4.0",
+    "i18next": "^26.4.2",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.16"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.2",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
   }

@@ -1,0 +1,9 @@
+{
+  "appName": "SomaScan",
+  "mainMenu": "Main menu",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "close": "Close",
+  "reset": "Reset",
+  "offline": "No internet connection"
+}

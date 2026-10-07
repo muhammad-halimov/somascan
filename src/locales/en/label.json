@@ -1,0 +1,36 @@
+{
+  "title": "Data from tag",
+  "notRecognized": "Not recognized",
+  "weightUnit": "kg",
+  "fields": {
+    "producer": "Producer",
+    "product": "Product",
+    "grade": "Steel grade",
+    "standard": "Standard",
+    "technical_approval": "Technical approval",
+    "size": "Size",
+    "heat": "Heat number",
+    "batch": "Batch / coil",
+    "weight_kg": "Weight",
+    "bar_count": "Number of bars",
+    "production_date": "Production date",
+    "production_time": "Production time",
+    "shift": "Shift",
+    "contract": "Contract",
+    "work_order": "Work order",
+    "customer_name": "Customer",
+    "destination": "Destination",
+    "customer_ref": "Customer ref",
+    "serial_number": "Serial number",
+    "mark": "Mark",
+    "packing": "Packing",
+    "origin_country": "Country of origin"
+  },
+  "productForm": {
+    "name": "Form",
+    "placeholder": "Not selected",
+    "bara": "Bar",
+    "bobina": "Coil",
+    "required": "Choose the form: bar or coil"
+  }
+}

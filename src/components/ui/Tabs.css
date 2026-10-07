@@ -1,0 +1,123 @@
+/*
+ * Вкладки Material 3: текстовые кнопки в ряд, у активной — акцентный цвет
+ * и полоска-индикатор по ширине содержимого. Нижняя линия отделяет ряд от контента.
+ */
+
+.tabs {
+  position: relative;
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  overscroll-behavior-x: contain;
+  /* Полоса прокрутки не нужна: ряд листается пальцем. */
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  flex: 1 0 auto;
+  min-height: 48px;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0 6px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
+:root:not([data-press]) .tab:active {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.tab.is-active {
+  color: var(--accent);
+}
+
+/* Кольцо фокуса — в браузере и при навигации с клавиатуры (data-keyboard), но не после тапа. */
+:root:not([data-press]) .tab:focus-visible,
+:root[data-keyboard] .tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Индикатор рисуется под содержимым, поэтому совпадает с ним по ширине. */
+.tab-content {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 2px;
+}
+
+/* Общая полоска-индикатор: переезжает к выбранной вкладке. */
+.tabs-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+  pointer-events: none;
+}
+
+.tabs-indicator.is-animated {
+  transition: translate 280ms cubic-bezier(.2, .75, .25, 1), width 280ms cubic-bezier(.2, .75, .25, 1);
+}
+
+.tab-icon {
+  display: inline-grid;
+  height: 20px;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Контурные иконки берут цвет вкладки (акцентный у активной). */
+.tab-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Фирменные знаки (Google, Drive, Claude) сохраняют свои цвета. */
+.tab-icon svg.brand-icon {
+  stroke: none;
+}
+
+.tab:not(.is-active) .tab-icon svg.brand-icon {
+  opacity: .85;
+}
+
+/* Наведение — только на десктопе с мышью (без data-press): на сенсорных платформах отклик ведёт код. */
+@media (hover: hover) and (pointer: fine) {
+  :root:not([data-press]) .tab:hover {
+    color: var(--text-h);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+  }
+
+  :root:not([data-press]) .tab.is-active:hover {
+    color: var(--accent);
+  }
+}
+
+/* Жирная копия подписи нужна только на iOS (см. Tabs.tsx и platform-ios.css). */
+.tab-label-bold {
+  display: none;
+}

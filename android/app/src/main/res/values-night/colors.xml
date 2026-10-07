@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="splash_background">#17181C</color>
+    <!-- Акцент тёмной темы (токен accent в tokens.css). -->
+    <color name="colorPrimary">#A7B4FF</color>
+    <color name="colorPrimaryDark">#17181C</color>
+    <color name="colorAccent">#A7B4FF</color>
+    <!-- Панель действий в тёмной теме. -->
+    <color name="sheet_surface">#1F2026</color>
+    <color name="sheet_text">#E8EAED</color>
+    <color name="sheet_text_secondary">#BDC1C6</color>
+    <color name="sheet_error">#F28B82</color>
 </resources>

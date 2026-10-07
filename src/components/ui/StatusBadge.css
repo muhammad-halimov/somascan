@@ -1,0 +1,34 @@
+/*
+ * Небольшая метка статуса: точка цвета статуса и подпись, без тяжёлой плашки.
+ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-h);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.status-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-badge.is-success::before {
+  background: var(--success);
+}
+
+.status-badge.is-info::before {
+  background: var(--accent);
+}
+
+.status-badge.is-neutral::before {
+  background: var(--text);
+  opacity: .6;
+}

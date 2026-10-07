@@ -1,0 +1,87 @@
+/*
+ * Просмотр фото на весь экран: тёмный фон в любой теме, заголовок с крестиком,
+ * сцена с жестами и кнопки масштаба и поворота внизу.
+ */
+
+.photo-viewer {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--safe-top) max(12px, var(--safe-right)) max(12px, var(--safe-bottom)) max(12px, var(--safe-left));
+  color: #f1f3f4;
+  background: #0b0c0f;
+  animation: backdrop-enter 180ms ease-out both;
+}
+
+/* Фото при открытии слегка «вырастает», при закрытии — наоборот. */
+.photo-viewer-stage {
+  animation: modal-enter 240ms cubic-bezier(.2, .75, .25, 1) both;
+}
+
+.photo-viewer.is-closing {
+  pointer-events: none;
+  animation: backdrop-exit 200ms ease-in both;
+}
+
+.photo-viewer.is-closing .photo-viewer-stage {
+  animation: modal-exit 200ms ease-in both;
+}
+
+.photo-viewer-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 6px 8px;
+}
+
+.photo-viewer-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Фон тёмный в обеих темах, поэтому цвета кнопки задаём явно. */
+.photo-viewer .action-button.is-ghost {
+  color: #f1f3f4;
+}
+
+.photo-viewer .action-button.is-ghost .action-button-caption {
+  color: #bdc1c6;
+}
+
+:root:not([data-press]) .photo-viewer .action-button.is-ghost:active .action-button-icon {
+  background: rgb(255 255 255 / 12%);
+}
+
+/* Сцена: все жесты наши (браузер не прокручивает и не масштабирует страницу). */
+.photo-viewer-stage {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Курсоры — только для мыши. */
+@media (hover: hover) and (pointer: fine) {
+  .photo-viewer-stage {
+    cursor: grab;
+  }
+
+  .photo-viewer-stage:active {
+    cursor: grabbing;
+  }
+}
+
+.photo-viewer-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 10px;
+}
