@@ -26,7 +26,6 @@ import { googleDriveSession } from '../drive/GoogleDriveAuth'
 import { uploadStore, type UploadRecord, type UploadStore } from '../store/UploadStore'
 import { isTransientUploadError, toUploadError } from '../UploadError'
 import { RetryPolicy } from './RetryPolicy'
-import { loadTableTemplate } from '../xlsx/tableTemplate'
 import { backendFor, defaultBackendDeps, type TableBackendDeps } from './tableBackends'
 import { TableWriter } from './TableWriter'
 
@@ -141,9 +140,12 @@ export class UploadWorker {
     this.tick()
   }
 
-  /** Проверяет подключение к хранилищу с текущими настройками (кнопка во вкладке «Хранилище»). */
-  async testConnection() {
-    return (await backendFor(this.settings.getSnapshot().storage, this.backends)).probe()
+  /**
+   * Проверяет подключение и наличие таблицы (кнопки во вкладке «Хранилище»).
+   * @param storage Настройки хранилища; по умолчанию — текущие.
+   */
+  async testConnection(storage: StorageSettings = this.settings.getSnapshot().storage) {
+    return (await backendFor(storage, this.backends)).probe()
   }
 
   /** Настройки хранилища изменились: немного ждём и повторяем всё незаписанное. */
@@ -267,7 +269,7 @@ export class UploadWorker {
 export const uploadWorker = new UploadWorker({
   store: uploadStore,
   settings: settingsStore,
-  writer: new TableWriter(getDeviceId(), loadTableTemplate),
+  writer: new TableWriter(getDeviceId()),
   backends: defaultBackendDeps(googleDriveSession),
   retry: new RetryPolicy(),
 })

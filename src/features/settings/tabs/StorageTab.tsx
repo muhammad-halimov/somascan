@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
-import { DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, PlugIcon, TableIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
+import { DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, PlugIcon, TableIcon, TableSearchIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
+import { ActionTextInput, type InputAction } from '@/components/ui/ActionTextInput'
 import { Button } from '@/components/ui/Button'
 import { Field, FieldRow } from '@/components/ui/Field'
 import { FormSection } from '@/components/ui/FormSection'
@@ -12,10 +13,11 @@ import { Tabs } from '@/components/ui/Tabs'
 import { TextInput } from '@/components/ui/TextInput'
 import { DriveClient } from '@/features/uploads/drive/DriveClient'
 import { googleDriveSession } from '@/features/uploads/drive/GoogleDriveAuth'
+import { tableCheckStore, type TableCheckResult } from '@/features/uploads/store/TableCheckStore'
 import { toUploadError } from '@/features/uploads/UploadError'
 import { useUploadErrorText } from '@/features/uploads/useUploadErrorText'
-import { uploadWorker } from '@/features/uploads/worker/UploadWorker'
 import { BACKUP_RETENTION_DAYS } from '@/features/uploads/xlsx/BackupPolicy'
+import { useStore } from '@/lib/store/useStore'
 import { settingsStore } from '../store/SettingsStore'
 import { STORAGE_TARGETS } from '../store/settingsSchema'
 import { useSettings } from '../store/useSettings'
@@ -25,7 +27,10 @@ import './StorageTab.css'
  * Вкладка «Хранилище»: куда дописываются строки `.xlsx` с распознанными бирками —
  * сетевой диск Windows (SMB) или Google Drive.
  *
- * «Проверить подключение» подключается с введёнными данными и сообщает, найдена ли таблица.
+ * Таблица должна уже существовать: приложение её не создаёт, без неё запись невозможна.
+ * Значок сверки в конце поля пути к таблице (у Google Drive — имени файла) сверяет, есть ли таблица,
+ * и оставляет итог под полями;
+ * «Проверить подключение» делает ту же проверку и сообщает итог диалогом.
  * Google Drive: вход через Google (нативный выбор аккаунта и согласие на доступ к Drive),
  * почта аккаунта показывается под кнопкой; «Выйти» отзывает доступ.
  */
@@ -34,7 +39,11 @@ export function StorageTab() {
   const { storage } = useSettings()
   const { smb, googleDrive } = storage
   const errorText = useUploadErrorText()
+  const check = useStore(tableCheckStore)
+  /** Идёт проверка от «Проверить подключение» (а не от значка сверки в поле). */
   const [isTesting, setIsTesting] = useState(false)
+  /** Проверять есть что: у Google Drive — только после входа. */
+  const canCheck = storage.target === 'smb' || Boolean(googleDrive.account)
 
   const [isSigningIn, setIsSigningIn] = useState(false)
 
@@ -68,23 +77,47 @@ export function StorageTab() {
     settingsStore.updateGoogleDrive({ account: '' })
   }
 
-  /** Подключается к хранилищу с текущими настройками и показывает результат. */
+  /** Подключается к хранилищу с текущими настройками и показывает итог диалогом. */
   const testConnection = async () => {
     setIsTesting(true)
     try {
-      const result = await uploadWorker.testConnection()
-      const message = result.exists
-        ? t('storage.smb.testOkExisting', {
-            size: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 0 }).format(Math.max(1, result.size / 1024)),
-            date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(result.modifiedAt),
-          })
-        : t('storage.smb.testOkNew')
-      await NativeDialogs.alert({ title: t('storage.smb.testOkTitle'), message, buttonTitle: t('common:ok') })
-    } catch (error) {
-      await NativeDialogs.alert({ title: t('storage.smb.testFailedTitle'), message: errorText(toUploadError(error)), buttonTitle: t('common:ok') })
+      const result = await tableCheckStore.check()
+      if (result.kind === 'found') {
+        await NativeDialogs.alert({ title: t('storage.smb.testOkTitle'), message: foundText(result), buttonTitle: t('common:ok') })
+      } else if (result.kind === 'missing') {
+        await NativeDialogs.alert({ title: t('storage.smb.testMissingTitle'), message: t('storage.smb.testMissingMessage'), buttonTitle: t('common:ok') })
+      } else {
+        await NativeDialogs.alert({ title: t('storage.smb.testFailedTitle'), message: errorText(result.error), buttonTitle: t('common:ok') })
+      }
     } finally {
       setIsTesting(false)
     }
+  }
+
+  /** «Таблица найдена: 24 КБ, изменена …». */
+  const foundText = (result: Extract<TableCheckResult, { kind: 'found' }>) => t('storage.smb.testOkExisting', {
+    size: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 0 }).format(Math.max(1, result.size / 1024)),
+    date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(result.modifiedAt),
+  })
+
+  /** Значок сверки в конце поля таблицы: цвет — итог проверки, сам итог — строкой под полями. */
+  const checkResult = tableCheckStore.resultFor(storage)
+  const checkAction: InputAction = {
+    icon: <TableSearchIcon />,
+    label: t('storage.check.label'),
+    busy: check.checking && !isTesting,
+    disabled: check.checking || !canCheck,
+    tone: checkResult ? (checkResult.kind === 'found' ? 'success' : 'danger') : undefined,
+    onClick: () => void tableCheckStore.check(),
+  }
+
+  /** Итог проверки текущих настроек: найдена, не найдена (писать некуда), не проверена. */
+  const checkStatus = () => {
+    if (check.storage === storage && check.checking) return <StatusBadge tone="neutral">{t('storage.check.checking')}</StatusBadge>
+    if (!checkResult) return <StatusBadge tone="neutral">{t('storage.check.unchecked')}</StatusBadge>
+    if (checkResult.kind === 'found') return <StatusBadge tone="success">{foundText(checkResult)}</StatusBadge>
+    if (checkResult.kind === 'missing') return <StatusBadge tone="danger">{t('storage.check.missing')}</StatusBadge>
+    return <StatusBadge tone="danger">{t('storage.check.failed', { error: errorText(checkResult.error) })}</StatusBadge>
   }
 
   return (
@@ -121,8 +154,14 @@ export function StorageTab() {
                 <TextInput placeholder={t('storage.smb.sharePlaceholder')} value={smb.share} onChange={(share) => settingsStore.updateSmb({ share })} />
               </Field>
               <Field label={t('storage.smb.filePath')}>
-                <TextInput placeholder={t('storage.smb.filePathPlaceholder')} value={smb.filePath} onChange={(filePath) => settingsStore.updateSmb({ filePath })} />
+                <ActionTextInput
+                  placeholder={t('storage.smb.filePathPlaceholder')}
+                  value={smb.filePath}
+                  onChange={(filePath) => settingsStore.updateSmb({ filePath })}
+                  action={checkAction}
+                />
               </Field>
+              <div className="storage-check" role="status">{checkStatus()}</div>
             </FormSection>
 
             <FormSection title={t('storage.smb.account')} icon={<UserIcon />}>
@@ -146,7 +185,7 @@ export function StorageTab() {
               </Field>
             </FormSection>
 
-            <Button variant="tonal" icon={<PlugIcon />} busy={isTesting} onClick={() => void testConnection()}>
+            <Button variant="tonal" icon={<PlugIcon />} busy={isTesting} disabled={check.checking} onClick={() => void testConnection()}>
               {isTesting ? t('storage.smb.testing') : t('storage.smb.test')}
             </Button>
           </>
@@ -173,11 +212,12 @@ export function StorageTab() {
                 />
               </Field>
               <Field label={t('storage.googleDrive.fileName')}>
-                <TextInput value={googleDrive.fileName} onChange={(fileName) => settingsStore.updateGoogleDrive({ fileName })} />
+                <ActionTextInput value={googleDrive.fileName} onChange={(fileName) => settingsStore.updateGoogleDrive({ fileName })} action={checkAction} />
               </Field>
+              {googleDrive.account && <div className="storage-check" role="status">{checkStatus()}</div>}
             </FormSection>
 
-            <Button variant="tonal" icon={<PlugIcon />} busy={isTesting} disabled={!googleDrive.account} onClick={() => void testConnection()}>
+            <Button variant="tonal" icon={<PlugIcon />} busy={isTesting} disabled={check.checking || !googleDrive.account} onClick={() => void testConnection()}>
               {isTesting ? t('storage.smb.testing') : t('storage.smb.test')}
             </Button>
           </>

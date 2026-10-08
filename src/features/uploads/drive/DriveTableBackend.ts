@@ -9,6 +9,7 @@
  *   копируется на сервере в папку `backups`, а версия файла сверяется с прочитанной: если таблицу
  *   успели изменить (Excel онлайн, другое устройство) — `busy`, запись повторится с новыми данными.
  *   После загрузки MD5, посчитанный Drive, сверяется с MD5 отправленных байтов.
+ * - Таблица должна уже лежать в папке: приложение её не создаёт (`tableNotFound`).
  */
 import { md5Hex } from '@/lib/encoding/md5'
 import { UploadError } from '../UploadError'
@@ -95,18 +96,14 @@ export class DriveTableBackend implements TableBackend {
     return this.drive.download(table.id)
   }
 
-  async replace(bytes: Uint8Array, backupName: string | undefined) {
+  async replace(bytes: Uint8Array, backupName: string) {
+    if (!this.table) throw new UploadError('tableNotFound', { path: this.name })
     const expected = md5Hex(bytes)
-    let saved: DriveFile
-    if (this.table) {
-      if (backupName) await this.drive.copy(this.table.id, (await this.backupFolderId(true))!, backupName)
-      // Таблицу изменили после чтения — не затираем чужие строки, повторим с новыми данными.
-      const current = await this.drive.get(this.table.id)
-      if (!current || current.version !== this.table.version) throw new UploadError('busy', { detail: 'table changed during write' })
-      saved = await this.drive.update(this.table.id, bytes, XLSX_MIME)
-    } else {
-      saved = await this.drive.create(this.folderId, this.name, bytes, XLSX_MIME)
-    }
+    await this.drive.copy(this.table.id, (await this.backupFolderId(true))!, backupName)
+    // Таблицу изменили после чтения — не затираем чужие строки, повторим с новыми данными.
+    const current = await this.drive.get(this.table.id)
+    if (!current || current.version !== this.table.version) throw new UploadError('busy', { detail: 'table changed during write' })
+    const saved = await this.drive.update(this.table.id, bytes, XLSX_MIME)
     this.table = saved
     if (saved.md5Checksum && saved.md5Checksum !== expected) {
       throw new UploadError('verifyFailed', { detail: `md5 ${saved.md5Checksum} ≠ ${expected}` })

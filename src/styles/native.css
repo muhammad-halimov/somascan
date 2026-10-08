@@ -26,14 +26,14 @@
 
 /*
  * Элемент, в котором рисуется отклик, обрезает его по своей форме.
- * Уже позиционированные элементы (.secret-input-toggle, .photo-empty — position: absolute) не трогаем,
+ * Уже позиционированные элементы (.input-action, .photo-empty — position: absolute) не трогаем,
  * иначе они выпадут из раскладки.
  */
 :root[data-press] :is(.tab, .list-item.is-interactive, .button, .action-button-icon) {
   position: relative;
 }
 
-:root[data-press] :is(.tab, .list-item.is-interactive, .button, .action-button-icon, .secret-input-toggle, .photo-empty) {
+:root[data-press] :is(.tab, .list-item.is-interactive, .button, .action-button-icon, .input-action, .photo-empty) {
   overflow: hidden;
 }
 
@@ -63,7 +63,7 @@
 }
 
 /* Содержимое кнопок остаётся над волной. */
-:root[data-platform='android'] :is(.tab, .list-item.is-interactive, .button, .action-button-icon, .secret-input-toggle, .photo-empty) > :not(.ripple) {
+:root[data-platform='android'] :is(.tab, .list-item.is-interactive, .button, .action-button-icon, .input-action, .photo-empty) > :not(.ripple) {
   position: relative;
   z-index: 1;
 }
@@ -93,7 +93,7 @@
  * Нажатая кнопка приглушается целиком — иконка и подпись, как UIButton с image + title.
  * Подсветка появляется мгновенно, а гаснет плавно: transition действует только при снятии.
  */
-:root[data-platform='ios'] :is(.action-button, .secret-input-toggle, .photo-empty) {
+:root[data-platform='ios'] :is(.action-button, .input-action, .photo-empty) {
   transition: opacity 200ms ease-out;
 }
 
@@ -105,7 +105,7 @@
   transition: opacity 200ms ease-out, background-color 140ms ease, color 140ms ease;
 }
 
-:root[data-platform='ios'] :is(.tab, .button, .action-button, .secret-input-toggle)[data-pressed] {
+:root[data-platform='ios'] :is(.tab, .button, .action-button, .input-action)[data-pressed] {
   opacity: .4;
   transition: none;
 }

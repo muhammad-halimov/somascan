@@ -33,6 +33,7 @@
     "verifyFailed": "Verificarea după salvare a eșuat; scrierea se va reîncerca.",
     "integrityFailed": "Scrierea a fost oprită: la salvarea registrului s-ar fi modificat alte date. Fișierul nu a fost atins — anunțați dezvoltatorul.",
     "unknownLayout": "În tabel nu s-a găsit registrul de probe: lipsește antetul cu coloanele Nr. Crt., Sarja, Producator, Bobina/Bara. Verificați calea fișierului.",
+    "tableNotFound": "Tabelul nu a fost găsit. Aplicația nu creează tabelul: indicați un registru existent în Setări → Stocare — apoi scrierea se va relua.",
     "io": "Eroare a partajării de rețea: {{detail}}",
     "authRequired": "Nu există acces la Google Drive: conectați-vă cu Google în Setări → Stocare.",
     "driveNotConfigured": "Conectarea cu Google nu este configurată în această versiune a aplicației (lipsește clientul OAuth Google).",

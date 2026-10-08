@@ -395,6 +395,18 @@ export function TableIcon() {
   )
 }
 
+/** Таблица с лупой: проверить, есть ли таблица. */
+export function TableSearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M21 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7" />
+      <path d="M3 9h18M3 15h9M12 3v18" />
+      <circle cx="17.5" cy="17.5" r="3.5" />
+      <path d="m22 22-2-2" />
+    </svg>
+  )
+}
+
 /** Список: списки моделей. */
 export function ListIcon() {
   return (
@@ -483,6 +495,15 @@ export function ChevronDownIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
+/** Два уголка вверх и вниз: значок всплывающего меню выбора iOS (chevron.up.chevron.down). */
+export function ChevronUpDownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="chevron-up-down-icon">
+      <path d="m7 9 5-5 5 5M7 15l5 5 5-5" />
     </svg>
   )
 }

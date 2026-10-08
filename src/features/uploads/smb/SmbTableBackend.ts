@@ -6,6 +6,7 @@
  * - Замена — в нативной части одним вызовом: временный файл → сверка SHA-256 → прежний файл
  *   переименовывается в резервную копию → временный становится таблицей.
  * - Если прошлая запись оборвалась между переименованиями, временный файл становится таблицей.
+ * - Таблица и её папка должны уже быть на сервере: приложение их не создаёт (`tableNotFound`).
  */
 import { bytesToUtf8, utf8ToBytes } from '@/lib/encoding/base64'
 import { isRecord } from '@/lib/validation/guards'
@@ -55,12 +56,13 @@ export class SmbTableBackend implements TableBackend {
 
   async acquireLock(owner: string) {
     const { share, connection, paths } = this
-    if (paths.dir) await share.mkdirs(connection, paths.dir)
     for (let attempt = 0; ; attempt++) {
       try {
         await share.mkdir(connection, paths.lock)
         break
       } catch (error) {
+        // Нет папки таблицы — нет и таблицы; папки не создаём.
+        if (error instanceof UploadError && error.code === 'notFound') throw new UploadError('tableNotFound', { path: paths.target })
         if (!(error instanceof UploadError) || error.code !== 'exists') throw error
         const holder = await this.readLockOwner()
         const createdAt = holder?.createdAt ?? (await this.lockFolderTime())
@@ -94,9 +96,8 @@ export class SmbTableBackend implements TableBackend {
     }
   }
 
-  async replace(bytes: Uint8Array, backupName: string | undefined) {
-    const backupPath = backupName ? `${this.paths.backupDir}/${backupName}` : undefined
-    await this.share.commit(this.connection, this.paths.target, bytes, backupPath)
+  async replace(bytes: Uint8Array, backupName: string) {
+    await this.share.commit(this.connection, this.paths.target, bytes, `${this.paths.backupDir}/${backupName}`)
   }
 
   readBack(): Promise<Uint8Array> {

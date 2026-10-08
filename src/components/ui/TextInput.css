@@ -1,14 +1,19 @@
 /*
  * Поля ввода в стиле Material 3 «filled»: мягкая заливка, скругление сверху
  * и линия снизу, которая при фокусе становится акцентной и толще —
- * та же «линия-индикатор», что у вкладок. Секретный вариант (пароль, API-ключ)
- * добавляет кнопку-глазок справа.
+ * та же «линия-индикатор», что у вкладок. Кнопка-значок внутри поля справа (`.input-action`):
+ * глазок у секретных полей (пароль, API-ключ), сверка у пути к таблице.
  */
 
-.secret-input {
+.input-with-action {
   position: relative;
   display: flex;
   align-items: center;
+}
+
+/* Место под кнопку справа, чтобы текст не уходил под неё. */
+.input-with-action .text-input {
+  padding-right: 48px;
 }
 
 .text-input {
@@ -50,9 +55,8 @@
   box-shadow: inset 0 -2px 0 var(--accent);
 }
 
-/* Место под глазок; моноширинный шрифт упрощает проверку ключей и паролей. */
+/* Моноширинный шрифт упрощает проверку ключей и паролей. */
 .secret-input .text-input {
-  padding-right: 48px;
   font-family: ui-monospace, SFMono-Regular, monospace;
   font-size: 16px;
 }
@@ -62,7 +66,7 @@
   -webkit-text-security: disc;
 }
 
-.secret-input-toggle {
+.input-action {
   position: absolute;
   right: 4px;
   display: grid;
@@ -79,18 +83,18 @@
 }
 
 /* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
-:root:not([data-press]) .secret-input-toggle:active {
+:root:not([data-press]) .input-action:active:not(:disabled) {
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 /* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
-:root:not([data-press]) .secret-input-toggle:focus-visible,
-:root[data-keyboard] .secret-input-toggle:focus-visible {
+:root:not([data-press]) .input-action:focus-visible,
+:root[data-keyboard] .input-action:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
-.secret-input-toggle svg {
+.input-action svg {
   width: 20px;
   height: 20px;
   fill: none;
@@ -98,6 +102,35 @@
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.input-action:disabled {
+  cursor: default;
+  opacity: .38;
+}
+
+/* Пока идёт действие, вместо значка крутится спиннер (тот же, что у кнопок-иконок); кнопка не приглушается. */
+.input-action.is-busy:disabled {
+  opacity: 1;
+}
+
+.input-action-spinner {
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 2.5px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: photo-spin 750ms linear infinite;
+}
+
+/* Цвет значка — итог действия: успех или ошибка (например, таблица найдена / не найдена). */
+.input-action.is-success {
+  color: var(--success);
+}
+
+.input-action.is-danger {
+  color: var(--danger);
 }
 
 /*

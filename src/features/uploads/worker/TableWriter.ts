@@ -4,7 +4,7 @@
  *
  * 1. Блокировка: пока журнал пишет другое устройство — `busy` (запись повторится).
  * 2. Чтение текущего журнала (каждый раз заново: его могли изменить в Excel или с другого телефона).
- *    Файла нет — новый журнал из пустого шаблона.
+ *    Файла нет — `tableNotFound`: своей таблицы приложение не создаёт, запись ждёт исправления пути.
  * 3. Если бирка с этим номером записи уже в журнале — запись считается выполненной (повтор после обрыва).
  * 4. Строка дописывается в лист года, книга сериализуется.
  * 5. Сверка до замены: новая книга перечитывается, и все значения, кроме записанной строки,
@@ -33,26 +33,19 @@ export interface TableWriteResult {
   duplicate: boolean
 }
 
-/** Пустой шаблон журнала (байты `.xlsx`). */
-export type TemplateLoader = () => Promise<Uint8Array>
-
 /** Пишет бирки в журнал через `TableBackend`. */
 export class TableWriter {
   /** Идентификатор устройства — владелец блокировки. */
   private readonly owner: string
-  /** Пустой шаблон журнала — для первой записи, когда файла ещё нет. */
-  private readonly template: TemplateLoader
   /** Текущее время (подменяется в тестах). */
   private readonly now: () => number
 
   /**
    * @param owner Идентификатор устройства.
-   * @param template Пустой шаблон журнала.
    * @param now Текущее время.
    */
-  constructor(owner: string, template: TemplateLoader, now: () => number = Date.now) {
+  constructor(owner: string, now: () => number = Date.now) {
     this.owner = owner
-    this.template = template
     this.now = now
   }
 
@@ -70,11 +63,10 @@ export class TableWriter {
     try {
       checkCancelled()
       const current = await backend.read()
+      if (!current) throw new UploadError('tableNotFound')
       checkCancelled()
       const writtenAt = this.now()
-      const workbook = current
-        ? await LabelWorkbook.open(current)
-        : await LabelWorkbook.fromTemplate(await this.template(), new Date(writtenAt).getFullYear())
+      const workbook = await LabelWorkbook.open(current)
       const existing = workbook.locate(record.localNumber)
       if (existing) return { sheet: existing.sheet, rowNumber: existing.row, duplicate: true }
       const before = workbook.snapshot()
@@ -83,7 +75,7 @@ export class TableWriter {
       await TableWriter.checkIntact(before, bytes, planned)
       checkCancelled()
       const policy = new BackupPolicy(backend.stem, backend.extension)
-      await backend.replace(bytes, current ? policy.backupName(new Date(writtenAt)) : undefined)
+      await backend.replace(bytes, policy.backupName(new Date(writtenAt)))
       await TableWriter.verify(await backend.readBack(), record, planned)
       await backend.pruneBackups(policy, this.now())
       return { sheet: planned.sheet, rowNumber: planned.row, duplicate: false }

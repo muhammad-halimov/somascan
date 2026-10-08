@@ -33,6 +33,7 @@
     "verifyFailed": "Verification after saving failed; the upload will retry.",
     "integrityFailed": "Upload stopped: re-saving the log would have changed other data. The file was not touched — contact the developer.",
     "unknownLayout": "The steel sample log was not found in the table: no header with Nr. Crt., Sarja, Producator, Bobina/Bara columns. Check the file path.",
+    "tableNotFound": "Table not found. The app does not create the table: point to an existing log in Settings → Storage — the write will be retried after that.",
     "io": "Network share error: {{detail}}",
     "authRequired": "No access to Google Drive: sign in with Google in Settings → Storage.",
     "driveNotConfigured": "Google sign-in is not set up in this build of the app (no Google OAuth client).",

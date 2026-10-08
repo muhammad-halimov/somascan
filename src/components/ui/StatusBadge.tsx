@@ -3,8 +3,8 @@ import './StatusBadge.css'
 
 /** Свойства `StatusBadge`. */
 export interface StatusBadgeProps {
-  /** Цвет: зелёный для OK, акцентный для информации, серый для нейтрального. */
-  tone: 'success' | 'info' | 'neutral'
+  /** Цвет: зелёный для OK, акцентный для информации, серый для нейтрального, красный для ошибки. */
+  tone: 'success' | 'info' | 'neutral' | 'danger'
   /** Текст бейджа. */
   children: ReactNode
 }

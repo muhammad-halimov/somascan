@@ -49,7 +49,7 @@ export function SecretInput({ showLabel, hideLabel, kind = 'token', className = 
   }, [visible])
 
   return (
-    <div className="secret-input">
+    <div className="input-with-action secret-input">
       <TextInput
         {...inputProps}
         ref={inputRef}
@@ -58,7 +58,7 @@ export function SecretInput({ showLabel, hideLabel, kind = 'token', className = 
       />
       <button
         type="button"
-        className="secret-input-toggle"
+        className="input-action"
         aria-label={visible ? hideLabel : showLabel}
         aria-pressed={visible}
         onClick={toggle}

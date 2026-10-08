@@ -84,11 +84,12 @@
       "showPassword": "Arată parola",
       "hidePassword": "Ascunde parola",
       "test": "Testează conexiunea",
-      "filePathHint": "Calea în folderul partajat, terminată cu .xlsx. Dacă registrul nu există, se creează din șablonul gol la prima scriere, împreună cu folderele lipsă.",
+      "filePathHint": "Calea către un registru existent în folderul partajat, se termină cu .xlsx. Aplicația nu creează nici tabelul, nici folderele: dacă fișierul lipsește, scrierea nu este posibilă — verificați cu pictograma de la capătul câmpului.",
       "testing": "Se conectează…",
       "testOkTitle": "Conectat",
       "testOkExisting": "Tabelul a fost găsit: {{size}} KB, modificat {{date}}.",
-      "testOkNew": "Tabelul nu există încă și va fi creat la prima scriere.",
+      "testMissingTitle": "Tabelul nu a fost găsit",
+      "testMissingMessage": "Conexiunea există, dar la această locație nu există tabel. Aplicația nu creează tabelul — indicați un registru existent, altfel etichetele nu vor fi scrise.",
       "testFailedTitle": "Conectarea a eșuat"
     },
     "googleDrive": {
@@ -104,9 +105,16 @@
       "signOutMessage": "Accesul aplicației la Google Drive al contului {{account}} va fi revocat. Încărcările din coadă vor aștepta o nouă conectare.",
       "signInFailed": "Conectarea cu Google a eșuat",
       "accountUnknown": "cont Google",
-      "locationHint": "Linkul folderului din bara de adrese Drive sau ID-ul lui; gol — rădăcina My Drive. Tabelul și folderul „backups” apar acolo la prima scriere."
+      "locationHint": "Linkul folderului din bara de adrese Drive sau ID-ul lui; gol — rădăcina „Drive-ul meu”. Tabelul cu acest nume trebuie să fie deja în folder — aplicația nu îl creează; folderul „backups” pentru copii apare la prima scriere."
     },
-    "backups": "Înainte de fiecare salvare se creează o copie de rezervă în folderul „backups” de lângă tabel; copiile mai vechi de {{days}} zile se șterg."
+    "backups": "Înainte de fiecare salvare se creează o copie de rezervă în folderul „backups” de lângă tabel; copiile mai vechi de {{days}} zile se șterg.",
+    "check": {
+      "label": "Verificați dacă tabelul există",
+      "unchecked": "Existența tabelului nu a fost verificată",
+      "checking": "Se verifică…",
+      "missing": "Tabelul nu a fost găsit — scrierea nu este posibilă",
+      "failed": "Verificarea a eșuat: {{error}}"
+    }
   },
   "advanced": {
     "prompt": "Prompt",

@@ -84,11 +84,12 @@
       "showPassword": "Show password",
       "hidePassword": "Hide password",
       "test": "Test connection",
-      "filePathHint": "Path inside the shared folder, ending with .xlsx. If the log does not exist, it is created from the empty template on the first upload, along with any missing folders.",
+      "filePathHint": "Path to an existing log inside the shared folder, ending in .xlsx. The app creates neither the table nor folders: if the file is missing, nothing can be written — check with the icon at the end of the field.",
       "testing": "Connecting…",
       "testOkTitle": "Connected",
       "testOkExisting": "The table was found: {{size}} KB, last modified {{date}}.",
-      "testOkNew": "The table does not exist yet and will be created on the first upload.",
+      "testMissingTitle": "Table not found",
+      "testMissingMessage": "Connected, but there is no table at this location. The app does not create the table — point to an existing log, otherwise tags will not be written.",
       "testFailedTitle": "Connection failed"
     },
     "googleDrive": {
@@ -104,9 +105,16 @@
       "signOutMessage": "The app’s access to Google Drive of {{account}} will be revoked. Queued uploads will wait for a new sign-in.",
       "signInFailed": "Couldn’t sign in with Google",
       "accountUnknown": "Google account",
-      "locationHint": "Folder link from the Drive address bar or its ID; empty — the root of My Drive. The table and a “backups” folder appear there on the first upload."
+      "locationHint": "Folder link from the Drive address bar or its ID; empty means the root of “My Drive”. A table with this name must already be in the folder — the app does not create it; the “backups” folder for copies appears on the first write."
     },
-    "backups": "Before every save a backup is created in the “backups” folder next to the table; backups older than {{days}} days are deleted."
+    "backups": "Before every save a backup is created in the “backups” folder next to the table; backups older than {{days}} days are deleted.",
+    "check": {
+      "label": "Check that the table exists",
+      "unchecked": "Table not checked yet",
+      "checking": "Checking…",
+      "missing": "Table not found — writing is not possible",
+      "failed": "Could not check: {{error}}"
+    }
   },
   "advanced": {
     "prompt": "Prompt",

@@ -62,7 +62,9 @@
   },
   "uploadDialog": {
     "unconfiguredTitle": "Stocarea nu este configurată",
-    "unconfiguredMessage": "Eticheta este salvată în coadă și va fi scrisă în tabel după ce configurați stocarea în Setări → Stocare."
+    "unconfiguredMessage": "Eticheta este salvată în coadă și va fi scrisă în tabel după ce configurați stocarea în Setări → Stocare.",
+    "tableMissingTitle": "Tabelul nu a fost găsit",
+    "tableMissingMessage": "Eticheta este salvată în coadă, dar nu are unde fi scrisă: la locația din setări nu există tabel. Indicați un registru existent în Setări → Stocare."
   },
   "qualityDialog": {
     "title": "Fotografie de calitate slabă",
@@ -82,6 +84,6 @@
   },
   "formDialog": {
     "title": "Forma nu este aleasă",
-    "message": "Înainte de trimitere alegeți ce este pe etichetă: bară sau bobină. Câmpul este deschis pentru editare."
+    "message": "Înainte de trimitere alegeți ce este pe etichetă: bară sau bobină — atingeți câmpul „Formă” din partea de sus a cardului."
   }
 }

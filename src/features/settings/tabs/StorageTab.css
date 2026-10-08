@@ -1,5 +1,5 @@
 /*
- * Вкладка «Хранилище»: строка аккаунта Google — почта слева, «Выйти» справа.
+ * Вкладка «Хранилище»: строка аккаунта Google — почта слева, «Выйти» справа; итог проверки таблицы.
  */
 
 .storage-account {
@@ -13,4 +13,18 @@
 .storage-account .status-badge {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/*
+ * Итог проверки таблицы под полями расположения. Сообщение об ошибке бывает в несколько строк —
+ * точка статуса остаётся у первой строки.
+ */
+.storage-check .status-badge {
+  align-items: flex-start;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.storage-check .status-badge::before {
+  margin-top: 5px;
 }

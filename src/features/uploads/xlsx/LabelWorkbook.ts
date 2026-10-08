@@ -4,7 +4,7 @@
  * Книга — по листу на год (`2026`, `2025`, …) с шапкой журнала (см. `labTableLayout`). Бирка
  * записывается в лист года записи — в первую строку после последней заполненной; если листа
  * этого года нет, он создаётся первым в книге с той же шапкой, что у самого нового года.
- * Новая книга создаётся из пустого шаблона журнала (`template/Probe otel.xlsx`).
+ * Новых книг приложение не создаёт: пишет только в существующий журнал.
  *
  * Все остальные листы, строки, стили, объединения, ширины и фильтры сохраняются; чужие ячейки
  * не перезаписываются. Перед заменой файла `TableWriter` сверяет все значения книги до и после
@@ -148,18 +148,6 @@ export class LabelWorkbook {
       }
     }
     return new LabelWorkbook(workbook)
-  }
-
-  /**
-   * Новая книга из пустого шаблона журнала: лист шаблона получает имя года записи.
-   * @param template Байты шаблона (`template/Probe otel.xlsx`).
-   * @param year Год записи.
-   */
-  static async fromTemplate(template: Uint8Array, year: number): Promise<LabelWorkbook> {
-    const book = await LabelWorkbook.open(template)
-    const sheet = book.workbook.worksheets.find(isYearSheet)
-    if (sheet) sheet.name = String(year)
-    return book
   }
 
   /** Имена видимых листов в порядке книги. */

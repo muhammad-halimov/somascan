@@ -5,6 +5,7 @@ import { hasProductForm } from '@/features/recognition/label/productForm'
 import { settingsStore } from '@/features/settings/store/SettingsStore'
 import { isDriveConfigured } from '@/features/uploads/drive/driveSettings'
 import { isSmbConfigured } from '@/features/uploads/smb/smbSettings'
+import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
 import { uploadStore } from '@/features/uploads/store/UploadStore'
 import { uploadWorker } from '@/features/uploads/worker/UploadWorker'
 import { buildUploadColumns } from '@/features/uploads/xlsx/uploadColumns'
@@ -171,14 +172,16 @@ export function ScanWorkspace() {
    * «Далее»: распознанная (и поправленная) бирка встаёт в очередь выгрузки, а экран очищается
    * для следующей. Спиннер в кнопке крутится, пока карточки очищаются (не меньше `HANDOFF_MS`,
    * чтобы его было видно), и гаснет, когда экран готов к следующей бирке. Сама запись в таблицу
-   * идёт в фоне (`UploadWorker`), её состояние — в «Загрузках»; если хранилище не настроено,
-   * запись подождёт настроек — об этом сообщаем сразу.
+   * идёт в фоне (`UploadWorker`), её состояние — в «Загрузках»; если хранилище не настроено
+   * или проверка уже показала, что таблицы нет (своей приложение не создаёт), запись подождёт
+   * исправления настроек — об этом сообщаем сразу.
    */
   const uploadResult = async () => {
     if (recognition.status.kind !== 'done' || isHandingOff) return
     // Форму поставки (пруток или катушка) выбирают вручную — без неё бирку не отправить.
+    // Выбор формы — первая строка карточки: докручиваем к нему, если список прокручен.
     if (!hasProductForm(recognition.status.label)) {
-      editMode.enter()
+      notesCardRef.current?.querySelector('.label-field.is-product-form')?.scrollIntoView({ block: 'nearest' })
       await NativeDialogs.alert({
         title: t('formDialog.title'),
         message: t('formDialog.message'),
@@ -201,6 +204,12 @@ export function ScanWorkspace() {
       await NativeDialogs.alert({
         title: t('uploadDialog.unconfiguredTitle'),
         message: t('uploadDialog.unconfiguredMessage'),
+        buttonTitle: t('common:ok'),
+      })
+    } else if (tableCheckStore.resultFor(storage)?.kind === 'missing') {
+      await NativeDialogs.alert({
+        title: t('uploadDialog.tableMissingTitle'),
+        message: t('uploadDialog.tableMissingMessage'),
         buttonTitle: t('common:ok'),
       })
     }

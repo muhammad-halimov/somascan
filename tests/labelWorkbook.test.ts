@@ -1,5 +1,5 @@
 /**
- * Журнал проб `.xlsx`: шаблон, поиск шапки, дописывание строк в лист года, новый год,
+ * Журнал проб `.xlsx`: пустой журнал (фикстура), поиск шапки, дописывание строк в лист года, новый год,
  * служебный лист с номерами записей, сохранность чужих данных, значения в формате журнала.
  * Запуск: `npm test`.
  */
@@ -13,7 +13,8 @@ import { LabelWorkbook, type LabEntry } from '../src/features/uploads/xlsx/Label
 import { cellKey, excelDateTime, normalizeHeader, readCell, toTableCell } from '../src/features/uploads/xlsx/tableCell'
 import type { UploadColumn } from '../src/features/uploads/xlsx/uploadColumns'
 
-const template = new Uint8Array(readFileSync(new URL('../src/features/uploads/xlsx/template/Probe otel.xlsx', import.meta.url)))
+/** Пустой журнал с листом `2026` (собран `scripts/lab-table/make-template.ts`). */
+const template = new Uint8Array(readFileSync(new URL('./fixtures/Probe otel.xlsx', import.meta.url)))
 const columns: UploadColumn[] = [
   { key: 'producer', kind: 'text', header: 'Производитель', aliases: ['Producer', 'Producător'] },
   { key: 'grade', kind: 'code', header: 'Марка стали', aliases: ['Steel grade', 'Marcă oțel'] },
@@ -32,15 +33,15 @@ async function rowValues(bytes: Uint8Array, sheet: string, row: number) {
   return Object.fromEntries(['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'].map((letter) => [letter, values.getCell(letter).value ?? null]))
 }
 
-test('шаблон: шапка журнала узнаётся, данных нет', async () => {
-  const workbook = await LabelWorkbook.fromTemplate(template, 2026)
+test('пустой журнал: шапка узнаётся, данных нет', async () => {
+  const workbook = await LabelWorkbook.open(template)
   assert.deepEqual(workbook.sheetNames, ['2026'])
   const rows = [...workbook.snapshot().keys()].map((key) => Number(/!(\d+):/.exec(key)![1]))
   assert.ok(rows.length > 0 && rows.every((row) => row < 7), 'только шапка и заголовок')
 })
 
 test('бирки дописываются по порядку: номер, вес, дата, плавка, завод, диаметр по форме', async () => {
-  const workbook = await LabelWorkbook.fromTemplate(template, 2026)
+  const workbook = await LabelWorkbook.open(template)
   const first = workbook.append(entry(1, { producer: 'ArcelorMittal', heat: '253830', size: '10 mm', weight_kg: 8126, product_form: 'bobina', quality_doc: null }), at(2026, 10, 8))
   assert.deepEqual([first.sheet, first.row, first.newSheet], ['2026', 7, false])
   const second = workbook.append(entry(2, { producer: 'OAM', heat: '25R00205', size: 'Ø 16', weight_kg: '2419', product_form: 'bara', quality_doc: 'Am acte' }), at(2026, 10, 8))
@@ -58,7 +59,7 @@ test('бирки дописываются по порядку: номер, ве�
 })
 
 test('новый год — новый лист первым, с той же шапкой; прежний год не тронут', async () => {
-  const workbook = await LabelWorkbook.fromTemplate(template, 2026)
+  const workbook = await LabelWorkbook.open(template)
   workbook.append(entry(1, { producer: 'Sovel', heat: '5673', size: '10', weight_kg: 4754, product_form: 'bobina' }), at(2026, 12, 30))
   const before = workbook.snapshot()
   const planned = workbook.append(entry(2, { producer: 'Sovel', heat: '5674', size: '12', weight_kg: 4800, product_form: 'bara' }), at(2027, 1, 3))
@@ -81,7 +82,7 @@ test('новый год — новый лист первым, с той же ш�
 })
 
 test('строки дописываются после последней с данными; заранее проставленные номера не мешают', async () => {
-  const base = await LabelWorkbook.fromTemplate(template, 2026)
+  const base = await LabelWorkbook.open(template)
   const raw = new ExcelJS.Workbook()
   await raw.xlsx.load(await base.toBytes() as unknown as Parameters<typeof raw.xlsx.load>[0])
   const sheet = raw.getWorksheet('2026')!

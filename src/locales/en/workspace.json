@@ -62,7 +62,9 @@
   },
   "uploadDialog": {
     "unconfiguredTitle": "Storage is not set up",
-    "unconfiguredMessage": "The tag is saved in the upload queue and will be written to the table once storage is set up in Settings → Storage."
+    "unconfiguredMessage": "The tag is saved in the upload queue and will be written to the table once storage is set up in Settings → Storage.",
+    "tableMissingTitle": "Table not found",
+    "tableMissingMessage": "The tag is saved in the queue, but there is nowhere to write it: there is no table at the location from the settings. Point to an existing log in Settings → Storage."
   },
   "qualityDialog": {
     "title": "Poor photo quality",
@@ -82,6 +84,6 @@
   },
   "formDialog": {
     "title": "Form not selected",
-    "message": "Before sending, choose what the tag is for: bar or coil. The field is open for editing."
+    "message": "Before sending, choose what the tag is for: bar or coil — tap the “Form” field at the top of the card."
   }
 }

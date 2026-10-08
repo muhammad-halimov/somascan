@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ArrowDropDownIcon, ChevronUpDownIcon } from '@/components/icons/Icons'
 import { enabledLabelFields, isMissingValue, type LabelFieldKind, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { useLabelFormatter } from '@/features/recognition/label/useLabelFormatter'
@@ -39,7 +40,8 @@ export interface LabelFieldsProps {
 
 /**
  * Распознанная бирка в виде списка «название — значение»; в режиме правки редактируется.
- * Первая строка — форма поставки (пруток или катушка): её выбирают вручную, с фото она не читается.
+ * Первая строка — форма поставки (пруток или катушка): её выбирают вручную, с фото она не читается;
+ * выбор открывается касанием значения и в просмотре, без режима правки.
  * Дальше — только поля, выбранные в настройках («Расширенные» → «Поля»).
  */
 export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProps) {
@@ -92,38 +94,46 @@ export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProp
 interface ProductFormFieldProps {
   /** Текущее значение (`bara`, `bobina` или пусто). */
   value: string | number | null | undefined
-  /** Режим правки: вместо значения — системный выбор. */
+  /** Режим правки: выбор в виде поля ввода; в просмотре — в виде значения строки. */
   isEditing: boolean
   /** Выбрано новое значение (румынское слово). */
   onChange: (value: string) => void
 }
 
 /**
- * Форма поставки: в просмотре — перевод выбранного значения или «Не выбрана» (цветом ошибки:
- * без неё бирку не отправить), в правке — системный выбор (`<select>`: колесо на iOS, список на Android).
+ * Форма поставки — системный выбор (`<select>`: список на Android, меню или колесо на iOS) в обоих режимах.
+ * В просмотре он выглядит как значение строки со значком выпадающего списка (Material — треугольник,
+ * iOS — двойной уголок всплывающего меню) и открывается касанием, без карандаша; пока форма
+ * не выбрана — «Не выбрана» цветом ошибки (без неё бирку не отправить). В правке — в стиле полей ввода.
  * В запись попадает румынское слово, подписи вариантов — на языке интерфейса.
  */
 function ProductFormField({ value, isEditing, onChange }: ProductFormFieldProps) {
   const { t } = useTranslation('label')
   const selected = isProductForm(value) ? value : ''
   const name = t('productForm.name')
+  const select = (
+    <select
+      className={isEditing ? 'label-field-input label-field-select' : `label-field-value label-field-picker${selected ? '' : ' is-missing is-required'}`}
+      aria-label={name}
+      aria-required="true"
+      value={selected}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      <option value="" disabled>{t('productForm.placeholder')}</option>
+      {PRODUCT_FORMS.map((form) => <option key={form} value={form}>{t(`productForm.${form}`)}</option>)}
+    </select>
+  )
   return (
     <label className={`label-field is-product-form${selected ? '' : ' is-required'}`}>
       <span className="label-field-name">{name}</span>
-      {isEditing ? (
-        <select
-          className="label-field-input label-field-select"
-          aria-label={name}
-          aria-required="true"
-          value={selected}
-          onChange={(event) => onChange(event.target.value)}
-        >
-          <option value="" disabled>{t('productForm.placeholder')}</option>
-          {PRODUCT_FORMS.map((form) => <option key={form} value={form}>{t(`productForm.${form}`)}</option>)}
-        </select>
-      ) : (
-        <span className={`label-field-value${selected ? '' : ' is-missing is-required'}`}>
-          {selected ? t(`productForm.${selected}`) : t('productForm.placeholder')}
+      {isEditing ? select : (
+        <span className="label-field-picker-wrap">
+          {select}
+          {/* Нужный значок показывает CSS по платформе, как у шторок (Disclosure). */}
+          <span className="label-field-picker-icon" aria-hidden="true">
+            <ChevronUpDownIcon />
+            <ArrowDropDownIcon />
+          </span>
         </span>
       )}
     </label>

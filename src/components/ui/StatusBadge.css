@@ -32,3 +32,12 @@
   background: var(--text);
   opacity: .6;
 }
+
+/* Ошибка: и точка, и текст цветом ошибки — состояние, которое мешает работе (нет таблицы). */
+.status-badge.is-danger {
+  color: var(--danger);
+}
+
+.status-badge.is-danger::before {
+  background: var(--danger);
+}

@@ -44,6 +44,8 @@ export type UploadErrorCode =
   | 'integrityFailed'
   /** В книге не нашлось шапки журнала проб (Nr. Crt., Sarja, Producator…). */
   | 'unknownLayout'
+  /** Таблицы по пути из настроек нет: приложение её не создаёт — запись невозможна, пока путь не исправят. */
+  | 'tableNotFound'
   /** Прочая ошибка ввода-вывода. */
   | 'io'
   /** Google: вход не выполнен или доступ к Drive отозван — нужно войти заново в настройках. */
@@ -59,7 +61,7 @@ export type UploadErrorCode =
 const CODES: Record<UploadErrorCode, true> = {
   notConfigured: true, targetUnsupported: true, invalidPath: true, unavailable: true, offline: true, hostUnreachable: true,
   timeout: true, authFailed: true, shareNotFound: true, notFound: true, exists: true, accessDenied: true, locked: true,
-  busy: true, corruptWorkbook: true, verifyFailed: true, integrityFailed: true, unknownLayout: true, io: true, authRequired: true, driveNotConfigured: true,
+  busy: true, corruptWorkbook: true, verifyFailed: true, integrityFailed: true, unknownLayout: true, tableNotFound: true, io: true, authRequired: true, driveNotConfigured: true,
   folderNotFound: true, cancelled: true,
 }
 
