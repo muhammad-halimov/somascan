@@ -163,10 +163,10 @@ npm test                                   # таблица, копии, раз�
 
 1. В [Google Cloud Console](https://console.cloud.google.com/) создать проект, включить **Google Drive API**.
 2. Экран согласия OAuth: тип **Internal** для аккаунтов Google Workspace компании (без проверки Google) или **External** с тестовыми пользователями. Область — `https://www.googleapis.com/auth/drive`: приложению нужен доступ к уже существующей папке, а `drive.file` видит только файлы, созданные самим приложением.
-3. **OAuth-клиент Android:** пакет `com.somascan.app` и SHA-1 ключа подписи. Отдельный клиент на каждый ключ: debug (`cd android && ./gradlew signingReport`), release и ключ Google Play App Signing. Client ID в код не вписывается.
+3. **OAuth-клиент Android:** пакет `com.somascan.app` и SHA-1 ключа подписи. Отдельный клиент на каждый ключ: debug (`cd android && ./gradlew signingReport`), release и ключ Google Play App Signing. Client ID в код не вписывается. Debug-ключ (`~/.android/debug.keystore`) у каждой машины свой: APK, собранный на другом компьютере, подписан другим ключом — для него нужен свой клиент (или тот же keystore), а поверх установленной сборки с другим ключом APK не ставится, сначала удалить прежнюю.
 4. **OAuth-клиент iOS:** bundle ID `com.somascan.app`. В `ios/App/App/Info.plist` вписать client ID в `GIDClientID`, а обратный ID (`com.googleusercontent.apps.…`) добавить в `CFBundleURLTypes` → `CFBundleURLSchemes`. Пока `GIDClientID` пустой, вход отвечает «Вход через Google не настроен в этой сборке» — приложение не падает.
 
-Проверка без сети и аккаунта: `npm test` гоняет запись через поддельный Drive API (`tests/fakeDrive.ts`): создание, дописывание, копии, блокировки, конфликт версий, очистка.
+Проверка без сети и аккаунта: `npm test` гоняет запись через поддельный Drive API (`tests/fakeDrive.ts`): отсутствующая таблица не создаётся, дописывание, копии, блокировки, конфликт версий, очистка.
 
 ---
 
