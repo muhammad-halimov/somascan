@@ -1,7 +1,8 @@
 /**
  * Минимальный клиент Google Drive API v3 для таблицы: поиск, скачивание, загрузка, копирование,
- * удаление файлов и папок. Запросы идут из WebView (`fetch`): API Google разрешает CORS.
- * Общие диски поддерживаются (`supportsAllDrives`).
+ * удаление файлов и папок. Запросы идут через переданный `fetch`: в WebView — обычный (API Google
+ * разрешает CORS), в движке очереди — через нативный хост. Поэтому тела запросов — строки и байты,
+ * без `Blob` и `URLSearchParams` (их нет в JavaScriptCore). Общие диски поддерживаются (`supportsAllDrives`).
  */
 import { isRecord } from '@/lib/validation/guards'
 import { UploadError } from '../UploadError'
@@ -40,6 +41,10 @@ export interface DriveFile {
 
 /** Поля, запрашиваемые у каждого файла. */
 const FILE_FIELDS = 'id,name,mimeType,md5Checksum,size,version,createdTime,modifiedTime,appProperties'
+
+/** Строка запроса из параметров (как `URLSearchParams`, которого нет в JavaScriptCore). */
+const queryString = (params: Record<string, string>) =>
+  Object.entries(params).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&')
 
 /** Экранирует строку для запроса `q`. */
 const quote = (text: string) => `'${text.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
@@ -127,7 +132,7 @@ export class DriveClient {
     return this.json<DriveFile>(`${UPLOAD}/files?uploadType=multipart&supportsAllDrives=true&fields=${FILE_FIELDS}`, {
       method: 'POST',
       headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
-      body: new Blob([body as Uint8Array<ArrayBuffer>]),
+      body: body as Uint8Array<ArrayBuffer>,
     })
   }
 
@@ -136,7 +141,7 @@ export class DriveClient {
     return this.json<DriveFile>(`${UPLOAD}/files/${encodeURIComponent(id)}?uploadType=media&supportsAllDrives=true&fields=${FILE_FIELDS}`, {
       method: 'PATCH',
       headers: { 'Content-Type': mimeType },
-      body: new Blob([bytes as Uint8Array<ArrayBuffer>], { type: mimeType }),
+      body: bytes as Uint8Array<ArrayBuffer>,
     })
   }
 
@@ -179,7 +184,7 @@ export class DriveClient {
     const files: DriveFile[] = []
     let pageToken: string | undefined
     do {
-      const query = new URLSearchParams({
+      const query = queryString({
         q,
         orderBy,
         fields: `nextPageToken,files(${FILE_FIELDS})`,

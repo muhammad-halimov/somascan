@@ -18,6 +18,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SmbSharePlugin.class);
         registerPlugin(GoogleDriveAuthPlugin.class);
         registerPlugin(NativeHttpPlugin.class);
+        // Очередь выгрузки: движок вне WebView экрана, пишет таблицу и в свёрнутом/закрытом приложении.
+        registerPlugin(UploadEnginePlugin.class);
         super.onCreate(savedInstanceState);
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

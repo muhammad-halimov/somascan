@@ -7,7 +7,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Очередь выгрузки: фоновые задачи регистрируются до конца запуска, движок сразу продолжает
+        // сохранённую очередь — в том числе когда система запустила приложение в фоне.
+        UploadBackground.shared.registerTasks()
+        UploadEngine.shared.start()
         return true
     }
 

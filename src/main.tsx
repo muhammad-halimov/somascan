@@ -6,7 +6,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from '@/app/App'
 import { exposeDebugHandles } from '@/app/debug'
 import { settingsStore } from '@/features/settings/store/SettingsStore'
-import { uploadWorker } from '@/features/uploads/worker/UploadWorker'
+import { uploadQueue } from '@/features/uploads/queue/appQueue'
 import { initI18n } from '@/i18n/i18n'
 import { initInteraction } from '@/lib/interaction/interaction'
 import { initKeyboard } from '@/lib/platform/keyboard'
@@ -25,8 +25,9 @@ initInteraction()
 // Клавиатура без веб-панели «‹ › Готово» (iOS).
 initKeyboard()
 
-// Очередь выгрузки в таблицу: записи, оставшиеся с прошлого запуска, пишутся в фоне.
-uploadWorker.start()
+// Очередь выгрузки в таблицу: на устройстве её пишет движок вне WebView (и в закрытом приложении),
+// экран подключается к нему; в браузере очередь обрабатывается на странице.
+uploadQueue.start()
 
 // В сборке для разработки (`vite build --mode development`) сторы доступны из консоли отладчика —
 // так очередь выгрузки проверяется на устройстве без production-ограничений.

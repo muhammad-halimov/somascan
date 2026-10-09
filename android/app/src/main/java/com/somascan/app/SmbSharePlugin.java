@@ -18,7 +18,8 @@ import java.util.concurrent.Executors;
  * На время операции удерживается частичный wake lock, чтобы запись дописалась,
  * даже если экран погас.
  *
- * Контракт (аргументы и коды ошибок) описан в веб-части: {@code src/features/uploads/smb/SmbShare.ts}.
+ * Операции — {@link SmbOps} (их же выполняет движок очереди); контракт (аргументы и коды ошибок)
+ * описан в веб-части: {@code src/features/uploads/smb/smbFiles.ts}.
  */
 @CapacitorPlugin(name = "SmbShare")
 public class SmbSharePlugin extends Plugin {
@@ -35,80 +36,49 @@ public class SmbSharePlugin extends Plugin {
 
     private final SmbShareClient client = new SmbShareClient();
 
-    /** Операция над подключённой общей папкой с аргументами вызова. */
-    private interface Operation {
-        JSObject run(com.hierynomus.smbj.share.DiskShare share, PluginCall call) throws Exception;
-    }
-
     @PluginMethod
     public void probe(PluginCall call) {
-        perform(call, (share, c) -> client.probe(share, path(c, "path")));
+        perform(call, "probe");
     }
 
     @PluginMethod
     public void read(PluginCall call) {
-        perform(call, (share, c) -> {
-            JSObject result = new JSObject();
-            result.put("data", client.read(share, path(c, "path")));
-            return result;
-        });
+        perform(call, "read");
     }
 
     @PluginMethod
     public void write(PluginCall call) {
-        perform(call, (share, c) -> {
-            client.write(share, path(c, "path"), SmbShareClient.decode(string(c, "data")));
-            return new JSObject();
-        });
+        perform(call, "write");
     }
 
     @PluginMethod
     public void commit(PluginCall call) {
-        perform(call, (share, c) -> {
-            String backup = c.getString("backupPath");
-            return client.commit(share, path(c, "path"), SmbShareClient.decode(string(c, "data")), backup == null ? null : SmbShareClient.toSmbPath(backup));
-        });
+        perform(call, "commit");
     }
 
     @PluginMethod
     public void rename(PluginCall call) {
-        perform(call, (share, c) -> {
-            client.rename(share, path(c, "from"), path(c, "to"));
-            return new JSObject();
-        });
+        perform(call, "rename");
     }
 
     @PluginMethod
     public void remove(PluginCall call) {
-        perform(call, (share, c) -> {
-            client.remove(share, path(c, "path"));
-            return new JSObject();
-        });
+        perform(call, "remove");
     }
 
     @PluginMethod
     public void list(PluginCall call) {
-        perform(call, (share, c) -> {
-            JSObject result = new JSObject();
-            result.put("entries", client.list(share, path(c, "path")));
-            return result;
-        });
+        perform(call, "list");
     }
 
     @PluginMethod
     public void mkdir(PluginCall call) {
-        perform(call, (share, c) -> {
-            client.mkdir(share, path(c, "path"));
-            return new JSObject();
-        });
+        perform(call, "mkdir");
     }
 
     @PluginMethod
     public void mkdirs(PluginCall call) {
-        perform(call, (share, c) -> {
-            client.mkdirs(share, path(c, "path"));
-            return new JSObject();
-        });
+        perform(call, "mkdirs");
     }
 
     @Override
@@ -117,8 +87,8 @@ public class SmbSharePlugin extends Plugin {
         executor.shutdown();
     }
 
-    /** Ставит операцию в очередь потока и отвечает на вызов по её завершении. */
-    private void perform(PluginCall call, Operation operation) {
+    /** Ставит операцию {@code op} ({@link SmbOps}) в очередь потока и отвечает на вызов по её завершении. */
+    private void perform(PluginCall call, String op) {
         SmbShareClient.Target target;
         try {
             target = SmbShareClient.Target.from(call.getObject("connection"));
@@ -129,7 +99,7 @@ public class SmbSharePlugin extends Plugin {
         executor.execute(() -> {
             PowerManager.WakeLock wakeLock = acquireWakeLock();
             try {
-                call.resolve(client.run(target, share -> operation.run(share, call)));
+                call.resolve(client.run(target, share -> SmbOps.run(client, share, op, call.getData())));
             } catch (SmbShareClient.Failure failure) {
                 call.reject(failure.getMessage(), failure.code);
             } catch (Exception error) {
@@ -140,20 +110,6 @@ public class SmbSharePlugin extends Plugin {
                 }
             }
         });
-    }
-
-    /** Обязательный строковый аргумент. */
-    private static String string(PluginCall call, String name) throws SmbShareClient.Failure {
-        String value = call.getString(name);
-        if (value == null) {
-            throw new SmbShareClient.Failure("invalidArgs", "Нужен аргумент " + name);
-        }
-        return value;
-    }
-
-    /** Обязательный путь, переведённый в формат SMB. */
-    private static String path(PluginCall call, String name) throws SmbShareClient.Failure {
-        return SmbShareClient.toSmbPath(string(call, name));
     }
 
     /** Частичный wake lock на время операции; {@code null}, если его не дали. */

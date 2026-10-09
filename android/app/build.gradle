@@ -41,6 +41,9 @@ dependencies {
     implementation "com.hierynomus:smbj:$smbjVersion"
     // Вход через Google и токены Drive (GoogleDriveAuthPlugin).
     implementation "com.google.android.gms:play-services-auth:$playServicesAuthVersion"
+    // Фоновая выгрузка: работа, которая переживает закрытие приложения (UploadWork), и ресурсы движка в WebView (UploadEngine).
+    implementation "androidx.work:work-runtime:$workRuntimeVersion"
+    implementation "androidx.webkit:webkit:$androidxWebkitVersion"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

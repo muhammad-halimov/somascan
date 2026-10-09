@@ -6,7 +6,7 @@
  * из готовых), переводит в `uploading`, а затем в `completed` или обратно в `queued` с паузой
  * (временный сбой) либо в `failed` (нужно вмешательство: пароль, настройки). Новые записи сверху.
  */
-import { appStorage, type KeyValueStore } from '@/lib/storage/KeyValueStore'
+import type { KeyValueStore } from '@/lib/storage/KeyValueStore'
 import { StoredValue } from '@/lib/storage/StoredValue'
 import { Store } from '@/lib/store/Store'
 import { isOneOf, isRecord, isString } from '@/lib/validation/guards'
@@ -141,8 +141,8 @@ function readRecord(value: unknown): UploadRecord | null {
   return record
 }
 
-/** Разбирает сохранённый список. */
-const parseRecords = (data: unknown): UploadRecord[] | null =>
+/** Разбирает сохранённый список (или снимок очереди от движка); неполные записи отбрасываются. */
+export const parseRecords = (data: unknown): UploadRecord[] | null =>
   Array.isArray(data) ? data.map(readRecord).filter((record): record is UploadRecord => record !== null) : null
 
 /** Ключ списка в прежней версии: записи хранили лишь несколько полей бирки и не знали об очереди. */
@@ -208,11 +208,11 @@ export class UploadStore extends Store<UploadRecord[]> {
     this.stored.write(records)
   }
 
-  /** Ставит бирку в очередь (в начало списка) и возвращает запись. */
-  enqueue(label: LabelRecord, columns: readonly UploadColumn[]): UploadRecord {
+  /** Новая запись очереди для бирки: свой id, номер записи, копии полей и колонок. */
+  static createRecord(label: LabelRecord, columns: readonly UploadColumn[]): UploadRecord {
     const createdAt = Date.now()
     const id = createId()
-    const record: UploadRecord = {
+    return {
       id,
       createdAt,
       localNumber: createLocalNumber(id, createdAt),
@@ -221,8 +221,33 @@ export class UploadStore extends Store<UploadRecord[]> {
       status: 'queued',
       attempts: 0,
     }
-    this.setState((records) => UploadStore.trim([record, ...records]))
+  }
+
+  /** Ставит бирку в очередь (в начало списка) и возвращает запись. */
+  enqueue(label: LabelRecord, columns: readonly UploadColumn[]): UploadRecord {
+    const record = UploadStore.createRecord(label, columns)
+    this.add(record)
     return record
+  }
+
+  /** Ставит готовую запись в очередь (в начало списка); запись с тем же id не дублируется. */
+  add(record: UploadRecord) {
+    this.setState((records) => (records.some((item) => item.id === record.id) ? records : UploadStore.trim([record, ...records])))
+  }
+
+  /** Добавляет записи, которых ещё нет (перенос прежней очереди), сохраняя порядок «новые сверху». */
+  importRecords(incoming: readonly UploadRecord[]) {
+    this.setState((records) => {
+      const known = new Set(records.map((record) => record.id))
+      const fresh = incoming.filter((record) => !known.has(record.id))
+      if (fresh.length === 0) return records
+      return UploadStore.trim([...records, ...fresh].sort((a, b) => b.createdAt - a.createdAt))
+    })
+  }
+
+  /** Заменяет весь список (зеркало очереди движка на экране). */
+  replace(records: UploadRecord[]) {
+    this.setState(records)
   }
 
   /** Самая старая запись, готовая к записи: `queued` без паузы или с истёкшей паузой. */
@@ -338,6 +363,3 @@ export class UploadStore extends Store<UploadRecord[]> {
     return result
   }
 }
-
-/** Общая очередь выгрузки приложения. */
-export const uploadStore = new UploadStore(appStorage)

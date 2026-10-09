@@ -6,8 +6,7 @@ import { settingsStore } from '@/features/settings/store/SettingsStore'
 import { isDriveConfigured } from '@/features/uploads/drive/driveSettings'
 import { isSmbConfigured } from '@/features/uploads/smb/smbSettings'
 import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
-import { uploadStore } from '@/features/uploads/store/UploadStore'
-import { uploadWorker } from '@/features/uploads/worker/UploadWorker'
+import { uploadQueue } from '@/features/uploads/queue/appQueue'
 import { buildUploadColumns } from '@/features/uploads/xlsx/uploadColumns'
 import { useHistoryLayer } from '@/hooks/useHistoryLayer'
 import { usePresence } from '@/hooks/usePresence'
@@ -172,7 +171,8 @@ export function ScanWorkspace() {
    * «Далее»: распознанная (и поправленная) бирка встаёт в очередь выгрузки, а экран очищается
    * для следующей. Спиннер в кнопке крутится, пока карточки очищаются (не меньше `HANDOFF_MS`,
    * чтобы его было видно), и гаснет, когда экран готов к следующей бирке. Сама запись в таблицу
-   * идёт в фоне (`UploadWorker`), её состояние — в «Загрузках»; если хранилище не настроено
+   * идёт в фоне (на устройстве — движок очереди вне WebView, и в свёрнутом, и в закрытом приложении),
+   * её состояние — в «Загрузках»; если хранилище не настроено
    * или проверка уже показала, что таблицы нет (своей приложение не создаёт), запись подождёт
    * исправления настроек — об этом сообщаем сразу.
    */
@@ -191,8 +191,7 @@ export function ScanWorkspace() {
     }
     const { advanced, general, storage } = settingsStore.getSnapshot()
     const columns = buildUploadColumns(enabledLabelFields(advanced.labelFields), general.language)
-    uploadStore.enqueue(recognition.status.label, columns)
-    uploadWorker.kick()
+    uploadQueue.enqueue(recognition.status.label, columns)
     setIsHandingOff(true)
     await new Promise((resolve) => window.setTimeout(resolve, HANDOFF_MS))
     clearPhoto()

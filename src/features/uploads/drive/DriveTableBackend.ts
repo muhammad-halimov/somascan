@@ -4,7 +4,8 @@
  * - Блокировка. В Drive нет атомарного «создать, если нет» (имена могут повторяться), поэтому:
  *   устройство создаёт файл `<таблица>.lock` со своим id, перечитывает все такие файлы, и
  *   побеждает самый ранний (при равенстве — с меньшим id); проигравший удаляет свой и ждёт (`busy`).
- *   Брошенные блокировки старше `LOCK_STALE_MS` удаляются.
+ *   Брошенные блокировки старше `LOCK_STALE_MS` удаляются, свои (этого же устройства) — сразу:
+ *   своя блокировка при новой попытке — след оборванной записи (см. `SmbTableBackend`).
  * - Замена. Загрузка нового содержимого — новая ревизия файла, атомарно. Перед ней прежний файл
  *   копируется на сервере в папку `backups`, а версия файла сверяется с прочитанной: если таблицу
  *   успели изменить (Excel онлайн, другое устройство) — `busy`, запись повторится с новыми данными.
@@ -58,10 +59,10 @@ export class DriveTableBackend implements TableBackend {
   async acquireLock(owner: string) {
     await this.requireFolder()
     const lockName = `${this.name}.lock`
-    // Брошенные блокировки (устройство выключили посреди записи) снимаем.
-    for (const stale of (await this.drive.find(this.folderId, lockName)).filter((file) => this.now() - createdMs(file) > LOCK_STALE_MS)) {
-      await this.drive.remove(stale.id)
-    }
+    // Брошенные блокировки (устройство выключили посреди записи) и свои, оставшиеся от оборванной записи, снимаем.
+    const leftovers = (await this.drive.find(this.folderId, lockName))
+      .filter((file) => file.appProperties?.[LOCK_OWNER_PROPERTY] === owner || this.now() - createdMs(file) > LOCK_STALE_MS)
+    for (const stale of leftovers) await this.drive.remove(stale.id)
     const others = await this.drive.find(this.folderId, lockName)
     if (others.length > 0) throw new UploadError('busy', { owner: others[0]!.appProperties?.[LOCK_OWNER_PROPERTY] })
     const mine = await this.drive.create(this.folderId, lockName, new TextEncoder().encode(owner), 'text/plain', { [LOCK_OWNER_PROPERTY]: owner })

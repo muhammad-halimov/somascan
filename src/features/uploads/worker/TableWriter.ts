@@ -35,17 +35,17 @@ export interface TableWriteResult {
 
 /** Пишет бирки в журнал через `TableBackend`. */
 export class TableWriter {
-  /** Идентификатор устройства — владелец блокировки. */
-  private readonly owner: string
+  /** Идентификатор устройства — владелец блокировки (в движке он приходит с настройками, поэтому — функция). */
+  private readonly owner: () => string
   /** Текущее время (подменяется в тестах). */
   private readonly now: () => number
 
   /**
-   * @param owner Идентификатор устройства.
+   * @param owner Идентификатор устройства или функция, которая его даёт.
    * @param now Текущее время.
    */
-  constructor(owner: string, now: () => number = Date.now) {
-    this.owner = owner
+  constructor(owner: string | (() => string), now: () => number = Date.now) {
+    this.owner = typeof owner === 'function' ? owner : () => owner
     this.now = now
   }
 
@@ -59,7 +59,7 @@ export class TableWriter {
       if (signal?.aborted) throw new UploadError('cancelled')
     }
     checkCancelled()
-    await backend.acquireLock(this.owner)
+    await backend.acquireLock(this.owner())
     try {
       checkCancelled()
       const current = await backend.read()

@@ -12,55 +12,8 @@
  */
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { base64ToBytes, bytesToBase64 } from '@/lib/encoding/base64'
-import { UploadError, type UploadErrorCode } from '../UploadError'
-
-/** Параметры подключения к общей папке. */
-export interface SmbConnection {
-  /** Имя сервера или IP-адрес. */
-  host: string
-  /** TCP-порт (обычно 445). */
-  port: number
-  /** Имя общей папки. */
-  share: string
-  /** Домен Windows или пустая строка. */
-  domain: string
-  /** Имя учётной записи. */
-  username: string
-  /** Пароль. */
-  password: string
-}
-
-/** Элемент списка папки. */
-export interface SmbEntry {
-  /** Имя файла или папки (без пути). */
-  name: string
-  /** Это папка. */
-  isDirectory: boolean
-  /** Размер в байтах (у папок 0). */
-  size: number
-  /** Время последнего изменения (мс с начала эпохи). */
-  modifiedAt: number
-}
-
-/** Сведения о файле или папке. */
-export interface SmbStat {
-  /** Существует ли путь. */
-  exists: boolean
-  /** Это папка. */
-  isDirectory: boolean
-  /** Размер в байтах. */
-  size: number
-  /** Время последнего изменения (мс с начала эпохи). */
-  modifiedAt: number
-}
-
-/** Результат атомарной замены файла. */
-export interface SmbCommitResult {
-  /** SHA-256 записанного файла (hex), посчитанный нативной частью после перечитывания. */
-  hash: string
-  /** Размер итогового файла в байтах. */
-  size: number
-}
+import { UploadError } from '../UploadError'
+import { toSmbError, type SmbCommitResult, type SmbConnection, type SmbEntry, type SmbFiles, type SmbStat } from './smbFiles'
 
 /** Контракт нативного плагина. */
 interface SmbSharePlugin {
@@ -78,24 +31,8 @@ interface SmbSharePlugin {
 /** Плагин есть только в нативных сборках. */
 const SmbShare = registerPlugin<SmbSharePlugin>('SmbShare')
 
-/** Коды, которые нативные плагины передают через `call.reject(message, code)`. */
-const NATIVE_CODES: readonly UploadErrorCode[] = [
-  'hostUnreachable', 'timeout', 'authFailed', 'shareNotFound', 'notFound', 'exists', 'accessDenied', 'locked', 'verifyFailed', 'io',
-]
-
-/** Превращает отказ плагина в `UploadError` с кодом из нативной части. */
-function toSmbError(error: unknown, connection: SmbConnection): UploadError {
-  const code = typeof error === 'object' && error !== null ? (error as { code?: unknown }).code : undefined
-  const detail = error instanceof Error ? error.message : String(error)
-  const params = { detail, host: connection.host, share: connection.share }
-  // Capacitor отвечает так, когда плагин не зарегистрирован на платформе (браузер, старая сборка).
-  if (code === 'UNIMPLEMENTED') return new UploadError('unavailable', params)
-  const known = NATIVE_CODES.find((candidate) => candidate === code)
-  return new UploadError(known ?? 'io', params)
-}
-
-/** Файловые операции на общей папке с ошибками в виде `UploadError`. */
-export class SmbShareClient {
+/** Файловые операции на общей папке через плагин Capacitor. */
+export class SmbShareClient implements SmbFiles {
   /** Сведения о файле или папке; `exists: false`, если пути нет. */
   probe(connection: SmbConnection, path: string): Promise<SmbStat> {
     return this.call(connection, () => SmbShare.probe({ connection, path }))
@@ -157,3 +94,5 @@ export class SmbShareClient {
     }
   }
 }
+
+export type { SmbCommitResult, SmbConnection, SmbEntry, SmbStat } from './smbFiles'

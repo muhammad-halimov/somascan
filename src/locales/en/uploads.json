@@ -40,5 +40,10 @@
   "retryCaption": "Retry",
   "retryAll": "Retry all failed uploads",
   "retryAllCaption": "Retry",
-  "completedSheetRow": "Written to the table · sheet {{sheet}}, row {{row}}"
+  "completedSheetRow": "Written to the table · sheet {{sheet}}, row {{row}}",
+  "background": {
+    "title": "Writing to the table",
+    "pending": "Left to write: {{count}}",
+    "waiting": "Waiting for network or retry"
+  }
 }

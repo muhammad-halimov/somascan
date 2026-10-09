@@ -15,6 +15,8 @@ final class SomascanBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(SmbSharePlugin())
         bridge?.registerPluginInstance(GoogleDriveAuthPlugin())
         bridge?.registerPluginInstance(NativeHttpPlugin())
+        // Очередь выгрузки: движок вне WKWebView, пишет таблицу и в свёрнутом приложении.
+        bridge?.registerPluginInstance(UploadEnginePlugin())
 
         guard let webView = bridge?.webView else { return }
         let scrollView = webView.scrollView

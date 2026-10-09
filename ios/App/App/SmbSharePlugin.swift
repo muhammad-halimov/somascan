@@ -11,7 +11,8 @@ import AMSMB2
  * На время операции у системы запрашивается фоновое время (`beginBackgroundTask`), чтобы запись
  * дописалась, даже если пользователь свернул приложение.
  *
- * Контракт (аргументы и коды ошибок) описан в веб-части: `src/features/uploads/smb/SmbShare.ts`.
+ * Операции — `SmbShareOps` (их же выполняет движок очереди); контракт (аргументы и коды ошибок)
+ * описан в веб-части: `src/features/uploads/smb/smbFiles.ts`.
  */
 @objc(SmbSharePlugin)
 public class SmbSharePlugin: CAPInstancePlugin, CAPBridgedPlugin {
@@ -24,81 +25,54 @@ public class SmbSharePlugin: CAPInstancePlugin, CAPBridgedPlugin {
     private let client = SmbShareClient()
 
     @objc public func probe(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            try await client.probe(manager, path: try Self.path(call, "path"))
-        }
+        perform(call, op: "probe")
     }
 
     @objc public func read(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            ["data": try await client.read(manager, path: try Self.path(call, "path")).base64EncodedString()]
-        }
+        perform(call, op: "read")
     }
 
     @objc public func write(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            try await client.write(manager, path: try Self.path(call, "path"), data: try Self.data(call, "data"))
-            return [:]
-        }
+        perform(call, op: "write")
     }
 
     @objc public func commit(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            try await client.commit(
-                manager,
-                path: try Self.path(call, "path"),
-                data: try Self.data(call, "data"),
-                backupPath: call.getString("backupPath").map(SmbShareClient.normalize)
-            )
-        }
+        perform(call, op: "commit")
     }
 
     @objc public func rename(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            try await client.rename(manager, from: try Self.path(call, "from"), to: try Self.path(call, "to"))
-            return [:]
-        }
+        perform(call, op: "rename")
     }
 
     @objc public func remove(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            try await client.remove(manager, path: try Self.path(call, "path"))
-            return [:]
-        }
+        perform(call, op: "remove")
     }
 
     @objc public func list(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            ["entries": try await client.list(manager, path: try Self.path(call, "path"))]
-        }
+        perform(call, op: "list")
     }
 
     @objc public func mkdir(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            try await client.mkdir(manager, path: try Self.path(call, "path"))
-            return [:]
-        }
+        perform(call, op: "mkdir")
     }
 
     @objc public func mkdirs(_ call: CAPPluginCall) {
-        perform(call) { client, manager in
-            try await client.mkdirs(manager, path: try Self.path(call, "path"))
-            return [:]
-        }
+        perform(call, op: "mkdirs")
     }
 
-    /// Ставит операцию в очередь клиента и отвечает на вызов по её завершении.
-    private func perform(_ call: CAPPluginCall, _ body: @escaping @Sendable (SmbShareClient, SMB2Manager) async throws -> [String: Any]) {
+    /// Ставит операцию `op` (`SmbShareOps`) в очередь клиента и отвечает на вызов по её завершении.
+    private func perform(_ call: CAPPluginCall, op: String) {
         guard let target = SmbShareClient.Target(call.getObject("connection")) else {
             call.reject("Нужны параметры подключения (connection)", "invalidArgs")
             return
         }
         let client = self.client
+        let args = call.options as? [String: Any] ?? [:]
         Task.detached(priority: .utility) {
             let activity = await BackgroundActivity.begin()
             defer { Task { await activity.end() } }
             do {
-                let result = try await client.perform(target) { manager in try await body(client, manager) }
+                let result = try await client.perform(target) { manager in try await SmbShareOps.run(client, manager, op: op, args: args) }
                 call.resolve(result)
             } catch let failure as SmbShareClient.Failure {
                 call.reject(failure.message, failure.code)
@@ -106,27 +80,6 @@ public class SmbSharePlugin: CAPInstancePlugin, CAPBridgedPlugin {
                 call.reject((error as NSError).localizedDescription, "io")
             }
         }
-    }
-
-    /// Обязательный строковый аргумент.
-    private static func string(_ call: CAPPluginCall, _ name: String) throws -> String {
-        guard let value = call.getString(name) else {
-            throw SmbShareClient.Failure(code: "invalidArgs", message: "Нужен аргумент \(name)")
-        }
-        return value
-    }
-
-    /// Обязательный путь без ведущих и конечных слэшей.
-    private static func path(_ call: CAPPluginCall, _ name: String) throws -> String {
-        SmbShareClient.normalize(try string(call, name))
-    }
-
-    /// Обязательные данные в base64.
-    private static func data(_ call: CAPPluginCall, _ name: String) throws -> Data {
-        guard let data = Data(base64Encoded: try string(call, name), options: .ignoreUnknownCharacters) else {
-            throw SmbShareClient.Failure(code: "invalidArgs", message: "Данные не в base64")
-        }
-        return data
     }
 }
 

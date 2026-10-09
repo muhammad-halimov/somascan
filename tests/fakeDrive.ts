@@ -64,7 +64,9 @@ export class FakeDrive {
     const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
     const notFound = () => json({ error: { code: 404, message: 'File not found', errors: [{ reason: 'notFound' }] } }, 404)
     const path = url.pathname.replace(/^\/(upload\/)?drive\/v3/, '')
-    const body = init.body instanceof Blob ? new Uint8Array(await init.body.arrayBuffer()) : typeof init.body === 'string' ? new TextEncoder().encode(init.body) : new Uint8Array()
+    const body = init.body instanceof Uint8Array ? init.body
+      : init.body instanceof Blob ? new Uint8Array(await init.body.arrayBuffer())
+        : typeof init.body === 'string' ? new TextEncoder().encode(init.body) : new Uint8Array()
 
     if (path === '/about') return json({ user: { emailAddress: 'tester@example.com' } })
     if (path === '/files' && method === 'GET') {

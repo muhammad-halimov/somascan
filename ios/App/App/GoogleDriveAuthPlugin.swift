@@ -47,29 +47,12 @@ public class GoogleDriveAuthPlugin: CAPInstancePlugin, CAPBridgedPlugin {
 
     @objc public func getAccessToken(_ call: CAPPluginCall) {
         let scopes = call.getArray("scopes", String.self) ?? []
-        guard configure(call) else { return }
-        DispatchQueue.main.async {
-            let refresh: (GIDGoogleUser) -> Void = { user in
-                user.refreshTokensIfNeeded { refreshed, error in
-                    if let error {
-                        Self.reject(call, error)
-                        return
-                    }
-                    Self.resolve(call, user: refreshed ?? user, scopes: scopes)
-                }
-            }
-            if let user = GIDSignIn.sharedInstance.currentUser {
-                refresh(user)
-            } else if GIDSignIn.sharedInstance.hasPreviousSignIn() {
-                GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-                    if let user {
-                        refresh(user)
-                    } else {
-                        call.reject(error?.localizedDescription ?? "Нужно войти в Google заново", "authRequired")
-                    }
-                }
-            } else {
-                call.reject("Вход в Google не выполнен", "notSignedIn")
+        GoogleDriveTokens.fetch(scopes: scopes) { result in
+            switch result {
+            case .success(let token):
+                call.resolve(["accessToken": token])
+            case .failure(let failure):
+                call.reject(failure.message, failure.code, failure.error)
             }
         }
     }
@@ -84,52 +67,122 @@ public class GoogleDriveAuthPlugin: CAPInstancePlugin, CAPBridgedPlugin {
         }
     }
 
-    /**
-     Настраивает SDK по Info.plist. Без client ID или без URL-схемы для обратного вызова
-     SDK падает исключением, поэтому сначала проверяем и отвечаем `notConfigured`.
-     */
+    /// Настраивает SDK; без настройки отвечает `notConfigured`.
     private func configure(_ call: CAPPluginCall) -> Bool {
-        let clientID = (Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String)?.trimmingCharacters(in: .whitespaces) ?? ""
-        guard !clientID.isEmpty else {
-            call.reject("Вход через Google не настроен: в Info.plist нет GIDClientID", "notConfigured")
+        if let failure = GoogleDriveTokens.configure() {
+            call.reject(failure.message, failure.code)
             return false
-        }
-        let reversed = clientID.components(separatedBy: ".").reversed().joined(separator: ".")
-        let urlTypes = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]] ?? []
-        let schemes = urlTypes.flatMap { $0["CFBundleURLSchemes"] as? [String] ?? [] }
-        guard schemes.contains(where: { $0.caseInsensitiveCompare(reversed) == .orderedSame }) else {
-            call.reject("Вход через Google не настроен: в URL-схемах нет \(reversed)", "notConfigured")
-            return false
-        }
-        if GIDSignIn.sharedInstance.configuration?.clientID != clientID {
-            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
         }
         return true
     }
 
     private static func resolve(_ call: CAPPluginCall, user: GIDGoogleUser, scopes: [String]) {
-        let granted = Set(user.grantedScopes ?? [])
-        guard scopes.allSatisfy({ granted.contains($0) }) else {
-            call.reject("Нет доступа к Google Drive — войдите заново и разрешите доступ", "authRequired")
-            return
+        switch GoogleDriveTokens.token(of: user, scopes: scopes) {
+        case .success(let token):
+            call.resolve(["accessToken": token])
+        case .failure(let failure):
+            call.reject(failure.message, failure.code)
         }
-        call.resolve(["accessToken": user.accessToken.tokenString])
     }
 
     private static func reject(_ call: CAPPluginCall, _ error: Error) {
+        let failure = GoogleDriveTokens.failure(of: error)
+        call.reject(failure.message, failure.code, error)
+    }
+}
+
+/**
+ Токен доступа к Drive без интерфейса — для плагина (экран) и для движка очереди `UploadEngine`,
+ который пишет таблицу и в свёрнутом приложении. Работает после входа в настройках (`signIn`);
+ если нужен пользователь — отказ `authRequired`, окно из фона не открывается.
+ */
+enum GoogleDriveTokens {
+
+    /// Область доступа к Drive (как `DRIVE_SCOPE` в веб-части).
+    static let driveScope = "https://www.googleapis.com/auth/drive"
+
+    /// Отказ с кодом для веб-части.
+    struct Failure: Error {
+        let code: String
+        let message: String
+        var error: Error?
+    }
+
+    /**
+     Настраивает SDK по Info.plist; `nil` — готово. Без client ID или без URL-схемы для обратного
+     вызова SDK падает исключением, поэтому сначала проверяем и отвечаем `notConfigured`.
+     */
+    static func configure() -> Failure? {
+        let clientID = (Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String)?.trimmingCharacters(in: .whitespaces) ?? ""
+        guard !clientID.isEmpty else {
+            return Failure(code: "notConfigured", message: "Вход через Google не настроен: в Info.plist нет GIDClientID")
+        }
+        let reversed = clientID.components(separatedBy: ".").reversed().joined(separator: ".")
+        let urlTypes = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]] ?? []
+        let schemes = urlTypes.flatMap { $0["CFBundleURLSchemes"] as? [String] ?? [] }
+        guard schemes.contains(where: { $0.caseInsensitiveCompare(reversed) == .orderedSame }) else {
+            return Failure(code: "notConfigured", message: "Вход через Google не настроен: в URL-схемах нет \(reversed)")
+        }
+        if GIDSignIn.sharedInstance.configuration?.clientID != clientID {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
+        return nil
+    }
+
+    /// Свежий токен: восстанавливает вход и обновляет токен; ответ — на главном потоке.
+    static func fetch(scopes: [String], completion: @escaping (Result<String, Failure>) -> Void) {
+        DispatchQueue.main.async {
+            if let failure = configure() {
+                completion(.failure(failure))
+                return
+            }
+            let refresh: (GIDGoogleUser) -> Void = { user in
+                user.refreshTokensIfNeeded { refreshed, error in
+                    if let error {
+                        completion(.failure(failure(of: error)))
+                        return
+                    }
+                    completion(token(of: refreshed ?? user, scopes: scopes))
+                }
+            }
+            if let user = GIDSignIn.sharedInstance.currentUser {
+                refresh(user)
+            } else if GIDSignIn.sharedInstance.hasPreviousSignIn() {
+                GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
+                    if let user {
+                        refresh(user)
+                    } else {
+                        completion(.failure(Failure(code: "authRequired", message: error?.localizedDescription ?? "Нужно войти в Google заново", error: error)))
+                    }
+                }
+            } else {
+                completion(.failure(Failure(code: "notSignedIn", message: "Вход в Google не выполнен")))
+            }
+        }
+    }
+
+    /// Токен пользователя, если у него есть все нужные области.
+    static func token(of user: GIDGoogleUser, scopes: [String]) -> Result<String, Failure> {
+        let granted = Set(user.grantedScopes ?? [])
+        guard scopes.allSatisfy({ granted.contains($0) }) else {
+            return .failure(Failure(code: "authRequired", message: "Нет доступа к Google Drive — войдите заново и разрешите доступ"))
+        }
+        return .success(user.accessToken.tokenString)
+    }
+
+    /// Ошибка Google Sign-In → отказ с кодом.
+    static func failure(of error: Error) -> Failure {
         let nsError = error as NSError
         if nsError.domain == kGIDSignInErrorDomain {
             switch GIDSignInError.Code(rawValue: nsError.code) {
             case .canceled:
-                call.reject("Вход отменён", "cancelled", error)
-                return
+                return Failure(code: "cancelled", message: "Вход отменён", error: error)
             case .hasNoAuthInKeychain:
-                call.reject("Вход в Google не выполнен", "notSignedIn", error)
-                return
+                return Failure(code: "notSignedIn", message: "Вход в Google не выполнен", error: error)
             default:
                 break
             }
         }
-        call.reject(nsError.localizedDescription, "authRequired", error)
+        return Failure(code: "authRequired", message: nsError.localizedDescription, error: error)
     }
 }

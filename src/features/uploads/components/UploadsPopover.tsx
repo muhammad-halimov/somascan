@@ -10,9 +10,9 @@ import { EXIT_ANIMATION_MS } from '@/hooks/usePresence'
 import { isMissingValue } from '@/features/recognition/label/labelFields'
 import { useLabelFormatter } from '@/features/recognition/label/useLabelFormatter'
 import { isProductForm, PRODUCT_FORM_KEY } from '@/features/recognition/label/productForm'
-import { hasFailed, uploadStore, type UploadRecord, type UploadStatus } from '../store/UploadStore'
+import { uploadQueue, uploadStore } from '../queue/appQueue'
+import { hasFailed, type UploadRecord, type UploadStatus } from '../store/UploadStore'
 import { useUploadErrorText } from '../useUploadErrorText'
-import { uploadWorker } from '../worker/UploadWorker'
 import './UploadsPopover.css'
 
 /** Свойства `UploadsPopover`. */
@@ -73,7 +73,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
       okButtonTitle: t('clearDialog.confirm'),
       cancelButtonTitle: t('common:cancel'),
     })
-    if (confirmed) uploadStore.clearCompleted()
+    if (confirmed) uploadQueue.clearCompleted()
   }
 
   /** Текст значения поля бирки или `undefined`, если его нет. */
@@ -121,7 +121,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
       okButtonTitle: t('deleteDialog.confirm'),
       cancelButtonTitle: t('common:cancel'),
     })
-    if (confirmed) removeAnimated(record.id, () => uploadStore.remove(record.id))
+    if (confirmed) removeAnimated(record.id, () => uploadQueue.remove(record.id))
   }
 
   /**
@@ -138,8 +138,8 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
     })
     if (!confirmed) return
     const current = uploadStore.getSnapshot().find((candidate) => candidate.id === record.id)
-    if (current?.status === 'uploading') uploadWorker.cancel(record.id)
-    else if (current && current.status !== 'completed') removeAnimated(record.id, () => uploadWorker.cancel(record.id))
+    if (current?.status === 'uploading') uploadQueue.cancel(record.id)
+    else if (current && current.status !== 'completed') removeAnimated(record.id, () => uploadQueue.cancel(record.id))
   }
 
   return (
@@ -150,7 +150,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
         actions={(
           <>
             {hasFailed(records) && (
-              <ActionButton variant="ghost" icon={<ResetIcon />} caption={t('retryAllCaption')} label={t('retryAll')} onClick={() => uploadWorker.retryAll()} />
+              <ActionButton variant="ghost" icon={<ResetIcon />} caption={t('retryAllCaption')} label={t('retryAll')} onClick={() => uploadQueue.retryAll()} />
             )}
             <ActionButton variant="ghost" icon={<TrashIcon />} caption={t('clearCaption')} label={t('clear')} disabled={!records.some((record) => record.status === 'completed')} onClick={() => void clearCompleted()} />
             <ActionButton variant="ghost" icon={<CloseIcon />} caption={t('common:close')} label={t('close')} onClick={onClose} />
@@ -194,7 +194,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
                   trailing={(
                     <span className="upload-item-actions">
                       {record.status === 'failed' && (
-                        <ActionButton size={46} icon={<ResetIcon />} caption={t('retryCaption')} label={t('retry')} onClick={() => uploadWorker.retry(record.id)} />
+                        <ActionButton size={46} icon={<ResetIcon />} caption={t('retryCaption')} label={t('retry')} onClick={() => uploadQueue.retry(record.id)} />
                       )}
                       {record.status === 'completed' ? (
                         <ActionButton size={46} icon={<TrashIcon />} caption={t('deleteCaption')} label={t('delete')} onClick={() => void removeRecord(record)} />

@@ -353,3 +353,68 @@ final class SmbShareClient: @unchecked Sendable {
         }
     }
 }
+
+/**
+ * Операции на общей папке по имени — общие для плагина `SmbSharePlugin` (экран приложения)
+ * и движка очереди `UploadEngine` (фоновая запись таблицы). Аргументы и результаты — как в контракте
+ * веб-части (`src/features/uploads/smb/smbFiles.ts`): пути через `/`, содержимое файлов — base64.
+ */
+enum SmbShareOps {
+
+    /// Выполняет операцию `op` над подключённой общей папкой.
+    static func run(_ client: SmbShareClient, _ manager: SMB2Manager, op: String, args: [String: Any]) async throws -> [String: Any] {
+        switch op {
+        case "probe":
+            return try await client.probe(manager, path: try path(args, "path"))
+        case "read":
+            return ["data": try await client.read(manager, path: try path(args, "path")).base64EncodedString()]
+        case "write":
+            try await client.write(manager, path: try path(args, "path"), data: try data(args, "data"))
+            return [:]
+        case "commit":
+            return try await client.commit(
+                manager,
+                path: try path(args, "path"),
+                data: try data(args, "data"),
+                backupPath: (args["backupPath"] as? String).map(SmbShareClient.normalize)
+            )
+        case "rename":
+            try await client.rename(manager, from: try path(args, "from"), to: try path(args, "to"))
+            return [:]
+        case "remove":
+            try await client.remove(manager, path: try path(args, "path"))
+            return [:]
+        case "list":
+            return ["entries": try await client.list(manager, path: try path(args, "path"))]
+        case "mkdir":
+            try await client.mkdir(manager, path: try path(args, "path"))
+            return [:]
+        case "mkdirs":
+            try await client.mkdirs(manager, path: try path(args, "path"))
+            return [:]
+        default:
+            throw SmbShareClient.Failure(code: "invalidArgs", message: "Неизвестная операция \(op)")
+        }
+    }
+
+    /// Обязательный строковый аргумент.
+    private static func string(_ args: [String: Any], _ name: String) throws -> String {
+        guard let value = args[name] as? String else {
+            throw SmbShareClient.Failure(code: "invalidArgs", message: "Нужен аргумент \(name)")
+        }
+        return value
+    }
+
+    /// Обязательный путь без ведущих и конечных слэшей.
+    private static func path(_ args: [String: Any], _ name: String) throws -> String {
+        SmbShareClient.normalize(try string(args, name))
+    }
+
+    /// Обязательные данные в base64.
+    private static func data(_ args: [String: Any], _ name: String) throws -> Data {
+        guard let data = Data(base64Encoded: try string(args, name), options: .ignoreUnknownCharacters) else {
+            throw SmbShareClient.Failure(code: "invalidArgs", message: "Данные не в base64")
+        }
+        return data
+    }
+}

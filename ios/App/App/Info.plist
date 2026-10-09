@@ -81,5 +81,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Фоновая выгрузка в таблицу (UploadBackground): обновление в фоне, обработка с сетью и продолжаемая задача iOS 26+. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.somascan.app.uploads.refresh</string>
+		<string>com.somascan.app.uploads.processing</string>
+		<string>com.somascan.app.uploads.continued.*</string>
+	</array>
 </dict>
 </plist>

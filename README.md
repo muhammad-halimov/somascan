@@ -100,7 +100,7 @@ npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe o
 
 ## Выгрузка в таблицу на сетевой диск
 
-Кнопка **«Далее»** на карточке результата ставит распознанную (и поправленную) бирку в очередь и очищает экран для следующей. Запись идёт **в фоне, строго по одной** — очередь хранится на устройстве (`somascan.uploads.v2`) и переживает перезапуск. Состояние каждой записи видно в «Загрузках»: *в очереди → запись в таблицу → записано* либо *не записано* с причиной и кнопкой «Повторить»; счётчик очереди — на кнопке «Загрузки» в шапке. Незаписанную бирку можно **отменить** (кнопка «Отмена» вместо «Удалить»): ждущая убирается из очереди сразу, пишущаяся останавливается на ближайшем шаге до замены файла (журнал не тронут, блокировка снимается); если файл уже заменяется, запись доводится до конца. Удалить из истории можно только записанную бирку.
+Кнопка **«Далее»** на карточке результата ставит распознанную (и поправленную) бирку в очередь и очищает экран для следующей. Запись идёт **в фоне, строго по одной** — очередь хранится на устройстве и переживает перезапуск; на телефоне её пишет движок вне WebView — и в свёрнутом, и в закрытом приложении (см. «Фоновая выгрузка»). Состояние каждой записи видно в «Загрузках»: *в очереди → запись в таблицу → записано* либо *не записано* с причиной и кнопкой «Повторить»; счётчик очереди — на кнопке «Загрузки» в шапке. Незаписанную бирку можно **отменить** (кнопка «Отмена» вместо «Удалить»): ждущая убирается из очереди сразу, пишущаяся останавливается на ближайшем шаге до замены файла (журнал не тронут, блокировка снимается); если файл уже заменяется, запись доводится до конца. Удалить из истории можно только записанную бирку.
 
 ### Как проходит одна запись (`TableWriter` + `SmbTableBackend`)
 
@@ -117,7 +117,24 @@ npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe o
 
 ### Повторы и ошибки
 
-Временные сбои (нет сети, сервер не отвечает, таблица открыта в Excel, занята другим устройством, проверка не прошла) повторяются с растущей паузой: 15 с, 30 с, 1, 2, 5, 10, затем каждые 15 минут. Постоянные (неверный пароль, нет общей папки, нет прав, не настроен диск, нет таблицы по пути из настроек, файл не `.xlsx`, в файле нет журнала проб, сверка до замены нашла бы изменения чужих данных) ждут пользователя: после изменения настроек хранилища все незаписанные записи возвращаются в очередь сами. Очередь просыпается при появлении записи, возврате сети и возвращении приложения на передний план. Коды ошибок — `UploadError`, тексты — `errors:upload.*`.
+Временные сбои (нет сети, сервер не отвечает, таблица открыта в Excel, занята другим устройством, проверка не прошла) повторяются с растущей паузой: 15 с, 30 с, 1, 2, 5, 10, затем каждые 15 минут. Постоянные (неверный пароль, нет общей папки, нет прав, не настроен диск, нет таблицы по пути из настроек, файл не `.xlsx`, в файле нет журнала проб, сверка до замены нашла бы изменения чужих данных) ждут пользователя: после изменения настроек хранилища все незаписанные записи возвращаются в очередь сами. Очередь просыпается при появлении записи, возврате сети, возвращении приложения на передний план и запуске фоновой задачи. Коды ошибок — `UploadError`, тексты — `errors:upload.*`.
+
+### Фоновая выгрузка (движок очереди)
+
+Раньше очередь обрабатывалась в WebView экрана: в свёрнутом приложении Android замораживал процесс, а iOS приостанавливал страницу — запись «висела» и мгновенно доходила при возврате, а закрытое посреди записи приложение оставляло на сервере свою блокировку, и потом 5 минут сыпалось «таблицу пишет другое устройство». Теперь очередь пишет **движок** — отдельный JS-файл `upload-engine.js` (`src/engine`, сборка `vite.engine.config.ts`, входит в `npm run build`), который нативная часть держит вне экрана:
+
+| | Android | iOS |
+|---|---|---|
+| Где работает | скрытый WebView процесса (`UploadEngine.java`), не связан с экраном | JavaScriptCore (`UploadEngine.swift`), вне WKWebView |
+| Свёрнуто | фоновая работа WorkManager (`UploadWork.java`) как foreground service типа `dataSync` с уведомлением «Выгрузка в таблицу · Осталось записать: N», пока очередь не допишется | фоновое время приложения (`beginBackgroundTask`, ~30 с); iOS 26+ — продолжаемая задача (`BGContinuedProcessingTask`) с ходом выгрузки в системе, без ограничения ~30 с |
+| Закрыто (смахнули) | процесс остаётся, пока идёт фоновая работа, — очередь дописывается | iOS не запускает в фоне приложение, закрытое пользователем: очередь продолжится при открытии |
+| Ждёт сети / паузы после сбоя | WorkManager запустит работу (условие «есть сеть»), поднимет процесс и движок — без открытия приложения | `BGAppRefreshTask` / `BGProcessingTask` (сеть) — когда разрешит система |
+
+Экран приложения — только окно в очередь: плагин `UploadEngine` (`uploads/queue/NativeUploadQueue.ts`) шлёт команды (поставить, повторить, отменить, удалить), настройки хранилища и id устройства и получает снимки очереди. Очередь и настройки движок хранит в файлах приложения (Android `files/upload-engine/`, iOS `Application Support/upload-engine/`); очередь прежней версии из `localStorage` переносится при первом запуске. Протокол — `src/engine/protocol.ts`, нативный хост (`SomascanHost`) даёт хранилище, сетевой диск (те же `SmbOps` / `SmbShareOps`, что у плагина `SmbShare`), HTTP для Drive, токен Google, таймеры и журнал. В браузере очередь по-прежнему обрабатывается на странице (`LocalUploadQueue`).
+
+**Своя блокировка** (этого же устройства) при новой попытке снимается сразу: устройство пишет таблицу только из движка и по одной записи, поэтому своя блокировка — след оборванной записи, а не чужая работа. Чужая свежая блокировка — по-прежнему `busy`, брошенная — снимается через 5 минут.
+
+На Android 13+ при первой бирке спрашивается разрешение на уведомления (без него выгрузка идёт, но уведомление не видно). Журнал движка: Android — `adb logcat -s UploadEngine UploadWork`, iOS — Console.app, процесс App, `[UploadEngine]`. Проверка без телефона: `npm test` запускает собранный движок в «голом» JS-контексте (как JavaScriptCore) с поддельным хостом — запись на сетевой диск и в Drive, перезапуск посреди записи со своей блокировкой, отсутствующая таблица (`tests/engine.test.ts`).
 
 ### Настройки
 
@@ -128,15 +145,17 @@ npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe o
 | Слой | Где | Что |
 |---|---|---|
 | Очередь | `features/uploads/store/UploadStore.ts` | записи со статусами, паузы, лимит истории |
-| Обработчик | `features/uploads/worker/UploadWorker.ts`, `RetryPolicy.ts` | одна запись за раз, события сети и приложения |
+| Обработчик | `features/uploads/worker/UploadWorker.ts`, `RetryPolicy.ts` | одна запись за раз; настройки, сеть и пробуждения — от среды |
+| Движок | `src/engine/` (`Engine`, `main`, `host`, `polyfills`, `HostSmbShare`, `hostFetch`, `protocol`) | очередь вне WebView: Android — `UploadEngine.java` + `UploadWork.java` (WorkManager), iOS — `UploadEngine.swift` + `UploadBackground.swift` |
+| Экран | `features/uploads/queue/` | `NativeUploadQueue` (плагин `UploadEngine`), `LocalUploadQueue` (браузер), `appQueue` (экземпляры), `appBackends` (проверка таблицы) |
 | Запись | `features/uploads/worker/TableWriter.ts`, `TableBackend.ts`, `tableBackends.ts` | общий цикл записи; хранилище (SMB или Drive) — по настройкам |
 | Журнал | `features/uploads/xlsx/` | `LabelWorkbook` (ExcelJS, грузится лениво), `labTableLayout` (шапка), `labTableCells` (значения), `tableCell`, `uploadColumns`, `BackupPolicy` |
-| SMB | `features/uploads/smb/SmbShare.ts`, `smbSettings.ts`, `SmbTableBackend.ts` | обёртка над плагином, разбор настроек и путей, блокировка и замена на общей папке |
+| SMB | `features/uploads/smb/smbFiles.ts`, `SmbShare.ts`, `smbSettings.ts`, `SmbTableBackend.ts` | контракт операций, обёртка над плагином, разбор настроек и путей, блокировка и замена на общей папке |
 | Google Drive | `features/uploads/drive/` | `DriveClient` (REST API v3), `DriveTableBackend`, `GoogleDriveAuth` (вход), `driveSettings` |
-| Android | `android/.../SmbSharePlugin.java`, `SmbShareClient.java` | [smbj](https://github.com/hierynomus/smbj) (Apache-2.0), один поток, wake lock на время операции |
-| iOS | `ios/App/App/SmbSharePlugin.swift`, `SmbShareClient.swift` | [AMSMB2](https://github.com/amosavian/AMSMB2) (MIT) поверх libsmb2 (LGPL-2.1, подключён динамическим фреймворком — фаза «Embed Frameworks»), очередь задач, фоновое время на операцию |
+| Android | `android/.../SmbSharePlugin.java`, `SmbOps.java`, `SmbShareClient.java` | [smbj](https://github.com/hierynomus/smbj) (Apache-2.0), один поток, wake lock на время операции |
+| iOS | `ios/App/App/SmbSharePlugin.swift`, `SmbShareClient.swift` (`SmbShareOps`) | [AMSMB2](https://github.com/amosavian/AMSMB2) (MIT) поверх libsmb2 (LGPL-2.1, подключён динамическим фреймворком — фаза «Embed Frameworks»), очередь задач, фоновое время на операцию |
 
-Контракт плагина `SmbShare` (`probe`, `read`, `write`, `commit`, `rename`, `remove`, `list`, `mkdir`, `mkdirs`) описан в `SmbShare.ts`; пути — через `/` от корня общей папки, данные — base64.
+Контракт операций сетевого диска (`probe`, `read`, `write`, `commit`, `rename`, `remove`, `list`, `mkdir`, `mkdirs`) описан в `smbFiles.ts` — общий для плагина `SmbShare` и хоста движка; пути — через `/` от корня общей папки, данные — base64.
 
 ### Проверка без сервера завода
 
@@ -411,7 +430,8 @@ src/
       LabelRecognizer.ts       фото → провайдер → поля бирки
     workspace/               главный экран: фото, жесты, просмотр на весь экран, результат, режим правки
     settings/                лист настроек: вкладки «Основные», «Хранилище», «Расширенные»; SettingsStore
-    uploads/                 очередь выгрузки и история («Загрузки»): UploadStore, TableCheckStore (проверка наличия таблицы), worker (UploadWorker, TableWriter, RetryPolicy), xlsx (LabelWorkbook…), smb (плагин SmbShare), drive (Google Drive и вход), UploadError
+    uploads/                 очередь выгрузки и история («Загрузки»): UploadStore, TableCheckStore (проверка наличия таблицы), queue (экран ↔ движок), worker (UploadWorker, TableWriter, RetryPolicy), xlsx (LabelWorkbook…), smb (плагин SmbShare), drive (Google Drive и вход), UploadError
+  engine/                  движок очереди выгрузки (upload-engine.js): работает вне WebView — Android скрытый WebView, iOS JavaScriptCore
   hooks/                   общие React-хуки (тема, сеть, панели, слои истории, кнопка «Назад» Android…)
   i18n/                    настройка i18next, список языков, типизация ключей
   locales/<язык>/<модуль>.json   переводы: en, ro, tg, ru × common, workspace, label, settings, uploads, errors
@@ -428,7 +448,7 @@ src/
     validation/              type guards для данных извне
   styles/                  глобальные стили: токены (цвета, тёмная тема), база, анимации, platform-ios (материалы и стекло), native (отклик на касания)
 capacitor.config.ts        конфигурация Capacitor (appId: com.somascan.app)
-android/, ios/             нативные проекты; локальные плагины: NativeTheme (обе платформы), NativeSheet (Android, панель действий Material 3)
+android/, ios/             нативные проекты; локальные плагины: NativeTheme (обе платформы), NativeSheet (Android, панель действий Material 3), SmbShare, GoogleDriveAuth, NativeHttp, UploadEngine (движок очереди и фоновая выгрузка)
 ```
 
 ### Соглашения

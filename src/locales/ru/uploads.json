@@ -40,5 +40,10 @@
   "retryCaption": "Повтор",
   "retryAll": "Повторить все незаписанные",
   "retryAllCaption": "Повтор",
-  "completedSheetRow": "Записано в таблицу · лист {{sheet}}, строка {{row}}"
+  "completedSheetRow": "Записано в таблицу · лист {{sheet}}, строка {{row}}",
+  "background": {
+    "title": "Выгрузка в таблицу",
+    "pending": "Осталось записать: {{count}}",
+    "waiting": "Ждёт сети или повтора"
+  }
 }

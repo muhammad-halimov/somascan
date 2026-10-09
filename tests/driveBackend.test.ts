@@ -78,6 +78,15 @@ test('чужая свежая блокировка — busy, брошенная 
   assert.equal((await writer.write(record(1), backend)).rowNumber, 7)
 })
 
+test('своя блокировка от оборванной записи снимается сразу', async () => {
+  const drive = new FakeDrive()
+  drive.add({ id: 'folder1', name: 'Somascan', mimeType: 'application/vnd.google-apps.folder', parents: ['root'] })
+  const { backend, writer } = setup(drive)
+  drive.add({ name: 'labels.xlsx.lock', mimeType: 'text/plain', parents: ['folder1'], appProperties: { somascanLockOwner: 'device-a' } })
+  assert.equal((await writer.write(record(1), backend)).rowNumber, 7)
+  assert.equal(drive.childrenOf('folder1').some((file) => file.name.endsWith('.lock')), false)
+})
+
 test('таблицу изменили во время записи — busy, чужие данные не затёрты', async () => {
   const drive = new FakeDrive()
   drive.add({ id: 'folder1', name: 'Somascan', mimeType: 'application/vnd.google-apps.folder', parents: ['root'] })

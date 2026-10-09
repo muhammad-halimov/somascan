@@ -28,4 +28,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
         SceneDelegateProxy.shared.scene(scene, continue: userActivity)
     }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        // Очередь выгрузки дописывается в фоне (UploadBackground).
+        UploadBackground.shared.didEnterBackground()
+    }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        UploadBackground.shared.willEnterForeground()
+    }
 }

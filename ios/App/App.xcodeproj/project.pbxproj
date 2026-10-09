@@ -26,6 +26,9 @@
 		150DAB06E174C760C170A219 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1698C0A2EB3120FC09FD55A7 /* GoogleSignIn */; };
 		369885684A50055D8346D06E /* NativeHttpPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9259E0EA7096BC0A13DEB46D /* NativeHttpPlugin.swift */; };
 		7A1C0F2E4B6D8A9012345601 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7A1C0F2E4B6D8A9012345602 /* InfoPlist.strings */; };
+		FE03BACF25D94C95A241139E /* UploadEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 548978CE709245A4A0D1C83B /* UploadEngine.swift */; };
+		9A01D235F62A4DEEB5378978 /* UploadBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD35C1693C414E659ACF9D18 /* UploadBackground.swift */; };
+		31BAD9F8E1A344769434E993 /* UploadEnginePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B19026139B43368526F5B2 /* UploadEnginePlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +53,9 @@
 		7A1C0F2E4B6D8A9012345604 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		7A1C0F2E4B6D8A9012345605 /* ro */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ro; path = ro.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		7A1C0F2E4B6D8A9012345606 /* tg */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tg; path = tg.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		548978CE709245A4A0D1C83B /* UploadEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadEngine.swift; sourceTree = "<group>"; };
+		AD35C1693C414E659ACF9D18 /* UploadBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadBackground.swift; sourceTree = "<group>"; };
+		C4B19026139B43368526F5B2 /* UploadEnginePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadEnginePlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -107,6 +113,9 @@
 				E644384EEB2C1395EE9AA672 /* SmbSharePlugin.swift */,
 				E8FBE714201AF0C1C979E31F /* GoogleDriveAuthPlugin.swift */,
 				9259E0EA7096BC0A13DEB46D /* NativeHttpPlugin.swift */,
+				C4B19026139B43368526F5B2 /* UploadEnginePlugin.swift */,
+				AD35C1693C414E659ACF9D18 /* UploadBackground.swift */,
+				548978CE709245A4A0D1C83B /* UploadEngine.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -218,6 +227,9 @@
 				4509D23B78F7E73B919E3918 /* SmbSharePlugin.swift in Sources */,
 				DDB230B26D8276B886E1424B /* GoogleDriveAuthPlugin.swift in Sources */,
 				369885684A50055D8346D06E /* NativeHttpPlugin.swift in Sources */,
+				31BAD9F8E1A344769434E993 /* UploadEnginePlugin.swift in Sources */,
+				9A01D235F62A4DEEB5378978 /* UploadBackground.swift in Sources */,
+				FE03BACF25D94C95A241139E /* UploadEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

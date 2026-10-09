@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --config vite.engine.config.ts",
     "lint": "oxlint",
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync",

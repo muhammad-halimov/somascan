@@ -14,7 +14,7 @@ import type { StorageSettings } from '@/features/settings/store/settingsSchema'
 import { Store } from '@/lib/store/Store'
 import { toUploadError, type UploadError } from '../UploadError'
 import type { TableProbeResult } from '../worker/TableBackend'
-import { uploadWorker } from '../worker/UploadWorker'
+import { probeTable } from '../queue/appBackends'
 
 /** Итог проверки. */
 export type TableCheckResult =
@@ -73,4 +73,4 @@ export class TableCheckStore extends Store<TableCheckState> {
 }
 
 /** Проверка таблицы приложения. */
-export const tableCheckStore = new TableCheckStore((storage) => uploadWorker.testConnection(storage))
+export const tableCheckStore = new TableCheckStore(probeTable)

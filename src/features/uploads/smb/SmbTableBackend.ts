@@ -2,7 +2,10 @@
  * Таблица на сетевом диске Windows (SMB).
  *
  * - Блокировка — папка `<таблица>.lock`: `mkdir` на сервере атомарен, второй `mkdir` получает `exists`.
- *   Внутри — `owner.json` с устройством и временем; брошенная блокировка снимается по сроку.
+ *   Внутри — `owner.json` с устройством и временем; брошенная блокировка снимается по сроку,
+ *   а своя (этого же устройства) — сразу: таблицу устройство пишет только из движка очереди и по одной
+ *   записи, поэтому своя блокировка при новой попытке — след оборванной записи (приложение закрыли
+ *   или система выгрузила его посреди записи), а не чужая работа.
  * - Замена — в нативной части одним вызовом: временный файл → сверка SHA-256 → прежний файл
  *   переименовывается в резервную копию → временный становится таблицей.
  * - Если прошлая запись оборвалась между переименованиями, временный файл становится таблицей.
@@ -13,7 +16,7 @@ import { isRecord } from '@/lib/validation/guards'
 import { UploadError } from '../UploadError'
 import { LOCK_STALE_MS, type TableBackend, type TableProbeResult } from '../worker/TableBackend'
 import type { BackupPolicy } from '../xlsx/BackupPolicy'
-import type { SmbConnection, SmbShareClient } from './SmbShare'
+import type { SmbConnection, SmbFiles } from './smbFiles'
 import { TABLE_EXTENSION, type TablePaths } from './smbSettings'
 
 /** Файл внутри папки-блокировки с владельцем и временем. */
@@ -32,7 +35,7 @@ export class SmbTableBackend implements TableBackend {
   readonly stem: string
   readonly extension = TABLE_EXTENSION
   /** Файловые операции. */
-  private readonly share: SmbShareClient
+  private readonly share: SmbFiles
   /** Подключение. */
   private readonly connection: SmbConnection
   /** Пути таблицы, блокировки, копий. */
@@ -46,7 +49,7 @@ export class SmbTableBackend implements TableBackend {
    * @param paths Пути таблицы.
    * @param now Текущее время.
    */
-  constructor(share: SmbShareClient, connection: SmbConnection, paths: TablePaths, now: () => number = Date.now) {
+  constructor(share: SmbFiles, connection: SmbConnection, paths: TablePaths, now: () => number = Date.now) {
     this.share = share
     this.connection = connection
     this.paths = paths
@@ -67,7 +70,8 @@ export class SmbTableBackend implements TableBackend {
         const holder = await this.readLockOwner()
         const createdAt = holder?.createdAt ?? (await this.lockFolderTime())
         if (createdAt === null) continue // блокировку только что сняли — пробуем снова
-        if (attempt === 0 && this.now() - createdAt > LOCK_STALE_MS) {
+        const leftover = holder?.owner === owner || this.now() - createdAt > LOCK_STALE_MS
+        if (attempt === 0 && leftover) {
           await share.remove(connection, paths.lock).catch(() => undefined)
           continue
         }

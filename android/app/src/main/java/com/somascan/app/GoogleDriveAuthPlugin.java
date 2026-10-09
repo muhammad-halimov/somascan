@@ -22,7 +22,6 @@ import com.google.android.gms.auth.api.identity.ClearTokenRequest;
 import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.gms.auth.api.identity.RevokeAccessRequest;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.Scope;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +31,8 @@ import org.json.JSONException;
  * Вход через Google для записи таблицы в Drive (Google Identity AuthorizationClient).
  *
  * {@code signIn} показывает выбор аккаунта и согласие на доступ к Drive; после этого
- * {@code getAccessToken} получает свежий токен без интерфейса — так фоновая очередь пишет
- * таблицу сама. Если Google требует участия пользователя (доступ отозван, сменился пароль),
+ * {@code getAccessToken} получает свежий токен без интерфейса ({@link GoogleDriveTokens}; так же
+ * токен берёт движок очереди, который пишет таблицу и при закрытом приложении). Если Google требует участия пользователя (доступ отозван, сменился пароль),
  * {@code getAccessToken} отвечает {@code authRequired}, а не открывает окно из фона.
  *
  * Настройка: в Google Cloud Console — OAuth-клиент типа Android с именем пакета
@@ -41,10 +40,6 @@ import org.json.JSONException;
  */
 @CapacitorPlugin(name = "GoogleDriveAuth")
 public class GoogleDriveAuthPlugin extends Plugin {
-
-    private static final String PREFS = "somascan.googleDrive";
-    private static final String KEY_SIGNED_IN = "signedIn";
-    private static final String KEY_TOKEN = "lastToken";
 
     private ActivityResultLauncher<IntentSenderRequest> resolutionLauncher;
     /** Вызов {@code signIn}, ждущий окна согласия. */
@@ -91,10 +86,6 @@ public class GoogleDriveAuthPlugin extends Plugin {
 
     @PluginMethod
     public void getAccessToken(PluginCall call) {
-        if (!prefs().getBoolean(KEY_SIGNED_IN, false)) {
-            call.reject("Вход в Google не выполнен", "notSignedIn");
-            return;
-        }
         AuthorizationRequest request;
         try {
             request = requestFor(call);
@@ -102,22 +93,25 @@ public class GoogleDriveAuthPlugin extends Plugin {
             call.reject("Нужен список scopes", "invalidArgs");
             return;
         }
-        client().authorize(request)
-            .addOnSuccessListener(result -> {
-                if (result.hasResolution()) {
-                    // Без пользователя дальше нельзя: он войдёт заново в настройках.
-                    call.reject("Нужно войти в Google заново", "authRequired");
-                } else {
-                    resolveToken(call, result);
-                }
-            })
-            .addOnFailureListener(error -> rejectFailure(call, error));
+        GoogleDriveTokens.fetch(getContext(), request.getRequestedScopes(), new GoogleDriveTokens.Callback() {
+            @Override
+            public void onToken(String token) {
+                JSObject response = new JSObject();
+                response.put("accessToken", token);
+                call.resolve(response);
+            }
+
+            @Override
+            public void onFailure(String code, String message, Exception error) {
+                call.reject(message, code, error);
+            }
+        });
     }
 
     @PluginMethod
     public void signOut(PluginCall call) {
-        SharedPreferences prefs = prefs();
-        String token = prefs.getString(KEY_TOKEN, null);
+        SharedPreferences prefs = GoogleDriveTokens.prefs(getContext());
+        String token = prefs.getString(GoogleDriveTokens.KEY_TOKEN, null);
         String email = call.getString("email");
         prefs.edit().clear().apply();
         if (token != null) {
@@ -125,7 +119,7 @@ public class GoogleDriveAuthPlugin extends Plugin {
         }
         if (email != null && !email.isEmpty()) {
             List<Scope> scopes = new ArrayList<>();
-            scopes.add(new Scope("https://www.googleapis.com/auth/drive"));
+            scopes.add(new Scope(GoogleDriveTokens.DRIVE_SCOPE));
             client().revokeAccess(
                 RevokeAccessRequest.builder().setAccount(new Account(email, "com.google")).setScopes(scopes).build()
             );
@@ -158,29 +152,14 @@ public class GoogleDriveAuthPlugin extends Plugin {
             call.reject("Google не выдал токен доступа", "authRequired");
             return;
         }
-        prefs().edit().putBoolean(KEY_SIGNED_IN, true).putString(KEY_TOKEN, token).apply();
+        GoogleDriveTokens.remember(getContext(), token);
         JSObject response = new JSObject();
         response.put("accessToken", token);
         call.resolve(response);
     }
 
     private void rejectFailure(PluginCall call, Exception error) {
-        if (error instanceof ApiException) {
-            int status = ((ApiException) error).getStatusCode();
-            if (status == CommonStatusCodes.DEVELOPER_ERROR) {
-                call.reject("Вход через Google не настроен: нет OAuth-клиента Android для этой подписи приложения", "notConfigured", error);
-                return;
-            }
-            if (status == CommonStatusCodes.CANCELED) {
-                call.reject("Вход отменён", "cancelled", error);
-                return;
-            }
-            if (status == CommonStatusCodes.SIGN_IN_REQUIRED) {
-                call.reject("Нужно войти в Google", "authRequired", error);
-                return;
-            }
-        }
-        call.reject(error.getMessage() == null ? "Ошибка входа Google" : error.getMessage(), "io", error);
+        call.reject(GoogleDriveTokens.messageOf(error), GoogleDriveTokens.codeOf(error), error);
     }
 
     private AuthorizationRequest requestFor(PluginCall call) throws JSONException {
@@ -200,9 +179,5 @@ public class GoogleDriveAuthPlugin extends Plugin {
     private AuthorizationClient client() {
         Context context = getActivity() != null ? getActivity() : getContext();
         return Identity.getAuthorizationClient(context);
-    }
-
-    private SharedPreferences prefs() {
-        return getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 }
