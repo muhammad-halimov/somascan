@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/components/icons/Icons'
+import { missingManualFields, type LabelFieldDefinition } from '@/features/recognition/label/labelFields'
 import { hasProductForm } from '@/features/recognition/label/productForm'
+import { useSettings } from '@/features/settings/store/useSettings'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import './PhotoGrid.css'
@@ -23,13 +25,16 @@ export interface PhotoGridProps {
 }
 
 /** Состояние бирки для значка в углу ячейки. */
-type CellState = 'busy' | 'failed' | 'noForm' | 'done' | 'none'
+type CellState = 'busy' | 'failed' | 'noForm' | 'incomplete' | 'done' | 'none'
 
-function cellState(item: ScanItem): CellState {
+function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[]): CellState {
   if (item.hasError || item.status.kind === 'failed') return 'failed'
   if (item.status.kind === 'recognizing') return 'busy'
-  if (item.status.kind === 'done') return hasProductForm(item.status.label) ? 'done' : 'noForm'
-  return 'none'
+  if (item.status.kind !== 'done') return 'none'
+  if (!hasProductForm(item.status.label)) return 'noForm'
+  // У бирки без фото поля по умолчанию обязательны.
+  if (item.manual && missingManualFields(item.status.label, fields).length > 0) return 'incomplete'
+  return 'done'
 }
 
 /**
@@ -38,12 +43,14 @@ function cellState(item: ScanItem): CellState {
  *
  * Выбранные для отправки бирки обведены акцентным цветом, открытая — контрастным (у выбранной
  * открытой — оба кольца); выбор — «радиокнопка» в левом нижнем углу (кольцо, у выбранной — точка). Состояние — в правом нижнем:
- * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма), красный знак (ошибка).
+ * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма; у бирки без фото — и не заполнены
+ * обязательные поля), красный знак (ошибка).
  * Нажатие на ячейку открывает бирку (карточка увеличивает ячейку до одной бирки). Когда бирки уходят
  * (отправка, «Сброс»), оставшиеся плавно переезжают на освободившиеся места.
  */
 export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, onToggleSelected }: PhotoGridProps) {
   const { t } = useTranslation('workspace')
+  const { advanced } = useSettings()
 
   // Где стояли ячейки бирок: после отправки или «Сброса» оставшиеся переезжают на освободившиеся места
   // плавно, а не перескакивают (позиции — раскладки, без учёта transform перехода к одной бирке).
@@ -88,7 +95,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
             </div>
           )
         }
-        const state = cellState(item)
+        const state = cellState(item, advanced.labelFields)
         const stateText = state === 'none' ? '' : t(`grid.state.${state}`)
         const name = item.manual ? `${t('grid.item', { number })}, ${t('grid.manual')}` : t('grid.item', { number })
         const classes = ['photo-grid-cell', 'has-photo', item.manual && 'is-manual', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')
@@ -106,9 +113,9 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
               {item.manual && <span className="photo-grid-manual" aria-hidden="true"><ImageOffIcon /></span>}
               <span className="photo-grid-number" aria-hidden="true">{number}</span>
               {state === 'busy' && <span className="photo-grid-spinner" aria-hidden="true" />}
-              {(state === 'failed' || state === 'noForm' || state === 'done') && (
-                <span className={`photo-grid-badge is-${state}`} aria-hidden="true">
-                  {state === 'failed' ? <AlertIcon /> : state === 'noForm' ? <ExclamationIcon /> : <CheckIcon />}
+              {(state === 'failed' || state === 'noForm' || state === 'incomplete' || state === 'done') && (
+                <span className={`photo-grid-badge is-${state === 'incomplete' ? 'noForm' : state}`} aria-hidden="true">
+                  {state === 'failed' ? <AlertIcon /> : state === 'done' ? <CheckIcon /> : <ExclamationIcon />}
                 </span>
               )}
             </button>

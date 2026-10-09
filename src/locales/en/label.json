@@ -1,6 +1,8 @@
 {
   "title": "Data from tag",
   "notRecognized": "Not recognized",
+  "notFilled": "Not filled in",
+  "requiredField": "Required",
   "weightUnit": "kg",
   "lengthUnit": "mm",
   "fields": {

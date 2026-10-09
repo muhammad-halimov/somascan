@@ -9,11 +9,6 @@
   padding: 5px 12px 6px;
 }
 
-/* Появление и исчезновение (высота анимируется, см. SlideBar.tsx): содержимое не вылезает за панель. */
-.slide-bar.is-revealing {
-  overflow: hidden;
-}
-
 /* «Открыть» меняет вид (доступна в сетке, приглушена у одной бирки) плавно, вместе с переходом. */
 .slide-bar .action-button {
   transition: opacity 240ms ease;

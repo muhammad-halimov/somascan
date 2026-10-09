@@ -28,6 +28,8 @@ export interface NotesCardProps {
   hasPhoto: boolean
   /** «Повтор» доступен: у бирки есть фото (бирку без фото распознавать нечего). */
   canRetry: boolean
+  /** Бирка без фото: поля заполняют вручную, поля по умолчанию обязательны. */
+  isManual: boolean
   /** Поле бирки отредактировано. */
   onFieldChange: (key: LabelKey, value: string) => void
   /** «Правка»: включить режим правки, а нажатая ещё раз — отменить изменения и выйти. */
@@ -57,7 +59,7 @@ export interface NotesCardProps {
  * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const isRecognizing = status.kind === 'recognizing'
   // Править и отправлять в таблицу можно только распознанный результат: не во время запроса и не после ошибки.
@@ -107,7 +109,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
       )}
 
       {status.kind === 'done' ? (
-        <LabelFields key={`${itemKey}-${isEditing ? 'edit' : 'view'}`} label={status.label} isEditing={isEditing} onFieldChange={onFieldChange} />
+        <LabelFields key={`${itemKey}-${isEditing ? 'edit' : 'view'}`} label={status.label} isEditing={isEditing} onFieldChange={onFieldChange} manual={isManual} />
       ) : status.kind === 'failed' ? (
         <p className="notes-message is-error anim-enter" role="alert">
           <span className="notes-message-title">{t('errors:recognitionFailed')}</span>

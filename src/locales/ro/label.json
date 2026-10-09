@@ -1,6 +1,8 @@
 {
   "title": "Date de pe etichetă",
   "notRecognized": "Nerecunoscut",
+  "notFilled": "Necompletat",
+  "requiredField": "Câmp obligatoriu",
   "weightUnit": "kg",
   "lengthUnit": "mm",
   "fields": {

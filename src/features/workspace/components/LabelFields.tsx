@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDropDownIcon, ChevronUpDownIcon } from '@/components/icons/Icons'
-import { enabledLabelFields, isMissingValue, type LabelFieldKind, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
+import { enabledLabelFields, isEnabledByDefault, isMissingValue, type LabelFieldKind, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { useLabelFormatter } from '@/features/recognition/label/useLabelFormatter'
 import { isProductForm, PRODUCT_FORM_KEY, PRODUCT_FORMS } from '@/features/recognition/label/productForm'
@@ -36,6 +36,11 @@ export interface LabelFieldsProps {
   isEditing: boolean
   /** Вызывается при правке поля. */
   onFieldChange: (key: LabelKey, value: string) => void
+  /**
+   * Бирка без фото: пустое поле — «Не заполнено», а поля по умолчанию (производитель, размер, плавка,
+   * вес) обязательны — пустые отмечены цветом ошибки, как невыбранная форма.
+   */
+  manual?: boolean
 }
 
 /**
@@ -44,7 +49,7 @@ export interface LabelFieldsProps {
  * выбор открывается касанием значения и в просмотре, без режима правки.
  * Дальше — только поля, выбранные в настройках («Расширенные» → «Поля»).
  */
-export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProps) {
+export function LabelFields({ label, isEditing, onFieldChange, manual = false }: LabelFieldsProps) {
   const { t } = useTranslation('label')
   const formatter = useLabelFormatter()
   const fieldName = useLabelFieldName()
@@ -59,8 +64,10 @@ export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProp
           const { key } = field
           const value = label[key] ?? null
           const name = fieldName(field)
+          const missing = isMissingValue(value)
+          const required = manual && isEnabledByDefault(key)
           return (
-            <label className="label-field" key={key}>
+            <label className={`label-field${required && missing ? ' is-required' : ''}`} key={key}>
               <span className="label-field-name">{name}</span>
               {isEditing ? (
                 <input
@@ -68,7 +75,8 @@ export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProp
                   aria-label={name}
                   // У размера и веса в правке — только число: единицы и пометки показывает просмотр.
                   value={formatter.editValue(field.kind, value, key)}
-                  placeholder={t('notRecognized')}
+                  placeholder={required ? t('requiredField') : manual ? t('notFilled') : t('notRecognized')}
+                  aria-required={required || undefined}
                   onChange={(event) => onFieldChange(key, event.target.value)}
                   onKeyDown={moveToNextField}
                   autoComplete="off"
@@ -78,8 +86,8 @@ export function LabelFields({ label, isEditing, onFieldChange }: LabelFieldsProp
                   {...(key === 'size' ? FIELD_KEYBOARD.weight : FIELD_KEYBOARD[field.kind])}
                 />
               ) : (
-                <span className={`label-field-value${isMissingValue(value) ? ' is-missing' : ''}`}>
-                  {formatter.value(field.kind, value, key)}
+                <span className={`label-field-value${missing ? ' is-missing' : ''}${required && missing ? ' is-required' : ''}`}>
+                  {missing && manual ? (required ? t('requiredField') : t('notFilled')) : formatter.value(field.kind, value, key)}
                 </span>
               )}
             </label>

@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { enabledLabelFields, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
+import { enabledLabelFields, missingManualFields, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
+import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { hasProductForm } from '@/features/recognition/label/productForm'
 import { settingsStore } from '@/features/settings/store/SettingsStore'
 import { isDriveConfigured } from '@/features/uploads/drive/driveSettings'
@@ -15,7 +16,7 @@ import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
 import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
-import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
+import { SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
@@ -43,7 +44,10 @@ export function ScanWorkspace() {
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   /** Карточка фото: одна бирка или сетка. */
   const [view, setView] = useState<PhotoCardView>('single')
-  /** Сетку уже открывали: у бирки появляется «Назад» к сетке. */
+  /**
+   * Из сетки уже возвращались: у бирки есть «Назад» к сетке. Ставится при возврате, а не при открытии
+   * сетки — кнопка приезжает вместе с биркой, а не появляется на миг перед уходом в сетку.
+   */
   const [usedGrid, setUsedGrid] = useState(false)
 
   const workspaceRef = useRef<HTMLElement>(null)
@@ -58,7 +62,10 @@ export function ScanWorkspace() {
   const closeViewer = useHistoryLayer(isViewerOpen, () => setIsViewerOpen(false), 'photo')
   const viewer = usePresence(isViewerOpen)
   /** Сетка закрывается системным «Назад» (жест iOS, кнопка Android) — открывается выбранная бирка. */
-  const closeGrid = useHistoryLayer(view === 'grid', () => setView('single'), 'grid')
+  const closeGrid = useHistoryLayer(view === 'grid', () => {
+    setView('single')
+    setUsedGrid(true)
+  }, 'grid')
 
   // Другая бирка — исходный масштаб и поворот.
   const { reset: resetTransform } = transform
@@ -213,7 +220,6 @@ export function ScanWorkspace() {
   /** «Сетка» и «Назад»: фото уменьшается в свою ячейку, появляется сетка. Правка закрывается. */
   const pendingGrid = useRef(false)
   const showGrid = () => {
-    setUsedGrid(true)
     // Правка — свой слой истории: сначала закрываем его, сетку открываем, когда он снят (см. эффект ниже).
     if (editMode.isEditing) {
       pendingGrid.current = true
@@ -234,18 +240,36 @@ export function ScanWorkspace() {
     closeGrid()
   }
 
-  /** Бирка готова к отправке: распознана и выбрана форма. */
-  const isReady = (candidate: ScanItem) => candidate.status.kind === 'done' && hasProductForm(candidate.status.label)
+  const fieldName = useLabelFieldName()
+  /** Незаполненные обязательные поля бирки без фото (у распознанной — нет обязательных). */
+  const missingFields = (candidate: ScanItem) =>
+    candidate.manual && candidate.status.kind === 'done' ? missingManualFields(candidate.status.label, settingsStore.getSnapshot().advanced.labelFields) : []
+
+  /** Бирка готова к отправке: распознана (или заполнена вручную), выбрана форма, у бирки без фото заполнены обязательные поля. */
+  const isReady = (candidate: ScanItem) =>
+    candidate.status.kind === 'done' && hasProductForm(candidate.status.label) && missingFields(candidate).length === 0
 
   /** Открывает бирку, которая мешает отправке, и объясняет, что с ней. */
   const showNotReady = async (blocker: ScanItem) => {
     const index = session.items.indexOf(blocker)
     session.select(index)
     const number = index + 1
-    if (blocker.status.kind === 'done') {
+    if (blocker.status.kind === 'done' && !hasProductForm(blocker.status.label)) {
       // Не выбрана форма: выбор формы — первая строка карточки, докручиваем к нему.
       window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-product-form')?.scrollIntoView({ block: 'nearest' }), 0)
       await NativeDialogs.alert({ title: t('formDialog.title'), message: t('formDialog.message'), buttonTitle: t('common:ok') })
+      return
+    }
+    const missing = missingFields(blocker)
+    if (missing.length > 0) {
+      // Бирка без фото с пустыми обязательными полями: объясняем какими и открываем правку у первого из них.
+      await NativeDialogs.alert({
+        title: t('requiredDialog.title'),
+        message: t('requiredDialog.message', { fields: missing.map(fieldName).join(', ') }),
+        buttonTitle: t('common:ok'),
+      })
+      if (!editMode.isEditing) editMode.toggle()
+      window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-required')?.scrollIntoView({ block: 'nearest' }), 0)
       return
     }
     await NativeDialogs.alert({
@@ -327,10 +351,6 @@ export function ScanWorkspace() {
     }
   }
 
-  /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
-  const hasSlideBar = session.items.length > 0 || view === 'grid'
-  /** Панель появляется и уходит плавно: пока она схлопывается, остаётся в DOM. */
-  const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
 
   /** Сколько бирок выбрано для отправки. */
   const selectedCount = session.items.filter((candidate) => candidate.selected).length
@@ -343,7 +363,7 @@ export function ScanWorkspace() {
     >
       <input className="photo-input" {...picker.inputProps} />
       {/* Карточка фото и панель листания под ней — один блок. */}
-      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}`}>
+      <div className="photo-block has-slide-bar">
         <PhotoCard
           handleRef={photoCardRef}
           item={item}
@@ -363,17 +383,15 @@ export function ScanWorkspace() {
           onOpenActive={closeGrid}
           onToggleSelected={session.toggleSelected}
         />
-        {slideBar.mounted && (
-          <SlideBar
-            isClosing={slideBar.closing}
-            activeIndex={activeIndex}
-            positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
-            isGrid={view === 'grid'}
-            onPrevious={() => session.select(activeIndex - 1)}
-            onNext={() => session.select(activeIndex + 1)}
-            onOpen={closeGrid}
-          />
-        )}
+        {/* Панель листания — всегда (в пустом списке кнопки недоступны): блок фото не меняет высоту. */}
+        <SlideBar
+          activeIndex={activeIndex}
+          positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
+          isGrid={view === 'grid'}
+          onPrevious={() => session.select(activeIndex - 1)}
+          onNext={() => session.select(activeIndex + 1)}
+          onOpen={closeGrid}
+        />
       </div>
       <NotesCard
         cardRef={notesCardRef}
@@ -385,6 +403,7 @@ export function ScanWorkspace() {
         status={status}
         hasPhoto={item !== null}
         canRetry={item !== null && !item.manual}
+        isManual={item?.manual ?? false}
         onFieldChange={changeField}
         onToggleEdit={toggleEdit}
         onCloseEdit={editMode.exit}

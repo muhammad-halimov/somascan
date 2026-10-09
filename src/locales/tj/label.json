@@ -1,6 +1,8 @@
 {
   "title": "Маълумот аз барчасп",
   "notRecognized": "Шинохта нашуд",
+  "notFilled": "Пур нашудааст",
+  "requiredField": "Майдони ҳатмӣ",
   "weightUnit": "кг",
   "lengthUnit": "мм",
   "fields": {

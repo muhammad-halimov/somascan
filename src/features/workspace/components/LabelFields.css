@@ -104,8 +104,20 @@
   background-size: 6px 6px, 6px 6px;
 }
 
-.label-field.is-required .label-field-select {
+/* Обязательное и пустое (форма; у бирки без фото — и поля по умолчанию): линия и подсказка цветом ошибки. */
+.label-field.is-required .label-field-select,
+.label-field.is-required .label-field-input:not(:focus) {
   box-shadow: inset 0 -2px 0 var(--danger);
+}
+
+.label-field.is-required .label-field-input::placeholder {
+  color: var(--danger);
+  opacity: .85;
+}
+
+/* iOS: у полей нет нижней линии — тонкая рамка цветом ошибки по скруглению. */
+:root[data-platform='ios'] .label-field.is-required .label-field-input:not(:focus) {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 60%, transparent);
 }
 
 /*

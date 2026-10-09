@@ -98,6 +98,10 @@
     "title": "Forma nu este aleasă",
     "message": "Înainte de trimitere alegeți ce este pe etichetă: bară sau bobină — atingeți câmpul „Formă” din partea de sus a cardului."
   },
+  "requiredDialog": {
+    "title": "Completați câmpurile obligatorii",
+    "message": "O etichetă fără fotografie trebuie să aibă: {{fields}}."
+  },
   "sendDialog": {
     "noneTitle": "Nimic de trimis",
     "noneMessage": "Selectați etichetele de trimis în grilă — marcajul din colțul din stânga jos al fotografiei.",
@@ -123,7 +127,8 @@
       "busy": "se recunoaște",
       "failed": "eroare",
       "noForm": "forma nu este aleasă",
-      "done": "gata"
+      "done": "gata",
+      "incomplete": "câmpuri obligatorii necompletate"
     },
     "single": "Foto",
     "manual": "fără fotografie"

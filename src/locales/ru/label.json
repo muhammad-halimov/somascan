@@ -1,6 +1,8 @@
 {
   "title": "Данные с бирки",
   "notRecognized": "Не распознано",
+  "notFilled": "Не заполнено",
+  "requiredField": "Обязательное поле",
   "weightUnit": "кг",
   "lengthUnit": "мм",
   "fields": {
