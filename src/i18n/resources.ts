@@ -7,7 +7,7 @@
 import en from '@/locales/en'
 import ro from '@/locales/ro'
 import ru from '@/locales/ru'
-import tg from '@/locales/tj'
+import tj from '@/locales/tj'
 import type { Language } from './languages'
 
 /** Структура одного языка: пространство имён → вложенные ключи. */
@@ -20,4 +20,4 @@ export const NAMESPACES = ['common', 'workspace', 'label', 'settings', 'uploads'
 export const DEFAULT_NAMESPACE = 'common' satisfies keyof Resources
 
 /** Все языки, проверенные по типам относительно английского. */
-export const resources: Record<Language, Resources> = { en, ro, tg, ru }
+export const resources: Record<Language, Resources> = { en, ro, tj, ru }

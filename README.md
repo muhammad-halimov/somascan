@@ -457,7 +457,7 @@ src/
   engine/                  движок очереди выгрузки (upload-engine.js): работает вне WebView — Android скрытый WebView, iOS JavaScriptCore
   hooks/                   общие React-хуки (тема, сеть, панели, слои истории, кнопка «Назад» Android…)
   i18n/                    настройка i18next, список языков, типизация ключей
-  locales/<язык>/<модуль>.json   переводы: en, ro, tg, ru × common, workspace, label, settings, uploads, errors
+  locales/<язык>/<модуль>.json   переводы: en, ro, tj, ru × common, workspace, label, settings, uploads, errors
   lib/                     инфраструктура без React и бизнес-логики
     store/                   Store — наблюдаемое состояние для useSyncExternalStore
     storage/                 безопасная обёртка над localStorage

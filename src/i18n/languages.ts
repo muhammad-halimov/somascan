@@ -2,8 +2,8 @@
  * Языки интерфейса. Для каждого есть папка в `src/locales/`.
  */
 
-/** Поддерживаемые коды языков (ISO 639-1). */
-export const LANGUAGES = ['en', 'ro', 'tg', 'ru'] as const
+/** Поддерживаемые коды языков. */
+export const LANGUAGES = ['en', 'ro', 'tj', 'ru'] as const
 
 /** Код языка интерфейса. */
 export type Language = (typeof LANGUAGES)[number]
@@ -17,6 +17,15 @@ export const FALLBACK_LANGUAGE: Language = 'en'
 /** Проверка, что значение — поддерживаемый `Language`. */
 export const isLanguage = (value: unknown): value is Language =>
   typeof value === 'string' && (LANGUAGES as readonly string[]).includes(value)
+
+/**
+ * Код языка из сохранённых настроек. В прежних версиях у таджикского был другой двухбуквенный код,
+ * а других языков, кроме нынешних, не было: такой код — таджикский, выбор языка сохраняется.
+ */
+export function readLanguageCode(value: unknown): Language | undefined {
+  if (isLanguage(value)) return value
+  return typeof value === 'string' && /^[a-z]{2}$/.test(value) ? 'tj' : undefined
+}
 
 /** Язык в том виде, как он показан в выборе языка. */
 export interface LanguageOption {
@@ -32,6 +41,6 @@ export interface LanguageOption {
 export const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
   { code: 'en', nativeName: 'English', flag: '🇬🇧' },
   { code: 'ro', nativeName: 'Română', flag: '🇷🇴' },
-  { code: 'tg', nativeName: 'Тоҷикӣ', flag: '🇹🇯' },
+  { code: 'tj', nativeName: 'Тоҷикӣ', flag: '🇹🇯' },
   { code: 'ru', nativeName: 'Русский', flag: '🇷🇺' },
 ]

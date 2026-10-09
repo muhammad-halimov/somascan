@@ -1,4 +1,4 @@
-import { DEFAULT_LANGUAGE, isLanguage, type Language } from '@/i18n/languages'
+import { DEFAULT_LANGUAGE, readLanguageCode, type Language } from '@/i18n/languages'
 import { DEFAULT_MODEL_AGE_LIMIT, MODEL_AGE_LIMITS, type ModelAgeLimit } from '@/features/recognition/catalog/ModelFilter'
 import { DEFAULT_KNOWN_SUPPLIERS, normalizeSuppliers } from '@/features/recognition/label/knownSuppliers'
 import { BUILT_IN_FIELDS, createDefaultLabelFields, isEnabledByDefault, type LabelFieldDefinition, type LabelFieldKind } from '@/features/recognition/label/labelFields'
@@ -156,11 +156,17 @@ function readStrings<T extends object>(source: unknown, fallback: T): T {
 /** Допустимые виды значения поля. */
 const LABEL_FIELD_KINDS: readonly LabelFieldKind[] = ['code', 'text', 'number', 'weight', 'date', 'time']
 
-/** Читает названия поля: только языки интерфейса и непустые строки. */
+/** Читает названия поля: только языки интерфейса и непустые строки (коды прежних версий — см. `readLanguageCode`). */
 function readFieldNames(source: unknown): LabelFieldDefinition['names'] {
   if (!isRecord(source)) return {}
+  const names: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(source)) {
+    const language = readLanguageCode(key)
+    // Название под нынешним кодом важнее сохранённого под прежним.
+    if (language && (language === key || !(language in source))) names[language] = value
+  }
   return Object.fromEntries(LANGUAGES.flatMap((language) => {
-    const value = source[language]
+    const value = names[language]
     return isString(value) && value.trim() !== '' ? [[language, value]] : []
   }))
 }
@@ -240,7 +246,7 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
   const advanced = isRecord(data) ? data.advanced : undefined
   return {
     general: {
-      language: readField(general, 'language', isLanguage, defaults.general.language),
+      language: readLanguageCode(isRecord(general) ? general.language : undefined) ?? defaults.general.language,
       theme: readField(general, 'theme', isOneOf(THEME_PREFERENCES), defaults.general.theme),
       provider: readField(general, 'provider', isProviderId, defaults.general.provider),
       models: readPerProvider(isRecord(general) ? general.models : undefined, defaults.general.models),

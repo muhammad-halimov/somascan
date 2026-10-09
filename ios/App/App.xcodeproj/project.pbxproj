@@ -57,7 +57,7 @@
 		7A1C0F2E4B6D8A9012345603 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		7A1C0F2E4B6D8A9012345604 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		7A1C0F2E4B6D8A9012345605 /* ro */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ro; path = ro.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		7A1C0F2E4B6D8A9012345606 /* tg */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tg; path = tg.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		7A1C0F2E4B6D8A9012345606 /* tj */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tj; path = tj.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		548978CE709245A4A0D1C83B /* UploadEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadEngine.swift; sourceTree = "<group>"; };
 		AD35C1693C414E659ACF9D18 /* UploadBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadBackground.swift; sourceTree = "<group>"; };
 		C4B19026139B43368526F5B2 /* UploadEnginePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadEnginePlugin.swift; sourceTree = "<group>"; };
@@ -253,7 +253,7 @@
 				Base,
 				ru,
 				ro,
-				tg,
+				tj,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
@@ -358,7 +358,7 @@
 				7A1C0F2E4B6D8A9012345603 /* en */,
 				7A1C0F2E4B6D8A9012345604 /* ru */,
 				7A1C0F2E4B6D8A9012345605 /* ro */,
-				7A1C0F2E4B6D8A9012345606 /* tg */,
+				7A1C0F2E4B6D8A9012345606 /* tj */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
