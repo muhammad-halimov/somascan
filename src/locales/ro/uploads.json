@@ -4,8 +4,11 @@
   "clear": "Șterge finalizate",
   "tabs": {
     "label": "Secțiunile încărcărilor",
-    "queue": "Coadă",
-    "done": "Gata"
+    "queue": "Active",
+    "done": "Istoric",
+    "count_one": "{{count}} etichetă",
+    "count_few": "{{count}} etichete",
+    "count_other": "{{count}} de etichete"
   },
   "emptyQueue": {
     "title": "Coada este goală",

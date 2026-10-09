@@ -4,8 +4,12 @@
   "clear": "Очистить завершённые",
   "tabs": {
     "label": "Разделы загрузок",
-    "queue": "Очередь",
-    "done": "Готово"
+    "queue": "Активные",
+    "done": "История",
+    "count_one": "{{count}} бирка",
+    "count_few": "{{count}} бирки",
+    "count_many": "{{count}} бирок",
+    "count_other": "{{count}} бирки"
   },
   "emptyQueue": {
     "title": "Очередь пуста",

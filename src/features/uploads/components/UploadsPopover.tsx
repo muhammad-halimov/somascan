@@ -36,9 +36,9 @@ const STATUS_ICONS: Record<UploadStatus, ReactNode> = {
 type UploadsTab = 'queue' | 'done'
 
 /**
- * Всплывающая панель под шапкой: две вкладки — «Очередь» (ждут, пишутся, не записаны — их можно
- * повторить или отменить) и «Готово» (записанные: лист, строка, номер элемента; их можно удалить
- * из истории). У каждой записи — состояние и причина сбоя. Закрывается нажатием вне панели или крестиком.
+ * Всплывающая панель под шапкой: две вкладки — «Активные» (ждут, пишутся, не записаны — их можно
+ * повторить или отменить) и «История» (записанные: лист, строка, номер элемента; их можно удалить
+ * из истории); под вкладками — сколько в ней бирок. У каждой записи — состояние и причина сбоя. Закрывается нажатием вне панели или крестиком.
  */
 export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   const { t, i18n } = useTranslation(['uploads', 'label', 'common'])
@@ -54,8 +54,8 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   const [tab, setTab] = useState<UploadsTab>(() => (uploadStore.getSnapshot().some((record) => record.status !== 'completed') ? 'queue' : 'done'))
   const shown = tab === 'queue' ? queued : completed
   const tabOptions = [
-    { value: 'queue' as const, label: queued.length > 0 ? `${t('tabs.queue')} ${queued.length}` : t('tabs.queue') },
-    { value: 'done' as const, label: completed.length > 0 ? `${t('tabs.done')} ${completed.length}` : t('tabs.done') },
+    { value: 'queue' as const, label: t('tabs.queue') },
+    { value: 'done' as const, label: t('tabs.done') },
   ]
   const dateTimeFormat = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
@@ -186,6 +186,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
       />
       <div className="uploads-tabs">
         <Tabs options={tabOptions} value={tab} onChange={setTab} label={t('tabs.label')} />
+        {shown.length > 0 && <p className="uploads-count" aria-live="polite">{t('tabs.count', { count: shown.length })}</p>}
       </div>
       <div className="uploads-content">
         {shown.length === 0 ? (

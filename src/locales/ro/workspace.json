@@ -113,8 +113,6 @@
     "item": "Eticheta {{number}}",
     "add": "Adaugă eticheta {{number}}",
     "locked": "Celula {{number}}: completați mai întâi celulele anterioare",
-    "close": "Etichetă",
-    "closeLabel": "Înapoi la eticheta deschisă",
     "select": "Trimite eticheta {{number}}",
     "state": {
       "busy": "se recunoaște",
@@ -122,5 +120,14 @@
       "noForm": "forma nu este aleasă",
       "done": "gata"
     }
+  },
+  "slides": {
+    "group": "Răsfoiește etichetele",
+    "previous": "Înapoi",
+    "previousLabel": "Eticheta anterioară",
+    "next": "Înainte",
+    "nextLabel": "Eticheta următoare",
+    "open": "Deschide",
+    "openLabel": "Deschide eticheta selectată"
   }
 }

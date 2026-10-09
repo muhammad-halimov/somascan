@@ -14,6 +14,7 @@ import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
 import { PhotoCard, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
+import { SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
@@ -26,8 +27,8 @@ const HANDOFF_MS = 700
 /**
  * Главный экран: выбрать фото бирок (до девяти сразу), автоматически распознать, проверить и поправить поля.
  *
- * Собирает карточку фото (одна бирка или сетка 3 × 3), карточку результата открытой бирки и просмотр
- * на весь экран. Бирки идут по порядку: новые фото встают в конец, каждое распознаётся само и сразу
+ * Собирает карточку фото (одна бирка или сетка 3 × 3), панель листания (стрелки и «Открыть»),
+ * карточку результата открытой бирки и просмотр на весь экран. Бирки идут по порядку: новые фото встают в конец, каждое распознаётся само и сразу
  * выбрано для отправки (выбор меняется в сетке); «Далее» отправляет выбранные в очередь выгрузки пачкой.
  * К бирке можно перейти из сетки и из карточки результата (номера бирок над полями).
  */
@@ -298,8 +299,17 @@ export function ScanWorkspace() {
         onShowGrid={showGrid}
         onOpenCell={openCell}
         onToggleSelected={session.toggleSelected}
-        onCloseGrid={closeGrid}
       />
+      {(session.items.length > 0 || view === 'grid') && (
+        <SlideBar
+          activeIndex={activeIndex}
+          positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
+          isGrid={view === 'grid'}
+          onPrevious={() => session.select(activeIndex - 1)}
+          onNext={() => session.select(activeIndex + 1)}
+          onOpen={closeGrid}
+        />
+      )}
       <NotesCard
         cardRef={notesCardRef}
         itemKey={item?.id ?? `empty-${activeIndex}`}

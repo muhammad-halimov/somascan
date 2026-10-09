@@ -4,7 +4,7 @@ import { AddIcon, CloseIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/
 import { ActionButton } from '@/components/ui/ActionButton'
 import { Tabs } from '@/components/ui/Tabs'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
-import type { RecognitionStatus } from '../hooks/useScanSession'
+import { MAX_SCAN_ITEMS, type RecognitionStatus } from '../hooks/useScanSession'
 import { LabelFields } from './LabelFields'
 import './NotesCard.css'
 
@@ -62,9 +62,9 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
 
   // Заголовок карточки: «Данные с бирки» для результата, иначе нейтральное «Результат».
   const title = status.kind === 'done' ? t('label:title') : t('notes.label')
-  // Номера бирок; открыта пустая ячейка после них — ещё и «+».
+  // Номера бирок и (пока их меньше девяти) «+» — пустая ячейка для следующей.
   const itemOptions = Array.from({ length: itemCount }, (_, index) => ({ value: index, label: String(index + 1) }))
-  if (activeIndex === itemCount) itemOptions.push({ value: itemCount, label: '+' })
+  if (itemCount < MAX_SCAN_ITEMS) itemOptions.push({ value: itemCount, label: '+' })
 
   return (
     <div ref={cardRef} className={`notes-card${isEditing ? ' is-text-editing' : ''}`} aria-busy={isRecognizing}>
@@ -88,7 +88,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
         </div>
       </div>
 
-      {itemOptions.length > 1 && (
+      {itemCount > 0 && (
         <div className="notes-items">
           <Tabs options={itemOptions} value={activeIndex} onChange={onSelectItem} label={t('grid.items')} />
         </div>

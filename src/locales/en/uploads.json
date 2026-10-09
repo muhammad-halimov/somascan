@@ -4,8 +4,10 @@
   "clear": "Clear completed",
   "tabs": {
     "label": "Upload sections",
-    "queue": "Queue",
-    "done": "Done"
+    "queue": "Active",
+    "done": "History",
+    "count_one": "{{count}} tag",
+    "count_other": "{{count}} tags"
   },
   "emptyQueue": {
     "title": "The queue is empty",

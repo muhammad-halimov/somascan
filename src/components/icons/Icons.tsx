@@ -560,3 +560,12 @@ export function ExclamationIcon() {
     </svg>
   )
 }
+
+/** Уголок вправо: следующий слайд (влево — он же, развёрнутый). */
+export function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m9.5 5 7 7-7 7" />
+    </svg>
+  )
+}

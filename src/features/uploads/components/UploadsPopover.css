@@ -27,7 +27,20 @@
 }
 
 :root[data-platform='ios'] .uploads-tabs {
-  padding: 2px 16px 8px;
+  padding: 2px 16px 4px;
+}
+
+/* Сколько бирок во вкладке — мелкой подписью под вкладками. */
+.uploads-count {
+  margin: 0;
+  padding: 8px 20px 0;
+  color: var(--text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-platform='ios'] .uploads-count {
+  padding: 6px 4px 2px;
 }
 
 .uploads-content {

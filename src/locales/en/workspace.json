@@ -113,8 +113,6 @@
     "item": "Tag {{number}}",
     "add": "Add tag {{number}}",
     "locked": "Cell {{number}}: fill the previous ones first",
-    "close": "Tag",
-    "closeLabel": "Back to the open tag",
     "select": "Send tag {{number}}",
     "state": {
       "busy": "recognizing",
@@ -122,5 +120,14 @@
       "noForm": "form not chosen",
       "done": "ready"
     }
+  },
+  "slides": {
+    "group": "Browse tags",
+    "previous": "Prev",
+    "previousLabel": "Previous tag",
+    "next": "Next",
+    "nextLabel": "Next tag",
+    "open": "Open",
+    "openLabel": "Open the selected tag"
   }
 }

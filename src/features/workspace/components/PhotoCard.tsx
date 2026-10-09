@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { BackIcon, GridIcon, ImageIcon } from '@/components/icons/Icons'
+import { BackIcon, GridIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { usePresence } from '@/hooks/usePresence'
 import type { ScanItem } from '../hooks/useScanSession'
@@ -45,8 +45,6 @@ export interface PhotoCardProps {
   onOpenCell: (index: number) => void
   /** Значок выбора в ячейке: отправлять бирку или нет. */
   onToggleSelected: (index: number) => void
-  /** Кнопка в углу сетки: вернуться к открытой бирке (и в пустом списке). */
-  onCloseGrid: () => void
 }
 
 /** Длительность и кривая перехода между сеткой и одной биркой — как у системы. */
@@ -63,11 +61,12 @@ const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
  * перетаскивание, — кнопками масштаба и поворота) или сетка 3 × 3 всех бирок.
  *
  * Справа вверху — «Сетка»: карточка уменьшает фото в его ячейку, и появляется сетка; нажатие
- * на ячейку (или кнопка в углу сетки) увеличивает её обратно до одной бирки. Слева вверху у бирки,
- * открытой из сетки, — «Назад» к сетке. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
+ * на ячейку (или «Открыть» в панели под карточкой) увеличивает её обратно до одной бирки. Слева
+ * вверху у бирки, открытой из сетки, — «Назад» к сетке. Переход к соседней бирке — фото въезжает
+ * сбоку, как слайд. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
  * один спиннер с подписью «Распознавание».
  */
-export function PhotoCard({ item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onToggleSelected, onCloseGrid }: PhotoCardProps) {
+export function PhotoCard({ item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -159,6 +158,23 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
     }
   }, [view])
 
+  // Другая бирка в одиночном виде — слайд: фото въезжает с той стороны, куда листали
+  // (после «Далее» и «Сброса» бирка меняется на месте — только проявляется).
+  const shownSlide = useRef({ id: item?.id ?? null, index: activeIndex })
+  useLayoutEffect(() => {
+    const previous = shownSlide.current
+    shownSlide.current = { id: item?.id ?? null, index: activeIndex }
+    const stage = stageRef.current
+    if (!stage || view !== 'single' || settledView !== 'single' || previous.id === (item?.id ?? null) && previous.index === activeIndex) return
+    if (prefersReducedMotion()) return
+    const direction = Math.sign(activeIndex - previous.index)
+    const animation = stage.animate(
+      [{ transform: `translateX(${direction * 36}px)`, opacity: direction === 0 ? 0.3 : 0.2 }, { transform: 'none', opacity: 1 }],
+      { duration: 280, easing: zoomTiming().easing },
+    )
+    return () => animation.cancel()
+  }, [item?.id, activeIndex, view, settledView])
+
   const isGridShown = view === 'grid' && settledView === 'grid'
   const classes = ['photo-card', hasPhoto && view === 'single' && 'has-photo', isZoomed && 'is-zoomed'].filter(Boolean).join(' ')
 
@@ -221,18 +237,6 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
         <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
       )}
 
-      {/* В сетке (и в пустом списке) — обратно к открытой бирке: тот же угол, что у «Сетки». */}
-      {view === 'grid' && (
-        <ActionButton
-          className="photo-grid-close anim-fade"
-          variant="overlay"
-          size={40}
-          icon={<ImageIcon />}
-          caption={t('grid.close')}
-          label={t('grid.closeLabel')}
-          onClick={onCloseGrid}
-        />
-      )}
     </div>
   )
 }

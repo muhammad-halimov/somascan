@@ -297,20 +297,8 @@
   -webkit-user-drag: none;
 }
 
-/* В сетке — обратно к открытой бирке: угол «Сетки», без подписи (не закрывает ячейку). */
-.photo-grid-close {
-  position: absolute;
-  z-index: 5;
-  top: 10px;
-  right: 10px;
-}
-
-.photo-grid-close .action-button-caption {
-  display: none;
-}
-
 /* Во время перехода между сеткой и одной биркой — без размытия под кнопками и значками. */
-.photo-card.is-zooming :is(.action-button-icon, .action-button-caption, .photo-grid-number, .photo-grid-check) {
+.photo-card.is-zooming :is(.action-button-icon, .action-button-caption, .photo-grid-number) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
