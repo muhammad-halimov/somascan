@@ -39,7 +39,8 @@
     "discardTitle": "Тағйиротро бекор кунем?",
     "discardMessage": "Тағйироти ҳангоми таҳрир воридшуда гум мешаванд.",
     "discardConfirm": "Бекор кардан",
-    "discardKeep": "Идомаи таҳрир"
+    "discardKeep": "Идомаи таҳрир",
+    "cancelCaption": "Бекор"
   },
   "actions": {
     "group": "Амалҳо",

@@ -80,25 +80,30 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
           <span>{t('notes.checkBeforeSend')}</span>
         </p>
       )}
-      {/* Шапка — узкая строка: заголовок слева, «пилюли» «✓ Готово» (только в правке) и «Правка» справа. */}
+      {/*
+        Шапка — узкая строка: заголовок слева, справа «✎ Правка»; в правке на её месте — «✕ Отмена» (отменяет
+        изменения) и «✓ Готово» (сохраняет, главная), как «Отмена» и «Готово» в панелях Android и iOS.
+      */}
       <div className="notes-header">
         <h2 className="notes-title"><TagIcon /><span className="notes-title-text">{title}</span></h2>
         <div className="notes-header-actions">
-          {isEditing && (
-            <ActionButton layout="inline" size={28} icon={<CheckIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} onClick={onCloseEdit} />
+          {isEditing ? (
+            <>
+              <ActionButton key="cancel" layout="inline" size={28} icon={<CloseIcon />} caption={t('editing.cancelCaption')} label={t('editing.cancel')} onClick={onToggleEdit} />
+              <ActionButton key="done" layout="inline" size={28} icon={<CheckIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} active onClick={onCloseEdit} />
+            </>
+          ) : (
+            <ActionButton
+              key="edit"
+              layout="inline"
+              size={28}
+              icon={<PencilIcon />}
+              caption={t('editing.editCaption')}
+              label={t('editing.edit')}
+              disabled={!canEdit}
+              onClick={onToggleEdit}
+            />
           )}
-          <ActionButton
-            layout="inline"
-            size={28}
-            icon={<PencilIcon />}
-            caption={t('editing.editCaption')}
-            // Нажатая ещё раз — отменяет правку (сохраняет «Готово»).
-            label={isEditing ? t('editing.cancel') : t('editing.edit')}
-            active={isEditing}
-            aria-pressed={isEditing}
-            disabled={!canEdit}
-            onClick={onToggleEdit}
-          />
         </div>
       </div>
 

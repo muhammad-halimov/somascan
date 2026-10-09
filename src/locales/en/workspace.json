@@ -39,7 +39,8 @@
     "discardTitle": "Discard changes?",
     "discardMessage": "The changes made while editing will be lost.",
     "discardConfirm": "Discard",
-    "discardKeep": "Keep editing"
+    "discardKeep": "Keep editing",
+    "cancelCaption": "Cancel"
   },
   "actions": {
     "group": "Actions",

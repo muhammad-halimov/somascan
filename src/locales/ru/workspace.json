@@ -39,7 +39,8 @@
     "discardTitle": "Отменить изменения?",
     "discardMessage": "Изменения, внесённые в правке, будут потеряны.",
     "discardConfirm": "Отменить",
-    "discardKeep": "Продолжить правку"
+    "discardKeep": "Продолжить правку",
+    "cancelCaption": "Отмена"
   },
   "actions": {
     "group": "Действия",

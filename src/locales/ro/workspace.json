@@ -39,7 +39,8 @@
     "discardTitle": "Renunțați la modificări?",
     "discardMessage": "Modificările făcute la editare se vor pierde.",
     "discardConfirm": "Renunță",
-    "discardKeep": "Continuă editarea"
+    "discardKeep": "Continuă editarea",
+    "cancelCaption": "Anulează"
   },
   "actions": {
     "group": "Acțiuni",
