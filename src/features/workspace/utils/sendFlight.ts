@@ -21,7 +21,7 @@ function backgroundOf(element: HTMLElement): string {
 }
 
 /**
- * «Отправка» фото: копии `elements` (фото открытой бирки или ячейки сетки) улетают по дуге к кнопке
+ * «Отправка» фото: копии `elements` (фото открытой бирки с её данными или ячейки сетки) улетают по дуге к кнопке
  * «Загрузки» в шапке — уменьшаются, скругляются в кружок и растворяются у значка, а значок в момент
  * прилёта слегка «принимает» их (пульс). Сами элементы и `hide` (кнопки поверх фото) сразу гаснут.
  * Копии живут в `body` поверх всего и убираются сами, поэтому бирки можно убирать, не дожидаясь конца полёта.
@@ -53,6 +53,12 @@ export function flyToUploads(elements: readonly HTMLElement[], hide: readonly HT
     const copy = element.cloneNode(true) as HTMLElement
     copy.classList.add('send-flight-copy')
     copy.removeAttribute('id')
+    // Копия разметки не несёт текущих значений полей (выбранную форму, введённый текст) — переносим их.
+    const sourceFields = element.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea')
+    copy.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea').forEach((field, index) => {
+      const source = sourceFields[index]
+      if (source) field.value = source.value
+    })
     box.append(copy)
     outer.append(box)
     document.body.append(outer)

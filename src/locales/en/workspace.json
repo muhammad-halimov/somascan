@@ -13,7 +13,10 @@
     "recognizing": "Recognizing…",
     "open": "Open photo full screen",
     "chooseFromFiles": "Choose from files",
-    "overflow": "Added {{added}} of {{picked}}: the grid has {{max}} cells."
+    "overflow": "Added {{added}} of {{picked}}: the grid has {{max}} cells.",
+    "noPhoto": "No photo",
+    "noPhotoLabel": "Add a tag without a photo",
+    "manualHint": "Data is entered by hand"
   },
   "notes": {
     "label": "Result",
@@ -26,7 +29,8 @@
     "finish": "Finish editing",
     "close": "Close editing",
     "editCaption": "Edit",
-    "closeCaption": "Done"
+    "closeCaption": "Done",
+    "cancel": "Cancel editing"
   },
   "actions": {
     "group": "Actions",
@@ -121,7 +125,8 @@
       "noForm": "form not chosen",
       "done": "ready"
     },
-    "single": "Photo"
+    "single": "Photo",
+    "manual": "no photo"
   },
   "slides": {
     "group": "Browse tags",

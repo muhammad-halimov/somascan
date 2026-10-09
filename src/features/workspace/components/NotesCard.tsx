@@ -24,13 +24,15 @@ export interface NotesCardProps {
   isEditing: boolean
   /** Состояние распознавания. */
   status: RecognitionStatus
-  /** Есть ли фото (иначе «Сброс» и «Повтор» недоступны). */
+  /** Открыта бирка, а не пустая ячейка (иначе «Сброс» недоступен). */
   hasPhoto: boolean
+  /** «Повтор» доступен: у бирки есть фото (бирку без фото распознавать нечего). */
+  canRetry: boolean
   /** Поле бирки отредактировано. */
   onFieldChange: (key: LabelKey, value: string) => void
-  /** Карандаш: включить или выключить режим правки. */
+  /** «Правка»: включить режим правки, а нажатая ещё раз — отменить изменения и выйти. */
   onToggleEdit: () => void
-  /** «Готово»: выйти из режима правки. */
+  /** «Готово»: выйти из режима правки, сохранив изменения. */
   onCloseEdit: () => void
   /** «Фото»: выбрать другое фото. */
   onAddPhoto: () => void
@@ -55,7 +57,7 @@ export interface NotesCardProps {
  * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const isRecognizing = status.kind === 'recognizing'
   // Править и отправлять в таблицу можно только распознанный результат: не во время запроса и не после ошибки.
@@ -88,7 +90,8 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
             size={28}
             icon={<PencilIcon />}
             caption={t('editing.editCaption')}
-            label={isEditing ? t('editing.finish') : t('editing.edit')}
+            // Нажатая ещё раз — отменяет правку (сохраняет «Готово»).
+            label={isEditing ? t('editing.cancel') : t('editing.edit')}
             active={isEditing}
             aria-pressed={isEditing}
             disabled={!canEdit}
@@ -129,7 +132,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
           disabled={!hasPhoto}
           onClick={isRecognizing ? onCancel : onClear}
         />
-        <ActionButton size={48} icon={<ResetIcon />} caption={t('actions.retry')} label={t('actions.retryLabel')} disabled={!hasPhoto || isRecognizing} onClick={onRetry} />
+        <ActionButton size={48} icon={<ResetIcon />} caption={t('actions.retry')} label={t('actions.retryLabel')} disabled={!canRetry || isRecognizing} onClick={onRetry} />
         <ActionButton
           size={48}
           variant="accent"

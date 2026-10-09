@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { enabledLabelFields } from '@/features/recognition/label/labelFields'
+import { enabledLabelFields, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { hasProductForm } from '@/features/recognition/label/productForm'
 import { settingsStore } from '@/features/settings/store/SettingsStore'
 import { isDriveConfigured } from '@/features/uploads/drive/driveSettings'
@@ -20,6 +20,7 @@ import { useEditMode } from './hooks/useEditMode'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
 import { IDLE, MAX_SCAN_ITEMS, useScanSession, type ScanItem } from './hooks/useScanSession'
+import { flyToUploads } from './utils/sendFlight'
 import './ScanWorkspace.css'
 
 /** Сколько крутится спиннер в «Далее», пока бирка уходит в очередь и открывается следующая. */
@@ -168,6 +169,35 @@ export function ScanWorkspace() {
     session.remove(activeIndex)
   }
 
+  /**
+   * Правка: до первого изменения бирки запоминаются её поля — «Правка», нажатая ещё раз, отменяет
+   * изменения (всех бирок, исправленных за эту правку), «Готово» и системное «Назад» их оставляют.
+   */
+  const editOriginals = useRef(new Map<string, { label: LabelRecord; productForm: string | null }>())
+  const changeField = (key: LabelKey, value: string) => {
+    if (editMode.isEditing && item && item.status.kind === 'done' && !editOriginals.current.has(item.id)) {
+      editOriginals.current.set(item.id, { label: item.status.label, productForm: item.productForm })
+    }
+    session.updateField(activeIndex, key, value)
+  }
+  const toggleEdit = () => {
+    if (editMode.isEditing) {
+      for (const [id, original] of editOriginals.current) session.restoreLabel(id, original.label, original.productForm)
+    }
+    editOriginals.current.clear()
+    editMode.toggle()
+  }
+  // Правка закончилась любым способом — запомненное больше не нужно.
+  useEffect(() => {
+    if (!editMode.isEditing) editOriginals.current.clear()
+  }, [editMode.isEditing])
+
+  /** «Без фото»: бирка с пустыми полями в конце, сразу открыта правка — данные вводят вручную. */
+  const addManual = () => {
+    if (!session.addManual()) return
+    if (!editMode.isEditing) editMode.toggle()
+  }
+
   /** «Повтор»: заново отправляет фото открытой бирки на распознавание. */
   const retry = () => {
     if (!item) return
@@ -269,13 +299,17 @@ export function ScanWorkspace() {
       if (candidate.status.kind === 'done') uploadQueue.enqueue(candidate.status.label, columns)
     }
     setIsHandingOff(true)
-    // Отправленные фото улетают к «Загрузкам» (в сетке — их ячейки, у одной бирки — её фото), а когда
-    // спиннер отработал, бирки убираются; скрытое на время полёта возвращается уже на новом месте.
+    // Отправленные фото улетают к «Загрузкам» (в сетке — их ячейки, у одной бирки — её фото вместе с данными),
+    // а когда спиннер отработал, бирки убираются; скрытое на время полёта возвращается уже на новом месте.
     const ids = ready.map((candidate) => candidate.id)
-    const flight = photoCardRef.current?.sendAway(new Set(ids))
+    const sent = new Set(ids)
+    const targets = photoCardRef.current?.sendTargets(sent) ?? { fly: [], hide: [] }
+    // Данные открытой бирки (если она среди отправленных) улетают вслед за её фото.
+    const fields = item && sent.has(item.id) ? notesCardRef.current?.querySelector<HTMLElement>('.label-fields') : null
+    const flight = flyToUploads(fields ? [...targets.fly, fields] : targets.fly, targets.hide)
     await new Promise((resolve) => window.setTimeout(resolve, HANDOFF_MS))
     flushSync(() => session.removeMany(ids))
-    flight?.restore()
+    flight.restore()
     setIsHandingOff(false)
     const configured = storage.target === 'smb' ? isSmbConfigured(storage.smb) : isDriveConfigured(storage.googleDrive)
     if (!configured) {
@@ -320,6 +354,7 @@ export function ScanWorkspace() {
           isReceiving={picker.isReceiving}
           transform={transform}
           onPick={() => void addPhotos()}
+          onAddManual={addManual}
           onOpen={() => setIsViewerOpen(true)}
           onLoad={(size) => item && session.markLoaded(item.id, size)}
           onError={() => item && session.markFailed(item.id)}
@@ -349,8 +384,9 @@ export function ScanWorkspace() {
         isEditing={editMode.isEditing}
         status={status}
         hasPhoto={item !== null}
-        onFieldChange={(key, value) => session.updateField(activeIndex, key, value)}
-        onToggleEdit={editMode.toggle}
+        canRetry={item !== null && !item.manual}
+        onFieldChange={changeField}
+        onToggleEdit={toggleEdit}
         onCloseEdit={editMode.exit}
         onAddPhoto={() => void addPhotos()}
         onClear={() => void removeItem()}

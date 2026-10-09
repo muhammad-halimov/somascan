@@ -1,14 +1,13 @@
 import { useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { BackIcon, GridIcon, ImageIcon } from '@/components/icons/Icons'
+import { BackIcon, GridIcon, ImageIcon, ImageOffIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { usePresence } from '@/hooks/usePresence'
 import type { ScanItem } from '../hooks/useScanSession'
 import type { Size } from '../utils/PhotoGeometry'
 import type { PhotoTransform } from '../hooks/usePhotoTransform'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
-import { flyToUploads, type SendFlight } from '../utils/sendFlight'
 import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
 import { PhotoGrid } from './PhotoGrid'
@@ -17,13 +16,19 @@ import './PhotoCard.css'
 /** Что показывает карточка: одну бирку или сетку всех. */
 export type PhotoCardView = 'single' | 'grid'
 
+/** Что улетает к «Загрузкам» при отправке и что на это время гаснет. */
+export interface SendTargets {
+  fly: HTMLElement[]
+  hide: HTMLElement[]
+}
+
 /** Команды карточке фото. */
 export interface PhotoCardHandle {
   /**
-   * «Отправка» бирок `ids`: в сетке их ячейки, у одной бирки — её фото (если она среди отправленных)
-   * улетают к «Загрузкам». `restore` вызывают, когда бирки уже убраны.
+   * Элементы «отправки» бирок `ids`: в сетке — их ячейки, у одной бирки — её фото (если она среди
+   * отправленных; кнопки масштаба и поворота над ним гаснут).
    */
-  sendAway: (ids: ReadonlySet<string>) => SendFlight
+  sendTargets: (ids: ReadonlySet<string>) => SendTargets
 }
 
 /** Свойства `PhotoCard`. */
@@ -46,6 +51,8 @@ export interface PhotoCardProps {
   transform: PhotoTransform
   /** Открывает источник фото (пустая ячейка). */
   onPick: () => void
+  /** «Без фото» (пустая ячейка): бирка, данные которой вводят вручную. */
+  onAddManual: () => void
   /** Открывает фото на весь экран. */
   onOpen: () => void
   /** Фото загрузилось; передаёт его натуральный размер. */
@@ -70,15 +77,17 @@ export interface PhotoCardProps {
  * на ячейку (или «Открыть» — в углу сетки и в панели под карточкой) увеличивает её обратно до одной бирки. Слева
  * вверху у бирки, открытой из сетки, — «Назад» к сетке. Переход к соседней бирке — фото въезжает
  * сбоку, как слайд. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
- * один спиннер с подписью «Распознавание».
+ * один спиннер с подписью «Распознавание». В правом нижнем углу пустой ячейки — «Без фото»: бирка, данные
+ * которой вводят вручную; у такой бирки на месте фото — перечёркнутая картинка.
  */
-export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onAddManual, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
   const photoUrl = item?.photoUrl ?? null
   const hasError = item?.hasError ?? false
   const hasPhoto = Boolean(photoUrl) && !hasError
+  const isManual = item?.manual ?? false
   const isBusy = isReceiving || (item !== null && (item.isLoading || item.status.kind === 'recognizing') && !hasError)
   const overlay = usePresence(isBusy)
   const gridSingle = usePresence(view === 'grid')
@@ -187,16 +196,16 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
     itemIdRef.current = item?.id ?? null
   }, [item?.id])
   useImperativeHandle(handleRef, () => ({
-    sendAway(ids) {
+    sendTargets(ids) {
       if (shownView.current === 'grid') {
         const cells = Array.from(gridRef.current?.querySelectorAll<HTMLElement>('[data-item-id]') ?? [])
-        return flyToUploads(cells.filter((cell) => ids.has(cell.dataset.itemId ?? '')))
+        return { fly: cells.filter((cell) => ids.has(cell.dataset.itemId ?? '')), hide: [] }
       }
       const stage = stageRef.current
-      const photo = stage?.querySelector<HTMLElement>('.photo-image-action')
-      if (!stage || !photo || !ids.has(itemIdRef.current ?? '')) return flyToUploads([])
-      // Фото улетает, кнопки масштаба и поворота над ним гаснут.
-      return flyToUploads([photo], Array.from(stage.querySelectorAll<HTMLElement>('.photo-controls')))
+      if (!stage || !ids.has(itemIdRef.current ?? '')) return { fly: [], hide: [] }
+      // Улетает фото (у бирки без фото — её заглушка), кнопки масштаба и поворота над ним гаснут.
+      const photo = stage.querySelector<HTMLElement>('.photo-image-action, .photo-manual')
+      return { fly: photo ? [photo] : [], hide: Array.from(stage.querySelectorAll<HTMLElement>('.photo-controls')) }
     },
   }), [])
 
@@ -240,11 +249,27 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
         )}
 
         {/* Пока идёт загрузка, пустое состояние не показываем: подпись спиннера его заменяет. */}
-        {!hasPhoto && !isBusy && (
+        {!hasPhoto && !isBusy && !isManual && (
           <button key={`empty-${activeIndex}`} className="photo-empty anim-fade" type="button" aria-label={t('photo.add')} onClick={onPick}>
             <span className="photo-plus" aria-hidden="true" />
             <span className="photo-label">{hasError ? t('photo.failedToOpen') : t('photo.add')}</span>
           </button>
+        )}
+
+        {/* Бирка без фото: на месте фото — перечёркнутая картинка, данные — в карточке результата. */}
+        {isManual && (
+          <div key={`manual-${item?.id}`} className="photo-manual anim-fade" role="img" aria-label={t('photo.noPhoto')}>
+            <span className="photo-manual-icon" aria-hidden="true"><ImageOffIcon /></span>
+            <span className="photo-label">{t('photo.noPhoto')}</span>
+            <span className="photo-manual-hint">{t('photo.manualHint')}</span>
+          </div>
+        )}
+
+        {/* Пустая ячейка: в правом нижнем углу — «Без фото» (бирка, данные которой вводят вручную). */}
+        {item === null && !isBusy && (
+          <div className="photo-corner">
+            <ActionButton variant="overlay" size={44} icon={<ImageOffIcon />} caption={t('photo.noPhoto')} label={t('photo.noPhotoLabel')} onClick={onAddManual} />
+          </div>
         )}
 
         {hasPhoto && !isBusy && <PhotoControls className="photo-controls anim-enter" transform={transform} showReset />}

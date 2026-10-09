@@ -62,6 +62,37 @@
   animation: backdrop-enter 200ms ease-out backwards;
 }
 
+/* Бирка без фото — перечёркнутая картинка по центру ячейки. */
+.photo-grid-cell.is-manual {
+  background: color-mix(in srgb, var(--text-h) 7%, var(--photo-empty-bg));
+}
+
+.photo-grid-manual {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: var(--photo-empty-plus);
+  background: var(--photo-empty-plus-bg);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  transition: opacity 160ms ease;
+}
+
+.photo-grid-manual svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.photo-grid-cell.has-photo:not(.is-selected) .photo-grid-manual {
+  opacity: .45;
+}
+
 /* Не выбранная для отправки — миниатюра приглушена. */
 .photo-grid-cell.has-photo:not(.is-selected) .photo-grid-thumb {
   opacity: .45;
@@ -91,6 +122,31 @@
   outline-offset: 2px;
   box-shadow: 0 0 18px 3px color-mix(in srgb, var(--focus) 50%, transparent);
   animation: photo-grid-focus 360ms cubic-bezier(.2, 0, 0, 1);
+}
+
+/*
+ * Во время перехода между сеткой и одной биркой колец нет: увеличенные вместе с ячейкой втрое, они
+ * выглядели бы толстой светящейся рамкой по краю карточки. После перехода кольца проявляются,
+ * а обводка открытой бирки снова «подтягивается» к ячейке.
+ */
+.photo-grid-cell::after {
+  transition: opacity 200ms ease;
+}
+
+.photo-grid-cell.is-active {
+  transition: box-shadow 200ms ease;
+}
+
+.photo-card.is-zooming .photo-grid-cell::after {
+  opacity: 0;
+  transition: none;
+}
+
+.photo-card.is-zooming .photo-grid-cell.is-active {
+  outline-color: transparent;
+  box-shadow: none;
+  transition: none;
+  animation: none;
 }
 
 /* Выбор ячейки — короткий «отклик»: обводка подтягивается к ячейке. */

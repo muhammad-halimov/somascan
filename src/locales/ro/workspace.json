@@ -13,7 +13,10 @@
     "recognizing": "Recunoaștere…",
     "open": "Deschide fotografia pe tot ecranul",
     "chooseFromFiles": "Alege din fișiere",
-    "overflow": "Adăugate {{added}} din {{picked}}: grila are {{max}} celule."
+    "overflow": "Adăugate {{added}} din {{picked}}: grila are {{max}} celule.",
+    "noPhoto": "Fără foto",
+    "noPhotoLabel": "Adaugă o etichetă fără fotografie",
+    "manualHint": "Datele se introduc manual"
   },
   "notes": {
     "label": "Rezultat",
@@ -26,7 +29,8 @@
     "finish": "Finalizează editarea",
     "close": "Închide editarea",
     "editCaption": "Editare",
-    "closeCaption": "Gata"
+    "closeCaption": "Gata",
+    "cancel": "Anulează editarea"
   },
   "actions": {
     "group": "Acțiuni",
@@ -121,7 +125,8 @@
       "noForm": "forma nu este aleasă",
       "done": "gata"
     },
-    "single": "Foto"
+    "single": "Foto",
+    "manual": "fără fotografie"
   },
   "slides": {
     "group": "Răsfoiește etichetele",

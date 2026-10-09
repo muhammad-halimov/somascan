@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertIcon, CheckIcon, ExclamationIcon } from '@/components/icons/Icons'
+import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/components/icons/Icons'
 import { hasProductForm } from '@/features/recognition/label/productForm'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
@@ -33,7 +33,7 @@ function cellState(item: ScanItem): CellState {
 }
 
 /**
- * Сетка 3 × 3 в карточке фото: бирки по порядку (миниатюра, номер, состояние распознавания),
+ * Сетка 3 × 3 в карточке фото: бирки по порядку (миниатюра или, у бирки без фото, перечёркнутая картинка; номер, состояние),
  * следующая свободная ячейка — «плюс», дальше — недоступные ячейки: заполнять можно только по порядку.
  *
  * Выбранные для отправки бирки обведены акцентным цветом, открытая — контрастным (у выбранной
@@ -90,17 +90,20 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
         }
         const state = cellState(item)
         const stateText = state === 'none' ? '' : t(`grid.state.${state}`)
-        const classes = ['photo-grid-cell', 'has-photo', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')
+        const name = item.manual ? `${t('grid.item', { number })}, ${t('grid.manual')}` : t('grid.item', { number })
+        const classes = ['photo-grid-cell', 'has-photo', item.manual && 'is-manual', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')
         return (
           <div key={item.id} className={classes} data-item-id={item.id}>
             <button
               type="button"
               className="photo-grid-open"
-              aria-label={stateText ? `${t('grid.item', { number })}: ${stateText}` : t('grid.item', { number })}
+              aria-label={stateText ? `${name}: ${stateText}` : name}
               aria-current={isActive || undefined}
               onClick={() => onOpen(index)}
             >
               {item.thumbUrl && !item.hasError && <img className="photo-grid-thumb" src={item.thumbUrl} alt="" draggable={false} decoding="async" />}
+              {/* Бирка без фото — перечёркнутая картинка на месте миниатюры. */}
+              {item.manual && <span className="photo-grid-manual" aria-hidden="true"><ImageOffIcon /></span>}
               <span className="photo-grid-number" aria-hidden="true">{number}</span>
               {state === 'busy' && <span className="photo-grid-spinner" aria-hidden="true" />}
               {(state === 'failed' || state === 'noForm' || state === 'done') && (

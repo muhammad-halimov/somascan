@@ -49,6 +49,8 @@ export interface ScanItem {
   productForm: string | null
   /** Бирка выбрана для отправки («Далее» отправляет выбранные). Новые фото выбраны сразу. */
   selected: boolean
+  /** Бирка без фото: данные вводятся вручную (`photoUrl` пустой, распознавания нет). */
+  manual: boolean
 }
 
 let nextId = 0
@@ -67,7 +69,7 @@ function revoke(item: ScanItem) {
  * остальные ждут), с настройками на момент запроса; для сетки строится миниатюра.
  *
  * `activeIndex` — открытая бирка; значение `items.length` (пока бирок меньше девяти) — следующая
- * пустая ячейка: карточка «Добавить фото».
+ * пустая ячейка: карточка «Добавить фото». Бирку можно добавить и без фото — тогда её поля заполняют вручную.
  */
 export function useScanSession() {
   const errorText = useErrorText()
@@ -155,6 +157,7 @@ export function useScanSession() {
     status: { kind: 'recognizing' },
     productForm: null,
     selected: true,
+    manual: false,
   }), [])
 
   /** Распознавание и миниатюра новой бирки. */
@@ -186,6 +189,30 @@ export function useScanSession() {
     added.forEach(prepare)
     return urls.length - added.length
   }, [commit, create, prepare])
+
+  /**
+   * Добавляет в конец бирку без фото и открывает её: поля пустые, их заполняют вручную (в правке).
+   * @returns Добавлена ли бирка (их уже девять — нет).
+   */
+  const addManual = useCallback(() => {
+    const list = itemsRef.current
+    if (list.length >= MAX_SCAN_ITEMS) return false
+    const item: ScanItem = {
+      id: `scan-${++nextId}`,
+      photoUrl: '',
+      thumbUrl: null,
+      naturalSize: null,
+      isLoading: false,
+      hasError: false,
+      status: { kind: 'done', label: {}, photo: { retake: false, issues: [] } },
+      productForm: null,
+      selected: true,
+      manual: true,
+    }
+    commit([...list, item])
+    setActiveIndex(list.length)
+    return true
+  }, [commit])
 
   /** Заменяет фото бирки `index` (распознавание — заново). */
   const replace = useCallback((index: number, url: string) => {
@@ -247,7 +274,8 @@ export function useScanSession() {
   /** Распознаёт фото бирки `index` заново. */
   const retry = useCallback((index: number) => {
     const item = itemsRef.current[index]
-    if (item) schedule(item.id)
+    // Без фото распознавать нечего.
+    if (item && !item.manual) schedule(item.id)
   }, [schedule])
 
   /** Отменяет распознавание бирки `index` по просьбе пользователя: фото остаётся, результат — «отменено». */
@@ -265,6 +293,14 @@ export function useScanSession() {
     patch(item.id, (current) => ({
       productForm: key === PRODUCT_FORM_KEY ? value || null : current.productForm,
       status: current.status.kind === 'done' ? { ...current.status, label: { ...current.status.label, [key]: value } } : current.status,
+    }))
+  }, [patch])
+
+  /** Возвращает поля бирки `id` к прежним (отмена правки). */
+  const restoreLabel = useCallback((id: string, label: LabelRecord, productForm: string | null) => {
+    patch(id, (current) => ({
+      productForm,
+      status: current.status.kind === 'done' ? { ...current.status, label } : current.status,
     }))
   }, [patch])
 
@@ -292,6 +328,7 @@ export function useScanSession() {
     /** Можно ли добавить ещё фото. */
     canAdd: items.length < MAX_SCAN_ITEMS,
     add,
+    addManual,
     replace,
     remove,
     removeMany,
@@ -300,6 +337,7 @@ export function useScanSession() {
     retry,
     abort,
     updateField,
+    restoreLabel,
     markLoaded,
     markFailed,
   }

@@ -45,13 +45,27 @@
   visibility: hidden;
 }
 
+/*
+ * Кнопки в углах карточки («Назад», «Сетка», «Фото» в сетке, «Без фото») — шире круга, чтобы подпись
+ * помещалась целиком («Без фото», «Fără foto»); круг по центру, от края карточки до круга — 10 px.
+ */
+.photo-card {
+  --corner-button: 60px;
+  --corner-inset: calc(10px - (var(--corner-button) - 44px) / 2);
+}
+
+:is(.photo-nav, .photo-corner) .action-button,
+.photo-grid-single {
+  width: var(--corner-button);
+}
+
 /* «Назад» (к сетке) слева и «Сетка» справа — в верхних углах, над фото и спиннером. */
 .photo-nav {
   position: absolute;
   z-index: 4;
   top: 10px;
-  right: 10px;
-  left: 10px;
+  right: var(--corner-inset);
+  left: var(--corner-inset);
   display: flex;
   align-items: flex-start;
   pointer-events: none;
@@ -65,8 +79,8 @@
   margin-left: auto;
 }
 
-/* Без фото кнопки — как «плюс» пустой карточки: светлый круг, подпись цветом подписи карточки. */
-.photo-card:not(.has-photo) .photo-nav .action-button.is-overlay .action-button-icon {
+/* Без фото кнопки (в углах) — как «плюс» пустой карточки: светлый круг, подпись цветом подписи карточки. */
+.photo-card:not(.has-photo) :is(.photo-nav, .photo-corner) .action-button.is-overlay .action-button-icon {
   color: var(--photo-empty-plus);
   background: var(--photo-empty-plus-bg);
   border-color: transparent;
@@ -75,9 +89,61 @@
   backdrop-filter: none;
 }
 
-.photo-card:not(.has-photo) .photo-nav .action-button.is-overlay .action-button-caption {
+.photo-card:not(.has-photo) :is(.photo-nav, .photo-corner) .action-button.is-overlay .action-button-caption {
   color: var(--photo-empty-text);
   background: transparent;
+}
+
+/* «Без фото» — в правом нижнем углу пустой ячейки, напротив «Сетки»: тот же размер и вид. */
+.photo-corner {
+  position: absolute;
+  z-index: 4;
+  right: var(--corner-inset);
+  bottom: 10px;
+  animation: backdrop-enter 200ms ease-out backwards;
+}
+
+/* Бирка без фото: перечёркнутая картинка в круге, как «плюс» пустой карточки, и пояснение. */
+.photo-manual {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  background: var(--photo-empty-bg);
+}
+
+.photo-manual-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  margin-bottom: 14px;
+  color: var(--photo-empty-plus);
+  background: var(--photo-empty-plus-bg);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%), inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 12%, transparent);
+}
+
+.photo-manual-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.photo-manual-hint {
+  color: var(--photo-empty-text);
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: .75;
+  text-align: center;
 }
 
 /* Увеличенное фото: все жесты наши (перетаскивание в любую сторону). */
@@ -278,7 +344,7 @@
 }
 
 /* iOS 26+: без фото кнопки — светлое стекло с бликом, как «плюс» пустой карточки. */
-:root[data-platform='ios'][data-ios-design='glass'] .photo-card:not(.has-photo) .photo-nav .action-button.is-overlay .action-button-icon {
+:root[data-platform='ios'][data-ios-design='glass'] .photo-card:not(.has-photo) :is(.photo-nav, .photo-corner) .action-button.is-overlay .action-button-icon {
   color: var(--photo-empty-plus);
   background: color-mix(in srgb, var(--photo-empty-plus-bg) 72%, transparent);
   border-color: rgb(255 255 255 / 60%);
@@ -312,11 +378,19 @@
   position: absolute;
   z-index: 5;
   top: 10px;
-  right: 10px;
+  right: var(--corner-inset);
+}
+
+/*
+ * Появляется, когда «Сетка» одной бирки (она уменьшается вместе с фото) уже почти погасла, и уходит
+ * быстрее, чем «Сетка» проявляется обратно, — две кнопки не накладываются друг на друга.
+ */
+.photo-grid-single.anim-fade {
+  animation-delay: 160ms;
 }
 
 .photo-grid-single.is-closing {
-  animation: fade-exit 200ms ease-in both;
+  animation: fade-exit 120ms ease-in both;
 }
 
 /*

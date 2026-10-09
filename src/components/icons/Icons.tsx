@@ -259,6 +259,20 @@ export function ImageIcon() {
   )
 }
 
+/** Перечёркнутая картинка: бирка без фото — данные вводятся вручную. */
+export function ImageOffIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m2 2 20 20" />
+      <path d="M10.41 10.41a2 2 0 1 1-2.83-2.82" />
+      <path d="M13.5 13.5 6 21" />
+      <path d="m18 12 3 3" />
+      <path d="M3.59 3.59A2 2 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.05-.22 1.41-.59" />
+      <path d="M21 15V5a2 2 0 0 0-2-2H9" />
+    </svg>
+  )
+}
+
 /** Рамка с углами: оригинальный размер фото. */
 export function MaximizeIcon() {
   return (
