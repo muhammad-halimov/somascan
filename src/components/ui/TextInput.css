@@ -11,9 +11,31 @@
   align-items: center;
 }
 
-/* Место под кнопку справа, чтобы текст не уходил под неё. */
+/* Место под кнопку справа, чтобы текст не уходил под неё (под две кнопки — вдвое больше). */
 .input-with-action .text-input {
   padding-right: 48px;
+}
+
+.input-with-action.has-actions-2 .text-input {
+  padding-right: 88px;
+}
+
+/* Несколько кнопок в поле — рядом, справа; каждая сама по себе не позиционируется. */
+.input-actions {
+  position: absolute;
+  right: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.input-actions .input-action {
+  position: static;
+}
+
+/* Поле под замком: текст приглушён, линия-индикатор не загорается, клавиатуры нет (readonly). */
+.text-input.is-locked {
+  color: var(--text);
+  cursor: default;
 }
 
 .text-input {
@@ -53,6 +75,12 @@
 .text-input:focus {
   background: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
   box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Под замком поле не выглядит выбранным, даже если на него нажали. */
+:root .input-with-action .text-input.is-locked:focus {
+  background: var(--field-bg);
+  box-shadow: none;
 }
 
 /* Моноширинный шрифт упрощает проверку ключей и паролей. */
@@ -131,6 +159,10 @@
 
 .input-action.is-danger {
   color: var(--danger);
+}
+
+.input-action.is-accent {
+  color: var(--accent);
 }
 
 /*

@@ -163,6 +163,87 @@
 }
 
 /*
+ * Телефон: панель действий компактная (и внизу экрана, и в карточке в правке — одного размера, чтобы
+ * при переходе в правку она не менялась): круги 42 вместо 48, подпись ближе к кругу, поля меньше.
+ */
+:root:is([data-platform='ios'], [data-platform='android']) .notes-actions {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+:root:is([data-platform='ios'], [data-platform='android']) .notes-actions .action-button {
+  --action-size: 42px !important;
+  gap: 3px;
+}
+
+/*
+ * Телефон (iOS и Android) вертикально, просмотр. Под полями оставалось две-три строки: блок фото,
+ * примечание, шапка, номера бирок и панель действий забирали почти весь экран. Поэтому поля
+ * не прокручиваются внутри карточки — прокручивается экран целиком: блок фото уезжает вверх,
+ * и карточка показывает все поля. Панель действий при этом — панель внизу экрана, и «Далее» всегда
+ * под рукой; содержимое прокручивается под ней, рабочая область оставляет под панелью место
+ * (см. ScanWorkspace.css):
+ * - Android — нижняя панель Material 3 во всю ширину;
+ * - iOS 18 — панель инструментов (UIToolbar): полоса материала во всю ширину;
+ * - iOS 26+ — парящая стеклянная «пилюля» над полоской «Домой».
+ * В правке, в горизонтальном положении и в браузере на компьютере — как раньше: панель в карточке.
+ */
+@media not all and (orientation: landscape) and (max-height: 600px) {
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .notes-card {
+    flex: 1 0 auto;
+  }
+
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) :is(.label-fields, .notes-message) {
+    flex: 1 0 auto;
+    overflow: visible;
+  }
+
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .notes-actions {
+    position: fixed;
+    z-index: 3;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  /*
+   * Полоса во всю ширину до нижнего края экрана, без лишних полей.
+   * Android: подписи — целиком над нижней безопасной зоной: полоска жестов стоит посреди зоны, и у разных
+   * производителей по-разному, заходить в зону нельзя (на HONOR подписи упирались в полоску). Старые
+   * WebView (до 140) Capacitor сам ставит над панелью навигации — зона 0, снизу только узкое поле.
+   * iOS 18: полоска «Домой» тонкая и у самого низа — подписи спускаются в верх зоны, как у панели вкладок.
+   */
+  :root:is([data-platform='android'], [data-ios-design='classic']) .scan-workspace:not(.is-text-editing) .notes-actions {
+    padding-top: 6px;
+  }
+
+  :root[data-platform='android'] .scan-workspace:not(.is-text-editing) .notes-actions {
+    padding-bottom: max(8px, var(--safe-bottom));
+  }
+
+  :root[data-ios-design='classic'] .scan-workspace:not(.is-text-editing) .notes-actions {
+    padding-bottom: max(6px, calc(var(--safe-bottom) - 12px));
+  }
+
+  /* Android: панель того же цвета, что и экран, — содержимое под ней не просвечивает; сверху — тонкая линия. */
+  :root[data-platform='android'] .scan-workspace:not(.is-text-editing) .notes-actions {
+    background: var(--bg);
+  }
+
+  /* iOS 26+: «пилюля» по центру, над полоской «Домой». */
+  :root[data-platform='ios'][data-ios-design='glass'] .scan-workspace:not(.is-text-editing) .notes-actions {
+    bottom: var(--notes-toolbar-inset);
+    width: max-content;
+    margin: 0 auto;
+  }
+}
+
+/* Панель переезжает между низом экрана и карточкой вместе с переходом в правку (см. ScanWorkspace.css). */
+:root:is([data-platform='ios'], [data-platform='android']).is-edit-transition .notes-actions {
+  view-transition-name: notes-actions;
+}
+
+/*
  * Горизонтальное положение (см. ScanWorkspace.css): карточка — правая колонка на всю высоту, и в правке
  * тоже; поля прокручиваются внутри, панель действий ниже и плотнее.
  */

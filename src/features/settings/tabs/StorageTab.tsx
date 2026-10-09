@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
-import { DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, PlugIcon, TableIcon, TableSearchIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
+import { DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, PlugIcon, TableIcon, TableSearchIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
 import { ActionTextInput, type InputAction } from '@/components/ui/ActionTextInput'
 import { Button } from '@/components/ui/Button'
 import { Field, FieldRow } from '@/components/ui/Field'
@@ -28,6 +28,8 @@ import './StorageTab.css'
  * сетевой диск Windows (SMB) или Google Drive.
  *
  * Таблица должна уже существовать: приложение её не создаёт, без неё запись невозможна.
+ * Путь и имя таблицы — под замком (по умолчанию «Probe otel.xlsx», см. `DEFAULT_TABLE_FILE`): поля
+ * закрыты для правки, чтобы их не сбили случайно; замок в поле открывает их до закрытия настроек.
  * Значок сверки в конце поля пути к таблице (у Google Drive — имени файла) сверяет, есть ли таблица,
  * и оставляет итог под полями;
  * «Проверить подключение» делает ту же проверку и сообщает итог диалогом.
@@ -46,6 +48,14 @@ export function StorageTab() {
   const canCheck = storage.target === 'smb' || Boolean(googleDrive.account)
 
   const [isSigningIn, setIsSigningIn] = useState(false)
+  /** Замок пути и имени таблицы открыт: поля можно править (при каждом открытии настроек — снова закрыт). */
+  const [isTableUnlocked, setIsTableUnlocked] = useState(false)
+  const lockAction: InputAction = {
+    icon: isTableUnlocked ? <LockOpenIcon /> : <LockIcon />,
+    label: isTableUnlocked ? t('storage.table.lock') : t('storage.table.unlock'),
+    tone: isTableUnlocked ? 'accent' : undefined,
+    onClick: () => setIsTableUnlocked((unlocked) => !unlocked),
+  }
 
   /** Вход через Google: токен с доступом к Drive, почта аккаунта — в настройки. */
   const signIn = async () => {
@@ -141,7 +151,7 @@ export function StorageTab() {
       <div key={storage.target} className="settings-stack anim-enter">
         {storage.target === 'smb' ? (
           <>
-            <FormSection title={t('storage.smb.location')} icon={<FolderIcon />} hint={t('storage.smb.filePathHint')}>
+            <FormSection title={t('storage.smb.location')} icon={<FolderIcon />} hint={`${t('storage.smb.filePathHint')} ${t('storage.table.lockHint')}`}>
               <Field label={t('storage.smb.server')}>
                 <TextInput
                   inputMode="url"
@@ -158,7 +168,8 @@ export function StorageTab() {
                   placeholder={t('storage.smb.filePathPlaceholder')}
                   value={smb.filePath}
                   onChange={(filePath) => settingsStore.updateSmb({ filePath })}
-                  action={checkAction}
+                  locked={!isTableUnlocked}
+                  action={[lockAction, checkAction]}
                 />
               </Field>
               <div className="storage-check" role="status">{checkStatus()}</div>
@@ -204,18 +215,25 @@ export function StorageTab() {
 
             <FormSection title={t('storage.googleDrive.location')} icon={<TableIcon />}>
               <Field label={t('storage.googleDrive.folder')}>
-                <TextInput
+                <ActionTextInput
                   inputMode="url"
                   placeholder={t('storage.googleDrive.folderPlaceholder')}
                   value={googleDrive.folder}
                   onChange={(folder) => settingsStore.updateGoogleDrive({ folder })}
+                  locked={!isTableUnlocked}
+                  action={lockAction}
                 />
               </Field>
               <Field label={t('storage.googleDrive.fileName')}>
-                <ActionTextInput value={googleDrive.fileName} onChange={(fileName) => settingsStore.updateGoogleDrive({ fileName })} action={checkAction} />
+                <ActionTextInput
+                  value={googleDrive.fileName}
+                  onChange={(fileName) => settingsStore.updateGoogleDrive({ fileName })}
+                  locked={!isTableUnlocked}
+                  action={[lockAction, checkAction]}
+                />
               </Field>
               {googleDrive.account && <div className="storage-check" role="status">{checkStatus()}</div>}
-              <Notice>{t('storage.googleDrive.locationHint')}</Notice>
+              <Notice>{t('storage.googleDrive.locationHint')} {t('storage.table.lockHint')}</Notice>
             </FormSection>
 
             <Button variant="tonal" icon={<PlugIcon />} busy={isTesting} disabled={check.checking || !googleDrive.account} onClick={() => void testConnection()}>

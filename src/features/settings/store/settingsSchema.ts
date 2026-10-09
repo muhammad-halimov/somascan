@@ -27,6 +27,9 @@ export interface GeneralSettings {
   endpoints: PerProvider<string>
 }
 
+/** Таблица по умолчанию — журнал проб; на сетевом диске — в корне общей папки (путь меняют, открыв замок). */
+export const DEFAULT_TABLE_FILE = 'Probe otel.xlsx'
+
 /** Куда записывается таблица `.xlsx`. */
 export const STORAGE_TARGETS = ['smb', 'googleDrive'] as const
 
@@ -126,8 +129,8 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
     },
     storage: {
       target: 'smb',
-      smb: { host: '', share: '', filePath: '', domain: '', username: '', password: '' },
-      googleDrive: { account: '', folder: '', fileName: 'Probe otel.xlsx' },
+      smb: { host: '', share: '', filePath: DEFAULT_TABLE_FILE, domain: '', username: '', password: '' },
+      googleDrive: { account: '', folder: '', fileName: DEFAULT_TABLE_FILE },
     },
     advanced: {
       prompt: '',
@@ -151,6 +154,15 @@ function readPerProvider(source: unknown, fallback: PerProvider<string>): PerPro
 function readStrings<T extends object>(source: unknown, fallback: T): T {
   const entries = Object.entries(fallback).map(([key, value]) => [key, readField(source, key, isString, value as string)])
   return Object.fromEntries(entries) as T
+}
+
+/**
+ * Пустой путь или имя таблицы — таблица по умолчанию: раньше по умолчанию поле было пустым,
+ * а с пустым путём записать всё равно некуда.
+ */
+function withDefaultTable<T extends object, K extends keyof T>(settings: T, key: K, fallback: T[K]): T {
+  const value = settings[key]
+  return typeof value === 'string' && value.trim() === '' ? { ...settings, [key]: fallback } : settings
 }
 
 /** Допустимые виды значения поля. */
@@ -255,8 +267,8 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
     },
     storage: {
       target: readField(storage, 'target', isOneOf(STORAGE_TARGETS), defaults.storage.target),
-      smb: readStrings(isRecord(storage) ? storage.smb : undefined, defaults.storage.smb),
-      googleDrive: readStrings(isRecord(storage) ? storage.googleDrive : undefined, defaults.storage.googleDrive),
+      smb: withDefaultTable(readStrings(isRecord(storage) ? storage.smb : undefined, defaults.storage.smb), 'filePath', defaults.storage.smb.filePath),
+      googleDrive: withDefaultTable(readStrings(isRecord(storage) ? storage.googleDrive : undefined, defaults.storage.googleDrive), 'fileName', defaults.storage.googleDrive.fileName),
     },
     advanced: {
       prompt: readField(advanced, 'prompt', isString, defaults.advanced.prompt),

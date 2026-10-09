@@ -114,6 +114,11 @@
       "checking": "Se verifică…",
       "missing": "Tabelul nu a fost găsit — scrierea nu este posibilă",
       "failed": "Verificarea a eșuat: {{error}}"
+    },
+    "table": {
+      "lock": "Blocați calea tabelului",
+      "unlock": "Deblocați calea tabelului pentru editare",
+      "lockHint": "Implicit — „Probe otel.xlsx”; calea și numele sunt blocate ca să nu fie schimbate din greșeală — atingeți lacătul din câmp pentru a le modifica."
     }
   },
   "advanced": {

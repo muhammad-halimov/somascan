@@ -73,6 +73,9 @@ test('бирка пишется на сетевой диск, активност
 test('ход пачки: обработано из всех растёт по одной, в покое — 0 из 0', async () => {
   const smb = new FakeSmb()
   smb.put(TABLE, template)
+  // Замена файла идёт дольше такта плавного хода (300 мс), как на настоящем сервере: иначе на быстрой
+  // машине пачка успевает записаться между тактами, и проверить ход между шагами нечем.
+  smb.latency = { commit: 450 }
   const engine = new EngineHarness(code, { smb })
   try {
     engine.command({ type: 'configure', storage: smbStorage, deviceId: 'ios-a1b2c3d4' })

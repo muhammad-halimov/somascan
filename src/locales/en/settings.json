@@ -114,6 +114,11 @@
       "checking": "Checking…",
       "missing": "Table not found — writing is not possible",
       "failed": "Could not check: {{error}}"
+    },
+    "table": {
+      "lock": "Lock the table path",
+      "unlock": "Unlock the table path to edit it",
+      "lockHint": "By default — “Probe otel.xlsx”; the path and name are locked so they are not changed by accident — tap the lock in the field to change them."
     }
   },
   "advanced": {

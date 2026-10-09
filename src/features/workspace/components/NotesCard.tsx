@@ -1,4 +1,4 @@
-import type { Ref } from 'react'
+import { useLayoutEffect, useRef, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AddIcon, CheckIcon, CloseIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
@@ -62,6 +62,23 @@ export interface NotesCardProps {
 export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const isRecognizing = status.kind === 'recognizing'
+  const actionsRef = useRef<HTMLDivElement>(null)
+
+  // Высота панели действий — в `--notes-actions-height`: на телефоне панель внизу экрана, и рабочая область
+  // оставляет под ней место (см. NotesCard.css). Шрифт и подписи на разных языках меняют высоту — меряем.
+  useLayoutEffect(() => {
+    const actions = actionsRef.current
+    if (!actions) return
+    const root = document.documentElement
+    const measure = () => root.style.setProperty('--notes-actions-height', `${Math.ceil(actions.getBoundingClientRect().height)}px`)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(actions)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--notes-actions-height')
+    }
+  }, [])
   // Править и отправлять в таблицу можно только распознанный результат: не во время запроса и не после ошибки.
   const canEdit = status.kind === 'done'
 
@@ -128,7 +145,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
         <p key="placeholder" className="notes-message is-placeholder anim-fade">{t('notes.placeholder')}</p>
       )}
 
-      <div className="notes-actions" role="group" aria-label={t('actions.group')}>
+      <div ref={actionsRef} className="notes-actions" role="group" aria-label={t('actions.group')}>
         <ActionButton size={48} icon={<AddIcon />} caption={t('actions.add')} label={t('actions.addLabel')} onClick={onAddPhoto} />
         {/* «Сброс»: пока идёт распознавание — прерывает его, оставляя фото для «Повтора»; иначе очищает экран. */}
         <ActionButton

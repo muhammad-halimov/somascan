@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+/*
+ * Ключ подписи приложения — общий для всех машин (android/keystore/somascan.jks, параметры —
+ * в android/keystore.properties; оба файла не в git, копию хранить отдельно). Им подписываются и debug,
+ * и release: SHA-1 один, и одного OAuth-клиента Google (вход в Google Drive) хватает для любой сборки.
+ * Без keystore.properties debug подписывается обычным debug-ключом машины (~/.android/debug.keystore).
+ */
+def signingProperties = new Properties()
+def signingPropertiesFile = rootProject.file('keystore.properties')
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.withInputStream { signingProperties.load(it) }
+}
+
 android {
     namespace = "com.somascan.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +28,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (signingPropertiesFile.exists()) {
+            somascan {
+                storeFile rootProject.file(signingProperties['storeFile'])
+                storePassword signingProperties['storePassword']
+                keyAlias signingProperties['keyAlias']
+                keyPassword signingProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
+        debug {
+            if (signingPropertiesFile.exists()) signingConfig signingConfigs.somascan
+        }
         release {
+            if (signingPropertiesFile.exists()) signingConfig signingConfigs.somascan
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
