@@ -53,6 +53,17 @@
   white-space: nowrap;
 }
 
+/* Номера бирок: вкладки Material (Android) или сегменты (iOS) под шапкой. */
+.notes-items {
+  flex: 0 0 auto;
+  padding: 2px 12px 6px;
+}
+
+.notes-items .tab {
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+}
+
 .notes-header-actions {
   display: flex;
   align-items: flex-start;

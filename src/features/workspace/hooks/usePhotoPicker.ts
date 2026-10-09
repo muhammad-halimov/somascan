@@ -8,14 +8,17 @@ import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 
 /** Колбэки `usePhotoPicker`. */
 export interface PhotoPickerCallbacks {
-  /** Фото выбрано; `url` пригоден для показа (`blob:` или путь WebView). */
-  onPicked: (url: string) => void
+  /** Фото выбраны (по порядку выбора); адреса пригодны для показа (`blob:` или путь WebView). */
+  onPicked: (urls: string[]) => void
   /** Сбой камеры или галереи (не вызывается, когда пользователь отменил выбор). */
   onError: () => void
 }
 
 /** Порядок пунктов в нативной панели выбора источника. */
 const ACTION = { take: 0, gallery: 1, files: 2, cancel: 3 } as const
+
+/** Адрес выбранного файла для WebView: `webPath`, а если его нет — нативный путь, переведённый в адрес. */
+const fileUrl = (file: { webPath?: string; path?: string } | undefined) => file?.webPath ?? (file?.path ? Capacitor.convertFileSrc(file.path) : null)
 
 /**
  * Источник фото.
@@ -29,6 +32,9 @@ const ACTION = { take: 0, gallery: 1, files: 2, cancel: 3 } as const
  *   нет «пользовательского жеста», и WebView игнорирует программный клик по нему.
  * - Веб: сразу скрытый `<input type="file">` (`inputProps` нужно передать ему через spread).
  *
+ * Галерея и файлы позволяют выбрать несколько фото сразу (не больше `limit` — сколько свободно в сетке),
+ * камера — один снимок.
+ *
  * Панель выбора — нативная (через `NativeDialogs`): на iOS системная, на Android — Material 3 в теме приложения.
  * Пока открыт выбор (камера, галерея, файлы), приложение ничего не показывает. Когда пользователь
  * вернулся из выбора, а плагин ещё готовит фото, `isReceiving` включает спиннер загрузки.
@@ -38,6 +44,8 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
   const inputRef = useRef<HTMLInputElement>(null)
   /** Пользователь уже вернулся из системного выбора, а фото ещё готовится (показываем загрузку). */
   const [isReceiving, setIsReceiving] = useState(false)
+  /** Сколько фото можно выбрать в текущем выборе (поле выбора файла в браузере читает его в `onChange`). */
+  const limitRef = useRef(1)
 
   /**
    * Ждёт результат системного выбора. Выбор на Android открывается поверх приложения отдельным
@@ -62,39 +70,41 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
   /** Веб: открывает выбор файла через скрытое поле (вызывается прямо из нажатия). */
   const openFileInput = () => inputRef.current?.click()
 
-  /** Нативное приложение: системный выбор файла-изображения. */
-  const fromFiles = async () => {
+  /** Нативное приложение: системный выбор файлов-изображений. */
+  const fromFiles = async (limit: number) => {
     // Android 13+ перехватывает выбор «только изображений» системным выбором фото (той же галереей),
     // поэтому там просим любые файлы — откроется файловый менеджер — и проверяем тип сами.
     const types = Capacitor.getPlatform() === 'android' ? undefined : ['image/*']
-    const { files } = await receive(FilePicker.pickFiles({ types, limit: 1 }))
-    const file = files[0]
-    if (file && !file.mimeType.startsWith('image/')) {
+    const { files } = await receive(FilePicker.pickFiles({ types, limit }))
+    const images = files.slice(0, limit).filter((file) => file.mimeType.startsWith('image/'))
+    if (files.length > 0 && images.length === 0) {
       onError()
       return
     }
-    // `webPath` можно сразу показывать; если его нет — переводим нативный путь в адрес для WebView.
-    const url = file?.webPath ?? (file?.path ? Capacitor.convertFileSrc(file.path) : null)
-    if (url) onPicked(url)
+    const urls = images.map(fileUrl).filter((url): url is string => Boolean(url))
+    if (urls.length > 0) onPicked(urls)
   }
 
   /** Снимок с камеры (плагин Camera). */
   const fromCamera = async () => {
     const photo = await receive(Camera.takePhoto({ quality: 90, editable: 'no' }))
-    if (photo?.webPath) onPicked(photo.webPath)
+    if (photo?.webPath) onPicked([photo.webPath])
   }
 
   /** Фото из галереи — системный выбор фото без перекодирования (плагин FilePicker). */
-  const fromGallery = async () => {
+  const fromGallery = async (limit: number) => {
     // На iOS просим JPEG (skipTranscoding: false): HEIC не принимают часть провайдеров распознавания.
-    const { files } = await receive(FilePicker.pickImages({ limit: 1, skipTranscoding: false }))
-    const file = files[0]
-    const url = file?.webPath ?? (file?.path ? Capacitor.convertFileSrc(file.path) : null)
-    if (url) onPicked(url)
+    const { files } = await receive(FilePicker.pickImages({ limit, skipTranscoding: false }))
+    const urls = files.slice(0, limit).map(fileUrl).filter((url): url is string => Boolean(url))
+    if (urls.length > 0) onPicked(urls)
   }
 
-  /** Открывает выбор источника фото. */
-  const pick = async () => {
+  /**
+   * Открывает выбор источника фото.
+   * @param limit Сколько фото можно выбрать (свободные ячейки сетки), не меньше одного.
+   */
+  const pick = async (limit = 1) => {
+    limitRef.current = Math.max(1, limit)
     if (!Capacitor.isNativePlatform()) {
       openFileInput()
       return
@@ -102,7 +112,7 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
     try {
       // Повторный тап, пока панель открыта, игнорируется (см. NativeDialogs).
       const selection = await NativeDialogs.showActions({
-        title: t('photo.add'),
+        title: limitRef.current > 1 ? t('photo.addUpTo', { count: limitRef.current }) : t('photo.add'),
         cancelable: true,
         options: [
           { title: t('photo.take') },
@@ -113,8 +123,8 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
       })
       if (!selection) return
       if (selection.index === ACTION.take) await fromCamera()
-      else if (selection.index === ACTION.gallery) await fromGallery()
-      else if (selection.index === ACTION.files) await fromFiles()
+      else if (selection.index === ACTION.gallery) await fromGallery(limitRef.current)
+      else if (selection.index === ACTION.files) await fromFiles(limitRef.current)
     } catch (error) {
       // Плагины отклоняют промис с «cancelled», когда пользователь отказался от выбора; это не ошибка.
       const message = error instanceof Error ? error.message : String(error)
@@ -122,17 +132,17 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
     }
   }
 
-  /** Поле выбора файла: передаём файл-изображение и сбрасываем поле, чтобы тот же файл можно было выбрать снова. */
+  /** Поле выбора файла: передаём файлы-изображения и сбрасываем поле, чтобы те же файлы можно было выбрать снова. */
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0]
+    const images = [...(event.currentTarget.files ?? [])].filter((file) => file.type.startsWith('image/')).slice(0, limitRef.current)
     event.currentTarget.value = ''
-    if (file?.type.startsWith('image/')) onPicked(URL.createObjectURL(file))
+    if (images.length > 0) onPicked(images.map((file) => URL.createObjectURL(file)))
   }
 
   return {
     pick,
     isReceiving,
     /** Свойства для скрытого поля выбора файла. */
-    inputProps: { ref: inputRef, type: 'file', accept: 'image/*', onChange, tabIndex: -1, 'aria-hidden': true } as const,
+    inputProps: { ref: inputRef, type: 'file', accept: 'image/*', multiple: true, onChange, tabIndex: -1, 'aria-hidden': true } as const,
   }
 }

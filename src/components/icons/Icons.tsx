@@ -516,3 +516,37 @@ export function ArrowDropDownIcon() {
     </svg>
   )
 }
+
+/** Сетка 3 × 3: все бирки на экране (до девяти фото). */
+export function GridIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="4.5" height="4.5" rx="1.2" />
+      <rect x="9.75" y="3.5" width="4.5" height="4.5" rx="1.2" />
+      <rect x="16" y="3.5" width="4.5" height="4.5" rx="1.2" />
+      <rect x="3.5" y="9.75" width="4.5" height="4.5" rx="1.2" />
+      <rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1.2" />
+      <rect x="16" y="9.75" width="4.5" height="4.5" rx="1.2" />
+      <rect x="3.5" y="16" width="4.5" height="4.5" rx="1.2" />
+      <rect x="9.75" y="16" width="4.5" height="4.5" rx="1.2" />
+      <rect x="16" y="16" width="4.5" height="4.5" rx="1.2" />
+    </svg>
+  )
+}
+
+/**
+ * «Назад» в стиле платформы: на iOS — уголок (chevron.backward), иначе — стрелка Material (arrow_back).
+ * Рисуются обе, лишнюю прячет CSS (см. Icons.css).
+ */
+export function BackIcon() {
+  return (
+    <>
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="back-icon-ios">
+        <path d="m14.5 5-7 7 7 7" />
+      </svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="back-icon-material">
+        <path d="M20 12H4m6-6-6 6 6 6" />
+      </svg>
+    </>
+  )
+}

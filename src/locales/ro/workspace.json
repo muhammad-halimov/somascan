@@ -12,7 +12,8 @@
     "rotate": "Rotește cu 90 de grade",
     "recognizing": "Recunoaștere…",
     "open": "Deschide fotografia pe tot ecranul",
-    "chooseFromFiles": "Alege din fișiere"
+    "chooseFromFiles": "Alege din fișiere",
+    "addUpTo": "Adaugă fotografii (până la {{count}})"
   },
   "notes": {
     "label": "Rezultat",
@@ -43,6 +44,11 @@
     "title": "Resetați zona de lucru?",
     "message": "Fotografia și textul recunoscut vor fi șterse.",
     "confirm": "Resetare"
+  },
+  "removeDialog": {
+    "title": "Eliminați eticheta?",
+    "message": "Fotografia și textul recunoscut al acestei etichete vor fi șterse. Celelalte etichete rămân.",
+    "confirm": "Elimină"
   },
   "controls": {
     "zoomOut": "Mai mic",
@@ -85,5 +91,19 @@
   "formDialog": {
     "title": "Forma nu este aleasă",
     "message": "Înainte de trimitere alegeți ce este pe etichetă: bară sau bobină — atingeți câmpul „Formă” din partea de sus a cardului."
+  },
+  "grid": {
+    "region": "Etichete pe ecran",
+    "open": "Grilă",
+    "openLabel": "Arată toate etichetele",
+    "back": "Înapoi",
+    "backLabel": "Înapoi la grilă",
+    "items": "Etichete",
+    "item": "Eticheta {{number}}",
+    "stateRecognizing": "se recunoaște",
+    "stateDone": "recunoscută",
+    "stateFailed": "eroare",
+    "add": "Adaugă eticheta {{number}}",
+    "locked": "Celula {{number}}: completați mai întâi celulele anterioare"
   }
 }

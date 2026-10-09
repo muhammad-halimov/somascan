@@ -2,8 +2,9 @@ import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AddIcon, CloseIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { Tabs } from '@/components/ui/Tabs'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
-import type { RecognitionStatus } from '../hooks/useLabelRecognition'
+import type { RecognitionStatus } from '../hooks/useScanSession'
 import { LabelFields } from './LabelFields'
 import './NotesCard.css'
 
@@ -11,6 +12,14 @@ import './NotesCard.css'
 export interface NotesCardProps {
   /** Ref карточки: в режиме правки экран прокручивается к ней. */
   cardRef?: Ref<HTMLDivElement>
+  /** Открытая бирка (её id): поля пересоздаются для другой бирки. */
+  itemKey: string
+  /** Сколько бирок на экране. */
+  itemCount: number
+  /** Номер открытой бирки (`itemCount` — пустая ячейка). */
+  activeIndex: number
+  /** Перейти к бирке. */
+  onSelectItem: (index: number) => void
   /** Режим правки включён. */
   isEditing: boolean
   /** Состояние распознавания. */
@@ -38,11 +47,12 @@ export interface NotesCardProps {
 }
 
 /**
- * Карточка результата под фото: шапка с заголовком и кнопками правки, распознанные поля
- * (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания — прерывает его), «Повтор», «Далее».
- * У всех кнопок — подписи.
+ * Карточка результата под фото: шапка с заголовком и кнопками правки, номера бирок (когда их
+ * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
+ * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
+ * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, isEditing, status, hasPhoto, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const isRecognizing = status.kind === 'recognizing'
   // Править и отправлять в таблицу можно только распознанный результат: не во время запроса и не после ошибки.
@@ -50,6 +60,9 @@ export function NotesCard({ cardRef, isEditing, status, hasPhoto, onFieldChange,
 
   // Заголовок карточки: «Данные с бирки» для результата, иначе нейтральное «Результат».
   const title = status.kind === 'done' ? t('label:title') : t('notes.label')
+  // Номера бирок; открыта пустая ячейка после них — ещё и «+».
+  const itemOptions = Array.from({ length: itemCount }, (_, index) => ({ value: index, label: String(index + 1) }))
+  if (activeIndex === itemCount) itemOptions.push({ value: itemCount, label: '+' })
 
   return (
     <div ref={cardRef} className={`notes-card${isEditing ? ' is-text-editing' : ''}`} aria-busy={isRecognizing}>
@@ -73,8 +86,14 @@ export function NotesCard({ cardRef, isEditing, status, hasPhoto, onFieldChange,
         </div>
       </div>
 
+      {itemOptions.length > 1 && (
+        <div className="notes-items">
+          <Tabs options={itemOptions} value={activeIndex} onChange={onSelectItem} label={t('grid.items')} />
+        </div>
+      )}
+
       {status.kind === 'done' ? (
-        <LabelFields key={isEditing ? 'edit' : 'view'} label={status.label} isEditing={isEditing} onFieldChange={onFieldChange} />
+        <LabelFields key={`${itemKey}-${isEditing ? 'edit' : 'view'}`} label={status.label} isEditing={isEditing} onFieldChange={onFieldChange} />
       ) : status.kind === 'failed' ? (
         <p className="notes-message is-error anim-enter" role="alert">
           <span className="notes-message-title">{t('errors:recognitionFailed')}</span>

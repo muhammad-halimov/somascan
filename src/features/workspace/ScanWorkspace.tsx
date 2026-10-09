@@ -12,47 +12,55 @@ import { useHistoryLayer } from '@/hooks/useHistoryLayer'
 import { usePresence } from '@/hooks/usePresence'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
-import { PhotoCard } from './components/PhotoCard'
+import { PhotoCard, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
 import { useEditMode } from './hooks/useEditMode'
-import { useLabelRecognition } from './hooks/useLabelRecognition'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
-import type { Size } from './utils/PhotoGeometry'
+import { IDLE, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
 import './ScanWorkspace.css'
 
-/** Сколько крутится спиннер в «Далее», пока экран очищается для следующей бирки. */
+/** Сколько крутится спиннер в «Далее», пока бирка уходит в очередь и открывается следующая. */
 const HANDOFF_MS = 700
 
 /**
- * Главный экран: выбрать фото бирки, автоматически распознать, проверить и поправить поля.
+ * Главный экран: выбрать фото бирок (до девяти сразу), автоматически распознать, проверить и поправить поля.
  *
- * Собирает карточку фото, карточку результата и просмотр на весь экран и ведёт
- * жизненный цикл фото: выбрано → загружается → загружено → распознано → «Далее» (в очередь выгрузки).
- * Распознавание запускается один раз на фото, как только оно загрузилось.
+ * Собирает карточку фото (одна бирка или сетка 3 × 3), карточку результата открытой бирки и просмотр
+ * на весь экран. Бирки идут по порядку: новые фото встают в конец, каждое распознаётся само;
+ * «Далее» отправляет открытую бирку в очередь выгрузки и открывает следующую.
+ * К бирке можно перейти из сетки и из карточки результата (номера бирок над полями).
  */
 export function ScanWorkspace() {
   const { t } = useTranslation(['workspace', 'common'])
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
-  const [photoKey, setPhotoKey] = useState(0)
-  const [naturalSize, setNaturalSize] = useState<Size | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [hasError, setHasError] = useState(false)
+  const session = useScanSession()
+  const item = session.active
+  const activeIndex = session.activeIndex
+  const status = item?.status ?? IDLE
   const [isViewerOpen, setIsViewerOpen] = useState(false)
-  /** Адрес, уже отправленный на распознавание: повторная загрузка картинки не шлёт его снова. */
-  const recognizedUrl = useRef<string | null>(null)
+  /** Карточка фото: одна бирка или сетка. */
+  const [view, setView] = useState<PhotoCardView>('single')
+  /** Сетку уже открывали: у бирки появляется «Назад» к сетке. */
+  const [usedGrid, setUsedGrid] = useState(false)
 
   const workspaceRef = useRef<HTMLElement>(null)
   const notesCardRef = useRef<HTMLDivElement>(null)
 
-  const hasPhoto = Boolean(photoUrl) && !hasError
-  const recognition = useLabelRecognition()
-  const transform = usePhotoTransform({ naturalSize, enabled: hasPhoto && !isLoading })
+  const hasPhoto = item !== null && !item.hasError
+  const transform = usePhotoTransform({ naturalSize: item?.naturalSize ?? null, enabled: hasPhoto && !item.isLoading && view === 'single' })
   const editMode = useEditMode()
-  /** «Далее» нажата: бирка уходит в очередь, экран очищается — пока это идёт, в кнопке крутится спиннер. */
+  /** «Далее» нажата: бирка уходит в очередь, открывается следующая — пока это идёт, в кнопке крутится спиннер. */
   const [isHandingOff, setIsHandingOff] = useState(false)
   const closeViewer = useHistoryLayer(isViewerOpen, () => setIsViewerOpen(false), 'photo')
   const viewer = usePresence(isViewerOpen)
+  /** Сетка закрывается системным «Назад» (жест iOS, кнопка Android) — открывается выбранная бирка. */
+  const closeGrid = useHistoryLayer(view === 'grid', () => setView('single'), 'grid')
+
+  // Другая бирка — исходный масштаб и поворот.
+  const { reset: resetTransform } = transform
+  useEffect(() => {
+    resetTransform()
+  }, [item?.id, resetTransform])
 
   // Вход и выход из правки — до отрисовки кадра и без анимации прокрутки:
   // карточка результата сразу оказывается вверху, фото не мелькает.
@@ -74,63 +82,48 @@ export function ScanWorkspace() {
     wasEditing.current = editMode.isEditing
   }, [editMode.isEditing])
 
-  // Плохое фото: после распознавания сообщаем, что его лучше переснять (один раз на результат).
-  const warnedResult = useRef<object | null>(null)
+  // Плохое фото: когда открытая бирка распознана, сообщаем, что его лучше переснять (один раз на результат).
+  const warnedResults = useRef(new WeakSet<object>())
   useEffect(() => {
-    const status = recognition.status
-    if (status.kind !== 'done' || !status.photo.retake || warnedResult.current === status.photo) return
-    warnedResult.current = status.photo
+    if (status.kind !== 'done' || !status.photo.retake || warnedResults.current.has(status.photo)) return
+    warnedResults.current.add(status.photo)
     const issues = status.photo.issues.map((issue) => t(`photoIssues.${issue}`)).join(', ')
     void NativeDialogs.alert({
       title: t('qualityDialog.title'),
       message: issues ? t('qualityDialog.message', { issues }) : t('qualityDialog.messageGeneric'),
       buttonTitle: t('common:ok'),
     })
-  }, [recognition.status, t])
+  }, [status, t])
 
-  // Освобождаем память фото, выбранного в браузере (`blob:`), когда его заменили или экран закрыли.
-  useEffect(() => () => {
-    if (photoUrl?.startsWith('blob:')) URL.revokeObjectURL(photoUrl)
-  }, [photoUrl])
-
-  /** Убирает фото и результат. */
-  const clearPhoto = () => {
-    recognition.reset()
-    editMode.exit()
-    transform.reset()
-    recognizedUrl.current = null
-    setNaturalSize(null)
-    setHasError(false)
-  }
-
-  /** Показывает только что выбранное фото; распознавание стартует в `handleLoad`. */
-  const showPhoto = (url: string) => {
-    clearPhoto()
-    setPhotoKey((key) => key + 1)
-    setIsLoading(true)
-    setPhotoUrl(url)
-  }
-
-  const picker = usePhotoPicker({ onPicked: showPhoto, onError: () => setHasError(true) })
-
-  /** Фото загрузилось: запоминаем размер и распознаём (один раз на фото). */
-  const handleLoad = (size: Size) => {
-    setNaturalSize(size)
-    setIsLoading(false)
-    if (photoUrl && recognizedUrl.current !== photoUrl) {
-      recognizedUrl.current = photoUrl
-      void recognition.recognize(photoUrl)
-    }
-  }
+  /** Куда идут выбранные фото: в конец (новые бирки) или вместо фото открытой бирки (все девять заняты). */
+  const pickTarget = useRef<'add' | 'replace'>('add')
+  const picker = usePhotoPicker({
+    onPicked: (urls) => {
+      editMode.exit()
+      if (pickTarget.current === 'replace') session.replace(activeIndex, urls[0]!)
+      else session.add(urls)
+    },
+    onError: () => {
+      void NativeDialogs.alert({ title: t('photo.add'), message: t('photo.failedToOpen'), buttonTitle: t('common:ok') })
+    },
+  })
 
   /**
    * Подтверждение нужно, только когда есть что терять: распознанный результат
    * или идущее распознавание. После ошибки или без фото действуем сразу.
    */
-  const hasResult = recognition.status.kind === 'done' || recognition.status.kind === 'recognizing'
+  const hasResult = status.kind === 'done' || status.kind === 'recognizing'
 
-  /** «Фото»: если есть результат, сначала спрашиваем, заменить ли фото (нативный диалог). */
-  const addPhoto = async () => {
+  /**
+   * «Фото» и пустая ячейка: выбранные фото (до числа свободных ячеек) встают в конец по порядку.
+   * Если все девять заняты — фото открытой бирки заменяется (с подтверждением, если есть результат).
+   */
+  const addPhotos = async () => {
+    if (session.canAdd) {
+      pickTarget.current = 'add'
+      await picker.pick(MAX_SCAN_ITEMS - session.items.length)
+      return
+    }
     if (hasPhoto && hasResult) {
       const confirmed = await NativeDialogs.confirm({
         title: t('replaceDialog.title'),
@@ -140,47 +133,76 @@ export function ScanWorkspace() {
       })
       if (!confirmed) return
     }
-    await picker.pick()
+    pickTarget.current = 'replace'
+    await picker.pick(1)
   }
 
-  /** «Сброс»: убирает фото и результат; если результат есть — после подтверждения. */
-  const resetWorkspace = async () => {
+  /** «Сброс»: убирает открытую бирку (следующие сдвигаются); если есть результат — после подтверждения. */
+  const removeItem = async () => {
+    if (!item) return
     if (hasResult) {
+      const dialog = session.items.length > 1 ? 'removeDialog' : 'resetDialog'
       const confirmed = await NativeDialogs.confirm({
-        title: t('resetDialog.title'),
-        message: t('resetDialog.message'),
-        okButtonTitle: t('resetDialog.confirm'),
+        title: t(`${dialog}.title`),
+        message: t(`${dialog}.message`),
+        okButtonTitle: t(`${dialog}.confirm`),
         cancelButtonTitle: t('common:cancel'),
       })
       if (!confirmed) return
     }
-    clearPhoto()
-    setPhotoUrl(null)
-    setIsLoading(false)
+    editMode.exit()
+    session.remove(activeIndex)
   }
 
-  /** «Повтор»: заново отправляет то же фото на распознавание. */
+  /** «Повтор»: заново отправляет фото открытой бирки на распознавание. */
   const retry = () => {
-    if (!photoUrl) return
+    if (!item) return
     editMode.exit()
-    recognizedUrl.current = photoUrl
-    void recognition.recognize(photoUrl)
+    session.retry(activeIndex)
+  }
+
+  /** Открывает бирку `index` из карточки результата (номера бирок). */
+  const selectItem = (index: number) => {
+    if (index !== activeIndex) session.select(index)
+  }
+
+  /** «Сетка» и «Назад»: фото уменьшается в свою ячейку, появляется сетка. Правка закрывается. */
+  const pendingGrid = useRef(false)
+  const showGrid = () => {
+    setUsedGrid(true)
+    // Правка — свой слой истории: сначала закрываем его, сетку открываем, когда он снят (см. эффект ниже).
+    if (editMode.isEditing) {
+      pendingGrid.current = true
+      editMode.exit()
+      return
+    }
+    setView('grid')
+  }
+  useEffect(() => {
+    if (editMode.isEditing || !pendingGrid.current) return
+    pendingGrid.current = false
+    setView('grid')
+  }, [editMode.isEditing])
+
+  /** Ячейка сетки: бирка (или следующая пустая ячейка) открывается, ячейка увеличивается до неё. */
+  const openCell = (index: number) => {
+    session.select(index)
+    closeGrid()
   }
 
   /**
-   * «Далее»: распознанная (и поправленная) бирка встаёт в очередь выгрузки, а экран очищается
-   * для следующей. Спиннер в кнопке крутится, пока карточки очищаются (не меньше `HANDOFF_MS`,
-   * чтобы его было видно), и гаснет, когда экран готов к следующей бирке. Сама запись в таблицу
-   * идёт в фоне (на устройстве — движок очереди вне WebView, и в свёрнутом, и в закрытом приложении),
-   * её состояние — в «Загрузках»; если хранилище не настроено
+   * «Далее»: распознанная (и поправленная) бирка встаёт в очередь выгрузки и убирается с экрана,
+   * открывается следующая (или пустая карточка). Спиннер в кнопке крутится не меньше `HANDOFF_MS`,
+   * чтобы его было видно. Сама запись в таблицу идёт в фоне (на устройстве — движок очереди вне WebView,
+   * и в свёрнутом, и в закрытом приложении), её состояние — в «Загрузках»; если хранилище не настроено
    * или проверка уже показала, что таблицы нет (своей приложение не создаёт), запись подождёт
    * исправления настроек — об этом сообщаем сразу.
    */
   const uploadResult = async () => {
-    if (recognition.status.kind !== 'done' || isHandingOff) return
+    if (!item || status.kind !== 'done' || isHandingOff) return
     // Форму поставки (пруток или катушка) выбирают вручную — без неё бирку не отправить.
     // Выбор формы — первая строка карточки: докручиваем к нему, если список прокручен.
-    if (!hasProductForm(recognition.status.label)) {
+    if (!hasProductForm(status.label)) {
       notesCardRef.current?.querySelector('.label-field.is-product-form')?.scrollIntoView({ block: 'nearest' })
       await NativeDialogs.alert({
         title: t('formDialog.title'),
@@ -191,12 +213,11 @@ export function ScanWorkspace() {
     }
     const { advanced, general, storage } = settingsStore.getSnapshot()
     const columns = buildUploadColumns(enabledLabelFields(advanced.labelFields), general.language)
-    uploadQueue.enqueue(recognition.status.label, columns)
+    uploadQueue.enqueue(status.label, columns)
     setIsHandingOff(true)
     await new Promise((resolve) => window.setTimeout(resolve, HANDOFF_MS))
-    clearPhoto()
-    setPhotoUrl(null)
-    setIsLoading(false)
+    const index = session.items.findIndex((candidate) => candidate.id === item.id)
+    if (index >= 0) session.remove(index)
     setIsHandingOff(false)
     const configured = storage.target === 'smb' ? isSmbConfigured(storage.smb) : isDriveConfigured(storage.googleDrive)
     if (!configured) {
@@ -222,36 +243,40 @@ export function ScanWorkspace() {
     >
       <input className="photo-input" {...picker.inputProps} />
       <PhotoCard
-        photoUrl={photoUrl}
-        photoKey={photoKey}
-        isLoading={isLoading || picker.isReceiving}
-        isRecognizing={recognition.status.kind === 'recognizing'}
-        hasError={hasError}
+        item={item}
+        items={session.items}
+        activeIndex={activeIndex}
+        view={view}
+        showBack={usedGrid}
+        isReceiving={picker.isReceiving}
         transform={transform}
-        onPick={() => void picker.pick()}
+        onPick={() => void addPhotos()}
         onOpen={() => setIsViewerOpen(true)}
-        onLoad={handleLoad}
-        onError={() => {
-          setIsLoading(false)
-          setHasError(true)
-        }}
+        onLoad={(size) => item && session.markLoaded(item.id, size)}
+        onError={() => item && session.markFailed(item.id)}
+        onShowGrid={showGrid}
+        onOpenCell={openCell}
       />
       <NotesCard
         cardRef={notesCardRef}
+        itemKey={item?.id ?? `empty-${activeIndex}`}
+        itemCount={session.items.length}
+        activeIndex={activeIndex}
+        onSelectItem={selectItem}
         isEditing={editMode.isEditing}
-        status={recognition.status}
-        hasPhoto={hasPhoto}
-        onFieldChange={recognition.updateField}
+        status={status}
+        hasPhoto={item !== null}
+        onFieldChange={(key, value) => session.updateField(activeIndex, key, value)}
         onToggleEdit={editMode.toggle}
         onCloseEdit={editMode.exit}
-        onAddPhoto={() => void addPhoto()}
-        onClear={() => void resetWorkspace()}
-        onCancel={recognition.abort}
+        onAddPhoto={() => void addPhotos()}
+        onClear={() => void removeItem()}
+        onCancel={() => session.abort(activeIndex)}
         onRetry={retry}
         onNext={() => void uploadResult()}
         isUploading={isHandingOff}
       />
-      {viewer.mounted && photoUrl && <PhotoViewer url={photoUrl} naturalSize={naturalSize} isClosing={viewer.closing} onClose={closeViewer} />}
+      {viewer.mounted && item && <PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} isClosing={viewer.closing} onClose={closeViewer} />}
     </section>
   )
 }

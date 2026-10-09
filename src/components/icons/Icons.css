@@ -31,3 +31,9 @@
   object-fit: contain;
   border-radius: 5px;
 }
+
+/* «Назад» (BackIcon): уголок на iOS, стрелка Material на остальных платформах. */
+:root[data-platform='ios'] .back-icon-material,
+:root:not([data-platform='ios']) .back-icon-ios {
+  display: none;
+}

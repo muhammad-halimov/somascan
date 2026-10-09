@@ -12,7 +12,8 @@
     "rotate": "Rotate 90 degrees",
     "recognizing": "Recognizing…",
     "open": "Open photo full screen",
-    "chooseFromFiles": "Choose from files"
+    "chooseFromFiles": "Choose from files",
+    "addUpTo": "Add photos (up to {{count}})"
   },
   "notes": {
     "label": "Result",
@@ -43,6 +44,11 @@
     "title": "Reset workspace?",
     "message": "Photo and recognized text will be removed.",
     "confirm": "Reset"
+  },
+  "removeDialog": {
+    "title": "Remove this tag?",
+    "message": "The photo and recognized text of this tag will be deleted. The other tags stay.",
+    "confirm": "Remove"
   },
   "controls": {
     "zoomOut": "Smaller",
@@ -85,5 +91,19 @@
   "formDialog": {
     "title": "Form not selected",
     "message": "Before sending, choose what the tag is for: bar or coil — tap the “Form” field at the top of the card."
+  },
+  "grid": {
+    "region": "Tags on screen",
+    "open": "Grid",
+    "openLabel": "Show all tags",
+    "back": "Back",
+    "backLabel": "Back to the grid",
+    "items": "Tags",
+    "item": "Tag {{number}}",
+    "stateRecognizing": "recognizing",
+    "stateDone": "recognized",
+    "stateFailed": "error",
+    "add": "Add tag {{number}}",
+    "locked": "Cell {{number}}: fill the previous ones first"
   }
 }

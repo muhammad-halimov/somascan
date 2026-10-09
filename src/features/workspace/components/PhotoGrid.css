@@ -1,0 +1,245 @@
+/*
+ * Сетка 3 × 3 в карточке фото: миниатюры бирок, следующая свободная ячейка с «плюсом»
+ * и недоступные ячейки (заполняются только по порядку).
+ * Карточка анимирует переход между сеткой и одной биркой (transform от левого верхнего угла).
+ */
+
+.photo-grid {
+  --photo-grid-gap: 6px;
+  --photo-grid-radius: 8px;
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: var(--photo-grid-gap);
+  padding: var(--photo-grid-gap);
+  background: var(--photo-empty-bg);
+  transform-origin: 0 0;
+}
+
+.photo-grid-cell {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+  color: var(--text-h);
+  background: var(--photo-backdrop);
+  border: 0;
+  border-radius: var(--photo-grid-radius);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.photo-grid-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  animation: backdrop-enter 200ms ease-out backwards;
+}
+
+/* Открытая бирка — акцентная рамка поверх миниатюры. */
+.photo-grid-cell.is-active::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 3px var(--accent);
+  pointer-events: none;
+}
+
+/* Номер бирки — в левом верхнем углу, у открытой — акцентный. */
+.photo-grid-number {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  left: 6px;
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0 6px;
+  color: #fff;
+  background: rgb(24 26 31 / 64%);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.photo-grid-cell.is-active .photo-grid-number {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+/* Распознаётся: миниатюра притушена, по центру — спиннер. */
+.photo-grid-cell.is-busy::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgb(0 0 0 / 38%);
+}
+
+.photo-grid-spinner {
+  position: relative;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  border: 3px solid rgb(255 255 255 / 35%);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: photo-spin 750ms linear infinite;
+}
+
+/* Итог распознавания — в правом нижнем углу: галочка или знак ошибки. */
+.photo-grid-badge {
+  position: absolute;
+  z-index: 2;
+  right: 6px;
+  bottom: 6px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  color: var(--on-accent);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+}
+
+.photo-grid-badge.is-done {
+  background: var(--success);
+}
+
+.photo-grid-badge.is-failed {
+  background: var(--danger);
+}
+
+.photo-grid-badge svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Пустые ячейки: следующая свободная — тональная с «плюсом», дальше — недоступные. */
+.photo-grid-cell.is-empty {
+  background: color-mix(in srgb, var(--text-h) 5%, transparent);
+}
+
+.photo-grid-cell.is-next {
+  background: color-mix(in srgb, var(--accent) 12%, var(--photo-empty-bg));
+}
+
+.photo-grid-cell.is-locked {
+  cursor: default;
+}
+
+.photo-grid-plus {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.photo-grid-cell.is-next .photo-grid-plus {
+  background: var(--photo-empty-plus-bg);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+.photo-grid-plus::before,
+.photo-grid-plus::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--accent);
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.photo-grid-plus::before {
+  width: 14px;
+  height: 2.2px;
+}
+
+.photo-grid-plus::after {
+  width: 2.2px;
+  height: 14px;
+}
+
+.photo-grid-cell.is-locked .photo-grid-plus {
+  opacity: .32;
+}
+
+.photo-grid-cell.is-locked .photo-grid-plus::before,
+.photo-grid-cell.is-locked .photo-grid-plus::after {
+  background: var(--text);
+}
+
+/* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
+:root:not([data-press]) .photo-grid-cell:focus-visible,
+:root[data-keyboard] .photo-grid-cell:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* Android: волна по миниатюре — белая, по «плюсу» — акцентная (Material 3). */
+:root[data-platform='android'] .photo-grid-cell.has-photo {
+  --ripple-color: #fff;
+}
+
+:root[data-platform='android'] .photo-grid-cell.is-next {
+  --ripple-color: var(--accent);
+}
+
+/*
+ * iOS: ячейки концентричны карточке (радиус карточки 24 минус отступ), значки на миниатюрах —
+ * материал UIKit (iOS 18) или стекло с бликом (iOS 26+).
+ */
+:root[data-platform='ios'] .photo-grid {
+  --photo-grid-gap: 8px;
+  --photo-grid-radius: 14px;
+}
+
+:root[data-platform='ios'] .photo-grid-number {
+  background: rgb(30 32 38 / 55%);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: saturate(180%) blur(12px);
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .photo-grid {
+  --photo-grid-radius: 16px;
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .photo-grid-number {
+  background: rgb(30 32 38 / 38%);
+  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / 45%), inset 0 1px 0 rgb(255 255 255 / 40%);
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .photo-grid-cell.is-next .photo-grid-plus {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%), 0 4px 12px rgb(0 0 0 / 10%);
+}
+
+:root[data-platform='ios'] .photo-grid-cell {
+  transition: opacity 200ms ease-out;
+}
+
+:root[data-platform='ios'] .photo-grid-cell[data-pressed] {
+  opacity: .6;
+  transition: none;
+}
