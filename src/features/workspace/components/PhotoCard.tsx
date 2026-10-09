@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { BackIcon, GridIcon } from '@/components/icons/Icons'
+import { BackIcon, GridIcon, ImageIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { usePresence } from '@/hooks/usePresence'
 import type { ScanItem } from '../hooks/useScanSession'
@@ -43,6 +43,8 @@ export interface PhotoCardProps {
   onShowGrid: () => void
   /** Ячейка сетки: открыть бирку или следующую пустую ячейку. */
   onOpenCell: (index: number) => void
+  /** Кнопка в углу сетки: открыть выбранную бирку (та же, что «Открыть» в панели листания). */
+  onOpenActive: () => void
   /** Значок выбора в ячейке: отправлять бирку или нет. */
   onToggleSelected: (index: number) => void
 }
@@ -61,12 +63,12 @@ const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
  * перетаскивание, — кнопками масштаба и поворота) или сетка 3 × 3 всех бирок.
  *
  * Справа вверху — «Сетка»: карточка уменьшает фото в его ячейку, и появляется сетка; нажатие
- * на ячейку (или «Открыть» в панели под карточкой) увеличивает её обратно до одной бирки. Слева
+ * на ячейку (или «Открыть» — в углу сетки и в панели под карточкой) увеличивает её обратно до одной бирки. Слева
  * вверху у бирки, открытой из сетки, — «Назад» к сетке. Переход к соседней бирке — фото въезжает
  * сбоку, как слайд. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
  * один спиннер с подписью «Распознавание».
  */
-export function PhotoCard({ item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -235,6 +237,19 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
 
       {gridMounted && (
         <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
+      )}
+
+      {/* В сетке — «Открыть» выбранную бирку в углу «Сетки» (дублирует кнопку панели листания). */}
+      {view === 'grid' && (
+        <ActionButton
+          className="photo-grid-single anim-fade"
+          variant="overlay"
+          size={36}
+          icon={<ImageIcon />}
+          caption={t('slides.open')}
+          label={t('slides.openLabel')}
+          onClick={onOpenActive}
+        />
       )}
 
     </div>

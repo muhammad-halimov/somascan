@@ -3,8 +3,8 @@
  * и недоступные ячейки (заполняются только по порядку).
  * Карточка анимирует переход между сеткой и одной биркой (transform от левого верхнего угла).
  *
- * Кольца: выбранная для отправки — акцентное, открытая — контрастное (цвет основного текста),
- * выбранная открытая — оба (контрастное снаружи, акцентное внутри).
+ * Кольца: выбранная для отправки — акцентное внутри ячейки, открытая — бирюзовая обводка снаружи
+ * со свечением (у выбранной открытой — оба).
  */
 
 .photo-grid {
@@ -81,15 +81,27 @@
   box-shadow: inset 0 0 0 3px var(--accent);
 }
 
-.photo-grid-cell.is-active::after {
-  box-shadow: inset 0 0 0 3px var(--text-h);
+/*
+ * Открытая бирка — фирменный бирюзовый (цвет логотипа): обводка снаружи ячейки и мягкое свечение.
+ * Не путается ни с акцентным кольцом выбранных (внутри ячейки), ни с цветами состояний.
+ */
+.photo-grid-cell.is-active {
+  z-index: 1;
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 18px 3px color-mix(in srgb, var(--focus) 50%, transparent);
+  animation: photo-grid-focus 360ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.photo-grid-cell.is-active.is-selected::after {
-  box-shadow: inset 0 0 0 3px var(--text-h), inset 0 0 0 6px var(--accent);
+/* Выбор ячейки — короткий «отклик»: обводка подтягивается к ячейке. */
+@keyframes photo-grid-focus {
+  from {
+    outline-offset: 7px;
+    outline-color: transparent;
+  }
 }
 
-/* Номер бирки — в левом верхнем углу: у выбранной акцентный, у открытой — контрастный. */
+/* Номер бирки — в левом верхнем углу: у выбранной акцентный, у открытой — бирюзовый. */
 .photo-grid-number {
   position: absolute;
   z-index: 2;
@@ -115,13 +127,8 @@
 }
 
 .photo-grid-cell.is-active .photo-grid-number {
-  color: var(--bg);
-  background: var(--text-h);
-}
-
-.photo-grid-cell.is-active.is-selected .photo-grid-number {
-  top: 8px;
-  left: 8px;
+  color: var(--on-focus);
+  background: var(--focus);
 }
 
 /* Распознаётся: миниатюра притушена, по центру — спиннер. */

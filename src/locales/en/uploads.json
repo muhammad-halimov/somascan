@@ -5,9 +5,15 @@
   "tabs": {
     "label": "Upload sections",
     "queue": "Active",
-    "done": "History",
-    "count_one": "{{count}} tag",
-    "count_other": "{{count}} tags"
+    "done": "History"
+  },
+  "strip": {
+    "active_one": "{{count}} tag in progress — written to the table in turn",
+    "active_other": "{{count}} tags in progress — written to the table in turn",
+    "activeFailed_one": "{{count}} tag in progress, not written: {{failed}} — tap “Retry”",
+    "activeFailed_other": "{{count}} tags in progress, not written: {{failed}} — tap “Retry”",
+    "history_one": "{{count}} tag written to the table",
+    "history_other": "{{count}} tags written to the table"
   },
   "emptyQueue": {
     "title": "The queue is empty",

@@ -5,11 +5,21 @@
   "tabs": {
     "label": "Разделы загрузок",
     "queue": "Активные",
-    "done": "История",
-    "count_one": "{{count}} бирка",
-    "count_few": "{{count}} бирки",
-    "count_many": "{{count}} бирок",
-    "count_other": "{{count}} бирки"
+    "done": "История"
+  },
+  "strip": {
+    "active_one": "{{count}} бирка в работе — запишется в таблицу по очереди",
+    "active_few": "{{count}} бирки в работе — запишутся в таблицу по очереди",
+    "active_many": "{{count}} бирок в работе — запишутся в таблицу по очереди",
+    "active_other": "{{count}} бирки в работе — запишутся в таблицу по очереди",
+    "activeFailed_one": "{{count}} бирка в работе, не записано: {{failed}} — нажмите «Повтор»",
+    "activeFailed_few": "{{count}} бирки в работе, не записано: {{failed}} — нажмите «Повтор»",
+    "activeFailed_many": "{{count}} бирок в работе, не записано: {{failed}} — нажмите «Повтор»",
+    "activeFailed_other": "{{count}} бирки в работе, не записано: {{failed}} — нажмите «Повтор»",
+    "history_one": "{{count}} бирка записана в таблицу",
+    "history_few": "{{count}} бирки записаны в таблицу",
+    "history_many": "{{count}} бирок записано в таблицу",
+    "history_other": "{{count}} бирки записаны в таблицу"
   },
   "emptyQueue": {
     "title": "Очередь пуста",

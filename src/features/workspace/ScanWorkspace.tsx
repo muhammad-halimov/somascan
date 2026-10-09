@@ -274,6 +274,9 @@ export function ScanWorkspace() {
     }
   }
 
+  /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
+  const hasSlideBar = session.items.length > 0 || view === 'grid'
+
   /** Сколько бирок выбрано для отправки. */
   const selectedCount = session.items.filter((candidate) => candidate.selected).length
 
@@ -284,32 +287,36 @@ export function ScanWorkspace() {
       aria-label={t('region')}
     >
       <input className="photo-input" {...picker.inputProps} />
-      <PhotoCard
-        item={item}
-        items={session.items}
-        activeIndex={activeIndex}
-        view={view}
-        showBack={usedGrid}
-        isReceiving={picker.isReceiving}
-        transform={transform}
-        onPick={() => void addPhotos()}
-        onOpen={() => setIsViewerOpen(true)}
-        onLoad={(size) => item && session.markLoaded(item.id, size)}
-        onError={() => item && session.markFailed(item.id)}
-        onShowGrid={showGrid}
-        onOpenCell={openCell}
-        onToggleSelected={session.toggleSelected}
-      />
-      {(session.items.length > 0 || view === 'grid') && (
-        <SlideBar
+      {/* Карточка фото и панель листания под ней — один блок. */}
+      <div className={`photo-block${hasSlideBar ? ' has-slide-bar' : ''}`}>
+        <PhotoCard
+          item={item}
+          items={session.items}
           activeIndex={activeIndex}
-          positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
-          isGrid={view === 'grid'}
-          onPrevious={() => session.select(activeIndex - 1)}
-          onNext={() => session.select(activeIndex + 1)}
-          onOpen={closeGrid}
+          view={view}
+          showBack={usedGrid}
+          isReceiving={picker.isReceiving}
+          transform={transform}
+          onPick={() => void addPhotos()}
+          onOpen={() => setIsViewerOpen(true)}
+          onLoad={(size) => item && session.markLoaded(item.id, size)}
+          onError={() => item && session.markFailed(item.id)}
+          onShowGrid={showGrid}
+          onOpenCell={openCell}
+          onOpenActive={closeGrid}
+          onToggleSelected={session.toggleSelected}
         />
-      )}
+        {hasSlideBar && (
+          <SlideBar
+            activeIndex={activeIndex}
+            positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
+            isGrid={view === 'grid'}
+            onPrevious={() => session.select(activeIndex - 1)}
+            onNext={() => session.select(activeIndex + 1)}
+            onOpen={closeGrid}
+          />
+        )}
+      </div>
       <NotesCard
         cardRef={notesCardRef}
         itemKey={item?.id ?? `empty-${activeIndex}`}

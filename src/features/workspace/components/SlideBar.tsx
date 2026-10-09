@@ -20,18 +20,20 @@ export interface SlideBarProps {
 }
 
 /**
- * Панель между карточкой фото и карточкой результата: листать бирки (стрелки влево и вправо)
- * и «Открыть» — справа от стрелок, тот же значок фото, что и выход из сетки: в сетке стрелки
- * передвигают выбор по ячейкам, «Открыть» увеличивает выбранную до одной бирки; у одной бирки
- * стрелки листают её как слайды.
+ * Панель листания — нижняя часть блока фото: листать бирки (уголки влево и вправо) и «Открыть» —
+ * справа от них, тот же значок фото, что и в углу сетки: в сетке уголки передвигают выбор по ячейкам,
+ * «Открыть» увеличивает выбранную до одной бирки; у одной бирки уголки листают бирки как слайды.
+ * Кнопки компактные, без подписей (доступные имена — для экранных дикторов); на iOS 26+ — стеклянная
+ * «пилюля» внутри блока.
  */
 export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, onOpen }: SlideBarProps) {
   const { t } = useTranslation('workspace')
   return (
     <div className="slide-bar" role="group" aria-label={t('slides.group')}>
+      <div className="slide-bar-pill">
       <ActionButton
         className="slide-bar-previous"
-        size={44}
+        size={36}
         icon={<ChevronRightIcon />}
         caption={t('slides.previous')}
         label={t('slides.previousLabel')}
@@ -39,7 +41,7 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
         onClick={onPrevious}
       />
       <ActionButton
-        size={44}
+        size={36}
         icon={<ChevronRightIcon />}
         caption={t('slides.next')}
         label={t('slides.nextLabel')}
@@ -47,7 +49,7 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
         onClick={onNext}
       />
       <ActionButton
-        size={44}
+        size={36}
         variant={isGrid ? 'accent' : 'tonal'}
         icon={<ImageIcon />}
         caption={t('slides.open')}
@@ -56,6 +58,7 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
         disabled={!isGrid}
         onClick={onOpen}
       />
+      </div>
     </div>
   )
 }

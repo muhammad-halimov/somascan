@@ -38,7 +38,7 @@ type UploadsTab = 'queue' | 'done'
 /**
  * Всплывающая панель под шапкой: две вкладки — «Активные» (ждут, пишутся, не записаны — их можно
  * повторить или отменить) и «История» (записанные: лист, строка, номер элемента; их можно удалить
- * из истории); под вкладками — сколько в ней бирок. У каждой записи — состояние и причина сбоя. Закрывается нажатием вне панели или крестиком.
+ * из истории); под вкладками — узкая лента: сколько бирок и что с ними. У каждой записи — состояние и причина сбоя. Закрывается нажатием вне панели или крестиком.
  */
 export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   const { t, i18n } = useTranslation(['uploads', 'label', 'common'])
@@ -53,6 +53,13 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   /** Открывается очередь, если в ней что-то есть, иначе — готовые. */
   const [tab, setTab] = useState<UploadsTab>(() => (uploadStore.getSnapshot().some((record) => record.status !== 'completed') ? 'queue' : 'done'))
   const shown = tab === 'queue' ? queued : completed
+  const failedCount = queued.filter((record) => record.status === 'failed').length
+  const stripTone = tab === 'done' ? 'history' : failedCount > 0 ? 'failed' : 'active'
+  const stripText = tab === 'done'
+    ? t('strip.history', { count: completed.length })
+    : failedCount > 0
+      ? t('strip.activeFailed', { count: queued.length, failed: failedCount })
+      : t('strip.active', { count: queued.length })
   const tabOptions = [
     { value: 'queue' as const, label: t('tabs.queue') },
     { value: 'done' as const, label: t('tabs.done') },
@@ -186,8 +193,14 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
       />
       <div className="uploads-tabs">
         <Tabs options={tabOptions} value={tab} onChange={setTab} label={t('tabs.label')} />
-        {shown.length > 0 && <p className="uploads-count" aria-live="polite">{t('tabs.count', { count: shown.length })}</p>}
       </div>
+      {/* Узкая лента под вкладками: сколько бирок и что с ними. */}
+      {shown.length > 0 && (
+        <p className={`uploads-strip is-${stripTone}`} role="status">
+          {stripTone === 'history' ? <CheckIcon /> : stripTone === 'failed' ? <AlertIcon /> : <ClockIcon />}
+          <span>{stripText}</span>
+        </p>
+      )}
       <div className="uploads-content">
         {shown.length === 0 ? (
           <div key={tab} className="uploads-empty-state anim-fade">

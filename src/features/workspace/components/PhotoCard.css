@@ -306,3 +306,15 @@
 .photo-card.is-zooming :is(.photo-stage, .photo-grid) {
   will-change: transform, opacity;
 }
+
+/* В сетке — «Открыть» выбранную бирку: угол «Сетки», компактная, без подписи (почти не закрывает ячейку). */
+.photo-grid-single {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  right: 10px;
+}
+
+.photo-grid-single .action-button-caption {
+  display: none;
+}

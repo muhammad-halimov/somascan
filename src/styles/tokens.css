@@ -35,6 +35,9 @@
   --warning: #f4b400;
   /* Требует внимания (оранжевый): у бирки не выбрана форма. */
   --attention: #e8710a;
+  /* Открытый элемент (фирменный бирюзовый, как у логотипа): открытая бирка в сетке. */
+  --focus: #00a1b3;
+  --on-focus: #fff;
   /* Баннер «нет сети». */
   --offline-text: #792d00;
   --offline-bg: #fff0e5;
@@ -67,6 +70,8 @@
   --success: #81c995;
   --warning: #fdd663;
   --attention: #fcad70;
+  --focus: #4fd5e3;
+  --on-focus: #00262b;
   --offline-text: #ffcf9f;
   --offline-bg: #462719;
   --photo-empty-bg: #292b31;

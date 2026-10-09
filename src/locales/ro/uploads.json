@@ -5,10 +5,18 @@
   "tabs": {
     "label": "Secțiunile încărcărilor",
     "queue": "Active",
-    "done": "Istoric",
-    "count_one": "{{count}} etichetă",
-    "count_few": "{{count}} etichete",
-    "count_other": "{{count}} de etichete"
+    "done": "Istoric"
+  },
+  "strip": {
+    "active_one": "{{count}} etichetă în lucru — se scrie în tabel pe rând",
+    "active_few": "{{count}} etichete în lucru — se scriu în tabel pe rând",
+    "active_other": "{{count}} de etichete în lucru — se scriu în tabel pe rând",
+    "activeFailed_one": "{{count}} etichetă în lucru, nescrise: {{failed}} — atingeți „Reia”",
+    "activeFailed_few": "{{count}} etichete în lucru, nescrise: {{failed}} — atingeți „Reia”",
+    "activeFailed_other": "{{count}} de etichete în lucru, nescrise: {{failed}} — atingeți „Reia”",
+    "history_one": "{{count}} etichetă scrisă în tabel",
+    "history_few": "{{count}} etichete scrise în tabel",
+    "history_other": "{{count}} de etichete scrise în tabel"
   },
   "emptyQueue": {
     "title": "Coada este goală",

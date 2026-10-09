@@ -27,20 +27,50 @@
 }
 
 :root[data-platform='ios'] .uploads-tabs {
-  padding: 2px 16px 4px;
+  padding: 2px 16px 8px;
 }
 
-/* Сколько бирок во вкладке — мелкой подписью под вкладками. */
-.uploads-count {
+/* Лента под вкладками: значок, сколько бирок и что с ними — тон по состоянию. */
+.uploads-strip {
+  --strip-tone: var(--accent);
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
   margin: 0;
-  padding: 8px 20px 0;
-  color: var(--text);
-  font-size: 13px;
+  padding: 7px 16px;
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--strip-tone) 11%, var(--bg));
+  font-size: 12.5px;
+  line-height: 1.35;
   font-variant-numeric: tabular-nums;
 }
 
-:root[data-platform='ios'] .uploads-count {
-  padding: 6px 4px 2px;
+.uploads-strip.is-history {
+  --strip-tone: var(--success);
+}
+
+.uploads-strip.is-failed {
+  --strip-tone: var(--danger);
+}
+
+.uploads-strip svg {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  flex: 0 0 16px;
+  fill: none;
+  stroke: var(--strip-tone);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* iOS: лента — скруглённая плашка с отступами, как сгруппированные строки. */
+:root[data-platform='ios'] .uploads-strip {
+  margin: 0 16px 4px;
+  padding: 7px 12px;
+  border-radius: var(--ios-radius-field);
 }
 
 .uploads-content {

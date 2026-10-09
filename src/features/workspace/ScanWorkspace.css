@@ -19,8 +19,21 @@
   scroll-snap-type: y proximity;
 }
 
+/* Блок фото: карточка фото и панель листания под ней — одной ширины, одним целым. */
+.photo-block {
+  display: flex;
+  width: min(100%, 380px, calc(44svh * 1.08));
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.photo-block > .photo-card {
+  width: 100%;
+}
+
 /* Фото в правке — той же ширины, что и карточка результата (см. .notes-card.is-text-editing). */
-.scan-workspace.is-text-editing .photo-card {
+.scan-workspace.is-text-editing .photo-block {
   width: min(100%, 600px);
 }
 
