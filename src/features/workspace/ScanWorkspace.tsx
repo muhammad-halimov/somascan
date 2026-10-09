@@ -101,8 +101,19 @@ export function ScanWorkspace() {
   const picker = usePhotoPicker({
     onPicked: (urls) => {
       editMode.exit()
-      if (pickTarget.current === 'replace') session.replace(activeIndex, urls[0]!)
-      else session.add(urls)
+      if (pickTarget.current === 'replace') {
+        session.replace(activeIndex, urls[0]!)
+        return
+      }
+      // Системный выбор не везде ограничивает число фото: лишние (сверх свободных ячеек) не встают.
+      const overflow = session.add(urls)
+      if (overflow > 0) {
+        void NativeDialogs.alert({
+          title: t('photo.add'),
+          message: t('photo.overflow', { added: urls.length - overflow, picked: urls.length, max: MAX_SCAN_ITEMS }),
+          buttonTitle: t('common:ok'),
+        })
+      }
     },
     onError: () => {
       void NativeDialogs.alert({ title: t('photo.add'), message: t('photo.failedToOpen'), buttonTitle: t('common:ok') })

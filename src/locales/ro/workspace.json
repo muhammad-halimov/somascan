@@ -13,7 +13,7 @@
     "recognizing": "Recunoaștere…",
     "open": "Deschide fotografia pe tot ecranul",
     "chooseFromFiles": "Alege din fișiere",
-    "addUpTo": "Adaugă fotografii (până la {{count}})"
+    "overflow": "Adăugate {{added}} din {{picked}}: grila are {{max}} celule."
   },
   "notes": {
     "label": "Rezultat",

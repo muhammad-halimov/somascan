@@ -13,7 +13,7 @@
     "recognizing": "Recognizing…",
     "open": "Open photo full screen",
     "chooseFromFiles": "Choose from files",
-    "addUpTo": "Add photos (up to {{count}})"
+    "overflow": "Added {{added}} of {{picked}}: the grid has {{max}} cells."
   },
   "notes": {
     "label": "Result",
