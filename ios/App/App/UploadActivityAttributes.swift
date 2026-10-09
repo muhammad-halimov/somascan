@@ -13,8 +13,10 @@ struct UploadActivityAttributes: ActivityAttributes {
         /// Ход пачки: обработано из всех. В итоге — записано из всех.
         var done: Int
         var total: Int
-        /// Пройдено в бирке, которая пишется сейчас (0…1, по шагам записи).
-        var current: Double
+        /// Доля для полосы прогресса (0…1) — плавный ход пачки от движка, движется и внутри записи бирки.
+        var fraction: Double
+        /// Счётчик справа: «42 %» по ходу, «100 %» — записано всё, «2/3» — не всё.
+        var counter: String
         /// Пачка дописана: показывается итог.
         var finished: Bool
         /// Строка под заголовком: «Осталось записать: 2», «Записано в таблицу: 3», «Не всё записано…».
@@ -22,9 +24,6 @@ struct UploadActivityAttributes: ActivityAttributes {
 
         /// Итог без сбоев: записано всё.
         var isComplete: Bool { finished && done == total }
-
-        /// Доля для полосы прогресса (0…1): движется и внутри записи одной бирки.
-        var fraction: Double { total > 0 ? min(1, (Double(done) + current) / Double(total)) : 0 }
     }
 
     /// Заголовок: «Выгрузка в таблицу».

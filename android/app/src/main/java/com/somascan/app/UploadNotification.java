@@ -31,9 +31,10 @@ import org.json.JSONObject;
  * «Не всё записано»), потом уведомление убирается само.
  *
  * Стиль — системный {@link NotificationCompat.ProgressStyle}: на Android 16 полоса из отрезков цвета
- * приложения (одна бирка — один отрезок, внутри него полоса движется по шагам записи) и Live Update
- * (чип «2/5» в строке состояния и на экране блокировки), на Android 15 и ниже тот же стиль сам
- * показывает обычную системную полосу прогресса.
+ * приложения (одна бирка — один отрезок) и Live Update (чип «42 %» в строке состояния и на экране
+ * блокировки), на Android 15 и ниже тот же стиль сам показывает обычную системную полосу прогресса.
+ * Полоса и проценты — плавный ход пачки от движка ({@code progress.fraction}): движется ровно и внутри
+ * записи одной бирки, без скачков по её шагам.
  */
 final class UploadNotification {
 
@@ -48,13 +49,16 @@ final class UploadNotification {
     /** Сколько держится итог пачки. */
     static final long RESULT_SHOWN_MS = 4_000;
 
-    /** Обновления не чаще: частые обновления одного уведомления система отбрасывает (до 5 в секунду). */
-    private static final long MIN_INTERVAL_MS = 250;
+    /**
+     * Обновления не чаще: частые обновления одного уведомления система отбрасывает (до 5 в секунду).
+     * Движок присылает плавный ход примерно так же часто — полоса движется ровно.
+     */
+    private static final long MIN_INTERVAL_MS = 300;
 
     /** Больше отрезков полоса не рисует по одному на бирку — дальше сплошная. */
     private static final int MAX_SEGMENTS = 12;
 
-    /** Делений на бирку: полоса движется и внутри записи одной бирки (по её шагам). */
+    /** Делений на бирку: полоса движется плавно и внутри записи одной бирки. */
     private static final int UNITS = 100;
 
     /** Акцентный цвет приложения (значок и полоса прогресса). */
@@ -99,11 +103,12 @@ final class UploadNotification {
         JSONObject progress = activity.optJSONObject("progress");
         int total = progress == null ? 0 : Math.max(0, progress.optInt("total"));
         int done = progress == null ? 0 : Math.max(0, Math.min(progress.optInt("done"), total));
-        double current = progress == null ? 0 : Math.max(0, Math.min(1, progress.optDouble("current", 0)));
+        // Плавный ход пачки от движка (0…1): полоса и проценты.
+        double fraction = progress == null ? 0 : Math.max(0, Math.min(1, progress.optDouble("fraction", 0)));
         if (UploadEngine.isBusy(activity)) {
             if (total > 0) {
                 inBatch = true;
-                view = View.progress(done, total, done < total ? (int) Math.round(current * UNITS) : 0);
+                view = View.progress(done, total, (int) Math.round(fraction * total * UNITS));
             }
         } else if (inBatch) {
             inBatch = false;
@@ -169,15 +174,16 @@ final class UploadNotification {
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setPriority(NotificationCompat.PRIORITY_LOW);
 
+        String percent = texts.getString("percent", "{percent}%").replace("{percent}", String.valueOf(view.percent()));
         switch (view.kind) {
             case PROGRESS:
                 builder
-                    .setContentText(texts.getString("pending", "Осталось записать: {count}").replace("{count}", String.valueOf(view.total - view.done)))
-                    .setStyle(progressStyle(view.done, view.total, view.step))
+                    .setContentText(percent + " · " + texts.getString("pending", "Осталось записать: {count}").replace("{count}", String.valueOf(view.total - view.done)))
+                    .setStyle(progressStyle(view.total, view.units))
                     .setOngoing(true)
                     // Android 16: Live Update — уведомление поднимается наверх, ход виден в строке состояния.
                     .setRequestPromotedOngoing(true)
-                    .setShortCriticalText(view.done + "/" + view.total);
+                    .setShortCriticalText(percent);
                 break;
             case RESULT:
                 boolean complete = view.done == view.total;
@@ -188,7 +194,7 @@ final class UploadNotification {
                     .setAutoCancel(true)
                     .setTimeoutAfter(RESULT_SHOWN_MS);
                 if (complete) {
-                    builder.setStyle(progressStyle(view.total, view.total, 0));
+                    builder.setStyle(progressStyle(view.total, view.total * UNITS));
                 }
                 break;
             default:
@@ -199,8 +205,8 @@ final class UploadNotification {
         return builder.build();
     }
 
-    /** Полоса: отрезок на бирку (до {@link #MAX_SEGMENTS}), в каждом — {@link #UNITS} делений; {@code step} — пройдено в текущей бирке. */
-    private static NotificationCompat.ProgressStyle progressStyle(int done, int total, int step) {
+    /** Полоса: отрезок на бирку (до {@link #MAX_SEGMENTS}), в каждом — {@link #UNITS} делений; {@code units} — пройдено делений. */
+    private static NotificationCompat.ProgressStyle progressStyle(int total, int units) {
         NotificationCompat.ProgressStyle style = new NotificationCompat.ProgressStyle().setStyledByProgress(true);
         if (total <= MAX_SEGMENTS) {
             for (int index = 0; index < total; index++) {
@@ -209,7 +215,7 @@ final class UploadNotification {
         } else {
             style.addProgressSegment(new NotificationCompat.ProgressStyle.Segment(total * UNITS).setColor(ACCENT));
         }
-        return style.setProgress(done * UNITS + step);
+        return style.setProgress(Math.max(0, Math.min(units, total * UNITS)));
     }
 
     private static void ensureChannel(Context context) {
@@ -235,18 +241,23 @@ final class UploadNotification {
         final Kind kind;
         final int done;
         final int total;
-        /** Пройдено в бирке, которая пишется сейчас (0…{@link #UNITS}). */
-        final int step;
+        /** Пройдено делений полосы ({@link #UNITS} на бирку, плавный ход). */
+        final int units;
 
-        private View(Kind kind, int done, int total, int step) {
+        private View(Kind kind, int done, int total, int units) {
             this.kind = kind;
             this.done = done;
             this.total = total;
-            this.step = step;
+            this.units = units;
         }
 
-        static View progress(int done, int total, int step) {
-            return new View(Kind.PROGRESS, done, total, step);
+        static View progress(int done, int total, int units) {
+            return new View(Kind.PROGRESS, done, total, units);
+        }
+
+        /** Процент хода (не 100, пока пачка не дописана). */
+        int percent() {
+            return total > 0 ? Math.min(99, units * 100 / (total * UNITS)) : 0;
         }
 
         static View result(int written, int total) {
@@ -259,12 +270,12 @@ final class UploadNotification {
                 return false;
             }
             View view = (View) other;
-            return view.kind == kind && view.done == done && view.total == total && view.step == step;
+            return view.kind == kind && view.done == done && view.total == total && view.units == units;
         }
 
         @Override
         public int hashCode() {
-            return ((kind.ordinal() * 31 + done) * 31 + total) * 31 + step;
+            return ((kind.ordinal() * 31 + done) * 31 + total) * 31 + units;
         }
     }
 }

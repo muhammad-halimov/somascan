@@ -42,6 +42,9 @@ export interface TableWriteResult {
 /** Доля записи, пройденная после шага (см. `TableWriter.write`, `onStep`). */
 const STEP = { locked: 0.1, read: 0.35, prepared: 0.55, replaced: 0.8, verified: 0.95 } as const
 
+/** Доли записи после шагов по порядку — по ним движок ведёт плавный ход между шагами. */
+export const WRITE_STEPS: readonly number[] = Object.values(STEP)
+
 /** Пишет бирки в журнал через `TableBackend`. */
 export class TableWriter {
   /** Идентификатор устройства — владелец блокировки (в движке он приходит с настройками, поэтому — функция). */

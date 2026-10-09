@@ -6,7 +6,8 @@ import WidgetKit
 /**
  * Расширение с Live Activity выгрузки в таблицу (iOS 16.2+): экран блокировки и Dynamic Island.
  * Данные и тексты присылает приложение (`UploadLiveActivity`), вид — системный: значок состояния,
- * заголовок, «Осталось записать: N», счётчик «2/5» и полоса прогресса.
+ * заголовок, «Осталось записать: N», проценты и полоса прогресса (переходы между обновлениями система
+ * анимирует сама).
  */
 @main
 struct UploadActivityBundle: WidgetBundle {
@@ -116,12 +117,12 @@ struct StatusIcon: View {
     }
 }
 
-/// Счётчик «обработано / всего» цифрами одной ширины.
+/// Счётчик справа цифрами одной ширины: проценты по ходу, «2/3» — если записано не всё.
 struct Counter: View {
     let state: UploadActivityAttributes.ContentState
 
     var body: some View {
-        Text("\(state.done)/\(state.total)")
+        Text(state.counter)
             .monospacedDigit()
             .lineLimit(1)
     }

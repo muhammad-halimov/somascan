@@ -177,16 +177,16 @@ final class UploadBackground: @unchecked Sendable {
         (activity?["pending"] as? NSNumber)?.intValue ?? 0
     }
 
-    /// Ход текущей пачки от движка: обработано из всех (`0 / 0` в покое) и пройдено в текущей бирке (0…1).
-    private var progress: (done: Int, total: Int, current: Double) {
+    /// Ход текущей пачки от движка: обработано из всех (`0 / 0` в покое) и плавный ход пачки (0…1).
+    private var progress: (done: Int, total: Int, fraction: Double) {
         let value = activity?["progress"] as? [String: Any]
         let total = max(0, (value?["total"] as? NSNumber)?.intValue ?? 0)
         let done = min(total, max(0, (value?["done"] as? NSNumber)?.intValue ?? 0))
-        let current = done < total ? min(1, max(0, (value?["current"] as? NSNumber)?.doubleValue ?? 0)) : 0
-        return (done, total, current)
+        let fraction = min(1, max(0, (value?["fraction"] as? NSNumber)?.doubleValue ?? 0))
+        return (done, total, fraction)
     }
 
-    /// Делений системного прогресса на бирку: полоса движется и внутри записи одной бирки.
+    /// Делений системного прогресса на бирку: полоса движется плавно и внутри записи одной бирки.
     private static let unitsPerRecord: Int64 = 100
 
     // MARK: Продолжаемая задача (iOS 26+)
@@ -219,7 +219,7 @@ final class UploadBackground: @unchecked Sendable {
         continuedTask = task
         let current = progress
         task.progress.totalUnitCount = Int64(max(1, current.total > 0 ? current.total : pendingCount)) * Self.unitsPerRecord
-        task.progress.completedUnitCount = Int64(current.done) * Self.unitsPerRecord + Int64((current.current * Double(Self.unitsPerRecord)).rounded())
+        task.progress.completedUnitCount = Int64((current.fraction * Double(task.progress.totalUnitCount)).rounded())
         task.expirationHandler = { [weak self] in
             DispatchQueue.main.async { self?.finishContinued(success: false) }
         }
@@ -240,7 +240,7 @@ final class UploadBackground: @unchecked Sendable {
         let current = progress
         if current.total > 0 {
             task.progress.totalUnitCount = Int64(current.total) * Self.unitsPerRecord
-            task.progress.completedUnitCount = Int64(current.done) * Self.unitsPerRecord + Int64((current.current * Double(Self.unitsPerRecord)).rounded())
+            task.progress.completedUnitCount = Int64((current.fraction * Double(task.progress.totalUnitCount)).rounded())
         }
         task.updateTitle(texts.title, subtitle: texts.subtitle(current.total > 0 ? current.total - current.done : pendingCount))
     }
@@ -262,6 +262,8 @@ final class UploadBackground: @unchecked Sendable {
         let doneTemplate: String
         /// В пачке есть незаписанные.
         let attention: String
+        /// Процент хода (`{percent}` — число), по языку приложения: «42%», «42 %».
+        let percentTemplate: String
 
         func subtitle(_ count: Int) -> String {
             count > 0 ? pending.replacingOccurrences(of: "{count}", with: String(count)) : waiting
@@ -269,6 +271,10 @@ final class UploadBackground: @unchecked Sendable {
 
         func done(_ count: Int) -> String {
             doneTemplate.replacingOccurrences(of: "{count}", with: String(count))
+        }
+
+        func percent(_ value: Int) -> String {
+            percentTemplate.replacingOccurrences(of: "{percent}", with: String(value))
         }
     }
 
@@ -279,7 +285,8 @@ final class UploadBackground: @unchecked Sendable {
             pending: stored["pending"] ?? "Осталось записать: {count}",
             waiting: stored["waiting"] ?? "Ждёт сети или повтора",
             doneTemplate: stored["done"] ?? "Записано в таблицу: {count}",
-            attention: stored["attention"] ?? "Не всё записано — подробности в «Загрузках»"
+            attention: stored["attention"] ?? "Не всё записано — подробности в «Загрузках»",
+            percentTemplate: stored["percent"] ?? "{percent}%"
         )
     }
 }

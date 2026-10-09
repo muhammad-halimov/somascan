@@ -10,7 +10,7 @@ import type { StorageSettings } from '@/features/settings/store/settingsSchema'
 import { parseRecords, UploadStore, type UploadRecord } from '@/features/uploads/store/UploadStore'
 import { RetryPolicy } from '@/features/uploads/worker/RetryPolicy'
 import type { TableBackendDeps } from '@/features/uploads/worker/tableBackends'
-import { TableWriter } from '@/features/uploads/worker/TableWriter'
+import { TableWriter, WRITE_STEPS } from '@/features/uploads/worker/TableWriter'
 import { UploadWorker, type StorageSource } from '@/features/uploads/worker/UploadWorker'
 import type { KeyValueStore } from '@/lib/storage/KeyValueStore'
 import { StoredValue } from '@/lib/storage/StoredValue'
@@ -55,6 +55,18 @@ export interface EngineDeps {
   retry?: RetryPolicy
 }
 
+/** Как часто обновляется плавный ход, пока пишется пачка (мс). */
+const SMOOTH_TICK_MS = 300
+/** Постоянная времени плавного хода: за неё он проходит ~63% пути до цели (мс). */
+const SMOOTH_TAU_MS = 900
+/** Какую часть пути до следующего шага записи плавный ход может пройти, пока шаг не пройден. */
+const SMOOTH_CREEP = 0.9
+
+/** Доля записи на следующем шаге после `current` (после последнего шага — конец записи). */
+function nextStep(current: number) {
+  return WRITE_STEPS.find((step) => step > current) ?? 1
+}
+
 /** Движок очереди. */
 export class Engine {
   /** Очередь записей. */
@@ -80,6 +92,10 @@ export class Engine {
   private readonly written = new Set<string>()
   /** Итог последней пачки (см. `EngineActivity.finished`). */
   private finished: EngineActivity['finished'] = null
+  /** Плавный ход пачки в бирках (записанные + доля текущей) и когда он посчитан. */
+  private smooth = { units: 0, at: 0 }
+  /** Таймер обновления плавного хода. */
+  private smoothTimer: ReturnType<typeof setTimeout> | null = null
 
   /** @param deps Зависимости. */
   constructor(deps: EngineDeps) {
@@ -189,11 +205,12 @@ export class Engine {
     for (const record of records) {
       if (record.status === 'completed' && this.batchIds.has(record.id)) this.written.add(record.id)
     }
-    if (!isBusy({ ...base, progress: { ...this.batch, current: 0 }, finished: this.finished })) {
+    if (!isBusy({ ...base, progress: { ...this.batch, current: 0, fraction: 0 }, finished: this.finished })) {
       if (this.batch.total > 0) this.finished = { written: this.written.size, total: this.batch.total }
       this.batch = { done: 0, total: 0 }
       this.batchIds.clear()
       this.written.clear()
+      this.smooth = { units: 0, at: 0 }
     } else {
       if (this.batch.total === 0) this.finished = null
       for (const record of records) {
@@ -205,7 +222,34 @@ export class Engine {
       this.batch = { done, total: done + remaining }
     }
     const current = uploading > 0 && this.batch.total > 0 ? this.worker.currentProgress : 0
-    return { ...base, progress: { ...this.batch, current }, finished: this.finished && { ...this.finished } }
+    const fraction = this.batch.total > 0 ? this.smoothFraction(current, now) : 0
+    return { ...base, progress: { ...this.batch, current, fraction }, finished: this.finished && { ...this.finished } }
+  }
+
+  /**
+   * Плавный ход пачки (0…1). Настоящий ход прыгает по шагам записи; плавный подтягивается к цели —
+   * настоящему ходу плюс `SMOOTH_CREEP` пути до следующего шага — тем быстрее, чем она дальше,
+   * поэтому полоса движется и пока шаг идёт, а следующего шага не обгоняет. Считается в бирках
+   * (новые бирки в пачке уменьшают долю честно) и назад не идёт.
+   */
+  private smoothFraction(current: number, now: number) {
+    const real = this.batch.done + current
+    const target = real + SMOOTH_CREEP * (this.batch.done + nextStep(current) - real)
+    const previous = this.smooth
+    const units = previous.at === 0
+      ? real
+      : Math.max(previous.units, previous.units + (target - previous.units) * (1 - Math.exp(-(now - previous.at) / SMOOTH_TAU_MS)))
+    this.smooth = { units: Math.min(units, this.batch.total), at: now }
+    return Math.round((this.smooth.units / this.batch.total) * 1000) / 1000
+  }
+
+  /** Пока пачка пишется, плавный ход обновляется по таймеру (активность уходит, только если изменилась). */
+  private scheduleSmoothTick(activity: EngineActivity) {
+    if (this.smoothTimer !== null || !isBusy(activity) || activity.progress.total === 0) return
+    this.smoothTimer = setTimeout(() => {
+      this.smoothTimer = null
+      this.emitActivity()
+    }, SMOOTH_TICK_MS)
   }
 
   /** Новые настройки: сохраняются; если хранилище изменилось, обработчик повторит незаписанное. */
@@ -219,6 +263,7 @@ export class Engine {
   /** Отправляет активность, если она изменилась (или `force`). */
   private emitActivity(force = false) {
     const activity = this.activity()
+    this.scheduleSmoothTick(activity)
     const json = JSON.stringify(activity)
     if (json === this.lastActivity && !force) return
     this.lastActivity = json

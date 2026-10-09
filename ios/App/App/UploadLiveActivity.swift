@@ -6,9 +6,9 @@ import Foundation
  * продолжаемой задачи системы, которая показывает ход сама (см. `UploadBackground`).
  *
  * Начинается, когда очередь взялась за пачку (бирку поставили с экрана — iOS запускает Live Activity
- * только у приложения на виду), обновляется вместе с «Загрузками» — полоса движется по шагам
- * записи каждой бирки, а когда пачка дописана, на несколько секунд показывает итог («Записано
- * в таблицу: 3» или «Не всё записано») и уходит.
+ * только у приложения на виду), обновляется вместе с «Загрузками» — полоса и проценты идут плавно
+ * (плавный ход пачки от движка), а когда пачка дописана, на несколько секунд показывает итог
+ * («Записано в таблицу: 3» или «Не всё записано») и уходит.
  *
  * Только на главном потоке.
  */
@@ -18,6 +18,8 @@ final class UploadLiveActivity {
 
     /// Сколько держится итог пачки (как у уведомления Android).
     private static let resultShown: TimeInterval = 4
+    /// Обновления не чаще раза в секунду: переходы между ними система анимирует сама, полоса идёт плавно.
+    private static let minInterval: TimeInterval = 1
 
     private var activity: Activity<UploadActivityAttributes>?
     /// Идёт ли пачка (Live Activity с ходом показана или её не дали начать).
@@ -27,6 +29,10 @@ final class UploadLiveActivity {
     private var chain: Task<Void, Never>?
     /// Оставшиеся от прошлого запуска (приложение выгрузили посреди пачки) уже убраны.
     private var staleEnded = false
+    /// Ход, ждущий своей очереди (см. `minInterval`), и когда было последнее обновление.
+    private var pending: UploadActivityAttributes.ContentState?
+    private var flushScheduled = false
+    private var lastUpdate = Date.distantPast
 
     private init() {}
 
@@ -45,10 +51,18 @@ final class UploadLiveActivity {
         let progress = data?["progress"] as? [String: Any]
         let total = max(0, (progress?["total"] as? NSNumber)?.intValue ?? 0)
         let done = min(total, max(0, (progress?["done"] as? NSNumber)?.intValue ?? 0))
-        let current = done < total ? min(1, max(0, (progress?["current"] as? NSNumber)?.doubleValue ?? 0)) : 0
+        // Плавный ход пачки от движка (0…1): полоса и проценты.
+        let fraction = min(1, max(0, (progress?["fraction"] as? NSNumber)?.doubleValue ?? 0))
         if busy {
             guard total > 0 else { return }
-            let state = UploadActivityAttributes.ContentState(done: done, total: total, current: current, finished: false, subtitle: texts.subtitle(total - done))
+            let state = UploadActivityAttributes.ContentState(
+                done: done,
+                total: total,
+                fraction: fraction,
+                counter: texts.percent(min(99, Int(fraction * 100))),
+                finished: false,
+                subtitle: texts.subtitle(total - done)
+            )
             if !inBatch {
                 inBatch = true
                 start(state, title: texts.title)
@@ -60,15 +74,18 @@ final class UploadLiveActivity {
             guard let current = activity else { return }
             activity = nil
             shown = nil
+            pending = nil
             let finished = data?["finished"] as? [String: Any]
             let finishedTotal = max(0, (finished?["total"] as? NSNumber)?.intValue ?? 0)
             let written = min(finishedTotal, max(0, (finished?["written"] as? NSNumber)?.intValue ?? 0))
+            let complete = written == finishedTotal
             let state = UploadActivityAttributes.ContentState(
                 done: written,
                 total: finishedTotal,
-                current: 0,
+                fraction: finishedTotal > 0 ? Double(written) / Double(finishedTotal) : 1,
+                counter: complete ? texts.percent(100) : "\(written)/\(finishedTotal)",
                 finished: true,
-                subtitle: written == finishedTotal ? texts.done(written) : texts.attention
+                subtitle: complete ? texts.done(written) : texts.attention
             )
             enqueue {
                 await current.end(ActivityContent(state: state, staleDate: nil), dismissalPolicy: .after(Date().addingTimeInterval(Self.resultShown)))
@@ -85,6 +102,7 @@ final class UploadLiveActivity {
                 pushType: nil
             )
             shown = state
+            lastUpdate = Date()
         } catch {
             // Приложение не на виду (пачку начала фоновая задача) или Live Activity выключены.
             NSLog("[UploadLiveActivity] request: %@", error.localizedDescription)
@@ -92,8 +110,22 @@ final class UploadLiveActivity {
     }
 
     private func apply(_ state: UploadActivityAttributes.ContentState) {
-        guard let activity, state != shown else { return }
+        guard activity != nil, state != shown else { return }
+        pending = state
+        guard !flushScheduled else { return }
+        flushScheduled = true
+        let wait = max(0, lastUpdate.addingTimeInterval(Self.minInterval).timeIntervalSinceNow)
+        DispatchQueue.main.asyncAfter(deadline: .now() + wait) { [weak self] in
+            self?.flush()
+        }
+    }
+
+    private func flush() {
+        flushScheduled = false
+        guard let activity, let state = pending, state != shown else { return }
+        pending = nil
         shown = state
+        lastUpdate = Date()
         enqueue {
             await activity.update(ActivityContent(state: state, staleDate: nil))
         }

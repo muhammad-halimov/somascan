@@ -50,7 +50,8 @@ public class UploadEnginePlugin: CAPInstancePlugin, CAPBridgedPlugin {
             "pending": texts["pending"] as? String ?? "Осталось записать: {count}",
             "waiting": texts["waiting"] as? String ?? "Ждёт сети или повтора",
             "done": texts["done"] as? String ?? "Записано в таблицу: {count}",
-            "attention": texts["attention"] as? String ?? "Не всё записано — подробности в «Загрузках»"
+            "attention": texts["attention"] as? String ?? "Не всё записано — подробности в «Загрузках»",
+            "percent": texts["percent"] as? String ?? "{percent}%"
         ], forKey: UploadBackground.textsKey)
         UploadEngine.shared.command(["type": "configure", "storage": storage, "deviceId": call.getString("deviceId") ?? ""])
         call.resolve()

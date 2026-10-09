@@ -32,6 +32,8 @@ export interface BackgroundTexts {
   done: string
   /** В пачке есть незаписанные. */
   attention: string
+  /** Процент хода, с подстановкой `{percent}` («{percent}%», «{percent} %» — по языку). */
+  percent: string
 }
 
 /** Контракт нативного плагина. */
@@ -138,6 +140,7 @@ export class NativeUploadQueue implements UploadQueue {
         waiting: i18n.t('uploads:background.waiting'),
         done: i18n.t('uploads:background.done', { count: '{count}' }),
         attention: i18n.t('uploads:background.attention'),
+        percent: new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(0.42).replace('42', '{percent}'),
       },
     }
     const json = JSON.stringify(options)

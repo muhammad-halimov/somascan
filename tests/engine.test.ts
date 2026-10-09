@@ -45,7 +45,7 @@ test('движок грузится без браузерных API и сооб�
       assert.ok(engine.missingBefore.includes(name), `${name} отсутствует в контексте`)
     }
     assert.equal(engine.events[0]?.type, 'ready')
-    assert.deepEqual(engine.activity, { running: false, online: true, due: 0, waiting: 0, nextAttemptAt: null, pending: 0, failed: 0, progress: { done: 0, total: 0, current: 0 }, finished: null })
+    assert.deepEqual(engine.activity, { running: false, online: true, due: 0, waiting: 0, nextAttemptAt: null, pending: 0, failed: 0, progress: { done: 0, total: 0, current: 0, fraction: 0 }, finished: null })
   } finally {
     engine.stop()
   }
@@ -81,10 +81,21 @@ test('ход пачки: обработано из всех растёт по о
     await engine.until(() => engine.activity?.running === false && engine.activity.pending === 0)
     const seen = engine.events.flatMap((event) => (event.type === 'activity' && event.activity.progress.total > 0 ? [`${event.activity.progress.done}/${event.activity.progress.total}`] : []))
     assert.deepEqual([...new Set(seen)], ['0/3', '1/3', '2/3', '3/3'])
-    assert.deepEqual(engine.activity?.progress, { done: 0, total: 0, current: 0 })
+    assert.deepEqual(engine.activity?.progress, { done: 0, total: 0, current: 0, fraction: 0 })
     // Внутри записи бирки ход тоже идёт: шаги записи (блокировка, чтение, подготовка, замена, проверка).
     const steps = engine.events.flatMap((event) => (event.type === 'activity' && event.activity.progress.done === 0 && event.activity.progress.current > 0 ? [event.activity.progress.current] : []))
     assert.deepEqual([...new Set(steps)], [0.1, 0.35, 0.55, 0.8, 0.95])
+    // Плавный ход: не идёт назад, не обгоняет следующий шаг и движется чаще, чем приходят шаги.
+    const busy = engine.events.flatMap((event) => (event.type === 'activity' && event.activity.progress.total > 0 ? [event.activity.progress] : []))
+    busy.reduce((previous, progress) => {
+      assert.ok(progress.fraction >= previous, `ход не идёт назад: ${progress.fraction} после ${previous}`)
+      return progress.fraction
+    }, 0)
+    for (const progress of busy) {
+      const ceiling = (progress.done + ([0.1, 0.35, 0.55, 0.8, 0.95].find((step) => step > progress.current) ?? 1)) / progress.total
+      assert.ok(progress.fraction <= ceiling + 0.001, `ход ${progress.fraction} не обгоняет следующий шаг ${ceiling}`)
+    }
+    assert.ok(new Set(busy.map((progress) => progress.fraction)).size > busy.filter((progress, index) => index === 0 || progress.current !== busy[index - 1]!.current).length, 'ход движется и между шагами')
     assert.deepEqual(engine.activity?.finished, { written: 3, total: 3 }, 'итог пачки: записаны все')
   } finally {
     engine.stop()

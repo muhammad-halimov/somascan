@@ -57,6 +57,7 @@ public class UploadEnginePlugin extends Plugin implements UploadEngine.Listener 
             .putString("pending", texts.getString("pending", "Осталось записать: {count}"))
             .putString("done", texts.getString("done", "Записано в таблицу: {count}"))
             .putString("attention", texts.getString("attention", "Не всё записано — подробности в «Загрузках»"))
+            .putString("percent", texts.getString("percent", "{percent}%"))
             .apply();
         JSObject command = new JSObject();
         command.put("type", "configure");
