@@ -76,15 +76,16 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
           <span>{t('notes.checkBeforeSend')}</span>
         </p>
       )}
-      {/* Шапка: заголовок слева, «Готово» (только в правке) и карандаш справа — одной строкой. */}
+      {/* Шапка — узкая строка: заголовок слева, «пилюли» «Готово» (только в правке) и «Правка» справа. */}
       <div className="notes-header">
-        <h2 className="notes-title"><TagIcon />{title}</h2>
+        <h2 className="notes-title"><TagIcon /><span className="notes-title-text">{title}</span></h2>
         <div className="notes-header-actions">
           {isEditing && (
-            <ActionButton size={40} icon={<CloseIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} onClick={onCloseEdit} />
+            <ActionButton layout="inline" size={32} icon={<CloseIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} onClick={onCloseEdit} />
           )}
           <ActionButton
-            size={40}
+            layout="inline"
+            size={32}
             icon={<PencilIcon />}
             caption={t('editing.editCaption')}
             label={isEditing ? t('editing.finish') : t('editing.edit')}

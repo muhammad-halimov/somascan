@@ -73,6 +73,38 @@
   white-space: nowrap;
 }
 
+/*
+ * inline: узкая «пилюля» высотой --action-size — иконка и подпись в одну строку
+ * (тональная кнопка с иконкой Material 3). Ширина — по подписи; подложка, волна и подсветка — на всю пилюлю.
+ */
+.action-button.is-inline {
+  width: auto;
+  max-width: 100%;
+}
+
+.action-button.is-inline .action-button-icon {
+  display: flex;
+  width: auto;
+  max-width: 100%;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px 0 9px;
+  border-radius: calc(var(--action-size) / 2);
+}
+
+.action-button.is-inline .action-button-icon svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.action-button.is-inline .action-button-caption {
+  color: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+  line-height: 18px;
+}
+
 /* ghost: «пилюля» 56×32, как в навигационной панели Material 3. */
 .action-button.is-ghost {
   width: 56px;

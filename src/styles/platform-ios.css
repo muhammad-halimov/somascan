@@ -228,6 +228,24 @@
   background: var(--glass-control);
 }
 
+/*
+ * «Пилюли» в шапке карточки («Правка», «Готово»): classic — тонированная капсула UIKit
+ * (акцентная подпись на светлом акценте), включённая — залитая акцентом; glass — та же капсула с бликом стекла по кромке.
+ */
+:root[data-platform='ios'] .action-button.is-inline.is-tonal .action-button-icon {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+:root[data-platform='ios'] .action-button.is-inline.is-tonal.is-active .action-button-icon {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .action-button.is-inline .action-button-icon {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), inset 0 0 0 .5px var(--glass-border);
+}
+
 /* Кнопки поверх фото — стеклянные круги с бликом. */
 :root[data-platform='ios'][data-ios-design='glass'] .action-button.is-overlay .action-button-icon {
   background: rgb(30 32 38 / 42%);

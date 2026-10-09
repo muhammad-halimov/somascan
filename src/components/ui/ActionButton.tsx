@@ -31,6 +31,12 @@ export interface ActionButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonE
   badgeTone?: 'accent' | 'danger'
   /** Идёт фоновая операция: вместо иконки крутится спиннер (кнопка остаётся нажимаемой). */
   busy?: boolean
+  /**
+   * Раскладка: `stack` — круг и подпись под ним (по умолчанию); `inline` — узкая «пилюля» высотой
+   * `size` с иконкой и подписью в одну строку (тональная кнопка с иконкой Material 3, капсула UIKit) —
+   * для шапок, где круг с подписью занимал бы лишнюю высоту.
+   */
+  layout?: 'stack' | 'inline'
 }
 
 /**
@@ -47,13 +53,14 @@ function BadgeAlertGlyph() {
 }
 
 /**
- * Кнопка-иконка с подписью снизу.
+ * Кнопка-иконка с подписью снизу (или, в раскладке `inline`, справа от иконки внутри «пилюли»).
  *
  * Ширина кнопки равна ширине круга (или пилюли у `ghost`), а подпись не может быть
  * шире кнопки: длинный текст обрезается многоточием. Поэтому подписи в переводах короткие.
  */
-export function ActionButton({ icon, caption, label, variant = 'tonal', size, active = false, badge, badgeTone = 'accent', busy = false, className = '', style, ...rest }: ActionButtonProps) {
-  const classes = ['action-button', `is-${variant}`, active && 'is-active', busy && 'is-busy', className].filter(Boolean).join(' ')
+export function ActionButton({ icon, caption, label, variant = 'tonal', size, active = false, badge, badgeTone = 'accent', busy = false, layout = 'stack', className = '', style, ...rest }: ActionButtonProps) {
+  const classes = ['action-button', `is-${variant}`, layout === 'inline' && 'is-inline', active && 'is-active', busy && 'is-busy', className].filter(Boolean).join(' ')
+  const captionNode = <span className="action-button-caption" aria-hidden="true">{caption}</span>
   return (
     <button
       type="button"
@@ -63,14 +70,18 @@ export function ActionButton({ icon, caption, label, variant = 'tonal', size, ac
       style={size ? { ...style, '--action-size': `${size}px` } as CSSProperties : style}
       {...rest}
     >
-      <span className="action-button-icon">{busy ? <span className="action-button-spinner" /> : icon}</span>
+      {/* В «пилюле» подпись внутри подложки: волна нажатия и подсветка — на всю кнопку. */}
+      <span className="action-button-icon">
+        {busy ? <span className="action-button-spinner" /> : icon}
+        {layout === 'inline' && captionNode}
+      </span>
       {/* Счётчик — вне круга иконки: тот обрезает содержимое (волна нажатия на Android). */}
       {badge !== undefined && badge !== 0 && (
         <span className={`action-button-badge is-${badgeTone}${badge === 'alert' ? ' is-glyph' : ''}`} aria-hidden="true">
           {badge === 'alert' ? <BadgeAlertGlyph /> : badge}
         </span>
       )}
-      <span className="action-button-caption" aria-hidden="true">{caption}</span>
+      {layout === 'stack' && captionNode}
     </button>
   )
 }

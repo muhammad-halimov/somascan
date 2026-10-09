@@ -54,13 +54,14 @@
   stroke-linejoin: round;
 }
 
+/* Шапка — одна узкая строка: заголовок и «пилюли» «Готово» и «Правка» высотой 32. */
 .notes-header {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px 4px 18px;
+  gap: 8px;
+  padding: 8px 10px 4px 18px;
 }
 
 /* Заголовок как у групп в настройках: небольшой, акцентного цвета. */
@@ -74,8 +75,14 @@
   color: var(--accent);
   font-size: 14px;
   font-weight: 600;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Не помещается рядом с «пилюлями» (в правке их две) — обрезается многоточием. */
+.notes-title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Номера бирок: вкладки Material (Android) или сегменты (iOS) под шапкой. */
@@ -93,8 +100,10 @@
 
 .notes-header-actions {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Сообщение вместо полей: подсказка или ошибка. */

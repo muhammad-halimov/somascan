@@ -17,14 +17,8 @@
 
 /*
  * Итог проверки таблицы под полями расположения. Сообщение об ошибке бывает в несколько строк —
- * точка статуса остаётся у первой строки.
+ * точка статуса и так остаётся у первой строки (выравнивание по её базовой линии, см. StatusBadge.css).
  */
 .storage-check .status-badge {
-  align-items: flex-start;
-  line-height: 18px;
   overflow-wrap: anywhere;
-}
-
-.storage-check .status-badge::before {
-  margin-top: 5px;
 }
