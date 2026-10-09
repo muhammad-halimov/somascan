@@ -29,18 +29,27 @@
   scroll-snap-align: start;
 }
 
-/* «Проверьте данные перед отправкой» — узкая полоса во всю ширину вверху карточки (её скругление — от карточки). */
+/*
+ * «Проверьте данные перед отправкой» — узкая плашка-примечание внутри карточки, вверху: отдельный
+ * скруглённый элемент с отступами от краёв (как плашка `Notice`, но в одну строку), а не полоса-«крыша».
+ */
 .notes-check {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 8px;
-  margin: 0;
-  padding: 6px 16px;
+  margin: 10px 10px 0;
+  padding: 7px 12px;
   color: var(--text-h);
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  background: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  border-radius: 10px;
   font-size: 12.5px;
   line-height: 1.35;
+}
+
+/* iOS: скругление концентрично карточке (её радиус минус отступ). */
+:root[data-platform='ios'] .notes-check {
+  border-radius: calc(var(--ios-radius-card) - 10px);
 }
 
 .notes-check svg {

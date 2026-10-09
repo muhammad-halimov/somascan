@@ -69,7 +69,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
 
   return (
     <div ref={cardRef} className={`notes-card${isEditing ? ' is-text-editing' : ''}`} aria-busy={isRecognizing}>
-      {/* Узкая полоса вверху карточки: распознанное проверяют перед каждой отправкой. */}
+      {/* Узкая плашка-примечание вверху карточки: распознанное проверяют перед каждой отправкой. */}
       {status.kind === 'done' && (
         <p className="notes-check anim-fade">
           <InfoIcon />
