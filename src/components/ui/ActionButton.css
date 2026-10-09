@@ -87,22 +87,29 @@
   width: auto;
   max-width: 100%;
   align-items: center;
-  gap: 5px;
-  padding: 0 12px 0 9px;
+  gap: 4px;
+  padding: 0 10px 0 8px;
   border-radius: calc(var(--action-size) / 2);
 }
 
 .action-button.is-inline .action-button-icon svg {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
 }
 
 .action-button.is-inline .action-button-caption {
   color: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   letter-spacing: 0;
-  line-height: 18px;
+  line-height: 16px;
+}
+
+/* Пилюля ниже пальца: область нажатия шире видимой — 44 px по высоте. */
+.action-button.is-inline::after {
+  content: '';
+  position: absolute;
+  inset: calc((var(--action-size) - 44px) / 2) -2px;
 }
 
 /* ghost: «пилюля» 56×32, как в навигационной панели Material 3. */

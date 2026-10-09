@@ -81,11 +81,11 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
         <h2 className="notes-title"><TagIcon /><span className="notes-title-text">{title}</span></h2>
         <div className="notes-header-actions">
           {isEditing && (
-            <ActionButton layout="inline" size={32} icon={<CloseIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} onClick={onCloseEdit} />
+            <ActionButton layout="inline" size={28} icon={<CloseIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} onClick={onCloseEdit} />
           )}
           <ActionButton
             layout="inline"
-            size={32}
+            size={28}
             icon={<PencilIcon />}
             caption={t('editing.editCaption')}
             label={isEditing ? t('editing.finish') : t('editing.edit')}
