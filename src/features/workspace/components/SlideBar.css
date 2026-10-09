@@ -1,28 +1,32 @@
 /*
- * Панель листания — нижняя полоса блока фото (под карточкой фото, тем же цветом рамки, что и сетка):
- * ‹, ›, «Открыть». Android и iOS 18 — кнопки в полосе; iOS 26+ — стеклянная «пилюля» в полосе.
+ * Панель листания — нижняя полоса блока фото (под карточкой фото, в общей рамке цвета сетки):
+ * ‹, ›, «Открыть», компактные. Android и iOS 18 — кнопки в полосе; iOS 26+ — стеклянная «пилюля».
  */
 
 .slide-bar {
   display: flex;
   justify-content: center;
-  padding: 6px 12px 8px;
-  background: var(--photo-empty-bg);
-  border-top: 1px solid color-mix(in srgb, var(--text-h) 7%, transparent);
-  border-radius: 0 0 12px 12px;
+  padding: 5px 12px 6px;
 }
 
-/* Карточка фото и панель — одно целое: у карточки скруглён только верх. */
-.photo-block.has-slide-bar > .photo-card,
-:root[data-platform='ios'] .photo-block.has-slide-bar > .photo-card {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+/*
+ * Блок фото с панелью — одна рамка (цвет рамки сетки): карточка фото внутри скруглена по всем углам,
+ * поэтому стык с панелью — не прямая линия, а скруглённый край фото.
+ */
+.photo-block.has-slide-bar {
+  overflow: hidden;
+  background: var(--photo-empty-bg);
+  border-radius: 12px;
+}
+
+:root[data-platform='ios'] .photo-block.has-slide-bar {
+  border-radius: var(--ios-radius-card);
 }
 
 .slide-bar-pill {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .slide-bar .action-button-caption {
@@ -43,11 +47,7 @@
 
 /* «Открыть» чуть отделена от уголков, как в нативных панелях инструментов. */
 .slide-bar-pill > .action-button:last-child {
-  margin-left: 6px;
-}
-
-:root[data-platform='ios'] .slide-bar {
-  border-radius: 0 0 var(--ios-radius-card) var(--ios-radius-card);
+  margin-left: 4px;
 }
 
 :root[data-platform='ios'] .slide-bar .action-button.is-tonal .action-button-icon {
@@ -56,12 +56,12 @@
 
 /* iOS 26+: «пилюля» из стекла с бликом по кромке — часть блока фото. */
 :root[data-platform='ios'][data-ios-design='glass'] .slide-bar {
-  padding: 7px 12px 9px;
+  padding: 5px 12px 7px;
 }
 
 :root[data-platform='ios'][data-ios-design='glass'] .slide-bar-pill {
-  gap: 10px;
-  padding: 4px 8px;
+  gap: 8px;
+  padding: 3px 6px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 999px;

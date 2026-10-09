@@ -307,14 +307,10 @@
   will-change: transform, opacity;
 }
 
-/* В сетке — «Открыть» выбранную бирку: угол «Сетки», компактная, без подписи (почти не закрывает ячейку). */
+/* В сетке — «Открыть» выбранную бирку: на месте «Сетки», того же размера и с подписью. */
 .photo-grid-single {
   position: absolute;
   z-index: 5;
   top: 10px;
   right: 10px;
-}
-
-.photo-grid-single .action-button-caption {
-  display: none;
 }

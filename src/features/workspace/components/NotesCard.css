@@ -56,11 +56,13 @@
 /* Номера бирок: вкладки Material (Android) или сегменты (iOS) под шапкой. */
 .notes-items {
   flex: 0 0 auto;
-  padding: 2px 12px 6px;
+  padding: 0 12px 4px;
 }
 
+/* Ряд номеров компактный: вкладки Material ниже обычных 48 px. */
 .notes-items .tab {
   min-width: 36px;
+  min-height: 38px;
   font-variant-numeric: tabular-nums;
 }
 

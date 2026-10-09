@@ -31,33 +31,33 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
   return (
     <div className="slide-bar" role="group" aria-label={t('slides.group')}>
       <div className="slide-bar-pill">
-      <ActionButton
-        className="slide-bar-previous"
-        size={36}
-        icon={<ChevronRightIcon />}
-        caption={t('slides.previous')}
-        label={t('slides.previousLabel')}
-        disabled={activeIndex <= 0}
-        onClick={onPrevious}
-      />
-      <ActionButton
-        size={36}
-        icon={<ChevronRightIcon />}
-        caption={t('slides.next')}
-        label={t('slides.nextLabel')}
-        disabled={activeIndex >= positions - 1}
-        onClick={onNext}
-      />
-      <ActionButton
-        size={36}
-        variant={isGrid ? 'accent' : 'tonal'}
-        icon={<ImageIcon />}
-        caption={t('slides.open')}
-        label={t('slides.openLabel')}
-        active={!isGrid}
-        disabled={!isGrid}
-        onClick={onOpen}
-      />
+        <ActionButton
+          className="slide-bar-previous"
+          size={32}
+          icon={<ChevronRightIcon />}
+          caption={t('slides.previous')}
+          label={t('slides.previousLabel')}
+          disabled={activeIndex <= 0}
+          onClick={onPrevious}
+        />
+        <ActionButton
+          size={32}
+          icon={<ChevronRightIcon />}
+          caption={t('slides.next')}
+          label={t('slides.nextLabel')}
+          disabled={activeIndex >= positions - 1}
+          onClick={onNext}
+        />
+        <ActionButton
+          size={32}
+          variant={isGrid ? 'accent' : 'tonal'}
+          icon={<ImageIcon />}
+          caption={t('slides.open')}
+          label={t('slides.openLabel')}
+          active={!isGrid}
+          disabled={!isGrid}
+          onClick={onOpen}
+        />
       </div>
     </div>
   )

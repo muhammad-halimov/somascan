@@ -119,7 +119,8 @@
       "failed": "eroare",
       "noForm": "forma nu este aleasă",
       "done": "gata"
-    }
+    },
+    "single": "Foto"
   },
   "slides": {
     "group": "Răsfoiește etichetele",

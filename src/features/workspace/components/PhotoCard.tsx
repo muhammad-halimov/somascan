@@ -239,14 +239,14 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
         <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
       )}
 
-      {/* В сетке — «Открыть» выбранную бирку в углу «Сетки» (дублирует кнопку панели листания). */}
+      {/* В сетке — «Открыть» выбранную бирку на месте «Сетки», с подписью (дублирует кнопку панели листания). */}
       {view === 'grid' && (
         <ActionButton
           className="photo-grid-single anim-fade"
           variant="overlay"
-          size={36}
+          size={44}
           icon={<ImageIcon />}
-          caption={t('slides.open')}
+          caption={t('grid.single')}
           label={t('slides.openLabel')}
           onClick={onOpenActive}
         />

@@ -119,7 +119,8 @@
       "failed": "error",
       "noForm": "form not chosen",
       "done": "ready"
-    }
+    },
+    "single": "Photo"
   },
   "slides": {
     "group": "Browse tags",
