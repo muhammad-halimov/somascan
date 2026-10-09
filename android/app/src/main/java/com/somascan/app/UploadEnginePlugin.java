@@ -52,10 +52,11 @@ public class UploadEnginePlugin extends Plugin implements UploadEngine.Listener 
             return;
         }
         JSObject texts = call.getObject("texts", new JSObject());
-        getContext().getSharedPreferences(UploadWork.TEXTS_PREFS, android.content.Context.MODE_PRIVATE).edit()
+        getContext().getSharedPreferences(UploadNotification.TEXTS_PREFS, android.content.Context.MODE_PRIVATE).edit()
             .putString("title", texts.getString("title", "Выгрузка в таблицу"))
             .putString("pending", texts.getString("pending", "Осталось записать: {count}"))
-            .putString("waiting", texts.getString("waiting", "Ждёт сети или повтора"))
+            .putString("done", texts.getString("done", "Записано в таблицу: {count}"))
+            .putString("attention", texts.getString("attention", "Не всё записано — подробности в «Загрузках»"))
             .apply();
         JSObject command = new JSObject();
         command.put("type", "configure");

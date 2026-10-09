@@ -85,17 +85,28 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
     return contract ? `${t('label:fields.contract')} ${contract}` : `№ ${record.localNumber}`
   }
 
+  /** Где записана бирка, коротко и с выделенными числами: «л. 2026, стр. 25, элем. 19». */
+  const placeOf = (record: UploadRecord, rowNumber: number) => {
+    const parts: Array<[string, string | number]> = [[t('place.row'), rowNumber]]
+    if (record.sheet) parts.unshift([t('place.sheet'), record.sheet])
+    if (record.item) parts.push([t('place.item'), record.item])
+    return parts.map(([label, value], index) => (
+      <span key={label}>
+        {index > 0 && ', '}
+        {label}{'\u00a0'}<b>{value}</b>
+      </span>
+    ))
+  }
+
   /** Строка состояния: что с записью и почему. */
-  const statusOf = (record: UploadRecord): { text: string; isError: boolean } => {
+  const statusOf = (record: UploadRecord): { text: ReactNode; isError: boolean } => {
     switch (record.status) {
       case 'failed':
         return { text: record.error ? errorText(record.error) : t('status.failed'), isError: true }
       case 'queued':
         return { text: record.error ? t('queuedAfterError', { error: errorText(record.error) }) : t('status.queued'), isError: false }
       case 'completed':
-        if (!record.rowNumber) return { text: t('status.completed'), isError: false }
-        if (record.sheet && record.item) return { text: t('completedSheetRowItem', { sheet: record.sheet, row: record.rowNumber, item: record.item }), isError: false }
-        return { text: record.sheet ? t('completedSheetRow', { sheet: record.sheet, row: record.rowNumber }) : t('completedRow', { row: record.rowNumber }), isError: false }
+        return { text: record.rowNumber ? placeOf(record, record.rowNumber) : t('status.completed'), isError: false }
       default:
         return { text: record.cancelRequested ? t('status.cancelling') : t('status.uploading'), isError: false }
     }

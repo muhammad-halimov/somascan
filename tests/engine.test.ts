@@ -45,7 +45,7 @@ test('движок грузится без браузерных API и сооб�
       assert.ok(engine.missingBefore.includes(name), `${name} отсутствует в контексте`)
     }
     assert.equal(engine.events[0]?.type, 'ready')
-    assert.deepEqual(engine.activity, { running: false, online: true, due: 0, waiting: 0, nextAttemptAt: null, pending: 0, failed: 0, progress: { done: 0, total: 0 } })
+    assert.deepEqual(engine.activity, { running: false, online: true, due: 0, waiting: 0, nextAttemptAt: null, pending: 0, failed: 0, progress: { done: 0, total: 0 }, finished: null })
   } finally {
     engine.stop()
   }
@@ -82,6 +82,7 @@ test('ход пачки: обработано из всех растёт по о
     const seen = engine.events.flatMap((event) => (event.type === 'activity' && event.activity.progress.total > 0 ? [`${event.activity.progress.done}/${event.activity.progress.total}`] : []))
     assert.deepEqual([...new Set(seen)], ['0/3', '1/3', '2/3', '3/3'])
     assert.deepEqual(engine.activity?.progress, { done: 0, total: 0 })
+    assert.deepEqual(engine.activity?.finished, { written: 3, total: 3 }, 'итог пачки: записаны все')
   } finally {
     engine.stop()
   }
@@ -129,6 +130,8 @@ test('нет таблицы — запись ждёт пользователя (
     assert.equal(engine.records[0]!.error?.code, 'tableNotFound')
     assert.deepEqual([...smb.nodes.keys()], [])
     assert.equal(engine.activity?.failed, 1)
+    await engine.until(() => engine.activity?.running === false)
+    assert.deepEqual(engine.activity?.finished, { written: 0, total: 1 }, 'итог пачки: не записана')
   } finally {
     engine.stop()
   }

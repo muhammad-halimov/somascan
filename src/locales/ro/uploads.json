@@ -35,16 +35,20 @@
     "keep": "Nu anulați"
   },
   "queuedAfterError": "În așteptare, se va reîncerca · {{error}}",
-  "completedRow": "Scris în tabel · rândul {{row}}",
+  "place": {
+    "sheet": "f.",
+    "row": "rd.",
+    "item": "nr."
+  },
   "retry": "Reîncearcă scrierea",
   "retryCaption": "Reia",
   "retryAll": "Reîncearcă toate cele nescrise",
   "retryAllCaption": "Reia",
-  "completedSheetRow": "Scris în tabel · foaia {{sheet}}, rândul {{row}}",
-  "completedSheetRowItem": "Scris în tabel · foaia {{sheet}}, rândul {{row}}, elementul nr. {{item}}",
   "background": {
     "title": "Scriere în tabel",
     "pending": "Rămase de scris: {{count}}",
-    "waiting": "Așteaptă rețeaua sau reîncercarea"
+    "waiting": "Așteaptă rețeaua sau reîncercarea",
+    "done": "Scrise în tabel: {{count}}",
+    "attention": "Nu s-a scris tot — vezi Încărcări"
   }
 }

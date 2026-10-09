@@ -81,6 +81,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Live Activity с ходом выгрузки в таблицу (UploadLiveActivity, расширение UploadActivity). -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<!-- Фоновая выгрузка в таблицу (UploadBackground): обновление в фоне, обработка с сетью и продолжаемая задача iOS 26+. -->
 	<key>UIBackgroundModes</key>
 	<array>

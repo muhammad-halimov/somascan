@@ -35,16 +35,20 @@
     "keep": "Keep"
   },
   "queuedAfterError": "Queued, will retry · {{error}}",
-  "completedRow": "Written to the table · row {{row}}",
+  "place": {
+    "sheet": "sh.",
+    "row": "row",
+    "item": "item"
+  },
   "retry": "Retry upload",
   "retryCaption": "Retry",
   "retryAll": "Retry all failed uploads",
   "retryAllCaption": "Retry",
-  "completedSheetRow": "Written to the table · sheet {{sheet}}, row {{row}}",
-  "completedSheetRowItem": "Written to the table · sheet {{sheet}}, row {{row}}, item No. {{item}}",
   "background": {
     "title": "Writing to the table",
     "pending": "Left to write: {{count}}",
-    "waiting": "Waiting for network or retry"
+    "waiting": "Waiting for network or retry",
+    "done": "Written to the table: {{count}}",
+    "attention": "Not everything was written — see Uploads"
   }
 }

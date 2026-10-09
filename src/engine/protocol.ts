@@ -57,6 +57,11 @@ export interface EngineActivity {
    * добавляются к ней. В покое — `0 / 0`.
    */
   progress: { done: number; total: number }
+  /**
+   * Итог последней дописанной пачки: сколько записей из неё записано в таблицу (`written`) из всех
+   * (`total`) — для итога в уведомлении. `null`, пока пачка идёт или пачек ещё не было.
+   */
+  finished: { written: number; total: number } | null
 }
 
 /** Событие движка. */

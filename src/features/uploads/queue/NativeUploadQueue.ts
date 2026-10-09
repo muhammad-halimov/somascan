@@ -28,6 +28,10 @@ export interface BackgroundTexts {
   pending: string
   /** Ждёт сети или повтора. */
   waiting: string
+  /** Пачка записана целиком, с подстановкой `{count}`. */
+  done: string
+  /** В пачке есть незаписанные. */
+  attention: string
 }
 
 /** Контракт нативного плагина. */
@@ -132,6 +136,8 @@ export class NativeUploadQueue implements UploadQueue {
         title: i18n.t('uploads:background.title'),
         pending: i18n.t('uploads:background.pending', { count: '{count}' }),
         waiting: i18n.t('uploads:background.waiting'),
+        done: i18n.t('uploads:background.done', { count: '{count}' }),
+        attention: i18n.t('uploads:background.attention'),
       },
     }
     const json = JSON.stringify(options)

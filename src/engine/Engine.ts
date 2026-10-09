@@ -75,6 +75,11 @@ export class Engine {
   private lastActivity = ''
   /** Ход текущей пачки записей (см. `EngineActivity.progress`). */
   private batch = { done: 0, total: 0 }
+  /** Записи текущей пачки и записанные из них (записанную потом удалили — она всё равно учтена). */
+  private readonly batchIds = new Set<string>()
+  private readonly written = new Set<string>()
+  /** Итог последней пачки (см. `EngineActivity.finished`). */
+  private finished: EngineActivity['finished'] = null
 
   /** @param deps Зависимости. */
   constructor(deps: EngineDeps) {
@@ -165,7 +170,7 @@ export class Engine {
   /**
    * Что сейчас делает очередь. Заодно ведёт ход пачки: пока очередь занята, обработанные записи
    * (записанные, отложенные после сбоя, ждущие пользователя) прибавляются к `done`, новые — к `total`;
-   * в покое пачка сбрасывается.
+   * в покое пачка сбрасывается, а её итог (сколько записано) остаётся в `finished`.
    */
   activity(now = Date.now()): EngineActivity {
     const records = this.store.getSnapshot()
@@ -181,15 +186,25 @@ export class Engine {
       pending: queued.length + uploading,
       failed: records.filter((record) => record.status === 'failed').length,
     }
-    if (!isBusy({ ...base, progress: this.batch })) {
+    for (const record of records) {
+      if (record.status === 'completed' && this.batchIds.has(record.id)) this.written.add(record.id)
+    }
+    if (!isBusy({ ...base, progress: this.batch, finished: this.finished })) {
+      if (this.batch.total > 0) this.finished = { written: this.written.size, total: this.batch.total }
       this.batch = { done: 0, total: 0 }
+      this.batchIds.clear()
+      this.written.clear()
     } else {
+      if (this.batch.total === 0) this.finished = null
+      for (const record of records) {
+        if (record.status === 'uploading' || (record.status === 'queued' && (record.nextAttemptAt ?? 0) <= now)) this.batchIds.add(record.id)
+      }
       // Осталось в этой пачке: готовые к записи и та, что пишется сейчас.
       const remaining = due + uploading
       const done = this.batch.total === 0 ? 0 : Math.max(this.batch.done, this.batch.total - remaining)
       this.batch = { done, total: done + remaining }
     }
-    return { ...base, progress: { ...this.batch } }
+    return { ...base, progress: { ...this.batch }, finished: this.finished && { ...this.finished } }
   }
 
   /** Новые настройки: сохраняются; если хранилище изменилось, обработчик повторит незаписанное. */

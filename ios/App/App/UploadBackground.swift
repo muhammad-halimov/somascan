@@ -11,6 +11,8 @@ import BackgroundTasks
  *   (`BGContinuedProcessingTask`) — система показывает её прогресс (обработано из всех, по ходу
  *   пачки от движка) и «Осталось записать: N», а очередь пишется в свёрнутом приложении столько,
  *   сколько нужно.
+ * - До iOS 26 ход пачки показывает Live Activity (`UploadLiveActivity`): экран блокировки
+ *   и Dynamic Island, синхронно с «Загрузками», в конце — итог пачки.
  * - Если записи ждут сети или паузы после сбоя (или фоновое время кончилось), планируются фоновые
  *   задачи системы (`BGAppRefreshTask`, `BGProcessingTask` с условием «есть сеть»): система запускает
  *   приложение в фоне, движок поднимается и продолжает с сохранённой очереди.
@@ -93,12 +95,26 @@ final class UploadBackground: @unchecked Sendable {
                 self.scheduleLater()
                 self.endBackgroundTask()
             }
-            #if compiler(>=6.2)
-            if #available(iOS 26.0, *) {
-                self.updateContinued()
+            if Self.usesContinuedTask {
+                #if compiler(>=6.2)
+                if #available(iOS 26.0, *) {
+                    self.updateContinued()
+                }
+                #endif
+            } else {
+                UploadLiveActivity.shared.update(activity: activity, texts: Self.texts())
             }
-            #endif
         }
+    }
+
+    /// Ход выгрузки показывает продолжаемая задача системы (iOS 26+), а не Live Activity.
+    private static var usesContinuedTask: Bool {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            return true
+        }
+        #endif
+        return false
     }
 
     // MARK: Фоновая задача приложения
@@ -234,22 +250,32 @@ final class UploadBackground: @unchecked Sendable {
 
     // MARK: Тексты
 
-    private struct Texts {
+    struct Texts {
         let title: String
         let pending: String
         let waiting: String
+        /// Пачка записана целиком (`{count}` — сколько).
+        let doneTemplate: String
+        /// В пачке есть незаписанные.
+        let attention: String
 
         func subtitle(_ count: Int) -> String {
             count > 0 ? pending.replacingOccurrences(of: "{count}", with: String(count)) : waiting
         }
+
+        func done(_ count: Int) -> String {
+            doneTemplate.replacingOccurrences(of: "{count}", with: String(count))
+        }
     }
 
-    private static func texts() -> Texts {
+    static func texts() -> Texts {
         let stored = UserDefaults.standard.dictionary(forKey: textsKey) as? [String: String] ?? [:]
         return Texts(
             title: stored["title"] ?? "Выгрузка в таблицу",
             pending: stored["pending"] ?? "Осталось записать: {count}",
-            waiting: stored["waiting"] ?? "Ждёт сети или повтора"
+            waiting: stored["waiting"] ?? "Ждёт сети или повтора",
+            doneTemplate: stored["done"] ?? "Записано в таблицу: {count}",
+            attention: stored["attention"] ?? "Не всё записано — подробности в «Загрузках»"
         )
     }
 }

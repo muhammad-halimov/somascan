@@ -97,6 +97,8 @@ final class UploadEngine {
     private final File storageDir;
     private final Object storageLock = new Object();
     private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
+    /** Уведомление о выгрузке — по каждой активности, сразу (синхронно с «Загрузками»). */
+    private final UploadNotification notification;
 
     private volatile String lastState;
     private volatile JSONObject lastActivity;
@@ -114,6 +116,7 @@ final class UploadEngine {
     private UploadEngine(Context context) {
         this.context = context;
         this.storageDir = new File(context.getFilesDir(), "upload-engine");
+        this.notification = new UploadNotification(context);
     }
 
     /** Запускает движок (если ещё не запущен). */
@@ -155,6 +158,10 @@ final class UploadEngine {
     /** Сколько раз движок сообщал активность (чтобы ждать ответа на {@code kick}). */
     long activitySequence() {
         return activitySequence;
+    }
+
+    UploadNotification notification() {
+        return notification;
     }
 
     void addListener(Listener listener) {
@@ -295,6 +302,7 @@ final class UploadEngine {
                     JSONObject activity = data.getJSONObject("activity");
                     lastActivity = activity;
                     long sequence = ++activitySequence;
+                    notification.onActivity(activity);
                     UploadWork.plan(context, activity);
                     for (Listener listener : listeners) {
                         listener.onActivity(activity, sequence);

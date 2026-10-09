@@ -35,16 +35,20 @@
     "keep": "Не отменять"
   },
   "queuedAfterError": "В очереди, будет повтор · {{error}}",
-  "completedRow": "Записано в таблицу · строка {{row}}",
+  "place": {
+    "sheet": "л.",
+    "row": "стр.",
+    "item": "элем."
+  },
   "retry": "Повторить запись",
   "retryCaption": "Повтор",
   "retryAll": "Повторить все незаписанные",
   "retryAllCaption": "Повтор",
-  "completedSheetRow": "Записано в таблицу · лист {{sheet}}, строка {{row}}",
-  "completedSheetRowItem": "Записано в таблицу · лист {{sheet}}, строка {{row}}, элемент № {{item}}",
   "background": {
     "title": "Выгрузка в таблицу",
     "pending": "Осталось записать: {{count}}",
-    "waiting": "Ждёт сети или повтора"
+    "waiting": "Ждёт сети или повтора",
+    "done": "Записано в таблицу: {{count}}",
+    "attention": "Не всё записано — подробности в «Загрузках»"
   }
 }

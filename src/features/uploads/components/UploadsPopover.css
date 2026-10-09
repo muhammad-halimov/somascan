@@ -113,6 +113,11 @@
   color: var(--text-h);
 }
 
+/* Числа места записи (лист, строка, элемент) — выделены. */
+.upload-item-state b {
+  font-weight: 600;
+}
+
 .upload-item-state.is-error {
   color: var(--danger);
 }
