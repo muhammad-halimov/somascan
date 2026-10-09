@@ -1,6 +1,6 @@
 import { modelCatalog } from '@/features/recognition/catalog/ModelCatalog'
 import { ModelFilter } from '@/features/recognition/catalog/ModelFilter'
-import { enabledLabelFields } from '@/features/recognition/label/labelFields'
+import { recognizedLabelFields } from '@/features/recognition/label/labelFields'
 import { labelRecognizer } from '@/features/recognition/LabelRecognizer'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import { RecognitionError } from '@/features/recognition/RecognitionError'
@@ -40,7 +40,7 @@ export async function recognizeLabel(imageUrl: string, signal: AbortSignal) {
     imageUrl,
     maxImageSide: advanced.maxImageSide,
     instructions: advanced.prompt,
-    fields: enabledLabelFields(advanced.labelFields),
+    fields: recognizedLabelFields(advanced.labelFields),
     suppliers: advanced.knownSuppliers,
   })
 }

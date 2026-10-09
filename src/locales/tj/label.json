@@ -28,7 +28,8 @@
     "serial_number": "Рақами силсилавӣ",
     "mark": "Тамға",
     "packing": "Бастабандӣ",
-    "origin_country": "Кишвари истеҳсол"
+    "origin_country": "Кишвари истеҳсол",
+    "sheet": "Варақ"
   },
   "productForm": {
     "name": "Шакл",
@@ -36,5 +37,9 @@
     "bara": "Чубча",
     "bobina": "Ғалтак",
     "required": "Шаклро интихоб кунед: чубча ё ғалтак"
+  },
+  "sheet": {
+    "default": "{{sheet}} — мисли танзимот",
+    "currentYear": "варақи {{year}}"
   }
 }

@@ -191,3 +191,48 @@
 :root[data-platform='ios'] .text-input.is-multiline:read-only:focus {
   box-shadow: none;
 }
+
+/* Системный выбор в виде поля (SelectInput): без своей стрелки браузера, значок по платформе справа. */
+.select-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 44px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.select-input-icon {
+  position: absolute;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.select-input-icon .arrow-drop-down-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.select-input-icon .chevron-up-down-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:root[data-platform='ios'] .select-input-icon .arrow-drop-down-icon,
+:root:not([data-platform='ios']) .select-input-icon .chevron-up-down-icon {
+  display: none;
+}

@@ -10,6 +10,7 @@
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import ExcelJS from 'exceljs'
+import { findCell, keepDefaultWidths } from '../../src/features/uploads/xlsx/excelInternals'
 import { findLabLayout } from '../../src/features/uploads/xlsx/labTableLayout'
 import { cellText } from '../../src/features/uploads/xlsx/tableCell'
 
@@ -27,8 +28,7 @@ if (!sheet) throw new Error('no year sheet')
 for (const other of workbook.worksheets) if (other !== sheet) workbook.removeWorksheet(other.id)
 
 // Читаем без `getCell`: он создал бы пустые ячейки шапки со стилем колонки.
-const findCell = (row: number, column: number) => (sheet as unknown as { findCell(r: number, c: number): ExcelJS.Cell | undefined }).findCell(row, column)
-const layout = findLabLayout((row, column) => cellText(findCell(row, column)?.value ?? null))
+const layout = findLabLayout((row, column) => cellText(findCell(sheet, row, column)?.value ?? null))
 if (!layout) throw new Error(`no journal header on sheet ${sheet.name}`)
 
 // Размеченные строки — до конца автофильтра (в журнале он заканчивается на последней размеченной строке).
@@ -48,8 +48,7 @@ for (let row = layout.dataStart; row <= sheet.rowCount; row++) {
   current.height = pattern.height
   current.commit()
 }
-// Ширина ровно 9 у ExcelJS считается «по умолчанию» и не сохраняется (см. `LabelWorkbook.open`).
-for (const column of sheet.columns ?? []) if (column.width === 9) column.width = 9 + 1e-6
+keepDefaultWidths(workbook)
 sheet.views = [{ state: 'normal', activeCell: `C${layout.dataStart}` }]
 workbook.views = [{ x: 0, y: 0, width: 29040, height: 15720, firstSheet: 0, activeTab: 0, visibility: 'visible' }]
 

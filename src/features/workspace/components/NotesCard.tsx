@@ -146,19 +146,17 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
       )}
 
       <div ref={actionsRef} className="notes-actions" role="group" aria-label={t('actions.group')}>
-        <ActionButton size={48} icon={<AddIcon />} caption={t('actions.add')} label={t('actions.addLabel')} onClick={onAddPhoto} />
+        <ActionButton icon={<AddIcon />} caption={t('actions.add')} label={t('actions.addLabel')} onClick={onAddPhoto} />
         {/* «Сброс»: пока идёт распознавание — прерывает его, оставляя фото для «Повтора»; иначе очищает экран. */}
         <ActionButton
-          size={48}
           icon={<CloseIcon />}
           caption={t('actions.clear')}
           label={isRecognizing ? t('actions.cancelLabel') : t('actions.clearLabel')}
           disabled={!hasPhoto}
           onClick={isRecognizing ? onCancel : onClear}
         />
-        <ActionButton size={48} icon={<ResetIcon />} caption={t('actions.retry')} label={t('actions.retryLabel')} disabled={!canRetry || isRecognizing} onClick={onRetry} />
+        <ActionButton icon={<ResetIcon />} caption={t('actions.retry')} label={t('actions.retryLabel')} disabled={!canRetry || isRecognizing} onClick={onRetry} />
         <ActionButton
-          size={48}
           variant="accent"
           icon={<NextIcon />}
           caption={t('actions.next')}

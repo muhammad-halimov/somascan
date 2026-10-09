@@ -28,7 +28,8 @@
     "serial_number": "Serial number",
     "mark": "Mark",
     "packing": "Packing",
-    "origin_country": "Country of origin"
+    "origin_country": "Country of origin",
+    "sheet": "Sheet"
   },
   "productForm": {
     "name": "Form",
@@ -36,5 +37,9 @@
     "bara": "Bar",
     "bobina": "Coil",
     "required": "Choose the form: bar or coil"
+  },
+  "sheet": {
+    "default": "{{sheet}} — as in settings",
+    "currentYear": "sheet {{year}}"
   }
 }

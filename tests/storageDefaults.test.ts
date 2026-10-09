@@ -24,3 +24,9 @@ test('пустой путь и имя прежних версий заменяю
   assert.equal(own.storage.smb.filePath, 'Probe si Sarje Otel\\Probe otel.xlsx')
   assert.equal(own.storage.googleDrive.fileName, 'labels.xlsx')
 })
+
+test('лист журнала: по умолчанию пусто (лист текущего года), выбранный сохраняется', () => {
+  assert.equal(defaults.storage.sheet, '')
+  assert.equal(parseSettings({ storage: { sheet: ' 2025 ' } }, defaults).storage.sheet, '2025')
+  assert.equal(parseSettings({ storage: { sheet: 7 } }, defaults).storage.sheet, '')
+})

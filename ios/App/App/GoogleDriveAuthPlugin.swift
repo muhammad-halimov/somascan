@@ -111,6 +111,8 @@ enum GoogleDriveTokens {
     /**
      Настраивает SDK по Info.plist; `nil` — готово. Без client ID или без URL-схемы для обратного
      вызова SDK падает исключением, поэтому сначала проверяем и отвечаем `notConfigured`.
+     Client ID и URL-схема заданы в Info.plist (iOS-клиент OAuth проекта Google Cloud, README,
+     «Настройка Google Cloud»); сменили клиента — поменять оба значения.
      */
     static func configure() -> Failure? {
         let clientID = (Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String)?.trimmingCharacters(in: .whitespaces) ?? ""

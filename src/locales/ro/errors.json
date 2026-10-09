@@ -16,9 +16,8 @@
   "uploadFailed": "Eroare la scriere",
   "upload": {
     "notConfigured": "Partajarea de rețea nu este configurată: introduceți serverul, folderul partajat și calea tabelului în Setări → Stocare.",
-    "targetUnsupported": "Deocamdată este acceptată doar partajarea de rețea. Alegeți-o în Setări → Stocare.",
     "invalidPath": "Calea tabelului trebuie să se termine cu .xlsx, de ex. Probe si Sarje Otel\\Probe otel.xlsx.",
-    "unavailable": "Scrierea pe partajarea de rețea funcționează doar în aplicația mobilă.",
+    "unavailable": "Scrierea în tabel (partajare de rețea, Google Drive) funcționează doar în aplicația mobilă.",
     "offline": "Nu există conexiune la rețea.",
     "hostUnreachable": "Serverul {{host}} nu răspunde. Verificați adresa, rețeaua Wi-Fi și dacă portul 445 este deschis.",
     "timeout": "Serverul a răspuns prea târziu.",
@@ -33,6 +32,7 @@
     "verifyFailed": "Verificarea după salvare a eșuat; scrierea se va reîncerca.",
     "integrityFailed": "Scrierea a fost oprită: la salvarea registrului s-ar fi modificat alte date. Fișierul nu a fost atins — anunțați dezvoltatorul.",
     "unknownLayout": "În tabel nu s-a găsit registrul de probe: lipsește antetul cu coloanele Nr. Crt., Sarja, Producator, Bobina/Bara. Verificați calea fișierului.",
+    "sheetNotFound": "Tabelul nu are foaia „{{detail}}”. Alegeți o foaie existentă în setările de stocare (scrierea se reia singură) sau creați această foaie în tabel și apăsați „Reîncearcă”.",
     "tableNotFound": "Tabelul nu a fost găsit. Aplicația nu creează tabelul: indicați un registru existent în Setări → Stocare — apoi scrierea se va relua.",
     "io": "Eroare a partajării de rețea: {{detail}}",
     "authRequired": "Nu există acces la Google Drive: conectați-vă cu Google în Setări → Stocare.",

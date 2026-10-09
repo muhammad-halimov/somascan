@@ -44,6 +44,11 @@ export interface LabelFieldDefinition {
   enabled: boolean
   /** Встроенное поле (его нельзя удалить, только выключить или переименовать). */
   builtIn: boolean
+  /**
+   * Поле выбирают вручную, с фото оно не читается (лист журнала): модели не отправляется,
+   * в колонку журнала не пишется, переживает «Повтор».
+   */
+  manual?: boolean
 }
 
 /** Встроенное поле: ключ, вид и пояснение для модели. Названия — в переводах (`label:fields.<ключ>`). */
@@ -51,7 +56,12 @@ interface BuiltInField {
   key: LabelKey
   kind: LabelFieldKind
   hint: string
+  /** Вводится вручную, а не читается с фото (см. `LabelFieldDefinition.manual`). */
+  manual?: true
 }
+
+/** Ключ поля «Лист»: в какой лист журнала записать бирку (пусто — как в настройках хранилища). */
+export const SHEET_KEY = 'sheet'
 
 /**
  * Встроенные поля в порядке показа: от изделия к производству, заказу и идентификаторам.
@@ -81,6 +91,7 @@ export const BUILT_IN_FIELDS: readonly BuiltInField[] = [
   { key: 'mark', kind: 'code', hint: 'Rolling / brand mark or size mark (Mark, Rolling mark, Hengerlési azonosító, Size Mark Color), e.g. "HADIDNA", "8/7".' },
   { key: 'packing', kind: 'text', hint: 'Packing / form of delivery (Packing), e.g. "12m bundle", "coil".' },
   { key: 'origin_country', kind: 'text', hint: 'Country of origin (Made in, Produs în, Producer country), e.g. "Ukraine", "Hungary".' },
+  { key: SHEET_KEY, kind: 'text', hint: '', manual: true },
 ]
 
 /** Ключи встроенных полей. */
@@ -109,6 +120,12 @@ export const isDefaultLabelFields = (fields: readonly LabelFieldDefinition[]) =>
 
 /** Включённые поля в порядке показа. */
 export const enabledLabelFields = (fields: readonly LabelFieldDefinition[]) => fields.filter((field) => field.enabled)
+
+/** Включённые поля, которые читаются с фото (без выбираемых вручную, как «Лист»): их получает модель. */
+export const recognizedLabelFields = (fields: readonly LabelFieldDefinition[]) => fields.filter((field) => field.enabled && !field.manual)
+
+/** Ключи встроенных полей, которые выбирают вручную: их значения переживают новое распознавание. */
+export const MANUAL_FIELD_KEYS: readonly LabelKey[] = BUILT_IN_FIELDS.filter((field) => field.manual).map((field) => field.key)
 
 /**
  * Ключ своего поля из английского названия: `snake_case` латиницей, уникальный среди `taken`.

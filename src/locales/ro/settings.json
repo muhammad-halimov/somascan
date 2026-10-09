@@ -67,7 +67,7 @@
       "smb": "Partajare rețea",
       "googleDrive": "Google Drive"
     },
-    "intro": "Etichetele trimise cu „Înainte” se adaugă ca rânduri în registrul de probe de oțel (.xlsx) — pe partajarea de rețea sau în Google Drive: una câte una, în fundal, în foaia anului curent, cu verificare după fiecare salvare.",
+    "intro": "Etichetele trimise cu „Înainte” se adaugă ca rânduri în registrul de probe de oțel (.xlsx) — pe partajarea de rețea sau în Google Drive: una câte una, în fundal, în foaia aleasă (implicit — a anului curent), cu verificare după fiecare salvare.",
     "smb": {
       "location": "Locație",
       "server": "Server",
@@ -84,7 +84,7 @@
       "showPassword": "Arată parola",
       "hidePassword": "Ascunde parola",
       "test": "Testează conexiunea",
-      "filePathHint": "Calea către un registru existent în folderul partajat, se termină cu .xlsx. Aplicația nu creează nici tabelul, nici folderele: dacă fișierul lipsește, scrierea nu este posibilă — verificați cu pictograma de la capătul câmpului.",
+      "filePathHint": "Tabelul trebuie să existe deja în folderul partajat.",
       "testing": "Se conectează…",
       "testOkTitle": "Conectat",
       "testOkExisting": "Tabelul a fost găsit: {{size}} KB, modificat {{date}}.",
@@ -101,11 +101,12 @@
       "fileName": "Nume fișier",
       "signedIn": "Conectat: {{account}}",
       "signOut": "Deconectare",
+      "signOutLabel": "Deconectare de la Google",
       "signOutTitle": "Vă deconectați de la Google?",
       "signOutMessage": "Accesul aplicației la Google Drive al contului {{account}} va fi revocat. Încărcările din coadă vor aștepta o nouă conectare.",
       "signInFailed": "Conectarea cu Google a eșuat",
       "accountUnknown": "cont Google",
-      "locationHint": "Linkul folderului din bara de adrese Drive sau ID-ul lui; gol — rădăcina „Drive-ul meu”. Tabelul cu acest nume trebuie să fie deja în folder — aplicația nu îl creează; folderul „backups” pentru copii apare la prima scriere."
+      "locationHint": "Folder — link sau ID, gol — „Drive-ul meu”. Tabelul trebuie să existe deja în folder."
     },
     "backups": "Înainte de fiecare salvare se creează o copie de rezervă în folderul „backups” de lângă tabel; copiile mai vechi de {{days}} zile se șterg.",
     "check": {
@@ -118,7 +119,13 @@
     "table": {
       "lock": "Blocați calea tabelului",
       "unlock": "Deblocați calea tabelului pentru editare",
-      "lockHint": "Implicit — „Probe otel.xlsx”; calea și numele sunt blocate ca să nu fie schimbate din greșeală — atingeți lacătul din câmp pentru a le modifica."
+      "lockHint": "Deschideți lacătul pentru a schimba calea."
+    },
+    "sheet": {
+      "label": "Foaie",
+      "auto": "Foaia anului curent ({{year}})",
+      "unknown": "{{sheet}} — nu există în tabel",
+      "hint": "Foaia anului se creează automat, celelalte apar după verificarea tabelului."
     }
   },
   "advanced": {

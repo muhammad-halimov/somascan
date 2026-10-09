@@ -67,7 +67,7 @@
       "smb": "Network share",
       "googleDrive": "Google Drive"
     },
-    "intro": "Tags sent with “Next” are appended as rows to the steel sample log (.xlsx) — on the network share or in Google Drive: one at a time, in the background, into the current year’s sheet, with a check after each save.",
+    "intro": "Tags sent with “Next” are appended as rows to the steel sample log (.xlsx) — on the network share or in Google Drive: one at a time, in the background, into the chosen sheet (by default — the current year’s), with a check after each save.",
     "smb": {
       "location": "Location",
       "server": "Server",
@@ -84,7 +84,7 @@
       "showPassword": "Show password",
       "hidePassword": "Hide password",
       "test": "Test connection",
-      "filePathHint": "Path to an existing log inside the shared folder, ending in .xlsx. The app creates neither the table nor folders: if the file is missing, nothing can be written — check with the icon at the end of the field.",
+      "filePathHint": "The table must already be in the shared folder.",
       "testing": "Connecting…",
       "testOkTitle": "Connected",
       "testOkExisting": "The table was found: {{size}} KB, last modified {{date}}.",
@@ -101,11 +101,12 @@
       "fileName": "File name",
       "signedIn": "Signed in: {{account}}",
       "signOut": "Sign out",
+      "signOutLabel": "Sign out of Google",
       "signOutTitle": "Sign out of Google?",
       "signOutMessage": "The app’s access to Google Drive of {{account}} will be revoked. Queued uploads will wait for a new sign-in.",
       "signInFailed": "Couldn’t sign in with Google",
       "accountUnknown": "Google account",
-      "locationHint": "Folder link from the Drive address bar or its ID; empty means the root of “My Drive”. A table with this name must already be in the folder — the app does not create it; the “backups” folder for copies appears on the first write."
+      "locationHint": "Folder — link or ID, empty — “My Drive”. The table must already be in the folder."
     },
     "backups": "Before every save a backup is created in the “backups” folder next to the table; backups older than {{days}} days are deleted.",
     "check": {
@@ -118,7 +119,13 @@
     "table": {
       "lock": "Lock the table path",
       "unlock": "Unlock the table path to edit it",
-      "lockHint": "By default — “Probe otel.xlsx”; the path and name are locked so they are not changed by accident — tap the lock in the field to change them."
+      "lockHint": "Open the lock to change the path."
+    },
+    "sheet": {
+      "label": "Sheet",
+      "auto": "Current year sheet ({{year}})",
+      "unknown": "{{sheet}} — not in the table",
+      "hint": "The year sheet is created automatically, others appear after the table check."
     }
   },
   "advanced": {

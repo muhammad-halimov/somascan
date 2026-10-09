@@ -28,7 +28,8 @@
     "serial_number": "Серийный номер",
     "mark": "Маркировка",
     "packing": "Упаковка",
-    "origin_country": "Страна происхождения"
+    "origin_country": "Страна происхождения",
+    "sheet": "Лист"
   },
   "productForm": {
     "name": "Форма",
@@ -36,5 +37,9 @@
     "bara": "Пруток",
     "bobina": "Катушка",
     "required": "Выберите форму: пруток или катушка"
+  },
+  "sheet": {
+    "default": "{{sheet}} — как в настройках",
+    "currentYear": "лист {{year}}"
   }
 }

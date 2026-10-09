@@ -28,7 +28,8 @@
     "serial_number": "Număr de serie",
     "mark": "Marcaj",
     "packing": "Ambalare",
-    "origin_country": "Țara de origine"
+    "origin_country": "Țara de origine",
+    "sheet": "Foaie"
   },
   "productForm": {
     "name": "Formă",
@@ -36,5 +37,9 @@
     "bara": "Bară",
     "bobina": "Bobină",
     "required": "Alegeți forma: bară sau bobină"
+  },
+  "sheet": {
+    "default": "{{sheet}} — ca în setări",
+    "currentYear": "foaia {{year}}"
   }
 }

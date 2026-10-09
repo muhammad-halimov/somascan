@@ -17,7 +17,9 @@
  * ExcelJS (≈1 МБ) загружается лениво, при первой записи.
  */
 import type { Cell, Workbook, Worksheet } from 'exceljs'
+import { SHEET_KEY } from '@/features/recognition/label/labelFields'
 import { UploadError } from '../UploadError'
+import { findCell, keepDefaultWidths, mergedRanges, moveSheetFirst } from './excelInternals'
 import { arrivalDateText, labCell } from './labTableCells'
 import { dataColumnsOf, findLabLayout, type FieldColumnHeader, type LabLayout } from './labTableLayout'
 import { cellText, readCell, toTableCell, type TableCell } from './tableCell'
@@ -26,11 +28,12 @@ import type { UploadColumn } from './uploadColumns'
 /** Модуль ExcelJS. */
 type ExcelModule = typeof import('exceljs')
 
-/** Имя скрытого служебного листа с номерами записанных бирок. */
+/**
+ * Имя скрытого служебного листа с номерами записанных бирок.
+ * РИСК: защита от повторной строки после обрыва держится на этом листе. Если его удалят (например,
+ * скопировав журнал в новую книгу без скрытых листов), уже записанные бирки при повторе допишутся снова.
+ */
 export const JOURNAL_SHEET = 'somascan-journal'
-
-/** Ширина колонки, которую ExcelJS считает «по умолчанию» и не сохраняет (см. `open`). */
-const EXCELJS_DEFAULT_WIDTH = 9
 
 /** Формат ячеек с датой и с датой-временем (для своих колонок вида «дата»). */
 const DATE_FORMAT = 'yyyy-mm-dd'
@@ -69,13 +72,6 @@ function writeCell(cell: Cell, value: TableCell) {
 
 /** Лист года: имя — четыре цифры. */
 const isYearSheet = (sheet: Worksheet) => /^\d{4}$/.test(sheet.name)
-
-/**
- * Ячейка, если она есть в файле. `getCell` ExcelJS создаёт недостающую ячейку со стилем колонки —
- * при чтении шапки это «расписало» бы пустые ячейки чужой таблицы, поэтому читаем без создания.
- */
-const findCell = (sheet: Worksheet, row: number, column: number): Cell | undefined =>
-  (sheet as unknown as { findCell(row: number, column: number): Cell | undefined }).findCell(row, column)
 
 /** Текст ячейки листа (строка и колонка с единицы), не создавая ячеек. */
 const readerOf = (sheet: Worksheet) => (row: number, column: number) => cellText(findCell(sheet, row, column)?.value ?? null)
@@ -148,13 +144,7 @@ export class LabelWorkbook {
     } catch (error) {
       throw new UploadError('corruptWorkbook', { detail: error instanceof Error ? error.message : String(error) })
     }
-    // Колонку шириной ровно 9 ExcelJS принимает за ширину по умолчанию и не сохраняет — Excel
-    // показал бы её чуть уже. Сдвигаем на миллионную долю, чтобы ширина записалась как была.
-    for (const sheet of workbook.worksheets) {
-      for (const column of sheet.columns ?? []) {
-        if (column.width === EXCELJS_DEFAULT_WIDTH) column.width = EXCELJS_DEFAULT_WIDTH + 1e-6
-      }
-    }
+    keepDefaultWidths(workbook)
     return new LabelWorkbook(workbook)
   }
 
@@ -178,15 +168,24 @@ export class LabelWorkbook {
   }
 
   /**
-   * Дописывает бирку в лист года записи.
+   * Дописывает бирку в выбранный лист — свой лист бирки (поле «Лист») или лист из настроек хранилища,
+   * а если лист не выбран — в лист года записи (его нет — создаётся).
    * @param entry Бирка, номер записи и колонки.
    * @param writtenAt Момент записи: от него — год (лист) и «Data intrare».
-   * @throws {UploadError} `unknownLayout`, если в книге не нашлось шапки журнала.
+   * @param defaultSheet Лист из настроек хранилища; пусто — лист года.
+   * @throws {UploadError} `sheetNotFound`, если выбранного листа в книге нет; `unknownLayout`, если на листе
+   *   не нашлось шапки журнала.
    */
-  append(entry: LabEntry, writtenAt: number): PlannedRow {
+  append(entry: LabEntry, writtenAt: number, defaultSheet = ''): PlannedRow {
+    // РИСК: год листа (и «Data intrare») — по часам устройства: с неверной датой на телефоне бирка уйдёт
+    // не в тот лист. Сервер своё время не сообщает, сверить не с чем.
     const year = new Date(writtenAt).getFullYear()
     const fields = fieldHeadersOf(entry.columns)
-    const existing = this.workbook.getWorksheet(String(year))
+    const own = entry.label[SHEET_KEY]
+    const chosen = (typeof own === 'string' && own.trim() !== '' ? own : defaultSheet).trim()
+    const existing = this.workbook.getWorksheet(chosen || String(year))
+    // Выбранный лист не создаём: бирка ждёт, пока выберут существующий (служебный лист — не журнал).
+    if (chosen && (!existing || existing.name === JOURNAL_SHEET)) throw new UploadError('sheetNotFound', { detail: chosen })
     const sheet = existing ?? this.addYearSheet(year)
     const layout = findLabLayout(readerOf(sheet), fields)
     if (!layout) throw new UploadError('unknownLayout', { detail: sheet.name })
@@ -328,16 +327,13 @@ export class LabelWorkbook {
     }
     if (!source || !layout) throw new UploadError('unknownLayout', { detail: String(year) })
 
-    // Порядок листов в книге ExcelJS хранит в `orderNo` (в типах его нет).
-    const orderOf = (sheet: Worksheet) => sheet as unknown as { orderNo: number }
-    const firstOrder = Math.min(...this.workbook.worksheets.map((sheet) => orderOf(sheet).orderNo))
     const sheet = this.workbook.addWorksheet(String(year), {
       properties: cloneStyle(source.properties),
       pageSetup: cloneStyle(source.pageSetup),
       views: [{ state: 'normal' }],
     })
     // Новый год — первым, как в журнале (листы идут от нового года к старому).
-    orderOf(sheet).orderNo = firstOrder - 1
+    moveSheetFirst(this.workbook, sheet)
 
     const lastColumn = Math.max(source.columnCount, layout.lastColumn, source.columns?.length ?? 0)
     for (let column = 1; column <= lastColumn; column++) {
@@ -362,8 +358,7 @@ export class LabelWorkbook {
       }
       to.commit()
     }
-    const merges = (source.model as { merges?: string[] }).merges ?? []
-    for (const range of merges) {
+    for (const range of mergedRanges(source)) {
       const bottom = Number(/(\d+)$/.exec(range)?.[1])
       if (bottom < layout.dataStart) sheet.mergeCells(range)
     }

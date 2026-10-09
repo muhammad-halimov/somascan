@@ -272,6 +272,8 @@ final class SmbShareClient: @unchecked Sendable {
      Путь уже существует. libsmb2 создаёт и удаляет папки и файлы составным запросом «открыть + закрыть»:
      если открытие отклонено (`STATUS_OBJECT_NAME_COLLISION`), код ошибки берётся у закрытия —
      `ENETRESET` («соединение сброшено»), а настоящий статус остаётся только в тексте. Поэтому смотрим и на текст.
+     РИСК: опора на текст сообщения libsmb2 — после обновления AMSMB2 проверить запись в существующую папку
+     на сервере Windows (ошибка «Error code 52 … OBJECT_NAME_COLLISION»).
      */
     private static func isAlreadyExists(_ error: Error) -> Bool {
         if let posix = error as? POSIXError, posix.code == .EEXIST { return true }

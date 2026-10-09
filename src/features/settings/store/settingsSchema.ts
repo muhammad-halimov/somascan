@@ -70,6 +70,11 @@ export interface StorageSettings {
   smb: SmbSettings
   /** Настройки Google Drive. */
   googleDrive: GoogleDriveSettings
+  /**
+   * Лист журнала, куда пишутся бирки; пусто — лист текущего года (создаётся, если его нет). У бирки
+   * можно выбрать свой лист необязательным полем «Лист».
+   */
+  sheet: string
 }
 
 /**
@@ -108,7 +113,7 @@ export interface AppSettings {
   general: GeneralSettings
   /** Вкладка «Хранилище». */
   storage: StorageSettings
-  /** Вкладка «Дополнительно». */
+  /** Вкладка «Расширенные». */
   advanced: AdvancedSettings
 }
 
@@ -131,6 +136,7 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       target: 'smb',
       smb: { host: '', share: '', filePath: DEFAULT_TABLE_FILE, domain: '', username: '', password: '' },
       googleDrive: { account: '', folder: '', fileName: DEFAULT_TABLE_FILE },
+      sheet: '',
     },
     advanced: {
       prompt: '',
@@ -241,7 +247,7 @@ function migrateLabelFields(fields: LabelFieldDefinition[], version: number): La
   if (version >= LABEL_FIELDS_VERSION || fields.some((field) => !field.builtIn)) return fields
   const enabled = fields.filter((field) => field.enabled).map((field) => field.key)
   // Поля, которых в той версии ещё не было (добавлены при чтении), в сравнении не участвуют.
-  const known = fields.filter((field) => field.key !== 'quality_doc')
+  const known = fields.filter((field) => field.key !== 'quality_doc' && field.key !== 'sheet')
   const untouched = version < 2
     ? known.every((field) => field.enabled)
     : enabled.length === VERSION_2_DEFAULT_KEYS.length && VERSION_2_DEFAULT_KEYS.every((key) => enabled.includes(key))
@@ -269,6 +275,7 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
       target: readField(storage, 'target', isOneOf(STORAGE_TARGETS), defaults.storage.target),
       smb: withDefaultTable(readStrings(isRecord(storage) ? storage.smb : undefined, defaults.storage.smb), 'filePath', defaults.storage.smb.filePath),
       googleDrive: withDefaultTable(readStrings(isRecord(storage) ? storage.googleDrive : undefined, defaults.storage.googleDrive), 'fileName', defaults.storage.googleDrive.fileName),
+      sheet: readField(storage, 'sheet', isString, defaults.storage.sheet).trim(),
     },
     advanced: {
       prompt: readField(advanced, 'prompt', isString, defaults.advanced.prompt),

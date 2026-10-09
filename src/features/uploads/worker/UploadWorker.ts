@@ -234,11 +234,12 @@ export class UploadWorker {
     this.current = { id: job.id, controller }
     this.store.markUploading(job.id)
     try {
-      const backend = await backendFor(this.settings.getStorage(), this.backends)
+      const storage = this.settings.getStorage()
+      const backend = await backendFor(storage, this.backends)
       const result = await this.writer.write(job, backend, controller.signal, (fraction) => {
         this.step = fraction
         this.onActivity()
-      })
+      }, storage.sheet ?? '')
       // Отмена пришла, когда файл уже заменялся: бирка в журнале — запись завершена.
       this.store.markCompleted(job.id, result.rowNumber, result.sheet, result.item ?? undefined)
     } catch (error) {

@@ -1,15 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { createPortal, flushSync } from 'react-dom'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { enabledLabelFields, isMissingValue, missingManualFields, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
-import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
-import { hasProductForm } from '@/features/recognition/label/productForm'
-import { settingsStore } from '@/features/settings/store/SettingsStore'
-import { isDriveConfigured } from '@/features/uploads/drive/driveSettings'
-import { isSmbConfigured } from '@/features/uploads/smb/smbSettings'
-import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
-import { uploadQueue } from '@/features/uploads/queue/appQueue'
-import { buildUploadColumns } from '@/features/uploads/xlsx/uploadColumns'
+import { isMissingValue, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { useHistoryLayer } from '@/hooks/useHistoryLayer'
 import { usePresence } from '@/hooks/usePresence'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
@@ -18,14 +10,11 @@ import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './component
 import { PhotoViewer } from './components/PhotoViewer'
 import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
+import { useSendSelected } from './hooks/useSendSelected'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
-import { IDLE, MAX_SCAN_ITEMS, useScanSession, type ScanItem } from './hooks/useScanSession'
-import { flyToUploads } from './utils/sendFlight'
+import { IDLE, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
 import './ScanWorkspace.css'
-
-/** Сколько крутится спиннер в «Далее», пока бирка уходит в очередь и открывается следующая. */
-const HANDOFF_MS = 700
 
 /**
  * Главный экран: выбрать фото бирок (до девяти сразу), автоматически распознать, проверить и поправить поля.
@@ -57,8 +46,6 @@ export function ScanWorkspace() {
   const hasPhoto = item !== null && !item.hasError
   const transform = usePhotoTransform({ naturalSize: item?.naturalSize ?? null, enabled: hasPhoto && !item.isLoading && view === 'single' })
   const editMode = useEditMode()
-  /** «Далее» нажата: бирка уходит в очередь, открывается следующая — пока это идёт, в кнопке крутится спиннер. */
-  const [isHandingOff, setIsHandingOff] = useState(false)
   const closeViewer = useHistoryLayer(isViewerOpen, () => setIsViewerOpen(false), 'photo')
   const viewer = usePresence(isViewerOpen)
   /** Сетка закрывается системным «Назад» (жест iOS, кнопка Android) — открывается выбранная бирка. */
@@ -148,7 +135,7 @@ export function ScanWorkspace() {
       await picker.pick(MAX_SCAN_ITEMS - session.items.length)
       return
     }
-    const hasData = item.status.kind === 'done' && (item.productForm !== null || Object.values(item.status.label).some((value) => !isMissingValue(value)))
+    const hasData = item.status.kind === 'done' && Object.values(item.status.label).some((value) => !isMissingValue(value))
     if (item.photoUrl && !item.hasError ? hasResult : hasData) {
       const noPhoto = !item.photoUrl || item.hasError
       const confirmed = await NativeDialogs.confirm({
@@ -165,9 +152,10 @@ export function ScanWorkspace() {
 
   /**
    * Угловая кнопка ячейки без снимка: «Без фото» — пустая ячейка становится биркой, данные которой вводят
-   * вручную (правку открывают «Правкой»), а ждущая фото бирка — снова «без фото»; «С фото» — обратно: бирка
-   * ждёт фото, введённое остаётся. Пустая последняя бирка «без фото» просто убирается — на её месте снова
-   * пустая ячейка.
+   * вручную (правку открывают «Правкой»), а ждущая фото бирка — снова «без фото». «С фото» — обратно, сразу,
+   * без вопросов: введённое вручную (поля и форма) сбрасывается, бирка ждёт фото («Добавить фото»), в карточке
+   * результата — «Здесь появится текст». Пустая последняя бирка «без фото» просто убирается — на её месте
+   * снова пустая ячейка.
    */
   const toggleManual = () => {
     if (!item) {
@@ -178,7 +166,7 @@ export function ScanWorkspace() {
       session.setManual(activeIndex, true)
       return
     }
-    const isEmpty = item.status.kind !== 'done' || (item.productForm === null && Object.values(item.status.label).every(isMissingValue))
+    const isEmpty = item.status.kind !== 'done' || Object.values(item.status.label).every(isMissingValue)
     if (isEmpty && activeIndex === session.items.length - 1) {
       editMode.exit()
       session.remove(activeIndex)
@@ -186,6 +174,7 @@ export function ScanWorkspace() {
       session.select(activeIndex)
       return
     }
+    editMode.exit()
     session.setManual(activeIndex, false)
   }
 
@@ -210,10 +199,10 @@ export function ScanWorkspace() {
    * Правка: до первого изменения бирки запоминаются её поля — «Правка», нажатая ещё раз, отменяет
    * изменения (всех бирок, исправленных за эту правку), «Готово» и системное «Назад» их оставляют.
    */
-  const editOriginals = useRef(new Map<string, { label: LabelRecord; productForm: string | null }>())
+  const editOriginals = useRef(new Map<string, LabelRecord>())
   const changeField = (key: LabelKey, value: string) => {
     if (editMode.isEditing && item && item.status.kind === 'done' && !editOriginals.current.has(item.id)) {
-      editOriginals.current.set(item.id, { label: item.status.label, productForm: item.productForm })
+      editOriginals.current.set(item.id, item.status.label)
     }
     session.updateField(activeIndex, key, value)
   }
@@ -222,8 +211,7 @@ export function ScanWorkspace() {
       // Что-то правда изменилось (а не исправлено и возвращено как было) — изменения пропадут: спрашиваем.
       const changed = [...editOriginals.current].filter(([id, original]) => {
         const current = session.items.find((candidate) => candidate.id === id)
-        return current?.status.kind === 'done'
-          && (current.productForm !== original.productForm || JSON.stringify(current.status.label) !== JSON.stringify(original.label))
+        return current?.status.kind === 'done' && JSON.stringify(current.status.label) !== JSON.stringify(original)
       })
       if (changed.length > 0) {
         const confirmed = await NativeDialogs.confirm({
@@ -233,7 +221,7 @@ export function ScanWorkspace() {
           cancelButtonTitle: t('editing.discardKeep'),
         })
         if (!confirmed) return
-        for (const [id, original] of changed) session.restoreLabel(id, original.label, original.productForm)
+        for (const [id, original] of changed) session.restoreLabel(id, original)
       }
     }
     editOriginals.current.clear()
@@ -287,123 +275,7 @@ export function ScanWorkspace() {
     closeGrid()
   }
 
-  const fieldName = useLabelFieldName()
-  /** Незаполненные обязательные поля бирки без фото (у распознанной — нет обязательных). */
-  const missingFields = (candidate: ScanItem) =>
-    candidate.manual && candidate.status.kind === 'done' ? missingManualFields(candidate.status.label, settingsStore.getSnapshot().advanced.labelFields) : []
-
-  /** Бирка готова к отправке: распознана (или заполнена вручную, «без фото»), выбрана форма, у бирки без фото заполнены обязательные поля. */
-  const isReady = (candidate: ScanItem) =>
-    candidate.status.kind === 'done' && (candidate.manual || candidate.photoUrl !== '')
-    && hasProductForm(candidate.status.label) && missingFields(candidate).length === 0
-
-  /** Открывает бирку, которая мешает отправке, и объясняет, что с ней. */
-  const showNotReady = async (blocker: ScanItem) => {
-    const index = session.items.indexOf(blocker)
-    session.select(index)
-    const number = index + 1
-    if (blocker.status.kind === 'done' && !blocker.manual && !blocker.photoUrl) {
-      // Бирку переключили обратно «с фото», а снимка нет.
-      await NativeDialogs.alert({ title: t('photoDialog.title'), message: t('photoDialog.message', { number }), buttonTitle: t('common:ok') })
-      return
-    }
-    if (blocker.status.kind === 'done' && !hasProductForm(blocker.status.label)) {
-      // Не выбрана форма: выбор формы — первая строка карточки, докручиваем к нему.
-      window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-product-form')?.scrollIntoView({ block: 'nearest' }), 0)
-      await NativeDialogs.alert({ title: t('formDialog.title'), message: t('formDialog.message'), buttonTitle: t('common:ok') })
-      return
-    }
-    const missing = missingFields(blocker)
-    if (missing.length > 0) {
-      // Бирка без фото с пустыми обязательными полями: объясняем какими и открываем правку у первого из них.
-      await NativeDialogs.alert({
-        title: t('requiredDialog.title'),
-        message: t('requiredDialog.message', { fields: missing.map(fieldName).join(', ') }),
-        buttonTitle: t('common:ok'),
-      })
-      if (!editMode.isEditing) editMode.toggle()
-      window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-required')?.scrollIntoView({ block: 'nearest' }), 0)
-      return
-    }
-    await NativeDialogs.alert({
-      title: t('sendDialog.notReadyTitle', { number }),
-      message: blocker.status.kind === 'recognizing' ? t('sendDialog.recognizingMessage') : t('sendDialog.failedMessage'),
-      buttonTitle: t('common:ok'),
-    })
-  }
-
-  /**
-   * «Далее»: выбранные бирки (по умолчанию — все), распознанные и с формой, встают в очередь выгрузки
-   * по порядку и убираются с экрана, открывается следующая. Если часть выбранных не готова
-   * (распознаётся, не распознана, без формы), сначала спрашиваем, отправить ли готовые; отказ открывает
-   * первую неготовую. Спиннер в кнопке крутится не меньше `HANDOFF_MS`, чтобы его было видно; за это время
-   * фото отправленных улетают к «Загрузкам».
-   *
-   * Сама запись в таблицу идёт в фоне (на устройстве — движок очереди вне WebView, и в свёрнутом,
-   * и в закрытом приложении), её состояние — в «Загрузках»; если хранилище не настроено или проверка
-   * уже показала, что таблицы нет (своей приложение не создаёт), записи подождут исправления
-   * настроек — об этом сообщаем сразу.
-   */
-  const uploadSelected = async () => {
-    if (isHandingOff) return
-    const selected = session.items.filter((candidate) => candidate.selected)
-    if (selected.length === 0) {
-      await NativeDialogs.alert({ title: t('sendDialog.noneTitle'), message: t('sendDialog.noneMessage'), buttonTitle: t('common:ok') })
-      return
-    }
-    const ready = selected.filter(isReady)
-    const blocker = selected.find((candidate) => !isReady(candidate))
-    if (blocker && ready.length === 0) {
-      await showNotReady(blocker)
-      return
-    }
-    if (blocker) {
-      const confirmed = await NativeDialogs.confirm({
-        title: t('sendDialog.partialTitle'),
-        message: t('sendDialog.partialMessage', { ready: ready.length, total: selected.length, rest: selected.length - ready.length }),
-        okButtonTitle: t('sendDialog.sendReady', { count: ready.length }),
-        cancelButtonTitle: t('common:cancel'),
-      })
-      if (!confirmed) {
-        await showNotReady(blocker)
-        return
-      }
-    }
-    editMode.exit()
-    const { advanced, general, storage } = settingsStore.getSnapshot()
-    const columns = buildUploadColumns(enabledLabelFields(advanced.labelFields), general.language)
-    for (const candidate of ready) {
-      if (candidate.status.kind === 'done') uploadQueue.enqueue(candidate.status.label, columns)
-    }
-    setIsHandingOff(true)
-    // Отправленные фото улетают к «Загрузкам» (в сетке — их ячейки, у одной бирки — её фото вместе с данными),
-    // а когда спиннер отработал, бирки убираются; скрытое на время полёта возвращается уже на новом месте.
-    const ids = ready.map((candidate) => candidate.id)
-    const sent = new Set(ids)
-    const targets = photoCardRef.current?.sendTargets(sent) ?? { fly: [], hide: [] }
-    // Данные открытой бирки (если она среди отправленных) улетают вслед за её фото.
-    const fields = item && sent.has(item.id) ? notesCardRef.current?.querySelector<HTMLElement>('.label-fields') : null
-    const flight = flyToUploads(fields ? [...targets.fly, fields] : targets.fly, targets.hide)
-    await new Promise((resolve) => window.setTimeout(resolve, HANDOFF_MS))
-    flushSync(() => session.removeMany(ids))
-    flight.restore()
-    setIsHandingOff(false)
-    const configured = storage.target === 'smb' ? isSmbConfigured(storage.smb) : isDriveConfigured(storage.googleDrive)
-    if (!configured) {
-      await NativeDialogs.alert({
-        title: t('uploadDialog.unconfiguredTitle'),
-        message: t('uploadDialog.unconfiguredMessage'),
-        buttonTitle: t('common:ok'),
-      })
-    } else if (tableCheckStore.resultFor(storage)?.kind === 'missing') {
-      await NativeDialogs.alert({
-        title: t('uploadDialog.tableMissingTitle'),
-        message: t('uploadDialog.tableMissingMessage'),
-        buttonTitle: t('common:ok'),
-      })
-    }
-  }
-
+  const sender = useSendSelected({ session, editMode, notesCardRef, photoCardRef })
 
   /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
   const hasSlideBar = session.items.length > 0 || view === 'grid'
@@ -472,9 +344,9 @@ export function ScanWorkspace() {
         onClear={() => void removeItem()}
         onCancel={() => session.abort(activeIndex)}
         onRetry={retry}
-        onNext={() => void uploadSelected()}
+        onNext={() => void sender.send()}
         sendCount={selectedCount}
-        isUploading={isHandingOff}
+        isUploading={sender.isHandingOff}
       />
       {/*
         Просмотр — в body: рабочая область в горизонтальном положении — контейнер размеров (container-type),

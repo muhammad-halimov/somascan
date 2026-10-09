@@ -25,6 +25,7 @@ const smbStorage: StorageSettings = {
   target: 'smb',
   smb: { host: '10.0.0.5', share: 'Warehouse', filePath: 'Probe si Sarje Otel\\Probe otel.xlsx', domain: '', username: 'scan', password: 'x' },
   googleDrive: { account: '', folder: '', fileName: 'Probe otel.xlsx' },
+  sheet: '',
 }
 const record = (n: number): UploadRecord => ({
   id: `id-${n}`, createdAt: Date.now() + n, localNumber: `SCN-261009-000${n}`,

@@ -151,6 +151,11 @@
   border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
+/* Размер кнопок задаёт CSS по месту (ниже — компактнее на телефоне и в горизонтальном положении), не `size` в коде. */
+.notes-actions .action-button {
+  --action-size: 48px;
+}
+
 .notes-title svg {
   width: 18px;
   height: 18px;
@@ -172,7 +177,7 @@
 }
 
 :root:is([data-platform='ios'], [data-platform='android']) .notes-actions .action-button {
-  --action-size: 42px !important;
+  --action-size: 42px;
   gap: 3px;
 }
 
@@ -211,6 +216,7 @@
    * Android: подписи — целиком над нижней безопасной зоной: полоска жестов стоит посреди зоны, и у разных
    * производителей по-разному, заходить в зону нельзя (на HONOR подписи упирались в полоску). Старые
    * WebView (до 140) Capacitor сам ставит над панелью навигации — зона 0, снизу только узкое поле.
+   * РИСК: поведение зависит от версии WebView на устройстве — проверять на старом (эмулятор) и новом (HONOR).
    * iOS 18: полоска «Домой» тонкая и у самого низа — подписи спускаются в верх зоны, как у панели вкладок.
    */
   :root:is([data-platform='android'], [data-ios-design='classic']) .scan-workspace:not(.is-text-editing) .notes-actions {
@@ -263,6 +269,6 @@
   }
 
   .notes-actions .action-button {
-    --action-size: 42px !important;
+    --action-size: 42px;
   }
 }

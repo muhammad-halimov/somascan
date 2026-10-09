@@ -22,7 +22,7 @@ import {
 /**
  * Настройки приложения в виде наблюдаемого хранилища, сохраняемого в `localStorage` при каждом изменении.
  *
- * Замечание по безопасности: API-ключи и пароль SMB лежат в `localStorage` WebView,
+ * РИСК (безопасность): API-ключи и пароль SMB лежат в `localStorage` WebView,
  * который закрыт для других приложений, но не зашифрован. Перед выпуском функции экспорта
  * секреты нужно перенести в системное хранилище ключей (iOS Keychain / Android Keystore).
  */
@@ -96,6 +96,11 @@ export class SettingsStore extends Store<AppSettings> {
   /** Выбирает, куда записывается таблица. */
   setStorageTarget(target: StorageTarget) {
     this.setState((state) => ({ ...state, storage: { ...state.storage, target } }))
+  }
+
+  /** Лист журнала для записи; пусто — лист текущего года. */
+  setTableSheet(sheet: string) {
+    this.setState((state) => ({ ...state, storage: { ...state.storage, sheet: sheet.trim() } }))
   }
 
   /** Обновляет часть полей SMB. */

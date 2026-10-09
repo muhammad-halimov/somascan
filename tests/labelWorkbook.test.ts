@@ -82,6 +82,18 @@ test('новый год — новый лист первым, с той же ш�
   assert.equal(check.getWorksheet('2027')!.getCell('C4').isMerged, true, 'объединения шапки скопированы')
 })
 
+test('выбранный лист: из настроек или свой у бирки (он важнее); выбранного листа нет — sheetNotFound', async () => {
+  const workbook = await LabelWorkbook.open(template)
+  // Год записи — 2027, но выбран лист 2026: лист 2027 не создаётся.
+  const fromSettings = workbook.append(entry(1, { producer: 'Sovel', heat: '1', size: '10', weight_kg: 1, product_form: 'bobina' }), at(2027, 1, 5), '2026')
+  assert.deepEqual([fromSettings.sheet, fromSettings.row, fromSettings.newSheet], ['2026', 7, false])
+  const own = workbook.append(entry(2, { producer: 'Sovel', heat: '2', size: '10', weight_kg: 1, product_form: 'bobina', sheet: '2026' }), at(2027, 1, 5), 'Nope')
+  assert.equal(own.sheet, '2026', 'свой лист бирки важнее листа из настроек')
+  assert.deepEqual(workbook.sheetNames, ['2026'])
+  assert.throws(() => workbook.append(entry(3, { heat: '3', product_form: 'bara' }), at(2026, 10, 8), 'Nope'), (error: Error & { code?: string; params?: { detail?: string } }) => error.code === 'sheetNotFound' && error.params?.detail === 'Nope')
+  assert.throws(() => workbook.append(entry(4, { heat: '4', product_form: 'bara', sheet: 'somascan-journal' }), at(2026, 10, 8)), (error: Error & { code?: string }) => error.code === 'sheetNotFound', 'служебный лист не выбирается')
+})
+
 test('строки дописываются после последней с данными; заранее проставленные номера не мешают', async () => {
   const base = await LabelWorkbook.open(template)
   const raw = new ExcelJS.Workbook()

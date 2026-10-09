@@ -53,9 +53,12 @@ export function LabelFieldEditor({ field, defaultNames = {}, onSave, onCancel, o
           </Field>
         )
       })}
-      <Field label={t('advanced.fieldHint')}>
-        <TextArea value={hint} rows={3} placeholder={t('advanced.fieldHintPlaceholder')} onChange={setHint} />
-      </Field>
+      {/* Поле, которое выбирают вручную (лист журнала), модели не отправляется — подсказка ему не нужна. */}
+      {!field?.manual && (
+        <Field label={t('advanced.fieldHint')}>
+          <TextArea value={hint} rows={3} placeholder={t('advanced.fieldHintPlaceholder')} onChange={setHint} />
+        </Field>
+      )}
       <div className="label-field-editor-actions">
         {onDelete && (
           <Button className="is-danger" icon={<TrashIcon />} onClick={onDelete}>{t('advanced.fieldDelete')}</Button>

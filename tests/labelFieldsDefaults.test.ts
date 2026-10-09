@@ -5,7 +5,7 @@
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createDefaultLabelFields, enabledLabelFields, isDefaultLabelFields } from '../src/features/recognition/label/labelFields'
+import { createDefaultLabelFields, enabledLabelFields, isDefaultLabelFields, recognizedLabelFields } from '../src/features/recognition/label/labelFields'
 import { providerRegistry } from '../src/features/recognition/providers/ProviderRegistry'
 import { createDefaultSettings, LABEL_FIELDS_VERSION, parseSettings, type AppSettings } from '../src/features/settings/store/settingsSchema'
 
@@ -38,4 +38,12 @@ test('изменённый выбор и выбор текущей версии 
   assert.deepEqual(enabledKeys(parseSettings({ advanced: { labelFields: custom, labelFieldsVersion: 2 } }, defaults)), ['heat', 'contract'])
   const withGrade = createDefaultLabelFields().map((field) => ({ ...field, enabled: [...MAIN, 'grade', 'quality_doc'].includes(field.key) }))
   assert.deepEqual(enabledKeys(parseSettings({ advanced: { labelFields: withGrade, labelFieldsVersion: LABEL_FIELDS_VERSION } }, defaults)), ['producer', 'grade', 'quality_doc', 'size', 'heat', 'weight_kg'])
+})
+
+test('поле «Лист» — необязательное, выбирается вручную: модели не отправляется', () => {
+  const fields = createDefaultLabelFields().map((field) => ({ ...field, enabled: field.key === 'sheet' || field.key === 'heat' }))
+  assert.ok(fields.some((field) => field.key === 'sheet' && field.manual))
+  assert.ok(createDefaultLabelFields().some((field) => field.key === 'sheet' && !field.enabled))
+  assert.deepEqual(enabledLabelFields(fields).map((field) => field.key), ['heat', 'sheet'])
+  assert.deepEqual(recognizedLabelFields(fields).map((field) => field.key), ['heat'])
 })

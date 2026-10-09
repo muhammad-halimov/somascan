@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Somascan</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -34,9 +34,18 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<!-- Вход через Google (Drive): client ID OAuth-клиента iOS; пустой — вход отключён. Обратный ID добавить в CFBundleURLTypes (см. README). -->
+	<!-- Вход через Google (Drive): client ID OAuth-клиента iOS (пустой — вход отключён) и обратный ID в CFBundleURLTypes ниже — оба меняются вместе (см. README). -->
 	<key>GIDClientID</key>
-	<string></string>
+	<string>697326360300-mvhnvt945oa9ehf7fd58a9fce163sael.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.697326360300-mvhnvt945oa9ehf7fd58a9fce163sael</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Local network access is needed to write the table to the network share (SMB) and to recognize with LM Studio.</string>
 	<key>UIApplicationSceneManifest</key>

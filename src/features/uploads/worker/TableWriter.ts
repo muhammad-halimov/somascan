@@ -64,9 +64,11 @@ export class TableWriter {
   /**
    * Дописывает запись в журнал.
    * @param onStep Ход записи: доля пройденного (0…1) после каждого шага.
+   * @param sheet Лист из настроек хранилища на момент записи; пусто — лист года. Свой лист бирки
+   *   (поле «Лист») важнее.
    * @throws {UploadError} Любой сбой; по коду `UploadWorker` решает, повторять ли попытку.
    */
-  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void): Promise<TableWriteResult> {
+  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void, sheet = ''): Promise<TableWriteResult> {
     const step = (fraction: number) => onStep?.(fraction)
     /** Останавливает запись, если её отменили: до замены файла журнал не тронут. */
     const checkCancelled = () => {
@@ -86,7 +88,7 @@ export class TableWriter {
       const existing = workbook.locate(record.localNumber)
       if (existing) return { sheet: existing.sheet, rowNumber: existing.row, item: workbook.itemAt(existing), duplicate: true }
       const before = workbook.snapshot()
-      const planned = workbook.append(record, writtenAt)
+      const planned = workbook.append(record, writtenAt, sheet)
       const bytes = await workbook.toBytes()
       await TableWriter.checkIntact(before, bytes, planned)
       step(STEP.prepared)
@@ -106,6 +108,8 @@ export class TableWriter {
   /**
    * Сверяет новую книгу с прежней до замены файла: каждое прежнее значение на месте,
    * новые — только в записанной строке (и в шапке листа нового года, если он создан этой записью).
+   * РИСК: сверяются значения, а не оформление: потерянный ExcelJS стиль, ширину или условное
+   * форматирование эта проверка не заметит (прежняя версия файла — в резервной копии).
    * @throws {UploadError} `integrityFailed` — файл на сервере не трогается.
    */
   private static async checkIntact(before: WorkbookSnapshot, bytes: Uint8Array, planned: PlannedRow) {

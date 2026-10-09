@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { LabelKey, LabelRecord } from '@/features/recognition/label/labelFields'
+import { MANUAL_FIELD_KEYS, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { PRODUCT_FORM_KEY } from '@/features/recognition/label/productForm'
 import type { PhotoVerdict } from '@/features/recognition/LabelRecognizer'
 import { useErrorText } from '@/features/recognition/useErrorText'
@@ -45,8 +45,11 @@ export interface ScanItem {
   hasError: boolean
   /** Распознавание. */
   status: RecognitionStatus
-  /** Выбранная вручную форма поставки: переживает «Повтор» того же фото. */
-  productForm: string | null
+  /**
+   * Значения, которые выбирают вручную, — форма поставки и поля вроде листа журнала (`CHOSEN_KEYS`): они же
+   * лежат в `status.label`, а здесь хранятся отдельно, чтобы пережить новое распознавание («Повтор»).
+   */
+  manualValues: LabelRecord
   /** Бирка выбрана для отправки («Далее» отправляет выбранные). Новые фото выбраны сразу. */
   selected: boolean
   /**
@@ -55,6 +58,9 @@ export interface ScanItem {
    */
   manual: boolean
 }
+
+/** Значения, которые выбирают вручную (форма поставки, лист журнала): переживают новое распознавание. */
+const CHOSEN_KEYS: readonly LabelKey[] = [PRODUCT_FORM_KEY, ...MANUAL_FIELD_KEYS]
 
 let nextId = 0
 
@@ -119,7 +125,7 @@ export function useScanSession() {
     try {
       const { label, photo } = await recognizeLabel(item.photoUrl, controller.signal)
       if (controller.signal.aborted) return
-      patch(id, (current) => ({ status: { kind: 'done', label: { ...label, [PRODUCT_FORM_KEY]: current.productForm }, photo } }))
+      patch(id, (current) => ({ status: { kind: 'done', label: { ...label, [PRODUCT_FORM_KEY]: null, ...current.manualValues }, photo } }))
     } catch (error) {
       // Отменено: бирку убрали, заменили фото или распознают заново — результат не нужен.
       if (controller.signal.aborted) return
@@ -158,7 +164,7 @@ export function useScanSession() {
     isLoading: true,
     hasError: false,
     status: { kind: 'recognizing' },
-    productForm: null,
+    manualValues: {},
     selected: true,
     manual: false,
   }), [])
@@ -208,7 +214,7 @@ export function useScanSession() {
       isLoading: false,
       hasError: false,
       status: { kind: 'done', label: {}, photo: { retake: false, issues: [] } },
-      productForm: null,
+      manualValues: {},
       selected: true,
       manual: true,
     }
@@ -219,17 +225,18 @@ export function useScanSession() {
 
   /**
    * Переключает бирку `index` между «без фото» (поля вводят вручную) и «с фото»: без снимка она ждёт его
-   * (карточка «Добавить фото»), введённые данные остаются.
+   * (карточка «Добавить фото»). Переход к фото сбрасывает введённое вручную — поля и форму: бирка
+   * как новая, без данных (в карточке результата — «Здесь появится текст»), данные придут с фото.
    */
   const setManual = useCallback((index: number, manual: boolean) => {
     const item = itemsRef.current[index]
     if (!item || item.manual === manual) return
     stopRecognition(item.id)
-    patch(item.id, (current) => ({
-      manual,
+    const empty: RecognitionStatus = { kind: 'done', label: {}, photo: { retake: false, issues: [] } }
+    patch(item.id, (current) => (manual
       // Без фото распознавать нечего: если шло распознавание — данных ещё нет, поля пустые.
-      status: current.status.kind === 'done' ? current.status : { kind: 'done', label: {}, photo: { retake: false, issues: [] } },
-    }))
+      ? { manual, status: current.status.kind === 'done' ? current.status : empty }
+      : { manual, status: IDLE, manualValues: {} }))
   }, [patch, stopRecognition])
 
   /** Заменяет фото бирки `index` (распознавание — заново). */
@@ -309,15 +316,15 @@ export function useScanSession() {
     const item = itemsRef.current[index]
     if (!item) return
     patch(item.id, (current) => ({
-      productForm: key === PRODUCT_FORM_KEY ? value || null : current.productForm,
+      manualValues: CHOSEN_KEYS.includes(key) ? { ...current.manualValues, [key]: value || null } : current.manualValues,
       status: current.status.kind === 'done' ? { ...current.status, label: { ...current.status.label, [key]: value } } : current.status,
     }))
   }, [patch])
 
   /** Возвращает поля бирки `id` к прежним (отмена правки). */
-  const restoreLabel = useCallback((id: string, label: LabelRecord, productForm: string | null) => {
+  const restoreLabel = useCallback((id: string, label: LabelRecord) => {
     patch(id, (current) => ({
-      productForm,
+      manualValues: Object.fromEntries(CHOSEN_KEYS.filter((key) => key in label).map((key) => [key, label[key] ?? null])),
       status: current.status.kind === 'done' ? { ...current.status, label } : current.status,
     }))
   }, [patch])

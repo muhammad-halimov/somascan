@@ -430,6 +430,16 @@ export function ListIcon() {
   )
 }
 
+/** Дверь со стрелкой наружу: выход из аккаунта. */
+export function LogoutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5M21 12H9" />
+    </svg>
+  )
+}
+
 /** Закрытый замок: поле защищено от случайной правки. */
 export function LockIcon() {
   return (

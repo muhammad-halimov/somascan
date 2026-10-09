@@ -10,8 +10,6 @@
 export type UploadErrorCode =
   /** Сетевой диск не настроен (сервер, папка или путь к таблице пустые). */
   | 'notConfigured'
-  /** Выбранное хранилище (Google Drive) пока не поддерживается. */
-  | 'targetUnsupported'
   /** Путь к таблице не оканчивается на `.xlsx` или содержит `..`. */
   | 'invalidPath'
   /** Нативного плагина нет (веб-версия в браузере). */
@@ -44,6 +42,8 @@ export type UploadErrorCode =
   | 'integrityFailed'
   /** В книге не нашлось шапки журнала проб (Nr. Crt., Sarja, Producator…). */
   | 'unknownLayout'
+  /** В журнале нет листа, выбранного в настройках или в поле бирки «Лист». */
+  | 'sheetNotFound'
   /** Таблицы по пути из настроек нет: приложение её не создаёт — запись невозможна, пока путь не исправят. */
   | 'tableNotFound'
   /** Прочая ошибка ввода-вывода. */
@@ -59,9 +59,9 @@ export type UploadErrorCode =
 
 /** Все коды — для проверки сохранённых записей (объект, а не список, чтобы компилятор требовал полноты). */
 const CODES: Record<UploadErrorCode, true> = {
-  notConfigured: true, targetUnsupported: true, invalidPath: true, unavailable: true, offline: true, hostUnreachable: true,
+  notConfigured: true, invalidPath: true, unavailable: true, offline: true, hostUnreachable: true,
   timeout: true, authFailed: true, shareNotFound: true, notFound: true, exists: true, accessDenied: true, locked: true,
-  busy: true, corruptWorkbook: true, verifyFailed: true, integrityFailed: true, unknownLayout: true, tableNotFound: true, io: true, authRequired: true, driveNotConfigured: true,
+  busy: true, corruptWorkbook: true, verifyFailed: true, integrityFailed: true, unknownLayout: true, sheetNotFound: true, tableNotFound: true, io: true, authRequired: true, driveNotConfigured: true,
   folderNotFound: true, cancelled: true,
 }
 
