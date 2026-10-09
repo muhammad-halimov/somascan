@@ -412,6 +412,7 @@
 }
 
 .send-flight-copy {
+  scale: none !important;
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;

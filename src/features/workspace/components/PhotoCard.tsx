@@ -130,6 +130,9 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
       finish()
       return
     }
+    // На время перехода — без размытия под кнопками (дорого для композитора, переход дёргался бы)
+    // и без увеличения открытой ячейки: её размер меряем уже обычным.
+    card.classList.add('is-zooming')
     const box = card.getBoundingClientRect()
     const rect = cell.getBoundingClientRect()
     const scale = rect.width / box.width
@@ -158,8 +161,6 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
           ], timing),
           grid.animate([{ transform: 'none', opacity: 1 }, { opacity: 1, offset: 0.4 }, { transform: gridAtCell, opacity: 0 }], timing),
         ]
-    // На время перехода — без размытия под кнопками (дорого для композитора, переход дёргался бы).
-    card.classList.add('is-zooming')
     let cancelled = false
     void Promise.all(animations.map((animation) => animation.finished)).then(() => {
       if (cancelled) return

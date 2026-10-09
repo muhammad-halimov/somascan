@@ -155,6 +155,8 @@
     "next": "Înainte",
     "nextLabel": "Eticheta următoare",
     "open": "Deschide",
-    "openLabel": "Deschide eticheta selectată"
+    "openLabel": "Deschide eticheta selectată",
+    "grid": "Grilă",
+    "gridLabel": "Toate etichetele în grilă"
   }
 }

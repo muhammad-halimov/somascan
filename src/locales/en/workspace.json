@@ -155,6 +155,8 @@
     "next": "Next",
     "nextLabel": "Next tag",
     "open": "Open",
-    "openLabel": "Open the selected tag"
+    "openLabel": "Open the selected tag",
+    "grid": "Grid",
+    "gridLabel": "All tags as a grid"
   }
 }

@@ -448,6 +448,7 @@ export function ScanWorkspace() {
             onPrevious={() => session.select(activeIndex - 1)}
             onNext={() => session.select(activeIndex + 1)}
             onOpen={closeGrid}
+            onShowGrid={showGrid}
           />
         )}
       </div>

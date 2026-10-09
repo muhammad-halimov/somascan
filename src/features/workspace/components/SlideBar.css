@@ -60,7 +60,7 @@
   transform: scaleX(-1);
 }
 
-/* «Открыть» чуть отделена от уголков, как в нативных панелях инструментов. */
+/* Переключатель вида чуть отделён от уголков, как в нативных панелях инструментов; значок сменяется плавно. */
 .slide-bar-pill > .action-button:last-child {
   margin-left: 4px;
 }
@@ -88,4 +88,15 @@
 :root[data-platform='ios'][data-ios-design='glass'] .slide-bar .action-button.is-tonal .action-button-icon {
   background: var(--glass-control);
   box-shadow: none;
+}
+
+.slide-bar-toggle .action-button-icon {
+  animation: slide-bar-toggle 240ms cubic-bezier(.2, 0, 0, 1) backwards;
+}
+
+@keyframes slide-bar-toggle {
+  from {
+    opacity: 0;
+    transform: scale(.7);
+  }
 }

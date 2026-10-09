@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronRightIcon, ImageIcon } from '@/components/icons/Icons'
+import { ChevronRightIcon, GridIcon, ImageIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import './SlideBar.css'
@@ -17,7 +17,7 @@ export interface SlideBarProps {
   activeIndex: number
   /** Сколько позиций можно листать: бирки и (пока их меньше девяти) пустая ячейка за ними. */
   positions: number
-  /** Сейчас на экране сетка: «Открыть» увеличивает выбранную ячейку до одной бирки. */
+  /** Сейчас на экране сетка: «Открыть» увеличивает выбранную ячейку до одной бирки; у одной бирки на её месте — «Сетка». */
   isGrid: boolean
   /** Предыдущая бирка. */
   onPrevious: () => void
@@ -25,14 +25,17 @@ export interface SlideBarProps {
   onNext: () => void
   /** Открыть выбранную бирку (из сетки). */
   onOpen: () => void
+  /** Показать все бирки сеткой (у одной бирки). */
+  onShowGrid: () => void
   /** Панель уходит: схлопывается по высоте и гаснет (см. `usePresence`). */
   isClosing?: boolean
 }
 
 /**
- * Панель листания — нижняя часть блока фото: листать бирки (уголки влево и вправо) и «Открыть» —
- * справа от них, тот же значок фото, что и в углу сетки: в сетке уголки передвигают выбор по ячейкам,
- * «Открыть» увеличивает выбранную до одной бирки; у одной бирки уголки листают бирки как слайды.
+ * Панель листания — нижняя часть блока фото: листать бирки (уголки влево и вправо) и справа от них
+ * переключатель вида: в сетке — «Открыть» (тот же значок фото, что и в углу сетки) увеличивает выбранную
+ * ячейку до одной бирки, у одной бирки — «Сетка» показывает все; в сетке уголки передвигают выбор
+ * по ячейкам, у одной бирки — листают бирки как слайды.
  * Кнопки компактные, без подписей (доступные имена — для экранных дикторов); на iOS 26+ — стеклянная
  * «пилюля» внутри блока.
  *
@@ -40,7 +43,7 @@ export interface SlideBarProps {
  * что и переход к сетке, — оба движения идут вместе), кнопки проявляются; карточка результата под блоком
  * съезжает вместе с ним, а не прыгает.
  */
-export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, onOpen, isClosing = false }: SlideBarProps) {
+export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, onOpen, onShowGrid, isClosing = false }: SlideBarProps) {
   const { t } = useTranslation('workspace')
   const barRef = useRef<HTMLDivElement>(null)
 
@@ -101,16 +104,12 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
           disabled={activeIndex >= positions - 1}
           onClick={onNext}
         />
-        <ActionButton
-          size={32}
-          variant={isGrid ? 'accent' : 'tonal'}
-          icon={<ImageIcon />}
-          caption={t('slides.open')}
-          label={t('slides.openLabel')}
-          active={!isGrid}
-          disabled={!isGrid}
-          onClick={onOpen}
-        />
+        {/* Переключатель вида: в сетке — «Открыть» выбранную бирку (фото), у одной бирки — «Сетка». */}
+        {isGrid ? (
+          <ActionButton key="open" className="slide-bar-toggle" size={32} variant="accent" icon={<ImageIcon />} caption={t('slides.open')} label={t('slides.openLabel')} onClick={onOpen} />
+        ) : (
+          <ActionButton key="grid" className="slide-bar-toggle" size={32} icon={<GridIcon />} caption={t('slides.grid')} label={t('slides.gridLabel')} onClick={onShowGrid} />
+        )}
       </div>
     </div>
   )
