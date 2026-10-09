@@ -48,6 +48,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 16: уведомление о выгрузке как Live Update (прогресс в строке состояния и на экране блокировки). -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <!-- Состояние сети: очередь ждёт сеть и продолжает, как только она появится. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 </manifest>

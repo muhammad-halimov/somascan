@@ -29,6 +29,8 @@ export interface TableWriteResult {
   sheet: string
   /** Номер строки на листе. */
   rowNumber: number
+  /** Номер элемента в журнале («Nr. Crt.» строки) или `null`, если его нет. */
+  item: number | null
   /** Строка уже была в журнале (повтор после обрыва), ничего не записывалось. */
   duplicate: boolean
 }
@@ -68,7 +70,7 @@ export class TableWriter {
       const writtenAt = this.now()
       const workbook = await LabelWorkbook.open(current)
       const existing = workbook.locate(record.localNumber)
-      if (existing) return { sheet: existing.sheet, rowNumber: existing.row, duplicate: true }
+      if (existing) return { sheet: existing.sheet, rowNumber: existing.row, item: workbook.itemAt(existing), duplicate: true }
       const before = workbook.snapshot()
       const planned = workbook.append(record, writtenAt)
       const bytes = await workbook.toBytes()
@@ -78,7 +80,7 @@ export class TableWriter {
       await backend.replace(bytes, policy.backupName(new Date(writtenAt)))
       await TableWriter.verify(await backend.readBack(), record, planned)
       await backend.pruneBackups(policy, this.now())
-      return { sheet: planned.sheet, rowNumber: planned.row, duplicate: false }
+      return { sheet: planned.sheet, rowNumber: planned.row, item: planned.item, duplicate: false }
     } finally {
       await backend.releaseLock()
     }

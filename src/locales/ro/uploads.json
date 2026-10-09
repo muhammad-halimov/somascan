@@ -41,6 +41,7 @@
   "retryAll": "Reîncearcă toate cele nescrise",
   "retryAllCaption": "Reia",
   "completedSheetRow": "Scris în tabel · foaia {{sheet}}, rândul {{row}}",
+  "completedSheetRowItem": "Scris în tabel · foaia {{sheet}}, rândul {{row}}, elementul nr. {{item}}",
   "background": {
     "title": "Scriere în tabel",
     "pending": "Rămase de scris: {{count}}",

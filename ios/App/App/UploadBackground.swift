@@ -8,8 +8,9 @@ import BackgroundTasks
  * - Пока очередь занята, приложение держит фоновую задачу (`beginBackgroundTask`): запись,
  *   начатая на экране, дописывается после сворачивания (система даёт на это обычно до ~30 с).
  * - iOS 26+: бирка, поставленная в очередь с экрана, запускает «продолжаемую» задачу
- *   (`BGContinuedProcessingTask`) — система показывает её ход («Осталось записать: N»), и очередь
- *   пишется в свёрнутом приложении столько, сколько нужно.
+ *   (`BGContinuedProcessingTask`) — система показывает её прогресс (обработано из всех, по ходу
+ *   пачки от движка) и «Осталось записать: N», а очередь пишется в свёрнутом приложении столько,
+ *   сколько нужно.
  * - Если записи ждут сети или паузы после сбоя (или фоновое время кончилось), планируются фоновые
  *   задачи системы (`BGAppRefreshTask`, `BGProcessingTask` с условием «есть сеть»): система запускает
  *   приложение в фоне, движок поднимается и продолжает с сохранённой очереди.
@@ -39,7 +40,6 @@ final class UploadBackground: @unchecked Sendable {
     /// Идущая продолжаемая задача (iOS 26+) и ожидание её запуска.
     private var continuedTask: AnyObject?
     private var continuedRequested = false
-    private var continuedTotal = 0
 
     private init() {}
 
@@ -161,6 +161,14 @@ final class UploadBackground: @unchecked Sendable {
         (activity?["pending"] as? NSNumber)?.intValue ?? 0
     }
 
+    /// Ход текущей пачки от движка: обработано из всех (`0 / 0` в покое).
+    private var progress: (done: Int, total: Int) {
+        let value = activity?["progress"] as? [String: Any]
+        let total = max(0, (value?["total"] as? NSNumber)?.intValue ?? 0)
+        let done = min(total, max(0, (value?["done"] as? NSNumber)?.intValue ?? 0))
+        return (done, total)
+    }
+
     // MARK: Продолжаемая задача (iOS 26+)
 
     #if compiler(>=6.2)
@@ -189,29 +197,32 @@ final class UploadBackground: @unchecked Sendable {
     private func runContinued(_ task: BGContinuedProcessingTask) {
         continuedRequested = false
         continuedTask = task
-        continuedTotal = max(1, pendingCount)
-        task.progress.totalUnitCount = Int64(continuedTotal)
-        task.progress.completedUnitCount = 0
+        let current = progress
+        task.progress.totalUnitCount = Int64(max(1, current.total > 0 ? current.total : pendingCount))
+        task.progress.completedUnitCount = Int64(current.done)
         task.expirationHandler = { [weak self] in
             DispatchQueue.main.async { self?.finishContinued(success: false) }
         }
         UploadEngine.shared.command(["type": "kick"])
     }
 
+    /// Системный прогресс задачи — ход пачки от движка (тот же, что в уведомлении Android).
     @available(iOS 26.0, *)
     private func updateContinued() {
         guard let task = continuedTask as? BGContinuedProcessingTask else { return }
-        let pending = pendingCount
-        if pending > continuedTotal {
-            continuedTotal = pending
-            task.progress.totalUnitCount = Int64(pending)
-        }
-        task.progress.completedUnitCount = Int64(max(0, continuedTotal - pending))
         let texts = Self.texts()
-        task.updateTitle(texts.title, subtitle: texts.subtitle(pending))
-        if !UploadEngine.isBusy(activity) {
-            finishContinued(success: pending == 0)
+        guard UploadEngine.isBusy(activity) else {
+            // Пачка дописана: полоса — до конца, задача завершается.
+            task.progress.completedUnitCount = task.progress.totalUnitCount
+            finishContinued(success: pendingCount == 0)
+            return
         }
+        let current = progress
+        if current.total > 0 {
+            task.progress.totalUnitCount = Int64(current.total)
+            task.progress.completedUnitCount = Int64(current.done)
+        }
+        task.updateTitle(texts.title, subtitle: texts.subtitle(current.total > 0 ? current.total - current.done : pendingCount))
     }
 
     @available(iOS 26.0, *)

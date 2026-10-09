@@ -106,8 +106,16 @@ export interface RowLocation {
 export interface PlannedRow extends RowLocation {
   /** Значения по номерам колонок. */
   cells: Map<number, TableCell>
+  /** Номер элемента в журнале («Nr. Crt.» записанной строки) или `null`, если колонки нет. */
+  item: number | null
   /** Лист года создан этой записью (вместе с шапкой). */
   newSheet: boolean
+}
+
+/** Номер элемента из ячейки «Nr. Crt.»: целое положительное число (в журнале бывает и текстом). */
+function itemOf(cell: TableCell): number | null {
+  const value = typeof cell === 'number' ? cell : typeof cell === 'string' ? Number(cell.trim()) : Number.NaN
+  return Number.isInteger(value) && value > 0 ? value : null
 }
 
 /** Значения всех непустых ячеек книги: ключ `лист!строка:колонка` → текст. */
@@ -206,7 +214,16 @@ export class LabelWorkbook {
     target.commit()
     LabelWorkbook.extendFilter(sheet, row)
     this.remember(entry.localNumber, { sheet: sheet.name, row }, writtenAt)
-    return { sheet: sheet.name, row, cells, newSheet: !existing }
+    const numberColumn = layout.known.get('number')
+    return { sheet: sheet.name, row, cells, item: numberColumn === undefined ? null : itemOf(cells.get(numberColumn) ?? null), newSheet: !existing }
+  }
+
+  /** Номер элемента («Nr. Crt.») в строке журнала или `null` (нет шапки, колонки или числа). */
+  itemAt(location: RowLocation): number | null {
+    const sheet = this.workbook.getWorksheet(location.sheet)
+    const column = sheet ? findLabLayout(readerOf(sheet))?.known.get('number') : undefined
+    if (column === undefined) return null
+    return itemOf(this.readCells(location, [column])[0] ?? null)
   }
 
   /** Значения указанных колонок строки. */

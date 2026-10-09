@@ -15,7 +15,7 @@ import { UploadWorker, type StorageSource } from '@/features/uploads/worker/Uplo
 import type { KeyValueStore } from '@/lib/storage/KeyValueStore'
 import { StoredValue } from '@/lib/storage/StoredValue'
 import { isRecord, isString } from '@/lib/validation/guards'
-import type { EngineActivity, EngineCommand, EngineEvent } from './protocol'
+import { isBusy, type EngineActivity, type EngineCommand, type EngineEvent } from './protocol'
 
 /** Настройки движка: куда писать и от чьего имени. */
 interface EngineConfig {
@@ -73,6 +73,8 @@ export class Engine {
   private readonly emit: (event: EngineEvent) => void
   /** Последняя отправленная активность (JSON) — одинаковые не повторяются. */
   private lastActivity = ''
+  /** Ход текущей пачки записей (см. `EngineActivity.progress`). */
+  private batch = { done: 0, total: 0 }
 
   /** @param deps Зависимости. */
   constructor(deps: EngineDeps) {
@@ -160,19 +162,34 @@ export class Engine {
     }
   }
 
-  /** Что сейчас делает очередь. */
+  /**
+   * Что сейчас делает очередь. Заодно ведёт ход пачки: пока очередь занята, обработанные записи
+   * (записанные, отложенные после сбоя, ждущие пользователя) прибавляются к `done`, новые — к `total`;
+   * в покое пачка сбрасывается.
+   */
   activity(now = Date.now()): EngineActivity {
     const records = this.store.getSnapshot()
     const queued = records.filter((record) => record.status === 'queued')
-    return {
+    const uploading = records.filter((record) => record.status === 'uploading').length
+    const due = queued.filter((record) => (record.nextAttemptAt ?? 0) <= now).length
+    const base = {
       running: this.worker.isRunning,
       online: this.worker.isOnline,
-      due: queued.filter((record) => (record.nextAttemptAt ?? 0) <= now).length,
-      waiting: queued.filter((record) => (record.nextAttemptAt ?? 0) > now).length,
+      due,
+      waiting: queued.length - due,
       nextAttemptAt: this.store.nextAttemptAt(now),
-      pending: queued.length + records.filter((record) => record.status === 'uploading').length,
+      pending: queued.length + uploading,
       failed: records.filter((record) => record.status === 'failed').length,
     }
+    if (!isBusy({ ...base, progress: this.batch })) {
+      this.batch = { done: 0, total: 0 }
+    } else {
+      // Осталось в этой пачке: готовые к записи и та, что пишется сейчас.
+      const remaining = due + uploading
+      const done = this.batch.total === 0 ? 0 : Math.max(this.batch.done, this.batch.total - remaining)
+      this.batch = { done, total: done + remaining }
+    }
+    return { ...base, progress: { ...this.batch } }
   }
 
   /** Новые настройки: сохраняются; если хранилище изменилось, обработчик повторит незаписанное. */

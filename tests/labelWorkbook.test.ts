@@ -43,9 +43,10 @@ test('пустой журнал: шапка узнаётся, данных не�
 test('бирки дописываются по порядку: номер, вес, дата, плавка, завод, диаметр по форме', async () => {
   const workbook = await LabelWorkbook.open(template)
   const first = workbook.append(entry(1, { producer: 'ArcelorMittal', heat: '253830', size: '10 mm', weight_kg: 8126, product_form: 'bobina', quality_doc: null }), at(2026, 10, 8))
-  assert.deepEqual([first.sheet, first.row, first.newSheet], ['2026', 7, false])
+  assert.deepEqual([first.sheet, first.row, first.newSheet, first.item], ['2026', 7, false, 1])
   const second = workbook.append(entry(2, { producer: 'OAM', heat: '25R00205', size: 'Ø 16', weight_kg: '2419', product_form: 'bara', quality_doc: 'Am acte' }), at(2026, 10, 8))
   assert.equal(second.row, 8)
+  assert.equal(second.item, 2, 'номер элемента — «Nr. Crt.» строки')
 
   const bytes = await workbook.toBytes()
   assert.deepEqual(await rowValues(bytes, '2026', 7), { C: 1, D: '8126Kg', E: null, F: '08.10.2026', G: 253830, H: 'ArcelorMittal', I: 10, J: null, K: null })
@@ -95,6 +96,8 @@ test('строки дописываются после последней с д�
   const planned = workbook.append(entry(1, { producer: 'Habas', heat: '1', size: '8', weight_kg: 1, product_form: 'bobina' }), at(2026, 10, 8))
   assert.equal(planned.row, 10)
   assert.equal(planned.cells.get(3), 4, 'Nr. Crt. — следующий после номера строки 9')
+  assert.equal(planned.item, 4)
+  assert.equal(workbook.itemAt({ sheet: '2026', row: 9 }), 3, 'номер уже заполненной строки')
 })
 
 test('чужая книга без шапки журнала — unknownLayout', async () => {

@@ -45,7 +45,7 @@ test('движок грузится без браузерных API и сооб�
       assert.ok(engine.missingBefore.includes(name), `${name} отсутствует в контексте`)
     }
     assert.equal(engine.events[0]?.type, 'ready')
-    assert.deepEqual(engine.activity, { running: false, online: true, due: 0, waiting: 0, nextAttemptAt: null, pending: 0, failed: 0 })
+    assert.deepEqual(engine.activity, { running: false, online: true, due: 0, waiting: 0, nextAttemptAt: null, pending: 0, failed: 0, progress: { done: 0, total: 0 } })
   } finally {
     engine.stop()
   }
@@ -61,9 +61,27 @@ test('бирка пишется на сетевой диск, активност
     await engine.until(() => statusOf(engine, 'id-1') === 'completed')
     const done = engine.records.find((item) => item.id === 'id-1')!
     assert.equal(done.rowNumber, 7)
+    assert.equal(done.item, 1, 'номер элемента в журнале')
     assert.equal((await LabelWorkbook.open(smb.file(TABLE)!)).locate('SCN-261009-0001')?.row, 7)
     await engine.until(() => engine.activity?.running === false && engine.activity.pending === 0)
     assert.ok(engine.events.some((event) => event.type === 'activity' && event.activity.running), 'была активность «пишет»')
+  } finally {
+    engine.stop()
+  }
+})
+
+test('ход пачки: обработано из всех растёт по одной, в покое — 0 из 0', async () => {
+  const smb = new FakeSmb()
+  smb.put(TABLE, template)
+  const engine = new EngineHarness(code, { smb })
+  try {
+    engine.command({ type: 'configure', storage: smbStorage, deviceId: 'ios-a1b2c3d4' })
+    engine.command({ type: 'import', records: [record(1), record(2), record(3)] })
+    await engine.until(() => engine.records.length === 3 && engine.records.every((item) => item.status === 'completed'))
+    await engine.until(() => engine.activity?.running === false && engine.activity.pending === 0)
+    const seen = engine.events.flatMap((event) => (event.type === 'activity' && event.activity.progress.total > 0 ? [`${event.activity.progress.done}/${event.activity.progress.total}`] : []))
+    assert.deepEqual([...new Set(seen)], ['0/3', '1/3', '2/3', '3/3'])
+    assert.deepEqual(engine.activity?.progress, { done: 0, total: 0 })
   } finally {
     engine.stop()
   }

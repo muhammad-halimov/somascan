@@ -59,7 +59,8 @@ test('дописывание в существующую таблицу с ко�
   assert.equal((await writer.write(record(1), backend)).rowNumber, 7)
   smb.now += 60_000
   assert.equal((await writer.write(record(2), backend)).rowNumber, 8)
-  assert.equal((await writer.write(record(2), backend)).duplicate, true)
+  const repeat = await writer.write(record(2), backend)
+  assert.deepEqual([repeat.duplicate, repeat.rowNumber, repeat.item], [true, 8, 2], 'повтор — та же строка и номер элемента')
   const workbook = await LabelWorkbook.open(smb.file(TABLE)!)
   assert.deepEqual(workbook.locate('SCN-261007-0002'), { sheet: '2026', row: 8 })
   assert.equal([...smb.nodes.keys()].filter((key) => key.startsWith('Probe si Sarje Otel/backups/')).length, 2)

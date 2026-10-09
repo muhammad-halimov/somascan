@@ -94,6 +94,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
         return { text: record.error ? t('queuedAfterError', { error: errorText(record.error) }) : t('status.queued'), isError: false }
       case 'completed':
         if (!record.rowNumber) return { text: t('status.completed'), isError: false }
+        if (record.sheet && record.item) return { text: t('completedSheetRowItem', { sheet: record.sheet, row: record.rowNumber, item: record.item }), isError: false }
         return { text: record.sheet ? t('completedSheetRow', { sheet: record.sheet, row: record.rowNumber }) : t('completedRow', { row: record.rowNumber }), isError: false }
       default:
         return { text: record.cancelRequested ? t('status.cancelling') : t('status.uploading'), isError: false }

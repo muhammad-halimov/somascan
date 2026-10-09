@@ -41,6 +41,7 @@
   "retryAll": "Ҳамаи навишта нашударо такрор кардан",
   "retryAllCaption": "Такрор",
   "completedSheetRow": "Ба ҷадвал навишта шуд · варақи {{sheet}}, сатри {{row}}",
+  "completedSheetRowItem": "Ба ҷадвал навишта шуд · варақи {{sheet}}, сатри {{row}}, унсури № {{item}}",
   "background": {
     "title": "Сабт ба ҷадвал",
     "pending": "Барои сабт боқӣ монд: {{count}}",

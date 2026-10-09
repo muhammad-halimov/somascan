@@ -41,6 +41,7 @@
   "retryAll": "Retry all failed uploads",
   "retryAllCaption": "Retry",
   "completedSheetRow": "Written to the table · sheet {{sheet}}, row {{row}}",
+  "completedSheetRowItem": "Written to the table · sheet {{sheet}}, row {{row}}, item No. {{item}}",
   "background": {
     "title": "Writing to the table",
     "pending": "Left to write: {{count}}",

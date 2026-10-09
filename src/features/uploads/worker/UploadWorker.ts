@@ -230,7 +230,7 @@ export class UploadWorker {
       const backend = await backendFor(this.settings.getStorage(), this.backends)
       const result = await this.writer.write(job, backend, controller.signal)
       // Отмена пришла, когда файл уже заменялся: бирка в журнале — запись завершена.
-      this.store.markCompleted(job.id, result.rowNumber, result.sheet)
+      this.store.markCompleted(job.id, result.rowNumber, result.sheet, result.item ?? undefined)
     } catch (error) {
       // Отменили — запись остановлена до замены файла, журнал не тронут: убираем её из очереди.
       if (controller.signal.aborted) {

@@ -53,10 +53,10 @@ test('дописывание в существующую таблицу, рез�
   const { backend, writer } = setup(drive)
   assert.equal((await backend.probe()).exists, true)
   const year = String(new Date(drive.now).getFullYear())
-  assert.deepEqual(await writer.write(record(1), backend), { sheet: year, rowNumber: 7, duplicate: false })
+  assert.deepEqual(await writer.write(record(1), backend), { sheet: year, rowNumber: 7, item: 1, duplicate: false })
   drive.now += 60_000
-  assert.deepEqual(await writer.write(record(2), backend), { sheet: year, rowNumber: 8, duplicate: false })
-  assert.deepEqual(await writer.write(record(2), backend), { sheet: year, rowNumber: 8, duplicate: true }, 'повтор не дублирует строку')
+  assert.deepEqual(await writer.write(record(2), backend), { sheet: year, rowNumber: 8, item: 2, duplicate: false })
+  assert.deepEqual(await writer.write(record(2), backend), { sheet: year, rowNumber: 8, item: 2, duplicate: true }, 'повтор не дублирует строку')
 
   const tables = drive.childrenOf('folder1').filter((file) => file.name === 'labels.xlsx')
   assert.equal(tables.length, 1)

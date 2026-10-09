@@ -52,6 +52,12 @@ public class UploadWork extends Worker {
     private static final long PLAIN_LIMIT_MS = 9 * 60_000;
     private static final long FOREGROUND_LIMIT_MS = 30 * 60_000;
 
+    /** Больше отрезков полоса прогресса не рисует по одному на бирку — дальше сплошная. */
+    private static final int MAX_SEGMENTS = 12;
+
+    /** Акцентный цвет приложения (значок и полоса прогресса). */
+    private static final int ACCENT = 0xFF536DFE;
+
     /** Последнее решение планировщика — одинаковые не повторяются. */
     private static String lastPlan = "";
 
@@ -193,28 +199,58 @@ public class UploadWork extends Worker {
         return new ForegroundInfo(NOTIFICATION_ID, notification);
     }
 
+    /**
+     * Уведомление о выгрузке с системным прогрессом: {@link NotificationCompat.ProgressStyle} —
+     * на Android 16 полоса из отрезков (одна бирка — один отрезок) и Live Update (чип «2/5» в строке
+     * состояния и на экране блокировки), на Android 15 и ниже тот же стиль сам показывает обычную
+     * системную полосу прогресса.
+     */
     private static Notification notification(Context context, JSONObject activity) {
         ensureChannel(context);
         SharedPreferences texts = context.getSharedPreferences(TEXTS_PREFS, Context.MODE_PRIVATE);
         String title = texts.getString("title", "Выгрузка в таблицу");
-        int pending = activity == null ? 0 : activity.optInt("pending");
-        String text = pending > 0 && UploadEngine.isBusy(activity)
-            ? texts.getString("pending", "Осталось записать: {count}").replace("{count}", String.valueOf(pending))
+        JSONObject progress = activity == null ? null : activity.optJSONObject("progress");
+        int total = progress == null ? 0 : Math.max(0, progress.optInt("total"));
+        int done = progress == null ? 0 : Math.max(0, Math.min(progress.optInt("done"), total));
+        boolean writing = UploadEngine.isBusy(activity) && total > 0;
+        String text = writing
+            ? texts.getString("pending", "Осталось записать: {count}").replace("{count}", String.valueOf(total - done))
             : texts.getString("waiting", "Ждёт сети или повтора");
+
+        NotificationCompat.ProgressStyle style = new NotificationCompat.ProgressStyle().setStyledByProgress(true);
+        if (writing) {
+            if (total <= MAX_SEGMENTS) {
+                for (int index = 0; index < total; index++) {
+                    style.addProgressSegment(new NotificationCompat.ProgressStyle.Segment(1));
+                }
+            } else {
+                style.addProgressSegment(new NotificationCompat.ProgressStyle.Segment(total));
+            }
+            style.setProgress(done);
+        } else {
+            style.setProgressIndeterminate(true);
+        }
+
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         PendingIntent open = launch == null ? null : PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-        return new NotificationCompat.Builder(context, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_upload)
+            .setColor(ACCENT)
             .setContentTitle(title)
             .setContentText(text)
             .setContentIntent(open)
+            .setStyle(style)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setProgress(0, 0, activity != null && activity.optBoolean("running"))
-            .build();
+            // Android 16: Live Update — уведомление поднимается наверх, ход виден в строке состояния.
+            .setRequestPromotedOngoing(true);
+        if (writing) {
+            builder.setShortCriticalText(done + "/" + total);
+        }
+        return builder.build();
     }
 
     private static void ensureChannel(Context context) {

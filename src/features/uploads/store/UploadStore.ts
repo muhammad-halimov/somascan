@@ -64,6 +64,8 @@ export interface UploadRecord {
   rowNumber?: number
   /** Лист журнала (год), куда записана бирка. */
   sheet?: string
+  /** Номер элемента в журнале («Nr. Crt.» записанной строки). */
+  item?: number
   /** Пользователь отменил запись, пока она писалась: её уберут, как только запись остановится. */
   cancelRequested?: boolean
 }
@@ -137,6 +139,8 @@ function readRecord(value: unknown): UploadRecord | null {
   const rowNumber = optionalNumber(value.rowNumber)
   if (rowNumber !== undefined) record.rowNumber = rowNumber
   if (isString(value.sheet)) record.sheet = value.sheet
+  const item = optionalNumber(value.item)
+  if (item !== undefined) record.item = item
   if (value.cancelRequested === true) record.cancelRequested = true
   return record
 }
@@ -272,8 +276,8 @@ export class UploadStore extends Store<UploadRecord[]> {
   }
 
   /** Запись попала в таблицу и проверена. */
-  markCompleted(id: string, rowNumber: number, sheet?: string) {
-    this.patch(id, (record) => ({ ...record, status: 'completed', completedAt: Date.now(), rowNumber, sheet, error: undefined, nextAttemptAt: undefined, cancelRequested: undefined }))
+  markCompleted(id: string, rowNumber: number, sheet?: string, item?: number) {
+    this.patch(id, (record) => ({ ...record, status: 'completed', completedAt: Date.now(), rowNumber, sheet, item, error: undefined, nextAttemptAt: undefined, cancelRequested: undefined }))
   }
 
   /** Временный сбой: запись вернётся в очередь и повторится не раньше `nextAttemptAt`. */
