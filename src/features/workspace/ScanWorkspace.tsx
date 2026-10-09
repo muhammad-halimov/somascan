@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { enabledLabelFields, missingManualFields, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
+import { enabledLabelFields, isMissingValue, missingManualFields, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { hasProductForm } from '@/features/recognition/label/productForm'
 import { settingsStore } from '@/features/settings/store/SettingsStore'
@@ -16,7 +16,7 @@ import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
 import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
-import { SlideBar } from './components/SlideBar'
+import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
@@ -137,26 +137,56 @@ export function ScanWorkspace() {
   const hasResult = status.kind === 'done' || status.kind === 'recognizing'
 
   /**
-   * «Фото» и пустая ячейка: выбранные фото (до числа свободных ячеек) встают в конец по порядку.
-   * Если все девять заняты — фото открытой бирки заменяется (с подтверждением, если есть результат).
+   * «+ Фото» и «Добавить фото»: на пустой ячейке выбранные фото (до числа свободных ячеек) встают в конец
+   * по порядку; у открытой бирки — всегда заменяют её фото (бирке без фото — добавляют его), новой бирки
+   * не появляется. Если что-то пропадёт (распознанное или введённое вручную) — сначала подтверждение.
    */
   const addPhotos = async () => {
-    if (session.canAdd) {
+    if (!item) {
+      if (!session.canAdd) return
       pickTarget.current = 'add'
       await picker.pick(MAX_SCAN_ITEMS - session.items.length)
       return
     }
-    if (hasPhoto && hasResult) {
+    const hasData = item.status.kind === 'done' && (item.productForm !== null || Object.values(item.status.label).some((value) => !isMissingValue(value)))
+    if (item.photoUrl && !item.hasError ? hasResult : hasData) {
+      const noPhoto = !item.photoUrl || item.hasError
       const confirmed = await NativeDialogs.confirm({
-        title: t('replaceDialog.title'),
-        message: t('replaceDialog.message'),
-        okButtonTitle: t('replaceDialog.confirm'),
+        title: noPhoto ? t('photo.manualReplaceTitle') : t('replaceDialog.title'),
+        message: noPhoto ? t('photo.manualReplaceMessage') : t('replaceDialog.message'),
+        okButtonTitle: noPhoto ? t('photo.manualReplaceConfirm') : t('replaceDialog.confirm'),
         cancelButtonTitle: t('common:cancel'),
       })
       if (!confirmed) return
     }
     pickTarget.current = 'replace'
     await picker.pick(1)
+  }
+
+  /**
+   * Угловая кнопка ячейки без снимка: «Без фото» — пустая ячейка становится биркой, данные которой вводят
+   * вручную (сразу открывается правка), а ждущая фото бирка — снова «без фото»; «С фото» — обратно: бирка
+   * ждёт фото, введённое остаётся. Пустая последняя бирка «без фото» просто убирается — на её месте снова
+   * пустая ячейка.
+   */
+  const toggleManual = () => {
+    if (!item) {
+      addManual()
+      return
+    }
+    if (!item.manual) {
+      session.setManual(activeIndex, true)
+      return
+    }
+    const isEmpty = item.status.kind !== 'done' || (item.productForm === null && Object.values(item.status.label).every(isMissingValue))
+    if (isEmpty && activeIndex === session.items.length - 1) {
+      editMode.exit()
+      session.remove(activeIndex)
+      // Открыта остаётся та же позиция — теперь это пустая ячейка.
+      session.select(activeIndex)
+      return
+    }
+    session.setManual(activeIndex, false)
   }
 
   /** «Сброс»: убирает открытую бирку (следующие сдвигаются); если есть результат — после подтверждения. */
@@ -187,9 +217,24 @@ export function ScanWorkspace() {
     }
     session.updateField(activeIndex, key, value)
   }
-  const toggleEdit = () => {
+  const toggleEdit = async () => {
     if (editMode.isEditing) {
-      for (const [id, original] of editOriginals.current) session.restoreLabel(id, original.label, original.productForm)
+      // Что-то правда изменилось (а не исправлено и возвращено как было) — изменения пропадут: спрашиваем.
+      const changed = [...editOriginals.current].filter(([id, original]) => {
+        const current = session.items.find((candidate) => candidate.id === id)
+        return current?.status.kind === 'done'
+          && (current.productForm !== original.productForm || JSON.stringify(current.status.label) !== JSON.stringify(original.label))
+      })
+      if (changed.length > 0) {
+        const confirmed = await NativeDialogs.confirm({
+          title: t('editing.discardTitle'),
+          message: t('editing.discardMessage'),
+          okButtonTitle: t('editing.discardConfirm'),
+          cancelButtonTitle: t('editing.discardKeep'),
+        })
+        if (!confirmed) return
+        for (const [id, original] of changed) session.restoreLabel(id, original.label, original.productForm)
+      }
     }
     editOriginals.current.clear()
     editMode.toggle()
@@ -245,15 +290,21 @@ export function ScanWorkspace() {
   const missingFields = (candidate: ScanItem) =>
     candidate.manual && candidate.status.kind === 'done' ? missingManualFields(candidate.status.label, settingsStore.getSnapshot().advanced.labelFields) : []
 
-  /** Бирка готова к отправке: распознана (или заполнена вручную), выбрана форма, у бирки без фото заполнены обязательные поля. */
+  /** Бирка готова к отправке: распознана (или заполнена вручную, «без фото»), выбрана форма, у бирки без фото заполнены обязательные поля. */
   const isReady = (candidate: ScanItem) =>
-    candidate.status.kind === 'done' && hasProductForm(candidate.status.label) && missingFields(candidate).length === 0
+    candidate.status.kind === 'done' && (candidate.manual || candidate.photoUrl !== '')
+    && hasProductForm(candidate.status.label) && missingFields(candidate).length === 0
 
   /** Открывает бирку, которая мешает отправке, и объясняет, что с ней. */
   const showNotReady = async (blocker: ScanItem) => {
     const index = session.items.indexOf(blocker)
     session.select(index)
     const number = index + 1
+    if (blocker.status.kind === 'done' && !blocker.manual && !blocker.photoUrl) {
+      // Бирку переключили обратно «с фото», а снимка нет.
+      await NativeDialogs.alert({ title: t('photoDialog.title'), message: t('photoDialog.message', { number }), buttonTitle: t('common:ok') })
+      return
+    }
     if (blocker.status.kind === 'done' && !hasProductForm(blocker.status.label)) {
       // Не выбрана форма: выбор формы — первая строка карточки, докручиваем к нему.
       window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-product-form')?.scrollIntoView({ block: 'nearest' }), 0)
@@ -352,6 +403,11 @@ export function ScanWorkspace() {
   }
 
 
+  /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
+  const hasSlideBar = session.items.length > 0 || view === 'grid'
+  /** Панель выезжает и уходит плавно: пока она схлопывается, остаётся в DOM. */
+  const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
+
   /** Сколько бирок выбрано для отправки. */
   const selectedCount = session.items.filter((candidate) => candidate.selected).length
 
@@ -363,7 +419,7 @@ export function ScanWorkspace() {
     >
       <input className="photo-input" {...picker.inputProps} />
       {/* Карточка фото и панель листания под ней — один блок. */}
-      <div className="photo-block has-slide-bar">
+      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}`}>
         <PhotoCard
           handleRef={photoCardRef}
           item={item}
@@ -374,7 +430,7 @@ export function ScanWorkspace() {
           isReceiving={picker.isReceiving}
           transform={transform}
           onPick={() => void addPhotos()}
-          onAddManual={addManual}
+          onToggleManual={toggleManual}
           onOpen={() => setIsViewerOpen(true)}
           onLoad={(size) => item && session.markLoaded(item.id, size)}
           onError={() => item && session.markFailed(item.id)}
@@ -383,15 +439,17 @@ export function ScanWorkspace() {
           onOpenActive={closeGrid}
           onToggleSelected={session.toggleSelected}
         />
-        {/* Панель листания — всегда (в пустом списке кнопки недоступны): блок фото не меняет высоту. */}
-        <SlideBar
-          activeIndex={activeIndex}
-          positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
-          isGrid={view === 'grid'}
-          onPrevious={() => session.select(activeIndex - 1)}
-          onNext={() => session.select(activeIndex + 1)}
-          onOpen={closeGrid}
-        />
+        {slideBar.mounted && (
+          <SlideBar
+            isClosing={slideBar.closing}
+            activeIndex={activeIndex}
+            positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
+            isGrid={view === 'grid'}
+            onPrevious={() => session.select(activeIndex - 1)}
+            onNext={() => session.select(activeIndex + 1)}
+            onOpen={closeGrid}
+          />
+        )}
       </div>
       <NotesCard
         cardRef={notesCardRef}
@@ -402,10 +460,10 @@ export function ScanWorkspace() {
         isEditing={editMode.isEditing}
         status={status}
         hasPhoto={item !== null}
-        canRetry={item !== null && !item.manual}
+        canRetry={item !== null && !item.manual && item.photoUrl !== ''}
         isManual={item?.manual ?? false}
         onFieldChange={changeField}
-        onToggleEdit={toggleEdit}
+        onToggleEdit={() => void toggleEdit()}
         onCloseEdit={editMode.exit}
         onAddPhoto={() => void addPhotos()}
         onClear={() => void removeItem()}

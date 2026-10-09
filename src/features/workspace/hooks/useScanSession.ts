@@ -49,7 +49,10 @@ export interface ScanItem {
   productForm: string | null
   /** Бирка выбрана для отправки («Далее» отправляет выбранные). Новые фото выбраны сразу. */
   selected: boolean
-  /** Бирка без фото: данные вводятся вручную (`photoUrl` пустой, распознавания нет). */
+  /**
+   * Бирка без фото: данные вводятся вручную, распознавания нет. Бирка «с фото» без снимка
+   * (`manual: false`, пустой `photoUrl`) ждёт фото — её переключили обратно из «без фото».
+   */
   manual: boolean
 }
 
@@ -214,6 +217,21 @@ export function useScanSession() {
     return true
   }, [commit])
 
+  /**
+   * Переключает бирку `index` между «без фото» (поля вводят вручную) и «с фото»: без снимка она ждёт его
+   * (карточка «Добавить фото»), введённые данные остаются.
+   */
+  const setManual = useCallback((index: number, manual: boolean) => {
+    const item = itemsRef.current[index]
+    if (!item || item.manual === manual) return
+    stopRecognition(item.id)
+    patch(item.id, (current) => ({
+      manual,
+      // Без фото распознавать нечего: если шло распознавание — данных ещё нет, поля пустые.
+      status: current.status.kind === 'done' ? current.status : { kind: 'done', label: {}, photo: { retake: false, issues: [] } },
+    }))
+  }, [patch, stopRecognition])
+
   /** Заменяет фото бирки `index` (распознавание — заново). */
   const replace = useCallback((index: number, url: string) => {
     const old = itemsRef.current[index]
@@ -329,6 +347,7 @@ export function useScanSession() {
     canAdd: items.length < MAX_SCAN_ITEMS,
     add,
     addManual,
+    setManual,
     replace,
     remove,
     removeMany,

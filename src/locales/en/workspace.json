@@ -16,7 +16,12 @@
     "overflow": "Added {{added}} of {{picked}}: the grid has {{max}} cells.",
     "noPhoto": "No photo",
     "noPhotoLabel": "Add a tag without a photo",
-    "manualHint": "Data is entered by hand"
+    "manualHint": "Data is entered by hand",
+    "withPhoto": "Photo",
+    "withPhotoLabel": "Tag with a photo: add a photo",
+    "manualReplaceTitle": "Add a photo?",
+    "manualReplaceMessage": "The data entered by hand will be replaced with the data recognized from the photo.",
+    "manualReplaceConfirm": "Add"
   },
   "notes": {
     "label": "Result",
@@ -30,7 +35,11 @@
     "close": "Close editing",
     "editCaption": "Edit",
     "closeCaption": "Done",
-    "cancel": "Cancel editing"
+    "cancel": "Cancel editing",
+    "discardTitle": "Discard changes?",
+    "discardMessage": "The changes made while editing will be lost.",
+    "discardConfirm": "Discard",
+    "discardKeep": "Keep editing"
   },
   "actions": {
     "group": "Actions",
@@ -102,6 +111,10 @@
     "title": "Fill in the required fields",
     "message": "A tag without a photo needs: {{fields}}."
   },
+  "photoDialog": {
+    "title": "No photo",
+    "message": "Add a photo for tag {{number}} or switch it to \"No photo\"."
+  },
   "sendDialog": {
     "noneTitle": "Nothing to send",
     "noneMessage": "Select tags to send in the grid — the mark in the bottom left corner of a photo.",
@@ -128,7 +141,8 @@
       "failed": "error",
       "noForm": "form not chosen",
       "done": "ready",
-      "incomplete": "required fields are empty"
+      "incomplete": "required fields are empty",
+      "noPhoto": "no photo"
     },
     "single": "Photo",
     "manual": "no photo"

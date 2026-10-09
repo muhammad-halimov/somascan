@@ -16,7 +16,12 @@
     "overflow": "Adăugate {{added}} din {{picked}}: grila are {{max}} celule.",
     "noPhoto": "Fără foto",
     "noPhotoLabel": "Adaugă o etichetă fără fotografie",
-    "manualHint": "Datele se introduc manual"
+    "manualHint": "Datele se introduc manual",
+    "withPhoto": "Cu foto",
+    "withPhotoLabel": "Etichetă cu fotografie: adaugă fotografie",
+    "manualReplaceTitle": "Adăugați o fotografie?",
+    "manualReplaceMessage": "Datele introduse manual vor fi înlocuite cu cele recunoscute din fotografie.",
+    "manualReplaceConfirm": "Adaugă"
   },
   "notes": {
     "label": "Rezultat",
@@ -30,7 +35,11 @@
     "close": "Închide editarea",
     "editCaption": "Editare",
     "closeCaption": "Gata",
-    "cancel": "Anulează editarea"
+    "cancel": "Anulează editarea",
+    "discardTitle": "Renunțați la modificări?",
+    "discardMessage": "Modificările făcute la editare se vor pierde.",
+    "discardConfirm": "Renunță",
+    "discardKeep": "Continuă editarea"
   },
   "actions": {
     "group": "Acțiuni",
@@ -102,6 +111,10 @@
     "title": "Completați câmpurile obligatorii",
     "message": "O etichetă fără fotografie trebuie să aibă: {{fields}}."
   },
+  "photoDialog": {
+    "title": "Fără fotografie",
+    "message": "Adăugați o fotografie pentru eticheta {{number}} sau treceți-o la „Fără foto”."
+  },
   "sendDialog": {
     "noneTitle": "Nimic de trimis",
     "noneMessage": "Selectați etichetele de trimis în grilă — marcajul din colțul din stânga jos al fotografiei.",
@@ -128,7 +141,8 @@
       "failed": "eroare",
       "noForm": "forma nu este aleasă",
       "done": "gata",
-      "incomplete": "câmpuri obligatorii necompletate"
+      "incomplete": "câmpuri obligatorii necompletate",
+      "noPhoto": "fără fotografie"
     },
     "single": "Foto",
     "manual": "fără fotografie"

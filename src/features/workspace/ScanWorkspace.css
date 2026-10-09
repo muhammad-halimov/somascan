@@ -73,3 +73,52 @@
     width: min(50cqw, calc((100cqh - var(--slide-bar-space)) * 1.08));
   }
 }
+
+/*
+ * Вход в правку и выход (View Transitions, см. hooks/useEditMode.ts): шапка остаётся на месте, блок фото
+ * и карточка результата переезжают на новые места с кривой платформы, содержимое карточки сменяется
+ * плавно. Имена — только на время перехода.
+ */
+:root.is-edit-transition .app-header {
+  view-transition-name: app-header;
+}
+
+:root.is-edit-transition .photo-block {
+  view-transition-name: photo-block;
+}
+
+:root.is-edit-transition .notes-card {
+  view-transition-name: notes-card;
+}
+
+::view-transition-group(*) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(.2, 0, 0, 1);
+}
+
+:root[data-platform='ios']::view-transition-group(*) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(.32, .72, 0, 1);
+}
+
+/*
+ * Карточка растёт и сжимается со своим скруглением; старое и новое содержимое — по ширине карточки,
+ * от её верха (не растягиваются по высоте) и обрезаются ею, пока сменяют друг друга.
+ */
+::view-transition-group(notes-card) {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+:root[data-platform='ios']::view-transition-group(notes-card) {
+  border-radius: var(--ios-radius-card);
+}
+
+/* Строки просмотра и поля правки не просвечивают друг через друга: старое гаснет быстро, новое проявляется следом. */
+::view-transition-old(notes-card) {
+  animation: fade-exit 140ms ease-out both;
+}
+
+::view-transition-new(notes-card) {
+  animation: backdrop-enter 240ms ease-out 90ms both;
+}

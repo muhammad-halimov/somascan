@@ -25,12 +25,14 @@ export interface PhotoGridProps {
 }
 
 /** Состояние бирки для значка в углу ячейки. */
-type CellState = 'busy' | 'failed' | 'noForm' | 'incomplete' | 'done' | 'none'
+type CellState = 'busy' | 'failed' | 'noPhoto' | 'noForm' | 'incomplete' | 'done' | 'none'
 
 function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[]): CellState {
   if (item.hasError || item.status.kind === 'failed') return 'failed'
   if (item.status.kind === 'recognizing') return 'busy'
   if (item.status.kind !== 'done') return 'none'
+  // Переключена обратно «с фото», а снимка нет.
+  if (!item.manual && !item.photoUrl) return 'noPhoto'
   if (!hasProductForm(item.status.label)) return 'noForm'
   // У бирки без фото поля по умолчанию обязательны.
   if (item.manual && missingManualFields(item.status.label, fields).length > 0) return 'incomplete'
@@ -113,8 +115,10 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
               {item.manual && <span className="photo-grid-manual" aria-hidden="true"><ImageOffIcon /></span>}
               <span className="photo-grid-number" aria-hidden="true">{number}</span>
               {state === 'busy' && <span className="photo-grid-spinner" aria-hidden="true" />}
-              {(state === 'failed' || state === 'noForm' || state === 'incomplete' || state === 'done') && (
-                <span className={`photo-grid-badge is-${state === 'incomplete' ? 'noForm' : state}`} aria-hidden="true">
+              {/* Ждёт фото — «плюс» на месте миниатюры. */}
+              {state === 'noPhoto' && <span className="photo-grid-plus" aria-hidden="true" />}
+              {(state === 'failed' || state === 'noPhoto' || state === 'noForm' || state === 'incomplete' || state === 'done') && (
+                <span className={`photo-grid-badge is-${state === 'incomplete' || state === 'noPhoto' ? 'noForm' : state}`} aria-hidden="true">
                   {state === 'failed' ? <AlertIcon /> : state === 'done' ? <CheckIcon /> : <ExclamationIcon />}
                 </span>
               )}

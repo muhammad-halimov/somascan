@@ -51,8 +51,8 @@ export interface PhotoCardProps {
   transform: PhotoTransform
   /** Открывает источник фото (пустая ячейка). */
   onPick: () => void
-  /** «Без фото» (пустая ячейка): бирка, данные которой вводят вручную. */
-  onAddManual: () => void
+  /** Угловая кнопка «Без фото» / «С фото»: переключает ячейку между фото и вводом данных вручную. */
+  onToggleManual: () => void
   /** Открывает фото на весь экран. */
   onOpen: () => void
   /** Фото загрузилось; передаёт его натуральный размер. */
@@ -77,10 +77,10 @@ export interface PhotoCardProps {
  * на ячейку (или «Открыть» — в углу сетки и в панели под карточкой) увеличивает её обратно до одной бирки. Слева
  * вверху у бирки, открытой из сетки, — «Назад» к сетке. Переход к соседней бирке — фото въезжает
  * сбоку, как слайд. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
- * один спиннер с подписью «Распознавание». В правом нижнем углу пустой ячейки — «Без фото»: бирка, данные
- * которой вводят вручную; у такой бирки на месте фото — перечёркнутая картинка.
+ * один спиннер с подписью «Распознавание». В правом нижнем углу ячейки без снимка — переключатель «Без фото» /
+ * «С фото»: бирка, данные которой вводят вручную (на месте фото — перечёркнутая картинка), и обратно.
  */
-export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onAddManual, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -265,10 +265,17 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
           </div>
         )}
 
-        {/* Пустая ячейка: в правом нижнем углу — «Без фото» (бирка, данные которой вводят вручную). */}
-        {item === null && !isBusy && (
+        {/*
+          Ячейка без снимка (пустая, «без фото» или ждущая фото): в правом нижнем углу — переключатель
+          «Без фото» ↔ «С фото», туда и обратно.
+        */}
+        {!hasPhoto && !isBusy && (
           <div className="photo-corner">
-            <ActionButton variant="overlay" size={44} icon={<ImageOffIcon />} caption={t('photo.noPhoto')} label={t('photo.noPhotoLabel')} onClick={onAddManual} />
+            {isManual ? (
+              <ActionButton key="with-photo" className="anim-fade" variant="overlay" size={44} icon={<ImageIcon />} caption={t('photo.withPhoto')} label={t('photo.withPhotoLabel')} onClick={onToggleManual} />
+            ) : (
+              <ActionButton key="no-photo" className="anim-fade" variant="overlay" size={44} icon={<ImageOffIcon />} caption={t('photo.noPhoto')} label={t('photo.noPhotoLabel')} onClick={onToggleManual} />
+            )}
           </div>
         )}
 
