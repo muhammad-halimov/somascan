@@ -46,6 +46,10 @@ interface UploadEnginePlugin {
   getState(): Promise<{ records?: unknown }>
   /** Разрешение на уведомление о фоновой выгрузке (Android 13+); на iOS не нужно. */
   requestNotifications(): Promise<{ granted: boolean }>
+  /** Виден ли ход выгрузки в системе (разрешение, уведомления приложения, канал / Live Activity). */
+  notificationStatus(): Promise<{ enabled: boolean }>
+  /** Системные настройки уведомлений приложения. */
+  openNotificationSettings(): Promise<void>
   /** Снимки очереди. */
   addListener(event: 'state', listener: (event: { records?: unknown }) => void): Promise<PluginListenerHandle>
 }
@@ -57,7 +61,6 @@ const UploadEngine = registerPlugin<UploadEnginePlugin>('UploadEngine')
 const LEGACY_QUEUE_KEY = 'somascan.uploads.v2'
 
 /** Спрашивали ли уже разрешение на уведомления. */
-const NOTIFICATIONS_ASKED_KEY = 'somascan.uploads.notificationsAsked'
 
 /** Очередь через движок. */
 export class NativeUploadQueue implements UploadQueue {
@@ -65,6 +68,8 @@ export class NativeUploadQueue implements UploadQueue {
   private readonly storage: KeyValueStore
   /** Последние отправленные настройки (JSON) — одинаковые не повторяются. */
   private lastConfig = ''
+  /** Разрешение на уведомления уже спрашивали в этом запуске. */
+  private notificationsAsked = false
 
   /**
    * @param store Зеркало очереди движка.
@@ -88,7 +93,7 @@ export class NativeUploadQueue implements UploadQueue {
     const record = UploadStore.createRecord(label, columns)
     this.store.add(record)
     this.send({ type: 'enqueue', record })
-    this.askNotificationsOnce()
+    this.askNotifications()
   }
 
   retry(id: string) {
@@ -162,10 +167,26 @@ export class NativeUploadQueue implements UploadQueue {
     }
   }
 
-  /** Android 13+: один раз спрашивает разрешение на уведомление о фоновой выгрузке. */
-  private askNotificationsOnce() {
-    if (this.storage.get(NOTIFICATIONS_ASKED_KEY)) return
-    this.storage.set(NOTIFICATIONS_ASKED_KEY, '1')
+  async notificationsEnabled() {
+    try {
+      return (await UploadEngine.notificationStatus()).enabled
+    } catch {
+      return true
+    }
+  }
+
+  openNotificationSettings() {
+    void UploadEngine.openNotificationSettings().catch((error: unknown) => console.warn('[uploads] notification settings', error))
+  }
+
+  /**
+   * Android 13+: если разрешения на уведомление о выгрузке нет — спрашивает (раз за запуск). Раньше
+   * спрашивали один раз навсегда, и после отказа или сброса разрешения уведомлений больше не было.
+   * Если система больше не показывает запрос (дважды отказали), включить можно из «Загрузок».
+   */
+  private askNotifications() {
+    if (this.notificationsAsked) return
+    this.notificationsAsked = true
     void UploadEngine.requestNotifications().catch(() => undefined)
   }
 }

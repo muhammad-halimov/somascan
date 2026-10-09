@@ -16,7 +16,9 @@
     "activeFailed_other": "{{count}} de etichete în lucru, nescrise: {{failed}} — atingeți „Reia”",
     "history_one": "{{count}} etichetă scrisă în tabel",
     "history_few": "{{count}} etichete scrise în tabel",
-    "history_other": "{{count}} de etichete scrise în tabel"
+    "history_other": "{{count}} de etichete scrise în tabel",
+    "notificationsOff": "Notificările de încărcare sunt oprite — progresul nu apare în bara de notificări",
+    "enable": "Activează"
   },
   "emptyQueue": {
     "title": "Coada este goală",

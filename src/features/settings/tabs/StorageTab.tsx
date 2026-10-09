@@ -202,7 +202,7 @@ export function StorageTab() {
               )}
             </FormSection>
 
-            <FormSection title={t('storage.googleDrive.location')} icon={<TableIcon />} hint={t('storage.googleDrive.locationHint')}>
+            <FormSection title={t('storage.googleDrive.location')} icon={<TableIcon />}>
               <Field label={t('storage.googleDrive.folder')}>
                 <TextInput
                   inputMode="url"
@@ -215,6 +215,7 @@ export function StorageTab() {
                 <ActionTextInput value={googleDrive.fileName} onChange={(fileName) => settingsStore.updateGoogleDrive({ fileName })} action={checkAction} />
               </Field>
               {googleDrive.account && <div className="storage-check" role="status">{checkStatus()}</div>}
+              <Notice>{t('storage.googleDrive.locationHint')}</Notice>
             </FormSection>
 
             <Button variant="tonal" icon={<PlugIcon />} busy={isTesting} disabled={check.checking || !googleDrive.account} onClick={() => void testConnection()}>

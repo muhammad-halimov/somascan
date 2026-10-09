@@ -13,7 +13,9 @@
     "activeFailed_one": "{{count}} tag in progress, not written: {{failed}} — tap “Retry”",
     "activeFailed_other": "{{count}} tags in progress, not written: {{failed}} — tap “Retry”",
     "history_one": "{{count}} tag written to the table",
-    "history_other": "{{count}} tags written to the table"
+    "history_other": "{{count}} tags written to the table",
+    "notificationsOff": "Upload notifications are off — progress is not shown in the shade",
+    "enable": "Turn on"
   },
   "emptyQueue": {
     "title": "The queue is empty",

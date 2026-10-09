@@ -1,5 +1,7 @@
-import Foundation
+import ActivityKit
 import Capacitor
+import Foundation
+import UIKit
 
 /**
  * Окно экрана в очередь выгрузки (аналог Android-плагина `UploadEnginePlugin.java`): команды движку
@@ -17,7 +19,9 @@ public class UploadEnginePlugin: CAPInstancePlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "configure", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "command", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getState", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "requestNotifications", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "requestNotifications", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "notificationStatus", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openNotificationSettings", returnType: CAPPluginReturnPromise)
     ]
 
     private var listenerID: UUID?
@@ -79,6 +83,28 @@ public class UploadEnginePlugin: CAPInstancePlugin, CAPBridgedPlugin {
     /// На iOS отдельное разрешение не нужно: ход выгрузки показывает сама система.
     @objc public func requestNotifications(_ call: CAPPluginCall) {
         call.resolve(["granted": true])
+    }
+
+    /// Виден ли ход выгрузки в системе: до iOS 26 — включены ли Live Activity приложения
+    /// (на iOS 26+ ход показывает продолжаемая задача, её не выключают).
+    @objc public func notificationStatus(_ call: CAPPluginCall) {
+        var enabled = ActivityAuthorizationInfo().areActivitiesEnabled
+        if #available(iOS 26.0, *) {
+            enabled = true
+        }
+        call.resolve(["enabled": enabled])
+    }
+
+    /// Настройки приложения (там же — переключатель Live Activity).
+    @objc public func openNotificationSettings(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let url = URL(string: UIApplication.openSettingsURLString) else {
+                call.reject("Не удалось открыть настройки", "unavailable")
+                return
+            }
+            UIApplication.shared.open(url)
+            call.resolve()
+        }
     }
 
     private static func records(_ json: String) -> [Any]? {

@@ -25,4 +25,11 @@ export interface UploadQueue {
   remove(id: string): void
   /** Удаляет все записанные. */
   clearCompleted(): void
+  /**
+   * Виден ли ход выгрузки в системе (Android — уведомление: разрешение, уведомления приложения, канал;
+   * iOS до 26 — Live Activity). Нет у очереди браузера.
+   */
+  notificationsEnabled?(): Promise<boolean>
+  /** Открывает системные настройки уведомлений приложения. */
+  openNotificationSettings?(): void
 }

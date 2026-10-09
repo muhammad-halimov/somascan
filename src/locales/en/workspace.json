@@ -18,7 +18,8 @@
   "notes": {
     "label": "Result",
     "placeholder": "Text will appear here",
-    "cancelled": "Recognition cancelled. The photo is kept — tap “Retry” to recognize it again."
+    "cancelled": "Recognition cancelled. The photo is kept — tap “Retry” to recognize it again.",
+    "checkBeforeSend": "Check the data before sending — recognition can make mistakes."
   },
   "editing": {
     "edit": "Edit text",

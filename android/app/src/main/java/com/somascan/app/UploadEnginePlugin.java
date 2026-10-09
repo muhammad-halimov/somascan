@@ -1,7 +1,10 @@
 package com.somascan.app;
 
 import android.Manifest;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
@@ -94,6 +97,30 @@ public class UploadEnginePlugin extends Plugin implements UploadEngine.Listener 
             result.put("records", new JSArray());
         }
         call.resolve(result);
+    }
+
+    /** Видно ли уведомление о выгрузке (разрешение, уведомления приложения, канал «Выгрузка в таблицу»). */
+    @PluginMethod
+    public void notificationStatus(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("enabled", UploadNotification.isEnabled(getContext()));
+        call.resolve(result);
+    }
+
+    /** Системные настройки уведомлений приложения (там включают и разрешение, и канал). */
+    @PluginMethod
+    public void openNotificationSettings(PluginCall call) {
+        String packageName = getContext().getPackageName();
+        Intent intent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            ? new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            : new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            getContext().startActivity(intent);
+            call.resolve();
+        } catch (Exception error) {
+            call.reject("Не удалось открыть настройки уведомлений", "unavailable", error);
+        }
     }
 
     /** Разрешение на уведомление о фоновой выгрузке (Android 13+; раньше оно не нужно). */

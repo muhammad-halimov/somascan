@@ -4,18 +4,24 @@
 
 .status-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   color: var(--text-h);
   font-size: 12.5px;
   font-weight: 500;
+  line-height: 1.4;
 }
 
+/*
+ * Точка — по середине первой строки текста (а не всего блока: длинный статус переносится),
+ * чуть выше геометрического центра строки — на уровне середины строчных и прописных букв.
+ */
 .status-badge::before {
   content: '';
   width: 8px;
   height: 8px;
   flex: 0 0 8px;
+  margin-top: calc(0.7em - 4px - 0.06em);
   border-radius: 50%;
   background: currentColor;
 }

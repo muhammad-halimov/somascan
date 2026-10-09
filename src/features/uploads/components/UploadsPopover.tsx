@@ -69,6 +69,21 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
     [i18n.language],
   )
 
+  /** Ход выгрузки в системе не виден (уведомления выключены): предупреждаем и даём включить. */
+  const [notificationsOff, setNotificationsOff] = useState(false)
+  useEffect(() => {
+    const check = () => {
+      void uploadQueue.notificationsEnabled?.().then((enabled) => setNotificationsOff(!enabled))
+    }
+    check()
+    // Вернулись из системных настроек — проверяем снова.
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') check()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+
   // Закрываем при нажатии вне панели и по Escape (на компьютере).
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -194,6 +209,15 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
       <div className="uploads-tabs">
         <Tabs options={tabOptions} value={tab} onChange={setTab} label={t('tabs.label')} />
       </div>
+      {notificationsOff && (
+        <p className="uploads-strip is-warning" role="alert">
+          <AlertIcon />
+          <span>{t('strip.notificationsOff')}</span>
+          <button type="button" className="uploads-strip-action" onClick={() => uploadQueue.openNotificationSettings?.()}>
+            {t('strip.enable')}
+          </button>
+        </p>
+      )}
       {/* Узкая лента под вкладками: сколько бирок и что с ними. */}
       {shown.length > 0 && (
         <p className={`uploads-strip is-${stripTone}`} role="status">

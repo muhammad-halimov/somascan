@@ -128,32 +128,47 @@ final class UploadNotification {
         if (view.equals(shown)) {
             return;
         }
-        shown = view;
         lastPostedAt = SystemClock.uptimeMillis();
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);
         if (view.kind == View.Kind.NONE) {
+            shown = view;
             current = null;
             manager.cancel(ID);
             return;
         }
         Notification notification = build(view);
         current = notification;
-        if (!canNotify()) {
+        // Уведомления выключены: показанным не считаем — включат посреди пачки, и следующий ход появится сразу.
+        if (!isEnabled(context)) {
+            Log.i(TAG, "upload notifications are turned off (permission, app or channel)");
             return;
         }
         try {
             manager.notify(ID, notification);
+            shown = view;
         } catch (SecurityException error) {
             Log.w(TAG, "notify", error);
         }
     }
 
-    private boolean canNotify() {
+    /**
+     * Видно ли уведомление о выгрузке: есть разрешение (Android 13+), уведомления приложения включены
+     * и канал «Выгрузка в таблицу» не выключен пользователем.
+     */
+    static boolean isEnabled(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return false;
         }
-        return NotificationManagerCompat.from(context).areNotificationsEnabled();
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            return false;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = context.getSystemService(NotificationManager.class);
+            NotificationChannel channel = manager == null ? null : manager.getNotificationChannel(CHANNEL_ID);
+            return channel == null || channel.getImportance() != NotificationManager.IMPORTANCE_NONE;
+        }
+        return true;
     }
 
     // ---------- Вид ----------
