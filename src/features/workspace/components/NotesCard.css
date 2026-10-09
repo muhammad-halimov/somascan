@@ -161,3 +161,27 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/*
+ * Горизонтальное положение (см. ScanWorkspace.css): карточка — правая колонка на всю высоту, и в правке
+ * тоже; поля прокручиваются внутри, панель действий ниже и плотнее.
+ */
+@media (orientation: landscape) and (max-height: 600px) {
+  .notes-card,
+  .notes-card.is-text-editing {
+    width: auto;
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+    margin-top: 0;
+  }
+
+  .notes-actions {
+    gap: 18px;
+    padding: 6px 12px;
+  }
+
+  .notes-actions .action-button {
+    --action-size: 42px !important;
+  }
+}

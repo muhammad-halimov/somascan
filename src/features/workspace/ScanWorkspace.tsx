@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
+import { createPortal, flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { enabledLabelFields, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { hasProductForm } from '@/features/recognition/label/productForm'
@@ -396,7 +396,11 @@ export function ScanWorkspace() {
         sendCount={selectedCount}
         isUploading={isHandingOff}
       />
-      {viewer.mounted && item && <PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} isClosing={viewer.closing} onClose={closeViewer} />}
+      {/*
+        Просмотр — в body: рабочая область в горизонтальном положении — контейнер размеров (container-type),
+        а он, как и любое сдерживание раскладки, удержал бы fixed-слой в своих границах.
+      */}
+      {viewer.mounted && item && createPortal(<PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} isClosing={viewer.closing} onClose={closeViewer} />, document.body)}
     </section>
   )
 }

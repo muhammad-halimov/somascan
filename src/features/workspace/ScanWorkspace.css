@@ -47,3 +47,29 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/*
+ * Телефон в горизонтальном положении: фото слева во всю высоту рабочей области, карточка результата —
+ * справа на всю высоту (её поля прокручиваются внутри), сама область не прокручивается. Так данные
+ * правят, глядя на фото, и в правке тоже. Размер фото — от высоты области (единицы контейнера `cqh`:
+ * без шапки, отступов и безопасных зон, и под клавиатурой тоже); место под панель листания оставлено
+ * всегда — фото не меняет размер, когда она появляется. Вырез и закругления экрана — по бокам (safe-area).
+ */
+@media (orientation: landscape) and (max-height: 600px) {
+  .scan-workspace {
+    --slide-bar-space: 46px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    overflow: hidden;
+    padding: 10px max(12px, var(--safe-right)) max(10px, var(--safe-bottom)) max(12px, var(--safe-left));
+    container-type: size;
+  }
+
+  .photo-block,
+  .scan-workspace.is-text-editing .photo-block {
+    width: min(50cqw, calc((100cqh - var(--slide-bar-space)) * 1.08));
+  }
+}

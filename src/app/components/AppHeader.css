@@ -35,3 +35,15 @@
   align-items: center;
   gap: 4px;
 }
+
+/* Телефон в горизонтальном положении: высота экрана на счету — шапка ниже, логотип меньше. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .app-header {
+    min-height: calc(52px + var(--safe-top));
+  }
+
+  .brand img {
+    width: 76px;
+    height: 44px;
+  }
+}
