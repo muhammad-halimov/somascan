@@ -10,7 +10,6 @@ import { uploadQueue } from '@/features/uploads/queue/appQueue'
 import { buildUploadColumns } from '@/features/uploads/xlsx/uploadColumns'
 import { useHistoryLayer } from '@/hooks/useHistoryLayer'
 import { usePresence } from '@/hooks/usePresence'
-import { Notice } from '@/components/ui/Notice'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
 import { PhotoCard, type PhotoCardView } from './components/PhotoCard'
@@ -329,8 +328,6 @@ export function ScanWorkspace() {
           />
         )}
       </div>
-      {/* Напоминание над карточкой результата: распознанное проверяют перед каждой отправкой. */}
-      {status.kind === 'done' && <Notice compact className="check-notice anim-fade">{t('notes.checkBeforeSend')}</Notice>}
       <NotesCard
         cardRef={notesCardRef}
         itemKey={item?.id ?? `empty-${activeIndex}`}

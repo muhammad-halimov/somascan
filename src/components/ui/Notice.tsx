@@ -6,16 +6,12 @@ import './Notice.css'
 export interface NoticeProps {
   /** Текст пояснения. */
   children: ReactNode
-  /** Узкая полоса (одна-две строки): напоминание над блоком, а не пояснение к разделу. */
-  compact?: boolean
-  /** Дополнительный CSS-класс (размещение). */
-  className?: string
 }
 
 /** Плашка-пояснение с иконкой «i»: статус функции, ограничения, подсказки к разделу. */
-export function Notice({ children, compact = false, className = '' }: NoticeProps) {
+export function Notice({ children }: NoticeProps) {
   return (
-    <p className={['notice', compact && 'is-compact', className].filter(Boolean).join(' ')}>
+    <p className="notice">
       <InfoIcon />
       <span>{children}</span>
     </p>

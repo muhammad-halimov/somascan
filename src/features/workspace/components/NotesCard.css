@@ -29,6 +29,31 @@
   scroll-snap-align: start;
 }
 
+/* «Проверьте данные перед отправкой» — узкая полоса во всю ширину вверху карточки (её скругление — от карточки). */
+.notes-check {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 16px;
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.notes-check svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .notes-header {
   display: flex;
   flex: 0 0 auto;

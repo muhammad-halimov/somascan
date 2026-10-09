@@ -1,6 +1,6 @@
 import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AddIcon, CloseIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
+import { AddIcon, CloseIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { Tabs } from '@/components/ui/Tabs'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
@@ -49,7 +49,8 @@ export interface NotesCardProps {
 }
 
 /**
- * Карточка результата под фото: шапка с заголовком и кнопками правки, номера бирок (когда их
+ * Карточка результата под фото: узкая полоса «Проверьте данные перед отправкой» (у распознанной бирки),
+ * шапка с заголовком и кнопками правки, номера бирок (когда их
  * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
  * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
@@ -68,6 +69,13 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
 
   return (
     <div ref={cardRef} className={`notes-card${isEditing ? ' is-text-editing' : ''}`} aria-busy={isRecognizing}>
+      {/* Узкая полоса вверху карточки: распознанное проверяют перед каждой отправкой. */}
+      {status.kind === 'done' && (
+        <p className="notes-check anim-fade">
+          <InfoIcon />
+          <span>{t('notes.checkBeforeSend')}</span>
+        </p>
+      )}
       {/* Шапка: заголовок слева, «Готово» (только в правке) и карандаш справа — одной строкой. */}
       <div className="notes-header">
         <h2 className="notes-title"><TagIcon />{title}</h2>

@@ -47,18 +47,3 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-
-/* «Проверьте данные перед отправкой» — узкая полоса над карточкой результата, той же ширины. */
-.check-notice {
-  width: min(100%, 380px);
-  flex: 0 0 auto;
-  margin-top: 10px;
-}
-
-.check-notice + .notes-card {
-  margin-top: 8px;
-}
-
-.scan-workspace.is-text-editing .check-notice {
-  width: min(100%, 600px);
-}

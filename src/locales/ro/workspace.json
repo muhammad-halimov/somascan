@@ -19,7 +19,7 @@
     "label": "Rezultat",
     "placeholder": "Textul va apărea aici",
     "cancelled": "Recunoașterea a fost anulată. Fotografia a rămas — apăsați „Reia” pentru a o recunoaște din nou.",
-    "checkBeforeSend": "Verificați datele înainte de trimitere — recunoașterea poate greși."
+    "checkBeforeSend": "Verificați datele înainte de trimitere"
   },
   "editing": {
     "edit": "Editează textul",

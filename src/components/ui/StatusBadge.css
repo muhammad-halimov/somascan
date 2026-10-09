@@ -4,7 +4,7 @@
 
 .status-badge {
   display: inline-flex;
-  align-items: flex-start;
+  align-items: baseline;
   gap: 6px;
   color: var(--text-h);
   font-size: 12.5px;
@@ -13,17 +13,25 @@
 }
 
 /*
- * Точка — по середине первой строки текста (а не всего блока: длинный статус переносится),
- * чуть выше геометрического центра строки — на уровне середины строчных и прописных букв.
+ * Точка — по середине прописных букв первой строки (длинный статус переносится): низ точки стоит
+ * на базовой линии текста (выравнивание по baseline), затем она поднимается на половину высоты
+ * прописных минус свой радиус. Высота прописных (`cap`) — у шрифта, который реально отрисован
+ * (на устройстве — системный), поэтому точка ровно по тексту на любом шрифте и масштабе текста.
  */
 .status-badge::before {
   content: '';
   width: 8px;
   height: 8px;
   flex: 0 0 8px;
-  margin-top: calc(0.7em - 4px - 0.06em);
   border-radius: 50%;
   background: currentColor;
+  transform: translateY(calc(4px - 0.36em));
+}
+
+@supports (top: 1cap) {
+  .status-badge::before {
+    transform: translateY(calc(4px - 0.5cap));
+  }
 }
 
 .status-badge.is-success::before {
