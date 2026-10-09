@@ -40,8 +40,10 @@ export interface NotesCardProps {
   onCancel: () => void
   /** «Повтор»: распознать то же фото заново. */
   onRetry: () => void
-  /** «Далее»: поставить результат в очередь выгрузки в таблицу. */
+  /** «Далее»: поставить выбранные бирки в очередь выгрузки в таблицу. */
   onNext: () => void
+  /** Сколько бирок выбрано для отправки (на «Далее» — счётчик, если их больше одной). */
+  sendCount: number
   /** «Далее» нажата и экран очищается для следующей бирки: в кнопке крутится спиннер. */
   isUploading?: boolean
 }
@@ -52,7 +54,7 @@ export interface NotesCardProps {
  * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const isRecognizing = status.kind === 'recognizing'
   // Править и отправлять в таблицу можно только распознанный результат: не во время запроса и не после ошибки.
@@ -119,7 +121,17 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
           onClick={isRecognizing ? onCancel : onClear}
         />
         <ActionButton size={48} icon={<ResetIcon />} caption={t('actions.retry')} label={t('actions.retryLabel')} disabled={!hasPhoto || isRecognizing} onClick={onRetry} />
-        <ActionButton size={48} variant="accent" icon={<NextIcon />} caption={t('actions.next')} label={isUploading ? t('actions.uploading') : t('actions.nextLabel')} busy={isUploading} disabled={!canEdit} onClick={onNext} />
+        <ActionButton
+          size={48}
+          variant="accent"
+          icon={<NextIcon />}
+          caption={t('actions.next')}
+          label={isUploading ? t('actions.uploading') : sendCount > 1 ? t('actions.nextManyLabel', { count: sendCount }) : t('actions.nextLabel')}
+          badge={sendCount > 1 && !isUploading ? sendCount : undefined}
+          busy={isUploading}
+          disabled={sendCount === 0}
+          onClick={onNext}
+        />
       </div>
     </div>
   )

@@ -33,6 +33,8 @@
   /* Успех: «ключ сохранён», «завершено». */
   --success: #0f9d58;
   --warning: #f4b400;
+  /* Требует внимания (оранжевый): у бирки не выбрана форма. */
+  --attention: #e8710a;
   /* Баннер «нет сети». */
   --offline-text: #792d00;
   --offline-bg: #fff0e5;
@@ -64,6 +66,7 @@
   --danger: #f28b82;
   --success: #81c995;
   --warning: #fdd663;
+  --attention: #fcad70;
   --offline-text: #ffcf9f;
   --offline-bg: #462719;
   --photo-empty-bg: #292b31;

@@ -47,6 +47,8 @@ export interface ScanItem {
   status: RecognitionStatus
   /** Выбранная вручную форма поставки: переживает «Повтор» того же фото. */
   productForm: string | null
+  /** Бирка выбрана для отправки («Далее» отправляет выбранные). Новые фото выбраны сразу. */
+  selected: boolean
 }
 
 let nextId = 0
@@ -76,6 +78,10 @@ export function useScanSession() {
 
   const [items, setItems] = useState<ScanItem[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
+  const activeIndexRef = useRef(0)
+  useEffect(() => {
+    activeIndexRef.current = activeIndex
+  }, [activeIndex])
   /** Текущий список для асинхронных обновлений (распознавание, миниатюры): единый источник правды. */
   const itemsRef = useRef<ScanItem[]>([])
   const controllers = useRef(new Map<string, AbortController>())
@@ -148,6 +154,7 @@ export function useScanSession() {
     hasError: false,
     status: { kind: 'recognizing' },
     productForm: null,
+    selected: true,
   }), [])
 
   /** Распознавание и миниатюра новой бирки. */
@@ -186,7 +193,7 @@ export function useScanSession() {
     if (!old) return
     stopRecognition(old.id)
     revoke(old)
-    const item = create(url)
+    const item = { ...create(url), selected: old.selected }
     commit(itemsRef.current.map((candidate, position) => (position === index ? item : candidate)))
     setActiveIndex(index)
     prepare(item)
@@ -202,6 +209,34 @@ export function useScanSession() {
     commit(next)
     setActiveIndex(next.length === 0 ? 0 : Math.min(index, next.length - 1))
   }, [commit, stopRecognition])
+
+  /**
+   * Убирает бирки `ids` (отправленные пачкой); открывается та, что встала на место открытой,
+   * или ближайшая перед ней.
+   */
+  const removeMany = useCallback((ids: readonly string[]) => {
+    const gone = new Set(ids)
+    const list = itemsRef.current
+    const activeId = list[activeIndexRef.current]?.id
+    for (const item of list) {
+      if (!gone.has(item.id)) continue
+      stopRecognition(item.id)
+      revoke(item)
+    }
+    const next = list.filter((item) => !gone.has(item.id))
+    commit(next)
+    // Открытая осталась — она и открыта; иначе — первая из оставшихся после неё (или последняя).
+    const kept = next.findIndex((item) => item.id === activeId)
+    const after = list.slice(activeIndexRef.current).find((item) => !gone.has(item.id))
+    const index = kept >= 0 ? kept : after ? next.indexOf(after) : next.length - 1
+    setActiveIndex(Math.max(0, index))
+  }, [commit, stopRecognition])
+
+  /** Выбрать бирку `index` для отправки или снять выбор. */
+  const toggleSelected = useCallback((index: number) => {
+    const item = itemsRef.current[index]
+    if (item) patch(item.id, (current) => ({ selected: !current.selected }))
+  }, [patch])
 
   /** Открывает бирку `index` или следующую пустую ячейку (`items.length`). */
   const select = useCallback((index: number) => {
@@ -259,6 +294,8 @@ export function useScanSession() {
     add,
     replace,
     remove,
+    removeMany,
+    toggleSelected,
     select,
     retry,
     abort,

@@ -38,7 +38,8 @@
     "next": "Înainte",
     "nextLabel": "Trimite în tabel",
     "uploading": "Se trimite…",
-    "cancelLabel": "Anulează recunoașterea"
+    "cancelLabel": "Anulează recunoașterea",
+    "nextManyLabel": "Trimite selectatele în tabel ({{count}})"
   },
   "resetDialog": {
     "title": "Resetați zona de lucru?",
@@ -92,6 +93,16 @@
     "title": "Forma nu este aleasă",
     "message": "Înainte de trimitere alegeți ce este pe etichetă: bară sau bobină — atingeți câmpul „Formă” din partea de sus a cardului."
   },
+  "sendDialog": {
+    "noneTitle": "Nimic de trimis",
+    "noneMessage": "Selectați etichetele de trimis în grilă — marcajul din colțul din stânga jos al fotografiei.",
+    "notReadyTitle": "Eticheta {{number}} nu este gata",
+    "recognizingMessage": "Încă se recunoaște — așteptați câteva secunde.",
+    "failedMessage": "Nu a putut fi recunoscută — atingeți „Reîncearcă” sau deselectați-o în grilă.",
+    "partialTitle": "Trimiteți pe cele gata?",
+    "partialMessage": "Gata de trimis: {{ready}} din {{total}}. Celelalte ({{rest}}) încă se recunosc, au eșuat sau nu au formă — rămân pe ecran.",
+    "sendReady": "Trimite {{count}}"
+  },
   "grid": {
     "region": "Etichete pe ecran",
     "open": "Grilă",
@@ -100,10 +111,16 @@
     "backLabel": "Înapoi la grilă",
     "items": "Etichete",
     "item": "Eticheta {{number}}",
-    "stateRecognizing": "se recunoaște",
-    "stateDone": "recunoscută",
-    "stateFailed": "eroare",
     "add": "Adaugă eticheta {{number}}",
-    "locked": "Celula {{number}}: completați mai întâi celulele anterioare"
+    "locked": "Celula {{number}}: completați mai întâi celulele anterioare",
+    "close": "Etichetă",
+    "closeLabel": "Înapoi la eticheta deschisă",
+    "select": "Trimite eticheta {{number}}",
+    "state": {
+      "busy": "se recunoaște",
+      "failed": "eroare",
+      "noForm": "forma nu este aleasă",
+      "done": "gata"
+    }
   }
 }

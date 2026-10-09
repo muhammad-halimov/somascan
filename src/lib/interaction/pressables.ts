@@ -4,10 +4,10 @@
  * Селектор общий для всех платформ: по нему контроллер нажатий (`PressController`) находит
  * элемент под пальцем. Компонент попадает сюда, если у него есть нативный аналог с откликом:
  * вкладка/сегмент, строка списка, кнопка, кнопка-иконка, кнопка внутри поля (глазок, «Сверка»), пустая карточка фото,
- * ячейка сетки фото.
+ * ячейка сетки фото и значок выбора в ней.
  */
 export const PRESSABLE_SELECTOR =
-  '.tab, .list-item.is-interactive, .action-button, .button, .input-action, .photo-empty, .photo-grid-cell'
+  '.tab, .list-item.is-interactive, .action-button, .button, .input-action, .photo-empty, .photo-grid-open, .photo-grid-select'
 
 /** Точка касания в координатах окна. */
 export interface PressPoint {

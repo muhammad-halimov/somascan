@@ -2,9 +2,18 @@
   "title": "Uploads",
   "close": "Close uploads",
   "clear": "Clear completed",
-  "empty": {
-    "title": "No uploads yet",
-    "description": "Tags you send with “Next” appear here and are written to the table one by one"
+  "tabs": {
+    "label": "Upload sections",
+    "queue": "Queue",
+    "done": "Done"
+  },
+  "emptyQueue": {
+    "title": "The queue is empty",
+    "description": "Tags sent with “Next” appear here and are written to the table one by one"
+  },
+  "emptyDone": {
+    "title": "Nothing written yet",
+    "description": "Tags already written to the table appear here: sheet, row and item number"
   },
   "status": {
     "queued": "Queued",

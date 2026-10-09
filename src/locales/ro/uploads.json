@@ -2,9 +2,18 @@
   "title": "Încărcări",
   "close": "Închide încărcările",
   "clear": "Șterge finalizate",
-  "empty": {
-    "title": "Nicio încărcare încă",
-    "description": "Etichetele trimise cu „Înainte” apar aici și se scriu în tabel una câte una"
+  "tabs": {
+    "label": "Secțiunile încărcărilor",
+    "queue": "Coadă",
+    "done": "Gata"
+  },
+  "emptyQueue": {
+    "title": "Coada este goală",
+    "description": "Etichetele trimise cu „Înainte” apar aici și se scriu în tabel pe rând"
+  },
+  "emptyDone": {
+    "title": "Nimic scris încă",
+    "description": "Aici apar etichetele deja scrise în tabel: foaia, rândul și numărul elementului"
   },
   "status": {
     "queued": "În așteptare",

@@ -77,6 +77,12 @@
 :root[data-platform='ios'][data-theme='dark'] {
   --ios-segment-track: rgb(118 118 128 / 24%);
   --ios-segment-thumb: #636366;
+  --attention: #ff9f0a;
+}
+
+/* Оранжевый «требует внимания» — systemOrange. */
+:root[data-platform='ios'] {
+  --attention: #ff9500;
 }
 
 :root[data-platform='ios'][data-ios-design='glass'][data-theme='dark'],

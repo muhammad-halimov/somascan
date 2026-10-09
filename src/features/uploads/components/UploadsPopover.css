@@ -21,6 +21,15 @@
   animation: popover-enter 180ms cubic-bezier(.2, .75, .25, 1) both;
 }
 
+/* Вкладки «Очередь» и «Готово» под заголовком: Material — на всю ширину, iOS — сегменты с отступами. */
+.uploads-tabs {
+  flex: 0 0 auto;
+}
+
+:root[data-platform='ios'] .uploads-tabs {
+  padding: 2px 16px 8px;
+}
+
 .uploads-content {
   flex: 1;
   min-height: 0;

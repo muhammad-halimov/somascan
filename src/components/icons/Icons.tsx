@@ -550,3 +550,13 @@ export function BackIcon() {
     </>
   )
 }
+
+/** Восклицательный знак: требует внимания (например, у бирки не выбрана форма). */
+export function ExclamationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 5.5v8.5" />
+      <path d="M12 18.6h.01" />
+    </svg>
+  )
+}

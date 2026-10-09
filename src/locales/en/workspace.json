@@ -38,7 +38,8 @@
     "next": "Next",
     "nextLabel": "Send to the table",
     "uploading": "Sending…",
-    "cancelLabel": "Cancel recognition"
+    "cancelLabel": "Cancel recognition",
+    "nextManyLabel": "Send selected to the table ({{count}})"
   },
   "resetDialog": {
     "title": "Reset workspace?",
@@ -92,6 +93,16 @@
     "title": "Form not selected",
     "message": "Before sending, choose what the tag is for: bar or coil — tap the “Form” field at the top of the card."
   },
+  "sendDialog": {
+    "noneTitle": "Nothing to send",
+    "noneMessage": "Select tags to send in the grid — the mark in the bottom left corner of a photo.",
+    "notReadyTitle": "Tag {{number}} is not ready",
+    "recognizingMessage": "It is still being recognized — wait a few seconds.",
+    "failedMessage": "It could not be recognized — tap “Retry” or deselect it in the grid.",
+    "partialTitle": "Send the ready ones?",
+    "partialMessage": "{{ready}} of {{total}} are ready to send. The others ({{rest}}) are still recognizing, failed or have no form — they stay on the screen.",
+    "sendReady": "Send {{count}}"
+  },
   "grid": {
     "region": "Tags on screen",
     "open": "Grid",
@@ -100,10 +111,16 @@
     "backLabel": "Back to the grid",
     "items": "Tags",
     "item": "Tag {{number}}",
-    "stateRecognizing": "recognizing",
-    "stateDone": "recognized",
-    "stateFailed": "error",
     "add": "Add tag {{number}}",
-    "locked": "Cell {{number}}: fill the previous ones first"
+    "locked": "Cell {{number}}: fill the previous ones first",
+    "close": "Tag",
+    "closeLabel": "Back to the open tag",
+    "select": "Send tag {{number}}",
+    "state": {
+      "busy": "recognizing",
+      "failed": "error",
+      "noForm": "form not chosen",
+      "done": "ready"
+    }
   }
 }

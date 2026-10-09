@@ -17,7 +17,7 @@ import { PhotoViewer } from './components/PhotoViewer'
 import { useEditMode } from './hooks/useEditMode'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
-import { IDLE, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
+import { IDLE, MAX_SCAN_ITEMS, useScanSession, type ScanItem } from './hooks/useScanSession'
 import './ScanWorkspace.css'
 
 /** Сколько крутится спиннер в «Далее», пока бирка уходит в очередь и открывается следующая. */
@@ -27,8 +27,8 @@ const HANDOFF_MS = 700
  * Главный экран: выбрать фото бирок (до девяти сразу), автоматически распознать, проверить и поправить поля.
  *
  * Собирает карточку фото (одна бирка или сетка 3 × 3), карточку результата открытой бирки и просмотр
- * на весь экран. Бирки идут по порядку: новые фото встают в конец, каждое распознаётся само;
- * «Далее» отправляет открытую бирку в очередь выгрузки и открывает следующую.
+ * на весь экран. Бирки идут по порядку: новые фото встают в конец, каждое распознаётся само и сразу
+ * выбрано для отправки (выбор меняется в сетке); «Далее» отправляет выбранные в очередь выгрузки пачкой.
  * К бирке можно перейти из сетки и из карточки результата (номера бирок над полями).
  */
 export function ScanWorkspace() {
@@ -190,34 +190,72 @@ export function ScanWorkspace() {
     closeGrid()
   }
 
-  /**
-   * «Далее»: распознанная (и поправленная) бирка встаёт в очередь выгрузки и убирается с экрана,
-   * открывается следующая (или пустая карточка). Спиннер в кнопке крутится не меньше `HANDOFF_MS`,
-   * чтобы его было видно. Сама запись в таблицу идёт в фоне (на устройстве — движок очереди вне WebView,
-   * и в свёрнутом, и в закрытом приложении), её состояние — в «Загрузках»; если хранилище не настроено
-   * или проверка уже показала, что таблицы нет (своей приложение не создаёт), запись подождёт
-   * исправления настроек — об этом сообщаем сразу.
-   */
-  const uploadResult = async () => {
-    if (!item || status.kind !== 'done' || isHandingOff) return
-    // Форму поставки (пруток или катушка) выбирают вручную — без неё бирку не отправить.
-    // Выбор формы — первая строка карточки: докручиваем к нему, если список прокручен.
-    if (!hasProductForm(status.label)) {
-      notesCardRef.current?.querySelector('.label-field.is-product-form')?.scrollIntoView({ block: 'nearest' })
-      await NativeDialogs.alert({
-        title: t('formDialog.title'),
-        message: t('formDialog.message'),
-        buttonTitle: t('common:ok'),
-      })
+  /** Бирка готова к отправке: распознана и выбрана форма. */
+  const isReady = (candidate: ScanItem) => candidate.status.kind === 'done' && hasProductForm(candidate.status.label)
+
+  /** Открывает бирку, которая мешает отправке, и объясняет, что с ней. */
+  const showNotReady = async (blocker: ScanItem) => {
+    const index = session.items.indexOf(blocker)
+    session.select(index)
+    const number = index + 1
+    if (blocker.status.kind === 'done') {
+      // Не выбрана форма: выбор формы — первая строка карточки, докручиваем к нему.
+      window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-product-form')?.scrollIntoView({ block: 'nearest' }), 0)
+      await NativeDialogs.alert({ title: t('formDialog.title'), message: t('formDialog.message'), buttonTitle: t('common:ok') })
       return
     }
+    await NativeDialogs.alert({
+      title: t('sendDialog.notReadyTitle', { number }),
+      message: blocker.status.kind === 'recognizing' ? t('sendDialog.recognizingMessage') : t('sendDialog.failedMessage'),
+      buttonTitle: t('common:ok'),
+    })
+  }
+
+  /**
+   * «Далее»: выбранные бирки (по умолчанию — все), распознанные и с формой, встают в очередь выгрузки
+   * по порядку и убираются с экрана, открывается следующая. Если часть выбранных не готова
+   * (распознаётся, не распознана, без формы), сначала спрашиваем, отправить ли готовые; отказ открывает
+   * первую неготовую. Спиннер в кнопке крутится не меньше `HANDOFF_MS`, чтобы его было видно.
+   *
+   * Сама запись в таблицу идёт в фоне (на устройстве — движок очереди вне WebView, и в свёрнутом,
+   * и в закрытом приложении), её состояние — в «Загрузках»; если хранилище не настроено или проверка
+   * уже показала, что таблицы нет (своей приложение не создаёт), записи подождут исправления
+   * настроек — об этом сообщаем сразу.
+   */
+  const uploadSelected = async () => {
+    if (isHandingOff) return
+    const selected = session.items.filter((candidate) => candidate.selected)
+    if (selected.length === 0) {
+      await NativeDialogs.alert({ title: t('sendDialog.noneTitle'), message: t('sendDialog.noneMessage'), buttonTitle: t('common:ok') })
+      return
+    }
+    const ready = selected.filter(isReady)
+    const blocker = selected.find((candidate) => !isReady(candidate))
+    if (blocker && ready.length === 0) {
+      await showNotReady(blocker)
+      return
+    }
+    if (blocker) {
+      const confirmed = await NativeDialogs.confirm({
+        title: t('sendDialog.partialTitle'),
+        message: t('sendDialog.partialMessage', { ready: ready.length, total: selected.length, rest: selected.length - ready.length }),
+        okButtonTitle: t('sendDialog.sendReady', { count: ready.length }),
+        cancelButtonTitle: t('common:cancel'),
+      })
+      if (!confirmed) {
+        await showNotReady(blocker)
+        return
+      }
+    }
+    editMode.exit()
     const { advanced, general, storage } = settingsStore.getSnapshot()
     const columns = buildUploadColumns(enabledLabelFields(advanced.labelFields), general.language)
-    uploadQueue.enqueue(status.label, columns)
+    for (const candidate of ready) {
+      if (candidate.status.kind === 'done') uploadQueue.enqueue(candidate.status.label, columns)
+    }
     setIsHandingOff(true)
     await new Promise((resolve) => window.setTimeout(resolve, HANDOFF_MS))
-    const index = session.items.findIndex((candidate) => candidate.id === item.id)
-    if (index >= 0) session.remove(index)
+    session.removeMany(ready.map((candidate) => candidate.id))
     setIsHandingOff(false)
     const configured = storage.target === 'smb' ? isSmbConfigured(storage.smb) : isDriveConfigured(storage.googleDrive)
     if (!configured) {
@@ -234,6 +272,9 @@ export function ScanWorkspace() {
       })
     }
   }
+
+  /** Сколько бирок выбрано для отправки. */
+  const selectedCount = session.items.filter((candidate) => candidate.selected).length
 
   return (
     <section
@@ -256,6 +297,8 @@ export function ScanWorkspace() {
         onError={() => item && session.markFailed(item.id)}
         onShowGrid={showGrid}
         onOpenCell={openCell}
+        onToggleSelected={session.toggleSelected}
+        onCloseGrid={closeGrid}
       />
       <NotesCard
         cardRef={notesCardRef}
@@ -273,7 +316,8 @@ export function ScanWorkspace() {
         onClear={() => void removeItem()}
         onCancel={() => session.abort(activeIndex)}
         onRetry={retry}
-        onNext={() => void uploadResult()}
+        onNext={() => void uploadSelected()}
+        sendCount={selectedCount}
         isUploading={isHandingOff}
       />
       {viewer.mounted && item && <PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} isClosing={viewer.closing} onClose={closeViewer} />}

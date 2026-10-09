@@ -5,6 +5,7 @@ import { AlertIcon, CheckIcon, ClockIcon, CloseIcon, EmptyInboxIcon, RefreshIcon
 import { ActionButton } from '@/components/ui/ActionButton'
 import { List, ListItem } from '@/components/ui/List'
 import { PanelHeader } from '@/components/ui/PanelHeader'
+import { Tabs } from '@/components/ui/Tabs'
 import { useStore } from '@/lib/store/useStore'
 import { EXIT_ANIMATION_MS } from '@/hooks/usePresence'
 import { isMissingValue } from '@/features/recognition/label/labelFields'
@@ -31,10 +32,13 @@ const STATUS_ICONS: Record<UploadStatus, ReactNode> = {
   failed: <AlertIcon />,
 }
 
+/** Вкладка панели: очередь (ждут, пишутся, не записаны) или готовые (записанные). */
+type UploadsTab = 'queue' | 'done'
+
 /**
- * Всплывающая панель под шапкой: очередь выгрузки и история записанных бирок.
- * У каждой записи — состояние (в очереди, пишется, записана, не записана) и причина сбоя;
- * незаписанные можно повторить. Закрывается нажатием вне панели или крестиком.
+ * Всплывающая панель под шапкой: две вкладки — «Очередь» (ждут, пишутся, не записаны — их можно
+ * повторить или отменить) и «Готово» (записанные: лист, строка, номер элемента; их можно удалить
+ * из истории). У каждой записи — состояние и причина сбоя. Закрывается нажатием вне панели или крестиком.
  */
 export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   const { t, i18n } = useTranslation(['uploads', 'label', 'common'])
@@ -44,6 +48,15 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   const popoverRef = useRef<HTMLElement>(null)
   /** Записи, которые сейчас уезжают с анимацией удаления. */
   const [removing, setRemoving] = useState<ReadonlySet<string>>(new Set())
+  const queued = records.filter((record) => record.status !== 'completed')
+  const completed = records.filter((record) => record.status === 'completed')
+  /** Открывается очередь, если в ней что-то есть, иначе — готовые. */
+  const [tab, setTab] = useState<UploadsTab>(() => (uploadStore.getSnapshot().some((record) => record.status !== 'completed') ? 'queue' : 'done'))
+  const shown = tab === 'queue' ? queued : completed
+  const tabOptions = [
+    { value: 'queue' as const, label: queued.length > 0 ? `${t('tabs.queue')} ${queued.length}` : t('tabs.queue') },
+    { value: 'done' as const, label: completed.length > 0 ? `${t('tabs.done')} ${completed.length}` : t('tabs.done') },
+  ]
   const dateTimeFormat = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
     [i18n.language],
@@ -161,24 +174,29 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
         title={t('title')}
         actions={(
           <>
-            {hasFailed(records) && (
+            {tab === 'queue' && hasFailed(records) && (
               <ActionButton variant="ghost" icon={<ResetIcon />} caption={t('retryAllCaption')} label={t('retryAll')} onClick={() => uploadQueue.retryAll()} />
             )}
-            <ActionButton variant="ghost" icon={<TrashIcon />} caption={t('clearCaption')} label={t('clear')} disabled={!records.some((record) => record.status === 'completed')} onClick={() => void clearCompleted()} />
+            {tab === 'done' && (
+              <ActionButton variant="ghost" icon={<TrashIcon />} caption={t('clearCaption')} label={t('clear')} disabled={completed.length === 0} onClick={() => void clearCompleted()} />
+            )}
             <ActionButton variant="ghost" icon={<CloseIcon />} caption={t('common:close')} label={t('close')} onClick={onClose} />
           </>
         )}
       />
+      <div className="uploads-tabs">
+        <Tabs options={tabOptions} value={tab} onChange={setTab} label={t('tabs.label')} />
+      </div>
       <div className="uploads-content">
-        {records.length === 0 ? (
-          <div className="uploads-empty-state">
+        {shown.length === 0 ? (
+          <div key={tab} className="uploads-empty-state anim-fade">
             <EmptyInboxIcon />
-            <h3 className="uploads-empty-title">{t('empty.title')}</h3>
-            <p className="uploads-empty-desc">{t('empty.description')}</p>
+            <h3 className="uploads-empty-title">{t(tab === 'queue' ? 'emptyQueue.title' : 'emptyDone.title')}</h3>
+            <p className="uploads-empty-desc">{t(tab === 'queue' ? 'emptyQueue.description' : 'emptyDone.description')}</p>
           </div>
         ) : (
-          <List className="uploads-list">
-            {records.map((record) => {
+          <List key={tab} className="uploads-list anim-fade">
+            {shown.map((record) => {
               // Строки подробностей: марка, размер и вес; плавка и партия; назначение и время; состояние.
               const join = (parts: Array<string | undefined | false>) => parts.filter(Boolean).join(' · ')
               const weight = text(record, 'weight_kg')

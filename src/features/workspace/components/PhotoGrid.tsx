@@ -1,6 +1,7 @@
 import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertIcon, CheckIcon } from '@/components/icons/Icons'
+import { AlertIcon, CheckIcon, ExclamationIcon } from '@/components/icons/Icons'
+import { hasProductForm } from '@/features/recognition/label/productForm'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import './PhotoGrid.css'
 
@@ -16,14 +17,30 @@ export interface PhotoGridProps {
   interactive: boolean
   /** Открыть бирку или следующую пустую ячейку. */
   onOpen: (index: number) => void
+  /** Выбрать бирку для отправки или снять выбор. */
+  onToggleSelected: (index: number) => void
+}
+
+/** Состояние бирки для значка в углу ячейки. */
+type CellState = 'busy' | 'failed' | 'noForm' | 'done' | 'none'
+
+function cellState(item: ScanItem): CellState {
+  if (item.hasError || item.status.kind === 'failed') return 'failed'
+  if (item.status.kind === 'recognizing') return 'busy'
+  if (item.status.kind === 'done') return hasProductForm(item.status.label) ? 'done' : 'noForm'
+  return 'none'
 }
 
 /**
  * Сетка 3 × 3 в карточке фото: бирки по порядку (миниатюра, номер, состояние распознавания),
  * следующая свободная ячейка — «плюс», дальше — недоступные ячейки: заполнять можно только по порядку.
- * Нажатие открывает бирку (карточка увеличивает ячейку до одной бирки).
+ *
+ * Выбранные для отправки бирки обведены акцентным цветом, открытая — контрастным (у выбранной
+ * открытой — оба кольца); значок выбора — в левом нижнем углу. Состояние — в правом нижнем:
+ * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма), красный знак (ошибка).
+ * Нажатие на ячейку открывает бирку (карточка увеличивает ячейку до одной бирки).
  */
-export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen }: PhotoGridProps) {
+export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, onToggleSelected }: PhotoGridProps) {
   const { t } = useTranslation('workspace')
   return (
     <div ref={gridRef} className="photo-grid" role="group" aria-label={t('grid.region')} inert={!interactive || undefined}>
@@ -34,40 +51,51 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen }: 
         if (!item) {
           const isNext = index === items.length
           return (
-            <button
-              key={`empty-${index}`}
-              type="button"
-              className={`photo-grid-cell is-empty ${isNext ? 'is-next' : 'is-locked'}${isActive ? ' is-active' : ''}`}
-              aria-label={isNext ? t('grid.add', { number }) : t('grid.locked', { number })}
-              disabled={!isNext}
-              onClick={() => onOpen(index)}
-            >
-              <span className="photo-grid-plus" aria-hidden="true" />
-            </button>
+            <div key={`empty-${index}`} className={`photo-grid-cell is-empty ${isNext ? 'is-next' : 'is-locked'}${isActive ? ' is-active' : ''}`}>
+              <button
+                type="button"
+                className="photo-grid-open"
+                aria-label={isNext ? t('grid.add', { number }) : t('grid.locked', { number })}
+                disabled={!isNext}
+                onClick={() => onOpen(index)}
+              >
+                <span className="photo-grid-plus" aria-hidden="true" />
+              </button>
+            </div>
           )
         }
-        const isBusy = item.status.kind === 'recognizing' || (item.isLoading && !item.hasError)
-        const isFailed = item.hasError || item.status.kind === 'failed'
-        const isDone = !isFailed && item.status.kind === 'done'
-        const state = isBusy ? t('grid.stateRecognizing') : isFailed ? t('grid.stateFailed') : isDone ? t('grid.stateDone') : ''
+        const state = cellState(item)
+        const stateText = state === 'none' ? '' : t(`grid.state.${state}`)
+        const classes = ['photo-grid-cell', 'has-photo', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')
         return (
-          <button
-            key={item.id}
-            type="button"
-            className={`photo-grid-cell has-photo${isActive ? ' is-active' : ''}${isBusy ? ' is-busy' : ''}`}
-            aria-label={state ? `${t('grid.item', { number })}: ${state}` : t('grid.item', { number })}
-            aria-current={isActive || undefined}
-            onClick={() => onOpen(index)}
-          >
-            {item.thumbUrl && !item.hasError && <img className="photo-grid-thumb" src={item.thumbUrl} alt="" draggable={false} decoding="async" />}
-            <span className="photo-grid-number" aria-hidden="true">{number}</span>
-            {isBusy && <span className="photo-grid-spinner" aria-hidden="true" />}
-            {(isFailed || isDone) && (
-              <span className={`photo-grid-badge ${isFailed ? 'is-failed' : 'is-done'}`} aria-hidden="true">
-                {isFailed ? <AlertIcon /> : <CheckIcon />}
-              </span>
-            )}
-          </button>
+          <div key={item.id} className={classes}>
+            <button
+              type="button"
+              className="photo-grid-open"
+              aria-label={stateText ? `${t('grid.item', { number })}: ${stateText}` : t('grid.item', { number })}
+              aria-current={isActive || undefined}
+              onClick={() => onOpen(index)}
+            >
+              {item.thumbUrl && !item.hasError && <img className="photo-grid-thumb" src={item.thumbUrl} alt="" draggable={false} decoding="async" />}
+              <span className="photo-grid-number" aria-hidden="true">{number}</span>
+              {state === 'busy' && <span className="photo-grid-spinner" aria-hidden="true" />}
+              {(state === 'failed' || state === 'noForm' || state === 'done') && (
+                <span className={`photo-grid-badge is-${state}`} aria-hidden="true">
+                  {state === 'failed' ? <AlertIcon /> : state === 'noForm' ? <ExclamationIcon /> : <CheckIcon />}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              role="checkbox"
+              className="photo-grid-select"
+              aria-checked={item.selected}
+              aria-label={t('grid.select', { number })}
+              onClick={() => onToggleSelected(index)}
+            >
+              <span className="photo-grid-check" aria-hidden="true"><CheckIcon /></span>
+            </button>
+          </div>
         )
       })}
     </div>

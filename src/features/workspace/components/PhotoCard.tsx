@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { BackIcon, GridIcon } from '@/components/icons/Icons'
+import { BackIcon, GridIcon, ImageIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { usePresence } from '@/hooks/usePresence'
 import type { ScanItem } from '../hooks/useScanSession'
@@ -42,6 +43,10 @@ export interface PhotoCardProps {
   onShowGrid: () => void
   /** Ячейка сетки: открыть бирку или следующую пустую ячейку. */
   onOpenCell: (index: number) => void
+  /** Значок выбора в ячейке: отправлять бирку или нет. */
+  onToggleSelected: (index: number) => void
+  /** Кнопка в углу сетки: вернуться к открытой бирке (и в пустом списке). */
+  onCloseGrid: () => void
 }
 
 /** Длительность и кривая перехода между сеткой и одной биркой — как у системы. */
@@ -58,11 +63,11 @@ const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
  * перетаскивание, — кнопками масштаба и поворота) или сетка 3 × 3 всех бирок.
  *
  * Справа вверху — «Сетка»: карточка уменьшает фото в его ячейку, и появляется сетка; нажатие
- * на ячейку увеличивает её обратно до одной бирки. Слева вверху у бирки, открытой из сетки, — «Назад»
- * к сетке. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
+ * на ячейку (или кнопка в углу сетки) увеличивает её обратно до одной бирки. Слева вверху у бирки,
+ * открытой из сетки, — «Назад» к сетке. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
  * один спиннер с подписью «Распознавание».
  */
-export function PhotoCard({ item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell }: PhotoCardProps) {
+export function PhotoCard({ item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onToggleSelected, onCloseGrid }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -71,6 +76,9 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
   const hasPhoto = Boolean(photoUrl) && !hasError
   const isBusy = isReceiving || (item !== null && (item.isLoading || item.status.kind === 'recognizing') && !hasError)
   const overlay = usePresence(isBusy)
+  /** Бирка, чьё фото уже загрузилось в карточке: до этого вместо него — миниатюра (фото с телефона декодируется не сразу). */
+  const [loadedId, setLoadedId] = useState<string | null>(null)
+  const placeholder = hasPhoto && item?.thumbUrl && item.thumbUrl !== photoUrl && loadedId !== item.id ? item.thumbUrl : null
 
   const cardRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -92,8 +100,12 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
     if (shownView.current === view) return
     shownView.current = view
     const finish = () => {
-      setSettledView(view)
-      if (view === 'single') setGridMounted(false)
+      // Сразу в DOM: иначе между концом анимации и отрисовкой React мелькнул бы прежний слой
+      // (например, сетка целиком — в конце перехода к одной бирке).
+      flushSync(() => {
+        setSettledView(view)
+        if (view === 'single') setGridMounted(false)
+      })
     }
     const card = cardRef.current
     const stage = stageRef.current
@@ -131,15 +143,19 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
           ], timing),
           grid.animate([{ transform: 'none', opacity: 1 }, { opacity: 1, offset: 0.4 }, { transform: gridAtCell, opacity: 0 }], timing),
         ]
+    // На время перехода — без размытия под кнопками (дорого для композитора, переход дёргался бы).
+    card.classList.add('is-zooming')
     let cancelled = false
     void Promise.all(animations.map((animation) => animation.finished)).then(() => {
       if (cancelled) return
-      animations.forEach((animation) => animation.cancel())
       finish()
+      animations.forEach((animation) => animation.cancel())
+      card.classList.remove('is-zooming')
     }, () => undefined)
     return () => {
       cancelled = true
       animations.forEach((animation) => animation.cancel())
+      card.classList.remove('is-zooming')
     }
   }, [view])
 
@@ -159,7 +175,18 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
             onClick={(event) => !wasGesture(event.timeStamp) && onOpen()}
             {...pointerHandlers}
           >
-            <PhotoFrame key={item?.id} url={photoUrl} alt={t('photo.alt')} transform={transform} onLoad={onLoad} onError={onError} />
+            {placeholder && <img className="photo-placeholder" src={placeholder} alt="" draggable={false} />}
+            <PhotoFrame
+              key={item?.id}
+              url={photoUrl}
+              alt={t('photo.alt')}
+              transform={transform}
+              onLoad={(size) => {
+                setLoadedId(item?.id ?? null)
+                onLoad(size)
+              }}
+              onError={onError}
+            />
           </button>
         )}
 
@@ -190,7 +217,22 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
         </div>
       </div>
 
-      {gridMounted && <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onOpen={onOpenCell} />}
+      {gridMounted && (
+        <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
+      )}
+
+      {/* В сетке (и в пустом списке) — обратно к открытой бирке: тот же угол, что у «Сетки». */}
+      {view === 'grid' && (
+        <ActionButton
+          className="photo-grid-close anim-fade"
+          variant="overlay"
+          size={40}
+          icon={<ImageIcon />}
+          caption={t('grid.close')}
+          label={t('grid.closeLabel')}
+          onClick={onCloseGrid}
+        />
+      )}
     </div>
   )
 }
