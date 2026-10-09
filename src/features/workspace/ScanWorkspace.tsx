@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { enabledLabelFields } from '@/features/recognition/label/labelFields'
 import { hasProductForm } from '@/features/recognition/label/productForm'
@@ -12,9 +13,9 @@ import { useHistoryLayer } from '@/hooks/useHistoryLayer'
 import { usePresence } from '@/hooks/usePresence'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
-import { PhotoCard, type PhotoCardView } from './components/PhotoCard'
+import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
-import { SlideBar } from './components/SlideBar'
+import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
@@ -46,6 +47,7 @@ export function ScanWorkspace() {
 
   const workspaceRef = useRef<HTMLElement>(null)
   const notesCardRef = useRef<HTMLDivElement>(null)
+  const photoCardRef = useRef<PhotoCardHandle>(null)
 
   const hasPhoto = item !== null && !item.hasError
   const transform = usePhotoTransform({ naturalSize: item?.naturalSize ?? null, enabled: hasPhoto && !item.isLoading && view === 'single' })
@@ -227,7 +229,8 @@ export function ScanWorkspace() {
    * «Далее»: выбранные бирки (по умолчанию — все), распознанные и с формой, встают в очередь выгрузки
    * по порядку и убираются с экрана, открывается следующая. Если часть выбранных не готова
    * (распознаётся, не распознана, без формы), сначала спрашиваем, отправить ли готовые; отказ открывает
-   * первую неготовую. Спиннер в кнопке крутится не меньше `HANDOFF_MS`, чтобы его было видно.
+   * первую неготовую. Спиннер в кнопке крутится не меньше `HANDOFF_MS`, чтобы его было видно; за это время
+   * фото отправленных улетают к «Загрузкам».
    *
    * Сама запись в таблицу идёт в фоне (на устройстве — движок очереди вне WebView, и в свёрнутом,
    * и в закрытом приложении), её состояние — в «Загрузках»; если хранилище не настроено или проверка
@@ -266,8 +269,13 @@ export function ScanWorkspace() {
       if (candidate.status.kind === 'done') uploadQueue.enqueue(candidate.status.label, columns)
     }
     setIsHandingOff(true)
+    // Отправленные фото улетают к «Загрузкам» (в сетке — их ячейки, у одной бирки — её фото), а когда
+    // спиннер отработал, бирки убираются; скрытое на время полёта возвращается уже на новом месте.
+    const ids = ready.map((candidate) => candidate.id)
+    const flight = photoCardRef.current?.sendAway(new Set(ids))
     await new Promise((resolve) => window.setTimeout(resolve, HANDOFF_MS))
-    session.removeMany(ready.map((candidate) => candidate.id))
+    flushSync(() => session.removeMany(ids))
+    flight?.restore()
     setIsHandingOff(false)
     const configured = storage.target === 'smb' ? isSmbConfigured(storage.smb) : isDriveConfigured(storage.googleDrive)
     if (!configured) {
@@ -287,6 +295,8 @@ export function ScanWorkspace() {
 
   /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
   const hasSlideBar = session.items.length > 0 || view === 'grid'
+  /** Панель появляется и уходит плавно: пока она схлопывается, остаётся в DOM. */
+  const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
 
   /** Сколько бирок выбрано для отправки. */
   const selectedCount = session.items.filter((candidate) => candidate.selected).length
@@ -299,8 +309,9 @@ export function ScanWorkspace() {
     >
       <input className="photo-input" {...picker.inputProps} />
       {/* Карточка фото и панель листания под ней — один блок. */}
-      <div className={`photo-block${hasSlideBar ? ' has-slide-bar' : ''}`}>
+      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}`}>
         <PhotoCard
+          handleRef={photoCardRef}
           item={item}
           items={session.items}
           activeIndex={activeIndex}
@@ -317,8 +328,9 @@ export function ScanWorkspace() {
           onOpenActive={closeGrid}
           onToggleSelected={session.toggleSelected}
         />
-        {hasSlideBar && (
+        {slideBar.mounted && (
           <SlideBar
+            isClosing={slideBar.closing}
             activeIndex={activeIndex}
             positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
             isGrid={view === 'grid'}

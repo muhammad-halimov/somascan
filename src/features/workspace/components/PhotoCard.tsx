@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { BackIcon, GridIcon, ImageIcon } from '@/components/icons/Icons'
@@ -7,6 +7,8 @@ import { usePresence } from '@/hooks/usePresence'
 import type { ScanItem } from '../hooks/useScanSession'
 import type { Size } from '../utils/PhotoGeometry'
 import type { PhotoTransform } from '../hooks/usePhotoTransform'
+import { motionTiming, prefersReducedMotion } from '../utils/motion'
+import { flyToUploads, type SendFlight } from '../utils/sendFlight'
 import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
 import { PhotoGrid } from './PhotoGrid'
@@ -15,8 +17,19 @@ import './PhotoCard.css'
 /** Что показывает карточка: одну бирку или сетку всех. */
 export type PhotoCardView = 'single' | 'grid'
 
+/** Команды карточке фото. */
+export interface PhotoCardHandle {
+  /**
+   * «Отправка» бирок `ids`: в сетке их ячейки, у одной бирки — её фото (если она среди отправленных)
+   * улетают к «Загрузкам». `restore` вызывают, когда бирки уже убраны.
+   */
+  sendAway: (ids: ReadonlySet<string>) => SendFlight
+}
+
 /** Свойства `PhotoCard`. */
 export interface PhotoCardProps {
+  /** Команды карточке (анимация отправки). */
+  handleRef?: Ref<PhotoCardHandle>
   /** Открытая бирка или `null` — пустая ячейка «Добавить фото». */
   item: ScanItem | null
   /** Все бирки по порядку (для сетки). */
@@ -49,15 +62,6 @@ export interface PhotoCardProps {
   onToggleSelected: (index: number) => void
 }
 
-/** Длительность и кривая перехода между сеткой и одной биркой — как у системы. */
-function zoomTiming(): KeyframeAnimationOptions {
-  return document.documentElement.dataset.platform === 'ios'
-    ? { duration: 420, easing: 'cubic-bezier(.32, .72, 0, 1)' }
-    : { duration: 400, easing: 'cubic-bezier(.2, 0, 0, 1)' }
-}
-
-const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
 /**
  * Карточка фото: открытая бирка (пустая кнопка «Добавить фото» или фото с жестами — щипок,
  * перетаскивание, — кнопками масштаба и поворота) или сетка 3 × 3 всех бирок.
@@ -68,7 +72,7 @@ const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
  * сбоку, как слайд. Нажатие на фото открывает просмотр на весь экран. Пока фото грузится и распознаётся —
  * один спиннер с подписью «Распознавание».
  */
-export function PhotoCard({ item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -77,6 +81,7 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
   const hasPhoto = Boolean(photoUrl) && !hasError
   const isBusy = isReceiving || (item !== null && (item.isLoading || item.status.kind === 'recognizing') && !hasError)
   const overlay = usePresence(isBusy)
+  const gridSingle = usePresence(view === 'grid')
   /** Бирка, чьё фото уже загрузилось в карточке: до этого вместо него — миниатюра (фото с телефона декодируется не сразу). */
   const [loadedId, setLoadedId] = useState<string | null>(null)
   const placeholder = hasPhoto && item?.thumbUrl && item.thumbUrl !== photoUrl && loadedId !== item.id ? item.thumbUrl : null
@@ -126,7 +131,7 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
     const gridAtCell = `translate(${box.width / 2 - cx / scale}px, ${box.height / 2 - cy / scale}px) scale(${1 / scale})`
     // Фото в ячейке скруглено, как ячейка (радиус — в масштабе уменьшенного фото).
     const cellRadius = `${Number.parseFloat(getComputedStyle(cell).borderTopLeftRadius) / scale || 0}px`
-    const timing = { ...zoomTiming(), fill: 'both' as const }
+    const timing = { ...motionTiming(), fill: 'both' as const }
     const animations = view === 'grid'
       ? [
           stage.animate([
@@ -172,10 +177,28 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
     const direction = Math.sign(activeIndex - previous.index)
     const animation = stage.animate(
       [{ transform: `translateX(${direction * 36}px)`, opacity: direction === 0 ? 0.3 : 0.2 }, { transform: 'none', opacity: 1 }],
-      { duration: 280, easing: zoomTiming().easing },
+      { duration: 280, easing: motionTiming().easing },
     )
     return () => animation.cancel()
   }, [item?.id, activeIndex, view, settledView])
+
+  const itemIdRef = useRef(item?.id ?? null)
+  useLayoutEffect(() => {
+    itemIdRef.current = item?.id ?? null
+  }, [item?.id])
+  useImperativeHandle(handleRef, () => ({
+    sendAway(ids) {
+      if (shownView.current === 'grid') {
+        const cells = Array.from(gridRef.current?.querySelectorAll<HTMLElement>('[data-item-id]') ?? [])
+        return flyToUploads(cells.filter((cell) => ids.has(cell.dataset.itemId ?? '')))
+      }
+      const stage = stageRef.current
+      const photo = stage?.querySelector<HTMLElement>('.photo-image-action')
+      if (!stage || !photo || !ids.has(itemIdRef.current ?? '')) return flyToUploads([])
+      // Фото улетает, кнопки масштаба и поворота над ним гаснут.
+      return flyToUploads([photo], Array.from(stage.querySelectorAll<HTMLElement>('.photo-controls')))
+    },
+  }), [])
 
   const isGridShown = view === 'grid' && settledView === 'grid'
   const classes = ['photo-card', hasPhoto && view === 'single' && 'has-photo', isZoomed && 'is-zoomed'].filter(Boolean).join(' ')
@@ -239,10 +262,11 @@ export function PhotoCard({ item, items, activeIndex, view, showBack, isReceivin
         <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
       )}
 
-      {/* В сетке — «Открыть» выбранную бирку на месте «Сетки», с подписью (дублирует кнопку панели листания). */}
-      {view === 'grid' && (
+      {/* В сетке — «Открыть» выбранную бирку на месте «Сетки», с подписью (дублирует кнопку панели листания); уходит, растворяясь. */}
+      {gridSingle.mounted && (
         <ActionButton
-          className="photo-grid-single anim-fade"
+          className={`photo-grid-single anim-fade${gridSingle.closing ? ' is-closing' : ''}`}
+          inert={gridSingle.closing || undefined}
           variant="overlay"
           size={44}
           icon={<ImageIcon />}

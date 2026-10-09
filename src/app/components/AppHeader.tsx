@@ -40,6 +40,8 @@ export function AppHeader({ openPanel, onTogglePanel }: AppHeaderProps) {
           active={openPanel === 'uploads'}
           aria-expanded={openPanel === 'uploads'}
           onClick={() => onTogglePanel('uploads')}
+          // Сюда прилетают фото отправленных бирок (см. workspace/utils/sendFlight.ts).
+          data-fly-target="uploads"
         />
         <ActionButton
           variant="ghost"

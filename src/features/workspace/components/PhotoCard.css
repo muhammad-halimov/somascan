@@ -314,3 +314,46 @@
   top: 10px;
   right: 10px;
 }
+
+.photo-grid-single.is-closing {
+  animation: fade-exit 200ms ease-in both;
+}
+
+/*
+ * «Отправка» (см. utils/sendFlight.ts): копия фото или ячейки сетки летит к «Загрузкам» поверх всего.
+ * Внешний слой двигается по горизонтали, внутренний — по вертикали, уменьшается и обрезает копию.
+ */
+.send-flight {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  contain: layout style;
+}
+
+.send-flight-box {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.send-flight-copy {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Копия не повторяет анимации появления (проявление фото, миниатюры, фокус ячейки) — она уже на экране. */
+.send-flight-copy,
+.send-flight-copy * {
+  animation: none !important;
+}
+
+/* У копии ячейки — только снимок с номером и значком состояния, без кольца выбора. */
+.send-flight-copy .photo-grid-select {
+  display: none;
+}

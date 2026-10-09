@@ -1,14 +1,15 @@
-import type { Ref } from 'react'
+import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertIcon, CheckIcon, ExclamationIcon } from '@/components/icons/Icons'
 import { hasProductForm } from '@/features/recognition/label/productForm'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
+import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import './PhotoGrid.css'
 
 /** Свойства `PhotoGrid`. */
 export interface PhotoGridProps {
   /** Ref сетки: по нему карточка анимирует переход между сеткой и одной биркой. */
-  gridRef: Ref<HTMLDivElement>
+  gridRef: RefObject<HTMLDivElement | null>
   /** Бирки по порядку. */
   items: readonly ScanItem[]
   /** Открытая бирка (`items.length` — следующая пустая ячейка). */
@@ -38,10 +39,33 @@ function cellState(item: ScanItem): CellState {
  * Выбранные для отправки бирки обведены акцентным цветом, открытая — контрастным (у выбранной
  * открытой — оба кольца); выбор — «радиокнопка» в левом нижнем углу (кольцо, у выбранной — точка). Состояние — в правом нижнем:
  * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма), красный знак (ошибка).
- * Нажатие на ячейку открывает бирку (карточка увеличивает ячейку до одной бирки).
+ * Нажатие на ячейку открывает бирку (карточка увеличивает ячейку до одной бирки). Когда бирки уходят
+ * (отправка, «Сброс»), оставшиеся плавно переезжают на освободившиеся места.
  */
 export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, onToggleSelected }: PhotoGridProps) {
   const { t } = useTranslation('workspace')
+
+  // Где стояли ячейки бирок: после отправки или «Сброса» оставшиеся переезжают на освободившиеся места
+  // плавно, а не перескакивают (позиции — раскладки, без учёта transform перехода к одной бирке).
+  const cellPositions = useRef(new Map<string, { left: number; top: number }>())
+  useLayoutEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    const previous = cellPositions.current
+    const next = new Map<string, { left: number; top: number }>()
+    const animate = interactive && !prefersReducedMotion()
+    for (const cell of grid.querySelectorAll<HTMLElement>('[data-item-id]')) {
+      const position = { left: cell.offsetLeft, top: cell.offsetTop }
+      const id = cell.dataset.itemId ?? ''
+      next.set(id, position)
+      const from = previous.get(id)
+      if (animate && from && (from.left !== position.left || from.top !== position.top)) {
+        cell.animate([{ transform: `translate(${from.left - position.left}px, ${from.top - position.top}px)` }, { transform: 'none' }], motionTiming())
+      }
+    }
+    cellPositions.current = next
+  }, [items, interactive, gridRef])
+
   return (
     <div ref={gridRef} className="photo-grid" role="group" aria-label={t('grid.region')} inert={!interactive || undefined}>
       {Array.from({ length: MAX_SCAN_ITEMS }, (_, index) => {
@@ -68,7 +92,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
         const stateText = state === 'none' ? '' : t(`grid.state.${state}`)
         const classes = ['photo-grid-cell', 'has-photo', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')
         return (
-          <div key={item.id} className={classes}>
+          <div key={item.id} className={classes} data-item-id={item.id}>
             <button
               type="button"
               className="photo-grid-open"

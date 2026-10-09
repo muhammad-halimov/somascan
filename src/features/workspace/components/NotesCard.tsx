@@ -1,6 +1,6 @@
 import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AddIcon, CloseIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
+import { AddIcon, CheckIcon, CloseIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { Tabs } from '@/components/ui/Tabs'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
@@ -76,12 +76,12 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
           <span>{t('notes.checkBeforeSend')}</span>
         </p>
       )}
-      {/* Шапка — узкая строка: заголовок слева, «пилюли» «Готово» (только в правке) и «Правка» справа. */}
+      {/* Шапка — узкая строка: заголовок слева, «пилюли» «✓ Готово» (только в правке) и «Правка» справа. */}
       <div className="notes-header">
         <h2 className="notes-title"><TagIcon /><span className="notes-title-text">{title}</span></h2>
         <div className="notes-header-actions">
           {isEditing && (
-            <ActionButton layout="inline" size={28} icon={<CloseIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} onClick={onCloseEdit} />
+            <ActionButton layout="inline" size={28} icon={<CheckIcon />} caption={t('editing.closeCaption')} label={t('editing.close')} onClick={onCloseEdit} />
           )}
           <ActionButton
             layout="inline"
