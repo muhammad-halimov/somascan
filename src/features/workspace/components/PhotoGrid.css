@@ -19,6 +19,8 @@
   gap: var(--photo-grid-gap);
   padding: var(--photo-grid-gap);
   background: var(--photo-empty-bg);
+  /* Скругление карточки: когда та не обрезает (сетка на экране), углы сетки не торчат. */
+  border-radius: inherit;
   transform-origin: 0 0;
 }
 

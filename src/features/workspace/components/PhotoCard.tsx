@@ -211,7 +211,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   }), [])
 
   const isGridShown = view === 'grid' && settledView === 'grid'
-  const classes = ['photo-card', hasPhoto && view === 'single' && 'has-photo', isZoomed && 'is-zoomed'].filter(Boolean).join(' ')
+  // `is-grid` — сетка на экране и переход закончился: свечение открытой ячейки выходит за края карточки.
+  const classes = ['photo-card', hasPhoto && view === 'single' && 'has-photo', isZoomed && 'is-zoomed', isGridShown && 'is-grid'].filter(Boolean).join(' ')
 
   return (
     <div ref={cardRef} className={classes} aria-busy={isBusy && view === 'single'} {...touchHandlers}>
