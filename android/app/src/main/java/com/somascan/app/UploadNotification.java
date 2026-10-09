@@ -30,9 +30,10 @@ import org.json.JSONObject;
  * Пачка дописана — на несколько секунд остаётся итог («Записано в таблицу: 3» с полной полосой или
  * «Не всё записано»), потом уведомление убирается само.
  *
- * Стиль — системный {@link NotificationCompat.ProgressStyle}: на Android 16 полоса из отрезков (одна
- * бирка — один отрезок) и Live Update (чип «2/5» в строке состояния и на экране блокировки),
- * на Android 15 и ниже тот же стиль сам показывает обычную системную полосу прогресса.
+ * Стиль — системный {@link NotificationCompat.ProgressStyle}: на Android 16 полоса из отрезков цвета
+ * приложения (одна бирка — один отрезок, внутри него полоса движется по шагам записи) и Live Update
+ * (чип «2/5» в строке состояния и на экране блокировки), на Android 15 и ниже тот же стиль сам
+ * показывает обычную системную полосу прогресса.
  */
 final class UploadNotification {
 
@@ -52,6 +53,9 @@ final class UploadNotification {
 
     /** Больше отрезков полоса не рисует по одному на бирку — дальше сплошная. */
     private static final int MAX_SEGMENTS = 12;
+
+    /** Делений на бирку: полоса движется и внутри записи одной бирки (по её шагам). */
+    private static final int UNITS = 100;
 
     /** Акцентный цвет приложения (значок и полоса прогресса). */
     private static final int ACCENT = 0xFF536DFE;
@@ -95,10 +99,11 @@ final class UploadNotification {
         JSONObject progress = activity.optJSONObject("progress");
         int total = progress == null ? 0 : Math.max(0, progress.optInt("total"));
         int done = progress == null ? 0 : Math.max(0, Math.min(progress.optInt("done"), total));
+        double current = progress == null ? 0 : Math.max(0, Math.min(1, progress.optDouble("current", 0)));
         if (UploadEngine.isBusy(activity)) {
             if (total > 0) {
                 inBatch = true;
-                view = View.progress(done, total);
+                view = View.progress(done, total, done < total ? (int) Math.round(current * UNITS) : 0);
             }
         } else if (inBatch) {
             inBatch = false;
@@ -168,7 +173,7 @@ final class UploadNotification {
             case PROGRESS:
                 builder
                     .setContentText(texts.getString("pending", "Осталось записать: {count}").replace("{count}", String.valueOf(view.total - view.done)))
-                    .setStyle(progressStyle(view.done, view.total))
+                    .setStyle(progressStyle(view.done, view.total, view.step))
                     .setOngoing(true)
                     // Android 16: Live Update — уведомление поднимается наверх, ход виден в строке состояния.
                     .setRequestPromotedOngoing(true)
@@ -183,7 +188,7 @@ final class UploadNotification {
                     .setAutoCancel(true)
                     .setTimeoutAfter(RESULT_SHOWN_MS);
                 if (complete) {
-                    builder.setStyle(progressStyle(view.total, view.total));
+                    builder.setStyle(progressStyle(view.total, view.total, 0));
                 }
                 break;
             default:
@@ -194,16 +199,17 @@ final class UploadNotification {
         return builder.build();
     }
 
-    private static NotificationCompat.ProgressStyle progressStyle(int done, int total) {
+    /** Полоса: отрезок на бирку (до {@link #MAX_SEGMENTS}), в каждом — {@link #UNITS} делений; {@code step} — пройдено в текущей бирке. */
+    private static NotificationCompat.ProgressStyle progressStyle(int done, int total, int step) {
         NotificationCompat.ProgressStyle style = new NotificationCompat.ProgressStyle().setStyledByProgress(true);
         if (total <= MAX_SEGMENTS) {
             for (int index = 0; index < total; index++) {
-                style.addProgressSegment(new NotificationCompat.ProgressStyle.Segment(1));
+                style.addProgressSegment(new NotificationCompat.ProgressStyle.Segment(UNITS).setColor(ACCENT));
             }
         } else {
-            style.addProgressSegment(new NotificationCompat.ProgressStyle.Segment(total));
+            style.addProgressSegment(new NotificationCompat.ProgressStyle.Segment(total * UNITS).setColor(ACCENT));
         }
-        return style.setProgress(done);
+        return style.setProgress(done * UNITS + step);
     }
 
     private static void ensureChannel(Context context) {
@@ -224,34 +230,41 @@ final class UploadNotification {
     private static final class View {
         enum Kind { NONE, PROGRESS, RESULT }
 
-        static final View NONE = new View(Kind.NONE, 0, 0);
+        static final View NONE = new View(Kind.NONE, 0, 0, 0);
 
         final Kind kind;
         final int done;
         final int total;
+        /** Пройдено в бирке, которая пишется сейчас (0…{@link #UNITS}). */
+        final int step;
 
-        private View(Kind kind, int done, int total) {
+        private View(Kind kind, int done, int total, int step) {
             this.kind = kind;
             this.done = done;
             this.total = total;
+            this.step = step;
         }
 
-        static View progress(int done, int total) {
-            return new View(Kind.PROGRESS, done, total);
+        static View progress(int done, int total, int step) {
+            return new View(Kind.PROGRESS, done, total, step);
         }
 
         static View result(int written, int total) {
-            return new View(Kind.RESULT, Math.max(0, Math.min(written, total)), Math.max(0, total));
+            return new View(Kind.RESULT, Math.max(0, Math.min(written, total)), Math.max(0, total), 0);
         }
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof View && ((View) other).kind == kind && ((View) other).done == done && ((View) other).total == total;
+            if (!(other instanceof View)) {
+                return false;
+            }
+            View view = (View) other;
+            return view.kind == kind && view.done == done && view.total == total && view.step == step;
         }
 
         @Override
         public int hashCode() {
-            return (kind.ordinal() * 31 + done) * 31 + total;
+            return ((kind.ordinal() * 31 + done) * 31 + total) * 31 + step;
         }
     }
 }

@@ -189,7 +189,7 @@ export class Engine {
     for (const record of records) {
       if (record.status === 'completed' && this.batchIds.has(record.id)) this.written.add(record.id)
     }
-    if (!isBusy({ ...base, progress: this.batch, finished: this.finished })) {
+    if (!isBusy({ ...base, progress: { ...this.batch, current: 0 }, finished: this.finished })) {
       if (this.batch.total > 0) this.finished = { written: this.written.size, total: this.batch.total }
       this.batch = { done: 0, total: 0 }
       this.batchIds.clear()
@@ -204,7 +204,8 @@ export class Engine {
       const done = this.batch.total === 0 ? 0 : Math.max(this.batch.done, this.batch.total - remaining)
       this.batch = { done, total: done + remaining }
     }
-    return { ...base, progress: { ...this.batch }, finished: this.finished && { ...this.finished } }
+    const current = uploading > 0 && this.batch.total > 0 ? this.worker.currentProgress : 0
+    return { ...base, progress: { ...this.batch, current }, finished: this.finished && { ...this.finished } }
   }
 
   /** Новые настройки: сохраняются; если хранилище изменилось, обработчик повторит незаписанное. */

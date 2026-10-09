@@ -15,6 +15,10 @@
  *
  * Отмена (`signal`) проверяется между шагами до замены файла (6) — после неё бирка уже в журнале,
  * и запись доводится до конца.
+ *
+ * Ход записи (`onStep`) — доля пройденного (0…1) после каждого шага, с весом по времени: дольше всего
+ * идут обмены с хранилищем (чтение, замена, проверка). По нему прогресс в системе движется и в пачке
+ * из одной бирки.
  */
 import type { UploadRecord } from '../store/UploadStore'
 import { UploadError } from '../UploadError'
@@ -35,6 +39,9 @@ export interface TableWriteResult {
   duplicate: boolean
 }
 
+/** Доля записи, пройденная после шага (см. `TableWriter.write`, `onStep`). */
+const STEP = { locked: 0.1, read: 0.35, prepared: 0.55, replaced: 0.8, verified: 0.95 } as const
+
 /** Пишет бирки в журнал через `TableBackend`. */
 export class TableWriter {
   /** Идентификатор устройства — владелец блокировки (в движке он приходит с настройками, поэтому — функция). */
@@ -53,9 +60,11 @@ export class TableWriter {
 
   /**
    * Дописывает запись в журнал.
+   * @param onStep Ход записи: доля пройденного (0…1) после каждого шага.
    * @throws {UploadError} Любой сбой; по коду `UploadWorker` решает, повторять ли попытку.
    */
-  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal): Promise<TableWriteResult> {
+  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void): Promise<TableWriteResult> {
+    const step = (fraction: number) => onStep?.(fraction)
     /** Останавливает запись, если её отменили: до замены файла журнал не тронут. */
     const checkCancelled = () => {
       if (signal?.aborted) throw new UploadError('cancelled')
@@ -63,9 +72,11 @@ export class TableWriter {
     checkCancelled()
     await backend.acquireLock(this.owner())
     try {
+      step(STEP.locked)
       checkCancelled()
       const current = await backend.read()
       if (!current) throw new UploadError('tableNotFound')
+      step(STEP.read)
       checkCancelled()
       const writtenAt = this.now()
       const workbook = await LabelWorkbook.open(current)
@@ -75,10 +86,13 @@ export class TableWriter {
       const planned = workbook.append(record, writtenAt)
       const bytes = await workbook.toBytes()
       await TableWriter.checkIntact(before, bytes, planned)
+      step(STEP.prepared)
       checkCancelled()
       const policy = new BackupPolicy(backend.stem, backend.extension)
       await backend.replace(bytes, policy.backupName(new Date(writtenAt)))
+      step(STEP.replaced)
       await TableWriter.verify(await backend.readBack(), record, planned)
+      step(STEP.verified)
       await backend.pruneBackups(policy, this.now())
       return { sheet: planned.sheet, rowNumber: planned.row, item: planned.item, duplicate: false }
     } finally {

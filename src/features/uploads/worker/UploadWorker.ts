@@ -96,6 +96,8 @@ export class UploadWorker {
   private lastStorage = ''
   /** Отмена текущей записи (пока она пишется). */
   private current: { id: string; controller: AbortController } | null = null
+  /** Ход текущей записи (0…1), см. `TableWriter.write`. */
+  private step = 0
   /** Отписки для `stop()`. */
   private readonly cleanups: Array<() => void> = []
 
@@ -118,6 +120,11 @@ export class UploadWorker {
   /** Есть ли сеть (последнее известное состояние). */
   get isOnline() {
     return this.online
+  }
+
+  /** Сколько пройдено в записи, которая идёт сейчас (0…1; без записи — 0). */
+  get currentProgress() {
+    return this.step
   }
 
   /** Запускает обработку: возвращает оборванные записи в очередь, подписывается на события и берётся за очередь. */
@@ -228,7 +235,10 @@ export class UploadWorker {
     this.store.markUploading(job.id)
     try {
       const backend = await backendFor(this.settings.getStorage(), this.backends)
-      const result = await this.writer.write(job, backend, controller.signal)
+      const result = await this.writer.write(job, backend, controller.signal, (fraction) => {
+        this.step = fraction
+        this.onActivity()
+      })
       // Отмена пришла, когда файл уже заменялся: бирка в журнале — запись завершена.
       this.store.markCompleted(job.id, result.rowNumber, result.sheet, result.item ?? undefined)
     } catch (error) {
@@ -247,6 +257,7 @@ export class UploadWorker {
       console.warn('[uploads]', job.localNumber, failure.code, failure.params.detail ?? '')
     } finally {
       this.current = null
+      this.step = 0
       this.running = false
       this.tick()
       this.onActivity()

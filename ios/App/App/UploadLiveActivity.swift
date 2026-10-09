@@ -6,9 +6,9 @@ import Foundation
  * продолжаемой задачи системы, которая показывает ход сама (см. `UploadBackground`).
  *
  * Начинается, когда очередь взялась за пачку (бирку поставили с экрана — iOS запускает Live Activity
- * только у приложения на виду), обновляется вместе с «Загрузками» — каждая обработанная бирка сдвигает
- * полосу, а когда пачка дописана, на несколько секунд показывает итог («Записано в таблицу: 3» или
- * «Не всё записано») и уходит.
+ * только у приложения на виду), обновляется вместе с «Загрузками» — полоса движется по шагам
+ * записи каждой бирки, а когда пачка дописана, на несколько секунд показывает итог («Записано
+ * в таблицу: 3» или «Не всё записано») и уходит.
  *
  * Только на главном потоке.
  */
@@ -45,9 +45,10 @@ final class UploadLiveActivity {
         let progress = data?["progress"] as? [String: Any]
         let total = max(0, (progress?["total"] as? NSNumber)?.intValue ?? 0)
         let done = min(total, max(0, (progress?["done"] as? NSNumber)?.intValue ?? 0))
+        let current = done < total ? min(1, max(0, (progress?["current"] as? NSNumber)?.doubleValue ?? 0)) : 0
         if busy {
             guard total > 0 else { return }
-            let state = UploadActivityAttributes.ContentState(done: done, total: total, finished: false, subtitle: texts.subtitle(total - done))
+            let state = UploadActivityAttributes.ContentState(done: done, total: total, current: current, finished: false, subtitle: texts.subtitle(total - done))
             if !inBatch {
                 inBatch = true
                 start(state, title: texts.title)
@@ -65,6 +66,7 @@ final class UploadLiveActivity {
             let state = UploadActivityAttributes.ContentState(
                 done: written,
                 total: finishedTotal,
+                current: 0,
                 finished: true,
                 subtitle: written == finishedTotal ? texts.done(written) : texts.attention
             )
