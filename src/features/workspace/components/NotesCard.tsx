@@ -66,6 +66,9 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
 
   // Высота панели действий — в `--notes-actions-height`: на телефоне панель внизу экрана, и рабочая область
   // оставляет под ней место (см. NotesCard.css). Шрифт и подписи на разных языках меняют высоту — меряем.
+  // Следим за рамкой целиком (`border-box`): нижний отступ панели — безопасная зона, а её Capacitor
+  // сообщает уже после первой отрисовки; по одному содержимому замер оставался старым, и конец карточки
+  // результата уходил под панель.
   useLayoutEffect(() => {
     const actions = actionsRef.current
     if (!actions) return
@@ -73,7 +76,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
     const measure = () => root.style.setProperty('--notes-actions-height', `${Math.ceil(actions.getBoundingClientRect().height)}px`)
     measure()
     const observer = new ResizeObserver(measure)
-    observer.observe(actions)
+    observer.observe(actions, { box: 'border-box' })
     return () => {
       observer.disconnect()
       root.style.removeProperty('--notes-actions-height')

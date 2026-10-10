@@ -44,8 +44,9 @@
 
 /*
  * Телефон вертикально, просмотр: панель действий — внизу экрана поверх содержимого (см. NotesCard.css),
- * поэтому снизу оставляем место под ней: конец карточки прокручивается выше панели, и поле, к которому
- * прокручивает приложение (`scrollIntoView`), не прячется под неё. Высоту панели меряет `NotesCard`.
+ * поэтому снизу оставляем место под ней: конец карточки (и пустой, растянутой до низа) — над панелью
+ * с зазором, а поле, к которому прокручивает приложение (`scrollIntoView`), не прячется под неё.
+ * Высоту панели меряет `NotesCard`.
  */
 :root[data-platform='ios'] {
   --notes-toolbar-inset: max(8px, calc(var(--safe-bottom) - 14px));
@@ -61,8 +62,8 @@
   }
 
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) {
-    padding-bottom: calc(var(--notes-toolbar-space) + 10px);
-    scroll-padding-bottom: calc(var(--notes-toolbar-space) + 8px);
+    padding-bottom: calc(var(--notes-toolbar-space) + 16px);
+    scroll-padding-bottom: calc(var(--notes-toolbar-space) + 12px);
   }
 }
 
