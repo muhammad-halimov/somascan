@@ -59,7 +59,10 @@
       "notLoaded": "Neîncărcat",
       "loading": "Se încarcă…"
     },
-    "modelSwitchError": "Modelul nu a putut fi încărcat"
+    "modelSwitchError": "Modelul nu a putut fi încărcat",
+    "modelSwitchWaiting": "LM Studio este ocupat (dispozitive: {{count}}) — modelul se schimbă când toți termină sau anulează.",
+    "modelSwitchLoading": "Modelul se încarcă în LM Studio…",
+    "modelSwitchCancel": "Anulează"
   },
   "storage": {
     "target": "Destinație",

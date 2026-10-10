@@ -18,6 +18,18 @@
   color: var(--danger);
 }
 
+/* Смена локальной модели: что происходит (ожидание очереди или загрузка) и «Отменить» справа. */
+.model-picker-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.model-picker-switch .button {
+  flex: 0 0 auto;
+}
+
 /* Характеристики, рекомендация и описание модели под названием; описание — не длиннее трёх строк. */
 .model-picker-info {
   display: flex;

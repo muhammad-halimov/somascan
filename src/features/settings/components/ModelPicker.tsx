@@ -14,6 +14,7 @@ import { useModelList } from '@/features/recognition/catalog/useModelList'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import type { ModelInfo, ProviderId } from '@/features/recognition/types'
 import { useErrorText } from '@/features/recognition/useErrorText'
+import { lmStudioGate } from '@/features/uploads/leases/lmStudioGate'
 import { useStore } from '@/lib/store/useStore'
 import { getProviderAccess } from '../store/providerAccess'
 import { settingsStore } from '../store/SettingsStore'
@@ -42,7 +43,9 @@ const COLLAPSE_AFTER_LOAD_MS = 700
  *
  * LM Studio: у каждой модели точка — зелёная, если модель в памяти сервера, красная, если нет.
  * Выбор модели выгружает прежнюю и загружает новую (`LocalModelLoader`): пока идёт загрузка,
- * точка мигает жёлтым, а список серый и недоступен; потом точка горит зелёным.
+ * точка мигает жёлтым, а список серый и недоступен; потом точка горит зелёным. Если сервером сейчас
+ * пользуются (распознают или меняют модель) другие устройства или это же, смена ждёт их — под списком
+ * «LM Studio занят…». Ожидание и загрузку можно отменить — выбор вернётся к прежней модели.
  */
 export function ModelPicker({ providerId }: ModelPickerProps) {
   const { t, i18n } = useTranslation('settings')
@@ -80,15 +83,18 @@ export function ModelPicker({ providerId }: ModelPickerProps) {
   }, [isLocal, isEnabled, providerId, endpoint, apiKey])
 
   // Модель загрузилась без ошибки — сворачиваем шторку, когда зелёная точка уже видна.
+  // Смену отменили — шторка остаётся открытой: можно выбрать другую модель.
   const wasSwitching = useRef(false)
+  const cancelRequested = useRef(false)
   useEffect(() => {
-    if (wasSwitching.current && !isSwitching && !loader.error) {
+    if (wasSwitching.current && !isSwitching && !loader.error && !cancelRequested.current) {
       if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current)
       collapseTimer.current = window.setTimeout(() => {
         collapseTimer.current = null
         setIsOpen(false)
       }, COLLAPSE_AFTER_LOAD_MS)
     }
+    if (!isSwitching) cancelRequested.current = false
     wasSwitching.current = isSwitching
   }, [isSwitching, loader.error])
 
@@ -165,14 +171,23 @@ export function ModelPicker({ providerId }: ModelPickerProps) {
     settingsStore.setModel(providerId, id)
     if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current)
     if (isLocal) {
-      // Шторка свернётся после загрузки (см. эффект выше).
-      void localModelLoader.switchTo(id, access)
+      // Шторка свернётся после загрузки (см. эффект выше); отменили — выбор возвращается к прежней модели.
+      const previous = activeModel
+      void localModelLoader.switchTo(id, access, lmStudioGate).then((outcome) => {
+        if (outcome === 'cancelled' && previous) settingsStore.setModel(providerId, previous)
+      })
       return
     }
     collapseTimer.current = window.setTimeout(() => {
       collapseTimer.current = null
       setIsOpen(false)
     }, COLLAPSE_AFTER_PICK_MS)
+  }
+
+  /** Отменяет смену локальной модели (ожидание очереди или загрузку). */
+  const cancelSwitch = () => {
+    cancelRequested.current = true
+    localModelLoader.cancel()
   }
 
   /** Пояснение под списком: почему он серый или какой фильтр действует. */
@@ -231,6 +246,14 @@ export function ModelPicker({ providerId }: ModelPickerProps) {
             })}
           </List>
         </Disclosure>
+      )}
+      {isSwitching && (
+        <div className="model-picker-switch" role="status">
+          <span className="model-picker-status">
+            {loader.waitingFor !== null ? t('general.modelSwitchWaiting', { count: loader.waitingFor }) : t('general.modelSwitchLoading')}
+          </span>
+          <Button onClick={cancelSwitch}>{t('general.modelSwitchCancel')}</Button>
+        </div>
       )}
       {isLocal && loader.error && (
         <span className="model-picker-status is-error" role="alert">{t('general.modelSwitchError')}: {errorText(loader.error)}</span>

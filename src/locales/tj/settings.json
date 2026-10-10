@@ -59,7 +59,10 @@
       "notLoaded": "Бор нашудааст",
       "loading": "Бор шуда истодааст…"
     },
-    "modelSwitchError": "Моделро бор кардан нашуд"
+    "modelSwitchError": "Моделро бор кардан нашуд",
+    "modelSwitchWaiting": "LM Studio банд аст (дастгоҳҳо: {{count}}) — модел вақте иваз мешавад, ки ҳама анҷом диҳанд ё бекор кунанд.",
+    "modelSwitchLoading": "Модел ба LM Studio бор мешавад…",
+    "modelSwitchCancel": "Бекор кардан"
   },
   "storage": {
     "target": "Ҷои нигоҳдорӣ",

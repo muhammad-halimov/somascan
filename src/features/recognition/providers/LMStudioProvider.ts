@@ -42,6 +42,20 @@ export function normalizeLmStudioEndpoint(input: string): string {
   }
 }
 
+/**
+ * Сервер LM Studio как `host:port` (`192.168.1.14` → `192.168.1.14:1234`): по нему устройства понимают,
+ * что работают с одним и тем же сервером (очередь к нему — `ModelUseGate`).
+ */
+export function lmStudioServerKey(input: string): string {
+  const base = normalizeLmStudioEndpoint(input)
+  try {
+    const url = new URL(base)
+    return `${url.hostname}:${url.port || (url.protocol === 'https:' ? '443' : '80')}`.toLowerCase()
+  } catch {
+    return base.toLowerCase()
+  }
+}
+
 /** Локальный сервер может быть выключен или занят распознаванием; ждём списка до 8 с (по Wi-Fi он отвечает медленнее), не дольше. */
 const LIST_TIMEOUT_MS = 8000
 

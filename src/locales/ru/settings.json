@@ -59,7 +59,10 @@
       "notLoaded": "Не загружена",
       "loading": "Загружается…"
     },
-    "modelSwitchError": "Не удалось загрузить модель"
+    "modelSwitchError": "Не удалось загрузить модель",
+    "modelSwitchWaiting": "LM Studio занят (устройств: {{count}}) — модель сменится, когда все закончат или отменят.",
+    "modelSwitchLoading": "Модель загружается в LM Studio…",
+    "modelSwitchCancel": "Отменить"
   },
   "storage": {
     "target": "Куда сохранять",

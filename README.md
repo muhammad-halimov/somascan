@@ -89,7 +89,8 @@
 
 - с ключом — список берётся из API самого провайдера;
 - без ключа — показывается предпросмотр из открытого каталога [models.dev](https://models.dev) (серым, выбрать модель нельзя, пока не введён ключ);
-- LM Studio — модели с типом `vlm` из `/api/v0/models` локального сервера. У каждой точка: зелёная — модель в памяти сервера, красная — нет. Выбор модели выгружает прежнюю и загружает новую (REST API LM Studio 0.4+: `/api/v1/models/unload`, `/load`); пока идёт загрузка, точка мигает жёлтым, а список серый.
+- LM Studio — модели с типом `vlm` из `/api/v0/models` локального сервера. У каждой точка: зелёная — модель в памяти сервера, красная — нет. Выбор модели выгружает прежнюю и загружает новую (REST API LM Studio 0.4+: `/api/v1/models/unload`, `/load`); пока идёт загрузка, точка мигает жёлтым, а список серый, под списком — «Модель загружается в LM Studio…» и «Отменить» (выбор вернётся к прежней модели).
+- LM Studio — общий сервер нескольких телефонов, и модель в его памяти одна на всех. Поэтому смена модели **ждёт**, пока на этом сервере никто не распознаёт и не меняет модель — ни другие телефоны, ни этот же («LM Studio занят (устройств: N) — модель сменится, когда все закончат или отменят»); ожидание тоже можно отменить. Распознавание, в свою очередь, ждёт, пока идёт чужая или своя смена модели. Сам LM Studio не сообщает, занята ли модель, поэтому телефоны отмечаются в хранилище таблицы — там же, где журнал: на сетевом диске папка `somascan-lmstudio` рядом с таблицей (файл `<id устройства>.json`), в Google Drive — файлы `somascan-lmstudio-<id устройства>` в папке таблицы (`recognition/catalog/ModelUseGate.ts`, `uploads/leases/`). Отметка продлевается, пока телефон занят, и сама истекает через минуту — выключенный или упавший телефон перестаёт мешать. Хранилище не настроено или не отвечает — телефон работает без очереди, как раньше. Распознавание через LM Studio из-за отметки начинается на долю секунды позже.
 
 У каждой модели показаны дата выхода, контекст, цена, рекомендация для бирок на языке интерфейса и (только в английском интерфейсе, потому что источники пишут по-английски) описание из её источника: API провайдера (Gemini отдаёт описание сам), для Claude и OpenAI — каталог models.dev, для LM Studio — автор сборки, архитектура и квантизация.
 
@@ -506,7 +507,7 @@ src/
   features/                функциональные модули; каждый — свои компоненты, хуки и логика
     recognition/             распознавание (без UI)
       providers/               RecognitionProvider (базовый класс) → Gemini, Anthropic, OpenAI, LM Studio
-      catalog/                 ModelCatalog (кэш списков), ModelFilter (vision + возраст), PublicModelDirectory (models.dev), modelFit (рекомендация для бирок), LocalModelLoader (загрузка модели в LM Studio)
+      catalog/                 ModelCatalog (кэш списков), ModelFilter (vision + возраст), PublicModelDirectory (models.dev), modelFit (рекомендация для бирок), LocalModelLoader (загрузка модели в LM Studio), ModelUseGate (очередь к LM Studio между устройствами)
       label/                   поля бирки, промпт, LabelParser, LabelFormatter, measure (размер и вес), productForm, knownSuppliers
       image/                   InlineImage (загрузка и уменьшение фото), imageType (тип по первым байтам), PhotoQuality (проверка качества)
       LabelRecognizer.ts       фото → провайдер → поля бирки
@@ -515,7 +516,7 @@ src/
                              hooks/useSendSelected («Далее»), utils/sendReadiness (готовность к отправке)
     settings/                лист настроек: вкладки «Основные», «Хранилище», «Расширенные»; SettingsStore;
                              components/storage/ — формы сетевого диска и Google Drive, проверка таблицы, замок, выбор листа
-    uploads/                 очередь выгрузки и история («Загрузки»): UploadStore, TableCheckStore (проверка наличия таблицы), queue (экран ↔ движок), worker (UploadWorker, TableWriter, RetryPolicy), xlsx (LabelWorkbook, excelInternals — недокументированное в ExcelJS…), smb (плагин SmbShare), drive (Google Drive и вход), UploadError
+    uploads/                 очередь выгрузки и история («Загрузки»): UploadStore, TableCheckStore (проверка наличия таблицы), queue (экран ↔ движок), worker (UploadWorker, TableWriter, RetryPolicy), xlsx (LabelWorkbook, excelInternals — недокументированное в ExcelJS…), smb (плагин SmbShare), drive (Google Drive и вход), leases (отметки очереди к LM Studio в хранилище таблицы), UploadError
   engine/                  движок очереди выгрузки (upload-engine.js): работает вне WebView — Android скрытый WebView, iOS JavaScriptCore
   hooks/                   общие React-хуки (тема, сеть, панели, слои истории, кнопка «Назад» Android…)
   i18n/                    настройка i18next, список языков, типизация ключей
@@ -575,6 +576,7 @@ android/, ios/             нативные проекты; локальные �
 | Список листов — снимок последней проверки | `uploads/store/TableCheckStore.ts` | лист переименовали в Excel — до новой проверки он в списке, запись получит `sheetNotFound` |
 | Резервные копии живут 7 дней | `uploads/xlsx/BackupPolicy.ts` | долгую историю хранит только бэкап самого сервера или Drive |
 | iOS: «уже есть» / «нет пути» от сервера Windows узнаются по тексту ошибки libsmb2 | `ios/App/App/SmbShareClient.swift` | после обновления AMSMB2 проверить запись в существующую папку на Windows |
+| Очередь к LM Studio — отметки в хранилище таблицы, сроки — по часам телефонов | `recognition/catalog/ModelUseGate.ts`, `uploads/leases/` | Google Drive показывает новые файлы в списке с небольшой задержкой: смена модели и распознавание, начатые на разных телефонах в одну секунду, могут столкнуться (распознавание оборвётся — «Повтор»); у телефонов с разным хранилищем таблицы общей очереди нет |
 | Вход в Google зависит от OAuth-клиентов проекта Google Cloud (iOS — client ID в `Info.plist`, Android — SHA-1 ключа подписи) | `Info.plist`, `android/keystore`, Google Cloud Console | клиента удалили, сменили ключ подписи или экран согласия в «Testing» без аккаунта в Test users — вход перестаёт работать |
 | Android: нижняя панель зависит от версии WebView (до 140 — между системными панелями, с 140 — под ними) | `workspace/components/NotesCard.css` | проверять на старом (эмулятор) и новом WebView (телефон) |
 | Ключи API и пароль SMB — в `localStorage` WebView, без шифрования | `settings/store/SettingsStore.ts` | перед раздачей приложения шире — перенести в Keychain / Keystore |

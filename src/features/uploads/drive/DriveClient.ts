@@ -108,6 +108,13 @@ export class DriveClient {
     return this.list(q, 'modifiedTime desc')
   }
 
+  /** Файлы в папке, чьё имя начинается с `prefix` (не в корзине). */
+  findByPrefix(parentId: string, prefix: string): Promise<DriveFile[]> {
+    // `contains` для имени в Drive ищет именно по началу слов имени; лишнее отсекаем сами.
+    return this.list(`${quote(parentId)} in parents and name contains ${quote(prefix)} and trashed = false`, 'name')
+      .then((files) => files.filter((file) => file.name.startsWith(prefix)))
+  }
+
   /** Содержимое папки (не в корзине). */
   children(parentId: string): Promise<DriveFile[]> {
     return this.list(`${quote(parentId)} in parents and trashed = false`, 'name')
@@ -142,6 +149,15 @@ export class DriveClient {
       method: 'PATCH',
       headers: { 'Content-Type': mimeType },
       body: bytes as Uint8Array<ArrayBuffer>,
+    })
+  }
+
+  /** Меняет свои метки приложения у файла (содержимое не трогает). */
+  setProperties(id: string, appProperties: Record<string, string>): Promise<DriveFile> {
+    return this.json<DriveFile>(`${API}/files/${encodeURIComponent(id)}?supportsAllDrives=true&fields=${FILE_FIELDS}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appProperties }),
     })
   }
 

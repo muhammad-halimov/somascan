@@ -59,7 +59,10 @@
       "notLoaded": "Not loaded",
       "loading": "Loading…"
     },
-    "modelSwitchError": "Couldn't load the model"
+    "modelSwitchError": "Couldn't load the model",
+    "modelSwitchWaiting": "LM Studio is busy (devices: {{count}}) — the model will switch once everyone finishes or cancels.",
+    "modelSwitchLoading": "Loading the model into LM Studio…",
+    "modelSwitchCancel": "Cancel"
   },
   "storage": {
     "target": "Destination",
