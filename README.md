@@ -9,6 +9,7 @@
 ## Оглавление
 
 - [Как это работает](#как-это-работает)
+  - [Форматы фото](#форматы-фото)
   - [Качество фото](#качество-фото)
   - [Настройки распознавания («Расширенные»)](#настройки-распознавания-расширенные)
   - [Известные поставщики](#известные-поставщики)
@@ -51,6 +52,10 @@
               ──► структурированные поля ──► строка в .xlsx
               ──► хранилище: сетевой диск Windows | Google Drive
 ```
+
+### Форматы фото
+
+Фото в HEIC/HEIF («эффективный формат» камеры многих телефонов, например HONOR и Samsung) WebView Android не показывает и не декодирует, поэтому на Android такое фото из галереи или из файлов сразу после выбора перекодируется в JPEG нативно (`PhotoImportPlugin.java`, Android 9+, с учётом ориентации, длинная сторона — до 4096 px; копии лежат в кэше и удаляются при следующем запуске). Тип фото при распознавании берётся из ответа, а если его там нет (фото из галереи Android приходят без Content-Type) — по первым байтам файла (`recognition/image/imageType.ts`); формат, который принимают не все провайдеры (HEIC, GIF, BMP…), перекодируется в JPEG.
 
 ### Качество фото
 
@@ -503,10 +508,11 @@ src/
       providers/               RecognitionProvider (базовый класс) → Gemini, Anthropic, OpenAI, LM Studio
       catalog/                 ModelCatalog (кэш списков), ModelFilter (vision + возраст), PublicModelDirectory (models.dev), modelFit (рекомендация для бирок), LocalModelLoader (загрузка модели в LM Studio)
       label/                   поля бирки, промпт, LabelParser, LabelFormatter, measure (размер и вес), productForm, knownSuppliers
-      image/                   InlineImage (загрузка и уменьшение фото), PhotoQuality (проверка качества)
+      image/                   InlineImage (загрузка и уменьшение фото), imageType (тип по первым байтам), PhotoQuality (проверка качества)
       LabelRecognizer.ts       фото → провайдер → поля бирки
     workspace/               главный экран: до 9 бирок (сетка 3 × 3), фото, жесты, просмотр на весь экран, результат, режим правки;
-                             hooks/useScanSession (бирки), hooks/useSendSelected («Далее»), utils/sendReadiness (готовность к отправке)
+                             hooks/useScanSession (бирки), hooks/usePhotoPicker (выбор фото; HEIC на Android — в JPEG, utils/pickedPhotoUrl),
+                             hooks/useSendSelected («Далее»), utils/sendReadiness (готовность к отправке)
     settings/                лист настроек: вкладки «Основные», «Хранилище», «Расширенные»; SettingsStore;
                              components/storage/ — формы сетевого диска и Google Drive, проверка таблицы, замок, выбор листа
     uploads/                 очередь выгрузки и история («Загрузки»): UploadStore, TableCheckStore (проверка наличия таблицы), queue (экран ↔ движок), worker (UploadWorker, TableWriter, RetryPolicy), xlsx (LabelWorkbook, excelInternals — недокументированное в ExcelJS…), smb (плагин SmbShare), drive (Google Drive и вход), UploadError

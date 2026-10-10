@@ -18,6 +18,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SmbSharePlugin.class);
         registerPlugin(GoogleDriveAuthPlugin.class);
         registerPlugin(NativeHttpPlugin.class);
+        // Фото из галереи в HEIC/HEIF WebView не декодирует — перекодируем в JPEG.
+        registerPlugin(PhotoImportPlugin.class);
         // Очередь выгрузки: движок вне WebView экрана, пишет таблицу и в свёрнутом/закрытом приложении.
         registerPlugin(UploadEnginePlugin.class);
         super.onCreate(savedInstanceState);

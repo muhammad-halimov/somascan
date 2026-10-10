@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core'
 import { FilePicker } from '@capawesome/capacitor-file-picker'
 import { useTranslation } from 'react-i18next'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
+import { pickedPhotoUrl, type PickedPhoto } from '../utils/pickedPhotoUrl'
 
 /** Колбэки `usePhotoPicker`. */
 export interface PhotoPickerCallbacks {
@@ -25,8 +26,9 @@ const ACTION = { take: 0, gallery: 1, files: 2, cancel: 3 } as const
  */
 const pickerLimit = (limit: number, exact: boolean) => (limit === 1 ? 1 : exact ? limit : 0)
 
-/** Адрес выбранного файла для WebView: `webPath`, а если его нет — нативный путь, переведённый в адрес. */
-const fileUrl = (file: { webPath?: string; path?: string } | undefined) => file?.webPath ?? (file?.path ? Capacitor.convertFileSrc(file.path) : null)
+/** Адреса выбранных фото для WebView, по порядку (HEIC и т. п. на Android — перекодированные в JPEG). */
+const photoUrls = async (files: readonly PickedPhoto[]) =>
+  (await Promise.all(files.map(pickedPhotoUrl))).filter((url): url is string => Boolean(url))
 
 /**
  * Источник фото.
@@ -35,7 +37,8 @@ const fileUrl = (file: { webPath?: string; path?: string } | undefined) => file?
  *   Выбрать из файлов». Снимок — плагин Camera; галерея и файлы — плагин FilePicker
  *   (системный выбор фото и «Файлы»). Галерею через Camera не открываем: он перекодирует
  *   выбранный снимок целиком, и на больших фото это секунды, в течение которых фото «не появляется».
- *   FilePicker отдаёт путь к уже готовому файлу — фото показывается сразу.
+ *   FilePicker отдаёт путь к уже готовому файлу — фото показывается сразу. Фото в HEIC/HEIF
+ *   (WebView Android их не декодирует) перекодируется в JPEG нативно (`pickedPhotoUrl`).
  *   Скрытый `<input type="file">` здесь не годится: после нативной панели у страницы
  *   нет «пользовательского жеста», и WebView игнорирует программный клик по нему.
  * - Веб: сразу скрытый `<input type="file">` (`inputProps` нужно передать ему через spread).
@@ -83,13 +86,15 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
     // Android 13+ перехватывает выбор «только изображений» системным выбором фото (той же галереей),
     // поэтому там просим любые файлы — откроется файловый менеджер — и проверяем тип сами.
     const types = Capacitor.getPlatform() === 'android' ? undefined : ['image/*']
-    const { files } = await receive(FilePicker.pickFiles({ types, limit: pickerLimit(limit, false) }))
-    const images = files.slice(0, limit).filter((file) => file.mimeType.startsWith('image/'))
-    if (files.length > 0 && images.length === 0) {
+    // Перекодирование — тоже под загрузкой: фото ещё готовится.
+    const urls = await receive(FilePicker.pickFiles({ types, limit: pickerLimit(limit, false) }).then(({ files }) => {
+      const images = files.slice(0, limit).filter((file) => file.mimeType.startsWith('image/'))
+      return files.length > 0 && images.length === 0 ? null : photoUrls(images)
+    }))
+    if (urls === null) {
       onError()
       return
     }
-    const urls = images.map(fileUrl).filter((url): url is string => Boolean(url))
     if (urls.length > 0) onPicked(urls)
   }
 
@@ -104,8 +109,8 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
     // На iOS просим JPEG (skipTranscoding: false): HEIC не принимают часть провайдеров распознавания.
     // На iOS выбранные фото пронумерованы по порядку (ordered) — в этом порядке они встанут в сетку.
     const exact = Capacitor.getPlatform() === 'ios'
-    const { files } = await receive(FilePicker.pickImages({ limit: pickerLimit(limit, exact), skipTranscoding: false, ordered: exact }))
-    const urls = files.slice(0, limit).map(fileUrl).filter((url): url is string => Boolean(url))
+    const urls = await receive(FilePicker.pickImages({ limit: pickerLimit(limit, exact), skipTranscoding: false, ordered: exact })
+      .then(({ files }) => photoUrls(files.slice(0, limit))))
     if (urls.length > 0) onPicked(urls)
   }
 
