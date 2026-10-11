@@ -66,9 +66,10 @@ export class TableWriter {
    * @param onStep Ход записи: доля пройденного (0…1) после каждого шага.
    * @param sheet Лист из настроек хранилища на момент записи; пусто — лист года. Свой лист бирки
    *   (поле «Лист») важнее.
+   * @param strict Строгое строение таблицы: лист без всех колонок журнала по порядку — `layoutMismatch`.
    * @throws {UploadError} Любой сбой; по коду `UploadWorker` решает, повторять ли попытку.
    */
-  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void, sheet = ''): Promise<TableWriteResult> {
+  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void, sheet = '', strict = false): Promise<TableWriteResult> {
     const step = (fraction: number) => onStep?.(fraction)
     /** Останавливает запись, если её отменили: до замены файла журнал не тронут. */
     const checkCancelled = () => {
@@ -88,7 +89,7 @@ export class TableWriter {
       const existing = workbook.locate(record.localNumber)
       if (existing) return { sheet: existing.sheet, rowNumber: existing.row, item: workbook.itemAt(existing), duplicate: true }
       const before = workbook.snapshot()
-      const planned = workbook.append(record, writtenAt, sheet)
+      const planned = workbook.append(record, writtenAt, sheet, strict)
       const bytes = await workbook.toBytes()
       await TableWriter.checkIntact(before, bytes, planned)
       step(STEP.prepared)

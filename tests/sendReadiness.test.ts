@@ -13,9 +13,14 @@ const done = (label: LabelRecord, extra: Partial<ScanItem> = {}): ScanItem => ({
   status: { kind: 'done', label, photo: { retake: false, issues: [] } }, manualValues: {}, selected: true, manual: false, ...extra,
 })
 
-test('распознанная бирка готова, когда выбрана форма', () => {
-  assert.equal(isReadyToSend(done({ heat: '1', product_form: null }), fields), false)
-  assert.equal(isReadyToSend(done({ heat: '1', product_form: 'bara' }), fields), true)
+test('распознанная бирка готова, когда выбрана форма и заполнены поля по умолчанию', () => {
+  const recognized = { producer: 'OAM', size: '12', heat: '1', weight_kg: 2650 }
+  assert.equal(isReadyToSend(done({ ...recognized, product_form: null }), fields), false)
+  assert.equal(isReadyToSend(done({ ...recognized, product_form: 'bara' }), fields), true)
+  // Модель не прочитала вес и плавку — их дописывают в правке, пока бирка не готова.
+  const partial = done({ producer: 'OAM', size: '12', heat: null, weight_kg: '', product_form: 'bara' })
+  assert.deepEqual(missingRequiredFields(partial, fields).map((field) => field.key), ['heat', 'weight_kg'])
+  assert.equal(isReadyToSend(partial, fields), false)
 })
 
 test('бирка без фото: обязательны поля по умолчанию; ждущая фото — не готова', () => {

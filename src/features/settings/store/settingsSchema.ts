@@ -75,6 +75,11 @@ export interface StorageSettings {
    * можно выбрать свой лист необязательным полем «Лист».
    */
   sheet: string
+  /**
+   * Строгое строение таблицы: писать только в лист со всеми колонками журнала по порядку (`JOURNAL_COLUMNS`).
+   * Выключено — колонки ищутся по названиям, недостающие пропускаются.
+   */
+  strictLayout: boolean
 }
 
 /**
@@ -137,6 +142,7 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       smb: { host: '', share: '', filePath: DEFAULT_TABLE_FILE, domain: '', username: '', password: '' },
       googleDrive: { account: '', folder: '', fileName: DEFAULT_TABLE_FILE },
       sheet: '',
+      strictLayout: true,
     },
     advanced: {
       prompt: '',
@@ -276,6 +282,7 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
       smb: withDefaultTable(readStrings(isRecord(storage) ? storage.smb : undefined, defaults.storage.smb), 'filePath', defaults.storage.smb.filePath),
       googleDrive: withDefaultTable(readStrings(isRecord(storage) ? storage.googleDrive : undefined, defaults.storage.googleDrive), 'fileName', defaults.storage.googleDrive.fileName),
       sheet: readField(storage, 'sheet', isString, defaults.storage.sheet).trim(),
+      strictLayout: readField(storage, 'strictLayout', (value): value is boolean => typeof value === 'boolean', defaults.storage.strictLayout),
     },
     advanced: {
       prompt: readField(advanced, 'prompt', isString, defaults.advanced.prompt),

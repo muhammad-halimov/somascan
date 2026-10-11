@@ -148,12 +148,12 @@ export function createLabelKey(englishName: string, taken: readonly LabelKey[]):
 export const isMissingValue = (value: LabelValue | undefined) => value === null || value === undefined || value === ''
 
 /**
- * Обязательные поля бирки без фото: поля по умолчанию (то, что идёт в журнал проб: производитель,
- * размер, номер плавки, вес), если они включены в настройках. Распознанную бирку они не ограничивают.
+ * Обязательные поля бирки — и распознанной с фото, и заполненной вручную: поля по умолчанию (то, что идёт
+ * в журнал проб: производитель, размер, номер плавки, вес), если они включены в настройках.
  */
-export const requiredManualFields = (fields: readonly LabelFieldDefinition[]) =>
+export const requiredLabelFields = (fields: readonly LabelFieldDefinition[]) =>
   enabledLabelFields(fields).filter((field) => isEnabledByDefault(field.key))
 
-/** Обязательные поля бирки без фото, которые ещё не заполнены. */
-export const missingManualFields = (label: LabelRecord, fields: readonly LabelFieldDefinition[]) =>
-  requiredManualFields(fields).filter((field) => isMissingValue(label[field.key]))
+/** Обязательные поля бирки, которые ещё пусты (не распознаны или не введены). */
+export const missingRequiredLabelFields = (label: LabelRecord, fields: readonly LabelFieldDefinition[]) =>
+  requiredLabelFields(fields).filter((field) => isMissingValue(label[field.key]))

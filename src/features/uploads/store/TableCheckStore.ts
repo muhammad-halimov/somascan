@@ -12,6 +12,8 @@
  * Найденная таблица заодно читается, и запоминается список её листов — для выбора листа в настройках
  * и в поле бирки «Лист». Список хранится на устройстве вместе с расположением таблицы (сервер, папка,
  * путь или папка и имя в Drive): после перезапуска он есть сразу, а после смены таблицы — пуст до проверки.
+ * В итоге есть и строение листов (`TableStructure`): по нему видно, пойдёт ли запись при «Строгом
+ * строении таблицы», — и после смены листа или переключателя без новой проверки.
  */
 import { settingsStore } from '@/features/settings/store/SettingsStore'
 import type { StorageSettings } from '@/features/settings/store/settingsSchema'
@@ -21,12 +23,13 @@ import { Store } from '@/lib/store/Store'
 import { isRecord, isString } from '@/lib/validation/guards'
 import { toUploadError, type UploadError } from '../UploadError'
 import type { TableProbeResult } from '../worker/TableBackend'
-import { listTableSheets, probeTable } from '../queue/appBackends'
+import { inspectTable, probeTable, type TableContents } from '../queue/appBackends'
+import type { TableStructure } from '../xlsx/tableStructure'
 
 /** Итог проверки. */
 export type TableCheckResult =
-  /** Таблица есть. */
-  | { kind: 'found'; size: number; modifiedAt: number }
+  /** Таблица есть; `structure` — строение листов (`null`, если прочитать не удалось). */
+  | { kind: 'found'; size: number; modifiedAt: number; structure: TableStructure | null }
   /** Подключение есть, таблицы нет — запись невозможна. */
   | { kind: 'missing' }
   /** Проверить не удалось: нет сети, неверный пароль, нет общей папки и т. п. */
@@ -70,28 +73,28 @@ const parseSheets = (data: unknown): TableCheckState['sheets'] =>
 /** Подключается к хранилищу и сообщает, есть ли таблица. */
 export type TableProbe = (storage: StorageSettings) => Promise<TableProbeResult>
 
-/** Читает список листов таблицы. */
-export type SheetLister = (storage: StorageSettings) => Promise<string[]>
+/** Читает листы таблицы и их строение; таблицы нет — `null`. */
+export type TableInspector = (storage: StorageSettings) => Promise<TableContents | null>
 
 /** Последняя проверка таблицы. */
 export class TableCheckStore extends Store<TableCheckState> {
   /** Проверка хранилища. */
   private readonly probe: TableProbe
-  /** Чтение списка листов. */
-  private readonly listSheets: SheetLister
+  /** Чтение листов и строения. */
+  private readonly inspect: TableInspector
   /** Сохранённый список листов. */
   private readonly storedSheets: StoredValue<NonNullable<TableCheckState['sheets']>>
 
   /**
    * @param probe Проверка хранилища.
-   * @param listSheets Чтение списка листов найденной таблицы.
+   * @param inspect Чтение листов и строения найденной таблицы.
    * @param storage Где хранится список листов.
    */
-  constructor(probe: TableProbe, listSheets: SheetLister, storage: KeyValueStore = appStorage) {
+  constructor(probe: TableProbe, inspect: TableInspector, storage: KeyValueStore = appStorage) {
     const storedSheets = new StoredValue(storage, 'somascan.tableSheets.v1', parseSheets)
     super({ storage: null, checking: false, result: null, sheets: storedSheets.read() })
     this.probe = probe
-    this.listSheets = listSheets
+    this.inspect = inspect
     this.storedSheets = storedSheets
   }
 
@@ -103,9 +106,12 @@ export class TableCheckStore extends Store<TableCheckState> {
     let sheets: string[] | null = null
     try {
       const table = await this.probe(storage)
-      result = table.exists ? { kind: 'found', size: table.size, modifiedAt: table.modifiedAt } : { kind: 'missing' }
-      // Таблица есть — читаем её листы; не вышло — остаётся прежний список (проверка всё равно прошла).
-      if (table.exists) sheets = await this.listSheets(storage).catch(() => null)
+      // Таблица есть — читаем её листы и строение; не вышло — остаётся прежний список (проверка всё равно прошла).
+      const contents = table.exists ? await this.inspect(storage).catch(() => null) : null
+      sheets = contents?.sheets ?? null
+      result = table.exists
+        ? { kind: 'found', size: table.size, modifiedAt: table.modifiedAt, structure: contents?.structure ?? null }
+        : { kind: 'missing' }
     } catch (error) {
       result = { kind: 'failed', error: toUploadError(error) }
     }
@@ -134,4 +140,4 @@ export class TableCheckStore extends Store<TableCheckState> {
 }
 
 /** Проверка таблицы приложения. */
-export const tableCheckStore = new TableCheckStore(probeTable, listTableSheets)
+export const tableCheckStore = new TableCheckStore(probeTable, inspectTable)

@@ -38,6 +38,7 @@
     "authRequired": "Ба Google Drive дастрасӣ нест: дар «Танзимот → Нигоҳдорӣ» бо Google ворид шавед.",
     "driveNotConfigured": "Воридшавӣ бо Google дар ин сохти барнома танзим нашудааст (мизоҷи OAuth-и Google нест).",
     "folderNotFound": "Ҷузвдони Google Drive ёфт нашуд ё ин ҳисоб ба он дастрасӣ надорад.",
-    "cancelled": "Воридшавӣ бекор шуд."
+    "cancelled": "Воридшавӣ бекор шуд.",
+    "layoutMismatch": "Варақи «{{detail}}» ба сохти журнал мувофиқ нест: сутунҳои Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate бо ҳамин тартиб лозиманд. Варақро ислоҳ кунед ё «Сохти қатъии ҷадвал»-ро дар «Танзимот → Нигаҳдорӣ» хомӯш кунед — сабт худ аз нав мешавад. Санҷиши ҷадвал дар он ҷо нишон медиҳад, ки чӣ дуруст нест."
   }
 }

@@ -93,7 +93,8 @@
       "testOkExisting": "Tabelul a fost găsit: {{size}} KB, modificat {{date}}.",
       "testMissingTitle": "Tabelul nu a fost găsit",
       "testMissingMessage": "Conexiunea există, dar la această locație nu există tabel. Aplicația nu creează tabelul — indicați un registru existent, altfel etichetele nu vor fi scrise.",
-      "testFailedTitle": "Conectarea a eșuat"
+      "testFailedTitle": "Conectarea a eșuat",
+      "testMismatchTitle": "Structura tabelului nu corespunde"
     },
     "googleDrive": {
       "account": "Cont Google",
@@ -117,7 +118,12 @@
       "unchecked": "Existența tabelului nu a fost verificată",
       "checking": "Se verifică…",
       "missing": "Tabelul nu a fost găsit — scrierea nu este posibilă",
-      "failed": "Verificarea a eșuat: {{error}}"
+      "failed": "Verificarea a eșuat: {{error}}",
+      "mismatch": "Foaia „{{sheet}}” nu corespunde structurii registrului: {{problems}}. Nu se va scrie nimic.",
+      "mismatchMissing": "lipsesc coloanele {{columns}}",
+      "mismatchOrder": "coloanele nu sunt în ordine",
+      "mismatchExtra": "între coloanele registrului sunt altele: {{columns}}",
+      "noJournal": "Foaia „{{sheet}}” nu are antetul registrului — nu se va scrie nimic."
     },
     "table": {
       "lock": "Blocați calea tabelului",
@@ -129,6 +135,10 @@
       "auto": "Foaia anului curent ({{year}})",
       "unknown": "{{sheet}} — nu există în tabel",
       "hint": "Foaia anului se creează automat, celelalte apar după verificarea tabelului."
+    },
+    "strict": {
+      "label": "Structură strictă a tabelului",
+      "hint": "Se scrie doar într-o foaie cu toate coloanele registrului, în ordine: Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate."
     }
   },
   "advanced": {

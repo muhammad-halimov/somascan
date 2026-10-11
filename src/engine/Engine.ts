@@ -32,6 +32,7 @@ const UNCONFIGURED: EngineConfig = {
     smb: { host: '', share: '', filePath: '', domain: '', username: '', password: '' },
     googleDrive: { account: '', folder: '', fileName: '' },
     sheet: '',
+    strictLayout: true,
   },
   deviceId: '',
 }

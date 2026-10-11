@@ -56,13 +56,15 @@ export type UploadErrorCode =
   | 'folderNotFound'
   /** Отменено пользователем: закрыл окно входа Google или отменил запись в «Загрузках». */
   | 'cancelled'
+  /** Строгое строение таблицы: на листе не все колонки журнала, не по порядку или с чужими между ними. */
+  | 'layoutMismatch'
 
 /** Все коды — для проверки сохранённых записей (объект, а не список, чтобы компилятор требовал полноты). */
 const CODES: Record<UploadErrorCode, true> = {
   notConfigured: true, invalidPath: true, unavailable: true, offline: true, hostUnreachable: true,
   timeout: true, authFailed: true, shareNotFound: true, notFound: true, exists: true, accessDenied: true, locked: true,
   busy: true, corruptWorkbook: true, verifyFailed: true, integrityFailed: true, unknownLayout: true, sheetNotFound: true, tableNotFound: true, io: true, authRequired: true, driveNotConfigured: true,
-  folderNotFound: true, cancelled: true,
+  folderNotFound: true, cancelled: true, layoutMismatch: true,
 }
 
 /** Проверка, что значение — известный код ошибки выгрузки. */

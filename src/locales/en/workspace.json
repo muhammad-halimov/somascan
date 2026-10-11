@@ -110,7 +110,7 @@
   },
   "requiredDialog": {
     "title": "Fill in the required fields",
-    "message": "A tag without a photo needs: {{fields}}."
+    "message": "Tag {{number}} is missing required fields: {{fields}}."
   },
   "photoDialog": {
     "title": "No photo",

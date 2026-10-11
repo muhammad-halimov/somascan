@@ -110,7 +110,7 @@
   },
   "requiredDialog": {
     "title": "Completați câmpurile obligatorii",
-    "message": "O etichetă fără fotografie trebuie să aibă: {{fields}}."
+    "message": "Etichetei {{number}} îi lipsesc câmpurile obligatorii: {{fields}}."
   },
   "photoDialog": {
     "title": "Fără fotografie",

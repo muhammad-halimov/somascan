@@ -10,6 +10,9 @@
  * таблицу могут переставить, переименовать колонку в известный вариант или добавить свою колонку —
  * колонка с названием включённого поля бирки тоже заполняется. «Data trimetere la incercat»
  * (дата отправки на испытание) заполняет лаборатория — приложение её не трогает.
+ *
+ * Строгая проверка (`strictMismatch`, «Строгое строение таблицы» в настройках хранилища) требует
+ * все колонки журнала (`JOURNAL_COLUMNS`) — по порядку и без чужих колонок с названием между ними.
  */
 import { normalizeHeader } from './tableCell'
 
@@ -46,6 +49,22 @@ const KNOWN_HEADERS: ReadonlyArray<readonly [LabColumnKind, RegExp]> = [
   ['bar', /^bara?$/],
   ['qualityDoc', /^(doc\.?|documente?|acte) de calitate\b/],
 ]
+
+/** Колонки журнала по порядку — строение, которого требует строгая проверка. */
+export const JOURNAL_COLUMNS: readonly LabColumnKind[] = ['number', 'quantity', 'sentToTest', 'arrivalDate', 'heat', 'producer', 'coil', 'bar', 'qualityDoc']
+
+/** Названия колонок журнала, как в его шапке (на всех языках интерфейса — так же). */
+export const JOURNAL_COLUMN_TITLES: Readonly<Record<LabColumnKind, string>> = {
+  number: 'Nr. Crt.',
+  quantity: 'Cantitatea',
+  sentToTest: 'Data trimitere la incercat',
+  arrivalDate: 'Data intrare',
+  heat: 'Sarja',
+  producer: 'Producator',
+  coil: 'Bobina',
+  bar: 'Bara',
+  qualityDoc: 'Doc. de calitate',
+}
 
 /** Сколько строк сверху просматривается в поисках шапки. */
 export const HEADER_SCAN_ROWS = 15
@@ -144,4 +163,37 @@ export function findLabLayout(read: (row: number, column: number) => string, fie
 export function dataColumnsOf(layout: LabLayout): number[] {
   const columns = [...layout.known].filter(([kind]) => kind !== 'number').map(([, column]) => column)
   return [...columns, ...layout.fields.values()]
+}
+
+/** Чем строение листа отличается от журнала. */
+export interface LayoutMismatch {
+  /** Каких колонок журнала нет. */
+  missing: LabColumnKind[]
+  /** Колонки журнала стоят не по порядку. */
+  outOfOrder: boolean
+  /** Чужие колонки с названием между колонками журнала (текст их шапки). */
+  extra: string[]
+}
+
+/**
+ * Строгая проверка строения листа: все колонки журнала (`JOURNAL_COLUMNS`), по порядку, без чужих
+ * колонок с названием между ними. Колонки правее последней (свои поля бирки и т. п.) не мешают.
+ * @param read Текст ячейки, как у `findLabLayout`.
+ * @returns Отличия или `null`, если строение совпадает.
+ */
+export function strictMismatch(layout: LabLayout, read: (row: number, column: number) => string): LayoutMismatch | null {
+  const missing = JOURNAL_COLUMNS.filter((kind) => !layout.known.has(kind))
+  const present = JOURNAL_COLUMNS.filter((kind) => layout.known.has(kind))
+  const columns = present.map((kind) => layout.known.get(kind)!)
+  const outOfOrder = columns.some((column, index) => index > 0 && column < columns[index - 1]!)
+  const ours = new Set(columns)
+  const extra: string[] = []
+  for (let column = Math.min(...columns); column <= Math.max(...columns); column++) {
+    if (ours.has(column)) continue
+    // Колонка без названия — скорее место недостающей колонки журнала: о ней уже говорит `missing`.
+    let title = ''
+    for (let row = layout.headerTop; row < layout.dataStart && !title; row++) title = read(row, column).trim()
+    if (title) extra.push(title)
+  }
+  return missing.length === 0 && !outOfOrder && extra.length === 0 ? null : { missing, outOfOrder, extra }
 }

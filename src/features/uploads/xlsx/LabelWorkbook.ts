@@ -14,6 +14,8 @@
  * его не видно и в списке скрытых листов Excel): номер записи → лист и строка. По нему повтор
  * после обрыва не дублирует строку, а проверка после сохранения находит записанную строку.
  *
+ * Строгое строение (`append(…, strict)`): лист без всех колонок журнала по порядку — `layoutMismatch`.
+ *
  * ExcelJS (≈1 МБ) загружается лениво, при первой записи.
  */
 import type { Cell, Workbook, Worksheet } from 'exceljs'
@@ -21,7 +23,8 @@ import { SHEET_KEY } from '@/features/recognition/label/labelFields'
 import { UploadError } from '../UploadError'
 import { findCell, keepDefaultWidths, mergedRanges, moveSheetFirst } from './excelInternals'
 import { arrivalDateText, labCell } from './labTableCells'
-import { dataColumnsOf, findLabLayout, type FieldColumnHeader, type LabLayout } from './labTableLayout'
+import { dataColumnsOf, findLabLayout, strictMismatch, type FieldColumnHeader, type LabLayout } from './labTableLayout'
+import type { TableStructure } from './tableStructure'
 import { cellText, readCell, toTableCell, type TableCell } from './tableCell'
 import type { UploadColumn } from './uploadColumns'
 
@@ -167,16 +170,29 @@ export class LabelWorkbook {
     return found
   }
 
+  /** Строение видимых листов — для проверки таблицы (`TableStructure`). */
+  structure(): TableStructure {
+    const sheets = this.workbook.worksheets
+      .filter((sheet) => sheet.state === 'visible' && sheet.name !== JOURNAL_SHEET)
+      .map((sheet) => {
+        const read = readerOf(sheet)
+        const layout = findLabLayout(read)
+        return { name: sheet.name, journal: layout !== null, mismatch: layout ? strictMismatch(layout, read) : null }
+      })
+    return { sheets, yearSource: this.yearSource()?.sheet.name ?? null }
+  }
+
   /**
    * Дописывает бирку в выбранный лист — свой лист бирки (поле «Лист») или лист из настроек хранилища,
    * а если лист не выбран — в лист года записи (его нет — создаётся).
    * @param entry Бирка, номер записи и колонки.
    * @param writtenAt Момент записи: от него — год (лист) и «Data intrare».
    * @param defaultSheet Лист из настроек хранилища; пусто — лист года.
+   * @param strict Строгое строение: все колонки журнала по порядку (`strictMismatch`).
    * @throws {UploadError} `sheetNotFound`, если выбранного листа в книге нет; `unknownLayout`, если на листе
-   *   не нашлось шапки журнала.
+   *   не нашлось шапки журнала; `layoutMismatch`, если строение строгое, а лист с ним не совпадает.
    */
-  append(entry: LabEntry, writtenAt: number, defaultSheet = ''): PlannedRow {
+  append(entry: LabEntry, writtenAt: number, defaultSheet = '', strict = false): PlannedRow {
     // РИСК: год листа (и «Data intrare») — по часам устройства: с неверной датой на телефоне бирка уйдёт
     // не в тот лист. Сервер своё время не сообщает, сверить не с чем.
     const year = new Date(writtenAt).getFullYear()
@@ -189,6 +205,7 @@ export class LabelWorkbook {
     const sheet = existing ?? this.addYearSheet(year)
     const layout = findLabLayout(readerOf(sheet), fields)
     if (!layout) throw new UploadError('unknownLayout', { detail: sheet.name })
+    if (strict && strictMismatch(layout, readerOf(sheet))) throw new UploadError('layoutMismatch', { detail: sheet.name })
 
     const last = this.lastDataRow(sheet, layout)
     const row = Math.max(last, layout.dataStart - 1) + 1
@@ -313,19 +330,9 @@ export class LabelWorkbook {
    * @throws {UploadError} `unknownLayout`, если такого листа нет.
    */
   private addYearSheet(year: number): Worksheet {
-    const candidates = this.workbook.worksheets
-      .filter((sheet) => sheet.name !== JOURNAL_SHEET)
-      .sort((a, b) => Number(isYearSheet(b)) - Number(isYearSheet(a)) || b.name.localeCompare(a.name))
-    let source: Worksheet | undefined
-    let layout: LabLayout | null = null
-    for (const candidate of candidates) {
-      layout = findLabLayout(readerOf(candidate))
-      if (layout) {
-        source = candidate
-        break
-      }
-    }
-    if (!source || !layout) throw new UploadError('unknownLayout', { detail: String(year) })
+    const found = this.yearSource()
+    if (!found) throw new UploadError('unknownLayout', { detail: String(year) })
+    const { sheet: source, layout } = found
 
     const sheet = this.workbook.addWorksheet(String(year), {
       properties: cloneStyle(source.properties),
@@ -374,6 +381,18 @@ export class LabelWorkbook {
     this.workbook.views = (this.workbook.views?.length ? this.workbook.views : [{}]).map((view) => ({ ...view, activeTab: 0, firstSheet: 0 })) as Workbook['views']
     this.styleSources.set(sheet.name, { sheet: source, row: layout.dataStart })
     return sheet
+  }
+
+  /** С какого листа копируется шапка листа нового года: самый новый лист-год (или другой лист) с шапкой журнала. */
+  private yearSource(): { sheet: Worksheet; layout: LabLayout } | null {
+    const candidates = this.workbook.worksheets
+      .filter((sheet) => sheet.name !== JOURNAL_SHEET)
+      .sort((a, b) => Number(isYearSheet(b)) - Number(isYearSheet(a)) || b.name.localeCompare(a.name))
+    for (const sheet of candidates) {
+      const layout = findLabLayout(readerOf(sheet))
+      if (layout) return { sheet, layout }
+    }
+    return null
   }
 
   /** Отмечает в служебном листе, куда записана бирка. */

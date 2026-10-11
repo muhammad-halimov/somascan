@@ -1,6 +1,6 @@
 /**
  * Журнал проб `.xlsx`: пустой журнал (фикстура), поиск шапки, дописывание строк в лист года, новый год,
- * служебный лист с номерами записей, сохранность чужих данных, значения в формате журнала.
+ * служебный лист с номерами записей, строгое строение, сохранность чужих данных, значения в формате журнала.
  * Запуск: `npm test`.
  */
 import assert from 'node:assert/strict'
@@ -8,8 +8,9 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import ExcelJS from 'exceljs'
 import { diameterCell, heatCell, quantityCell, arrivalDateText } from '../src/features/uploads/xlsx/labTableCells'
-import { findLabLayout, knownColumnOf } from '../src/features/uploads/xlsx/labTableLayout'
+import { findLabLayout, knownColumnOf, strictMismatch } from '../src/features/uploads/xlsx/labTableLayout'
 import { LabelWorkbook, type LabEntry } from '../src/features/uploads/xlsx/LabelWorkbook'
+import { writeTarget } from '../src/features/uploads/xlsx/tableStructure'
 import { cellKey, excelDateTime, normalizeHeader, readCell, toTableCell } from '../src/features/uploads/xlsx/tableCell'
 import type { UploadColumn } from '../src/features/uploads/xlsx/uploadColumns'
 
@@ -110,6 +111,50 @@ test('строки дописываются после последней с д�
   assert.equal(planned.cells.get(3), 4, 'Nr. Crt. — следующий после номера строки 9')
   assert.equal(planned.item, 4)
   assert.equal(workbook.itemAt({ sheet: '2026', row: 9 }), 3, 'номер уже заполненной строки')
+})
+
+/** Книга после правки через ExcelJS. */
+async function edited(bytes: Uint8Array, change: (workbook: ExcelJS.Workbook) => void) {
+  const raw = new ExcelJS.Workbook()
+  await raw.xlsx.load(bytes as unknown as Parameters<typeof raw.xlsx.load>[0])
+  change(raw)
+  return new Uint8Array(await raw.xlsx.writeBuffer() as ArrayBuffer)
+}
+
+test('строгое строение: журнал подходит, лист без колонки журнала — layoutMismatch; без строгости пишется', async () => {
+  const strictOk = await LabelWorkbook.open(template)
+  assert.equal(strictOk.append(entry(1, { heat: '1', product_form: 'bara' }), at(2026, 10, 8), '', true).row, 7)
+  assert.deepEqual(strictOk.structure().sheets, [{ name: '2026', journal: true, mismatch: null }])
+
+  // Шапка «Cantitatea» стёрта (объединение D4:D6 — значение в D4).
+  const withoutQuantity = await edited(template, (raw) => {
+    raw.getWorksheet('2026')!.getCell('D4').value = null
+  })
+  const strict = await LabelWorkbook.open(withoutQuantity)
+  assert.throws(() => strict.append(entry(1, { heat: '1', product_form: 'bara' }), at(2026, 10, 8), '', true),
+    (error: Error & { code?: string; params?: { detail?: string } }) => error.code === 'layoutMismatch' && error.params?.detail === '2026')
+  const lenient = await LabelWorkbook.open(withoutQuantity)
+  const planned = lenient.append(entry(1, { heat: '1', weight_kg: 5, product_form: 'bara' }), at(2026, 10, 8))
+  assert.equal(planned.cells.has(4), false, 'колонки «Cantitatea» нет — вес не пишется')
+
+  const structure = strict.structure()
+  assert.deepEqual(structure.sheets, [{ name: '2026', journal: true, mismatch: { missing: ['quantity'], outOfOrder: false, extra: [] } }])
+  assert.equal(structure.yearSource, '2026')
+  assert.equal(writeTarget(structure, '', 2027)?.name, '2026', 'лист нового года получит строение самого нового')
+  assert.equal(writeTarget(structure, 'Nope', 2026), null)
+})
+
+test('строгое строение: порядок колонок и чужие колонки между ними', () => {
+  const titles = ['Nr. Crt.', 'Cantitatea', 'Data trimitere la incercat', 'Data intrare', 'Sarja', 'Producator', 'Bobina', 'Bara', 'Doc. de calitate']
+  const check = (header: string[]) => {
+    const read = (row: number, column: number) => (row === 1 ? header[column - 1] ?? '' : '')
+    return strictMismatch(findLabLayout(read)!, read)
+  }
+  assert.equal(check(titles), null)
+  assert.equal(check([...titles, 'Marcă oțel']), null, 'свои колонки правее журнала не мешают')
+  assert.deepEqual(check(['Cantitatea', 'Nr. Crt.', ...titles.slice(2)]), { missing: [], outOfOrder: true, extra: [] })
+  assert.deepEqual(check([...titles.slice(0, 5), 'Note', ...titles.slice(5)]), { missing: [], outOfOrder: false, extra: ['Note'] })
+  assert.deepEqual(check(titles.filter((title) => title !== 'Cantitatea')), { missing: ['quantity'], outOfOrder: false, extra: [] })
 })
 
 test('чужая книга без шапки журнала — unknownLayout', async () => {

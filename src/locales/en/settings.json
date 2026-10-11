@@ -93,7 +93,8 @@
       "testOkExisting": "The table was found: {{size}} KB, last modified {{date}}.",
       "testMissingTitle": "Table not found",
       "testMissingMessage": "Connected, but there is no table at this location. The app does not create the table — point to an existing log, otherwise tags will not be written.",
-      "testFailedTitle": "Connection failed"
+      "testFailedTitle": "Connection failed",
+      "testMismatchTitle": "Table structure does not match"
     },
     "googleDrive": {
       "account": "Google account",
@@ -117,7 +118,12 @@
       "unchecked": "Table not checked yet",
       "checking": "Checking…",
       "missing": "Table not found — writing is not possible",
-      "failed": "Could not check: {{error}}"
+      "failed": "Could not check: {{error}}",
+      "mismatch": "Sheet “{{sheet}}” does not match the journal structure: {{problems}}. Nothing will be written.",
+      "mismatchMissing": "missing columns {{columns}}",
+      "mismatchOrder": "columns are out of order",
+      "mismatchExtra": "other columns between the journal ones: {{columns}}",
+      "noJournal": "Sheet “{{sheet}}” has no journal header — nothing will be written."
     },
     "table": {
       "lock": "Lock the table path",
@@ -129,6 +135,10 @@
       "auto": "Current year sheet ({{year}})",
       "unknown": "{{sheet}} — not in the table",
       "hint": "The year sheet is created automatically, others appear after the table check."
+    },
+    "strict": {
+      "label": "Strict table structure",
+      "hint": "Write only to a sheet with all journal columns in order: Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate."
     }
   },
   "advanced": {

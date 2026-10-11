@@ -38,10 +38,7 @@ export interface LabelFieldsProps {
   isEditing: boolean
   /** Вызывается при правке поля. */
   onFieldChange: (key: LabelKey, value: string) => void
-  /**
-   * Бирка без фото: пустое поле — «Не заполнено», а поля по умолчанию (производитель, размер, плавка,
-   * вес) обязательны — пустые отмечены цветом ошибки, как невыбранная форма.
-   */
+  /** Бирка без фото: пустое поле — «Не заполнено» (у распознанной — «Не распознано»). */
   manual?: boolean
 }
 
@@ -71,7 +68,9 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false }:
           const value = label[key] ?? null
           const name = fieldName(field)
           const missing = isMissingValue(value)
-          const required = manual && isEnabledByDefault(key)
+          // Поля по умолчанию (производитель, размер, плавка, вес) обязательны у любой бирки: пустые — цветом
+          // ошибки, как невыбранная форма; у бирки без фото — «Обязательное поле», у распознанной — «Не распознано».
+          const required = isEnabledByDefault(key)
           return (
             <label className={`label-field${required && missing ? ' is-required' : ''}`} key={key}>
               <span className="label-field-name">{name}</span>

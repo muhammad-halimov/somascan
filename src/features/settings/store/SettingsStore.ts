@@ -103,6 +103,11 @@ export class SettingsStore extends Store<AppSettings> {
     this.setState((state) => ({ ...state, storage: { ...state.storage, sheet: sheet.trim() } }))
   }
 
+  /** Включает или выключает строгую проверку строения таблицы. */
+  setStrictLayout(strictLayout: boolean) {
+    this.setState((state) => ({ ...state, storage: { ...state.storage, strictLayout } }))
+  }
+
   /** Обновляет часть полей SMB. */
   updateSmb(patch: Partial<SmbSettings>) {
     this.setState((state) => ({ ...state, storage: { ...state.storage, smb: { ...state.storage.smb, ...patch } } }))

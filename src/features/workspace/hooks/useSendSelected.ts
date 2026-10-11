@@ -67,10 +67,10 @@ export function useSendSelected({ session, editMode, notesCardRef, photoCardRef 
     }
     const missing = missingRequiredFields(blocker, settingsStore.getSnapshot().advanced.labelFields)
     if (missing.length > 0) {
-      // Бирка без фото с пустыми обязательными полями: объясняем какими и открываем правку у первого из них.
+      // Пустые обязательные поля (не распознаны или не введены): объясняем какие и открываем правку у первого из них.
       await NativeDialogs.alert({
         title: t('requiredDialog.title'),
-        message: t('requiredDialog.message', { fields: missing.map(fieldName).join(', ') }),
+        message: t('requiredDialog.message', { number, fields: missing.map(fieldName).join(', ') }),
         buttonTitle: t('common:ok'),
       })
       if (!editMode.isEditing) editMode.toggle()

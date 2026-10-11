@@ -29,4 +29,7 @@ test('лист журнала: по умолчанию пусто (лист те
   assert.equal(defaults.storage.sheet, '')
   assert.equal(parseSettings({ storage: { sheet: ' 2025 ' } }, defaults).storage.sheet, '2025')
   assert.equal(parseSettings({ storage: { sheet: 7 } }, defaults).storage.sheet, '')
+  assert.equal(defaults.storage.strictLayout, true, 'строгое строение таблицы — по умолчанию')
+  assert.equal(parseSettings({ storage: { strictLayout: false } }, defaults).storage.strictLayout, false)
+  assert.equal(parseSettings({ storage: { strictLayout: 'no' } }, defaults).storage.strictLayout, true)
 })

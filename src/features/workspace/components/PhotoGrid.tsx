@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/components/icons/Icons'
-import { missingManualFields, type LabelFieldDefinition } from '@/features/recognition/label/labelFields'
+import { missingRequiredLabelFields, type LabelFieldDefinition } from '@/features/recognition/label/labelFields'
 import { hasProductForm } from '@/features/recognition/label/productForm'
 import { useSettings } from '@/features/settings/store/useSettings'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
@@ -34,8 +34,8 @@ function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[]): Cel
   // Переключена обратно «с фото», а снимка нет.
   if (!item.manual && !item.photoUrl) return 'noPhoto'
   if (!hasProductForm(item.status.label)) return 'noForm'
-  // У бирки без фото поля по умолчанию обязательны.
-  if (item.manual && missingManualFields(item.status.label, fields).length > 0) return 'incomplete'
+  // Поля по умолчанию обязательны — и у распознанной бирки, и у бирки без фото.
+  if (missingRequiredLabelFields(item.status.label, fields).length > 0) return 'incomplete'
   return 'done'
 }
 
