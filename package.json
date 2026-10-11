@@ -1,6 +1,8 @@
 {
   "name": "somascan",
   "private": true,
+  "license": "Apache-2.0",
+  "author": "Muhammad Halimov",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

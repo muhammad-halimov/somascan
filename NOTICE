@@ -1,0 +1,12 @@
+Somascan
+Copyright 2026 Muhammad Halimov
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The names and logos of Somaco, Holcim, Google, Google Drive, Anthropic, OpenAI,
+LM Studio and Microsoft Windows shown in the app are trademarks of their
+respective owners and are not covered by this license.
+
+Third-party libraries keep their own licenses, among them libsmb2 (LGPL-2.1,
+linked dynamically on iOS through AMSMB2, MIT), smbj (Apache-2.0),
+ExcelJS (MIT), React (MIT) and Capacitor (MIT).
