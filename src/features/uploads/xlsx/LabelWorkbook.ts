@@ -14,11 +14,14 @@
  * его не видно и в списке скрытых листов Excel): номер записи → лист и строка. По нему повтор
  * после обрыва не дублирует строку, а проверка после сохранения находит записанную строку.
  *
- * Строгое строение (`append(…, strict)`): лист без всех колонок журнала по порядку — `layoutMismatch`.
+ * Правила записи (`AppendOptions`, из настроек хранилища): строгое строение — лист без всех колонок журнала
+ * по порядку не пишется (`layoutMismatch`); каждая плавка — один раз: если она уже есть на каком-либо листе
+ * журнала — `duplicateHeat`.
  *
  * ExcelJS (≈1 МБ) загружается лениво, при первой записи.
  */
 import type { Cell, Workbook, Worksheet } from 'exceljs'
+import { HEAT_KEY, heatKey } from '@/features/recognition/label/heatNumber'
 import { SHEET_KEY } from '@/features/recognition/label/labelFields'
 import { UploadError } from '../UploadError'
 import { findCell, keepDefaultWidths, mergedRanges, moveSheetFirst } from './excelInternals'
@@ -91,6 +94,16 @@ export interface LabEntry {
   label: Record<string, string | number | null>
   /** Колонки записи: по ним находятся колонки своих полей. */
   columns: readonly UploadColumn[]
+}
+
+/** Правила записи из настроек хранилища; не заданные — выключены (и лист — лист года). */
+export interface AppendOptions {
+  /** Лист из настроек хранилища; пусто — лист года. Свой лист бирки (поле «Лист») важнее. */
+  sheet?: string
+  /** Строгое строение: все колонки журнала по порядку (`strictMismatch`), иначе `layoutMismatch`. */
+  strict?: boolean
+  /** Каждая плавка — один раз: плавка, которая уже есть в журнале, — `duplicateHeat`. */
+  uniqueHeat?: boolean
 }
 
 /** Где лежит записанная строка. */
@@ -187,12 +200,12 @@ export class LabelWorkbook {
    * а если лист не выбран — в лист года записи (его нет — создаётся).
    * @param entry Бирка, номер записи и колонки.
    * @param writtenAt Момент записи: от него — год (лист) и «Data intrare».
-   * @param defaultSheet Лист из настроек хранилища; пусто — лист года.
-   * @param strict Строгое строение: все колонки журнала по порядку (`strictMismatch`).
+   * @param options Лист из настроек и правила записи.
    * @throws {UploadError} `sheetNotFound`, если выбранного листа в книге нет; `unknownLayout`, если на листе
-   *   не нашлось шапки журнала; `layoutMismatch`, если строение строгое, а лист с ним не совпадает.
+   *   не нашлось шапки журнала; `layoutMismatch`, если строение строгое, а лист с ним не совпадает;
+   *   `duplicateHeat`, если плавки уникальны, а такая уже есть в журнале.
    */
-  append(entry: LabEntry, writtenAt: number, defaultSheet = '', strict = false): PlannedRow {
+  append(entry: LabEntry, writtenAt: number, { sheet: defaultSheet = '', strict = false, uniqueHeat = false }: AppendOptions = {}): PlannedRow {
     // РИСК: год листа (и «Data intrare») — по часам устройства: с неверной датой на телефоне бирка уйдёт
     // не в тот лист. Сервер своё время не сообщает, сверить не с чем.
     const year = new Date(writtenAt).getFullYear()
@@ -206,6 +219,11 @@ export class LabelWorkbook {
     const layout = findLabLayout(readerOf(sheet), fields)
     if (!layout) throw new UploadError('unknownLayout', { detail: sheet.name })
     if (strict && strictMismatch(layout, readerOf(sheet))) throw new UploadError('layoutMismatch', { detail: sheet.name })
+    const heat = uniqueHeat ? heatKey(entry.label[HEAT_KEY]) : null
+    const sameHeat = heat ? this.findHeat(heat) : null
+    if (sameHeat) {
+      throw new UploadError('duplicateHeat', { detail: `${String(entry.label[HEAT_KEY]).trim()} — ${sameHeat.sheet}, ${sameHeat.row}` })
+    }
 
     const last = this.lastDataRow(sheet, layout)
     const row = Math.max(last, layout.dataStart - 1) + 1
@@ -232,6 +250,27 @@ export class LabelWorkbook {
     this.remember(entry.localNumber, { sheet: sheet.name, row }, writtenAt)
     const numberColumn = layout.known.get('number')
     return { sheet: sheet.name, row, cells, item: numberColumn === undefined ? null : itemOf(cells.get(numberColumn) ?? null), newSheet: !existing }
+  }
+
+  /**
+   * Где в журнале уже есть эта плавка (`heatKey`) — на любом листе с шапкой журнала, или `null`.
+   * Плавки сравниваются без пробелов и регистра; число и такой же текст — одна плавка.
+   */
+  findHeat(heat: string): RowLocation | null {
+    const key = heatKey(heat)
+    if (!key) return null
+    for (const sheet of this.workbook.worksheets) {
+      if (sheet.name === JOURNAL_SHEET) continue
+      const layout = findLabLayout(readerOf(sheet))
+      const column = layout?.known.get('heat')
+      if (!layout || column === undefined) continue
+      let found: number | null = null
+      sheet.eachRow({ includeEmpty: false }, (row, number) => {
+        if (found === null && number >= layout.dataStart && heatKey(cellText(row.findCell(column)?.value ?? null)) === key) found = number
+      })
+      if (found !== null) return { sheet: sheet.name, row: found }
+    }
+    return null
   }
 
   /** Номер элемента («Nr. Crt.») в строке журнала или `null` (нет шапки, колонки или числа). */

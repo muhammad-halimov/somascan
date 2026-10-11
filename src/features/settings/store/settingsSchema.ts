@@ -80,6 +80,11 @@ export interface StorageSettings {
    * Выключено — колонки ищутся по названиям, недостающие пропускаются.
    */
   strictLayout: boolean
+  /**
+   * Каждая плавка — один раз: плавка, которая уже есть в журнале, в «Загрузках» или у другой бирки на экране,
+   * не отправляется и не записывается. Выключено — повторы плавок разрешены (несколько бунтов одной плавки).
+   */
+  uniqueHeat: boolean
 }
 
 /**
@@ -143,6 +148,7 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       googleDrive: { account: '', folder: '', fileName: DEFAULT_TABLE_FILE },
       sheet: '',
       strictLayout: true,
+      uniqueHeat: true,
     },
     advanced: {
       prompt: '',
@@ -283,6 +289,7 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
       googleDrive: withDefaultTable(readStrings(isRecord(storage) ? storage.googleDrive : undefined, defaults.storage.googleDrive), 'fileName', defaults.storage.googleDrive.fileName),
       sheet: readField(storage, 'sheet', isString, defaults.storage.sheet).trim(),
       strictLayout: readField(storage, 'strictLayout', (value): value is boolean => typeof value === 'boolean', defaults.storage.strictLayout),
+      uniqueHeat: readField(storage, 'uniqueHeat', (value): value is boolean => typeof value === 'boolean', defaults.storage.uniqueHeat),
     },
     advanced: {
       prompt: readField(advanced, 'prompt', isString, defaults.advanced.prompt),

@@ -33,6 +33,7 @@ const UNCONFIGURED: EngineConfig = {
     googleDrive: { account: '', folder: '', fileName: '' },
     sheet: '',
     strictLayout: true,
+    uniqueHeat: true,
   },
   deviceId: '',
 }

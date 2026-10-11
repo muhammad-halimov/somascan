@@ -10,6 +10,7 @@ import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './component
 import { PhotoViewer } from './components/PhotoViewer'
 import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
+import { useHeatDuplicates } from './hooks/useHeatDuplicates'
 import { useSendSelected } from './hooks/useSendSelected'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
@@ -276,6 +277,8 @@ export function ScanWorkspace() {
   }
 
   const sender = useSendSelected({ session, editMode, notesCardRef, photoCardRef })
+  /** Повторы плавок: у открытой бирки поле плавки — цветом ошибки, с подсказкой, с чем совпало. */
+  const duplicates = useHeatDuplicates(session.items)
 
   /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
   const hasSlideBar = session.items.length > 0 || view === 'grid'
@@ -337,6 +340,7 @@ export function ScanWorkspace() {
         hasPhoto={item !== null}
         canRetry={item !== null && !item.manual && item.photoUrl !== ''}
         isManual={item?.manual ?? false}
+        heatDuplicate={item ? duplicates.get(item.id) ?? null : null}
         onFieldChange={changeField}
         onToggleEdit={() => void toggleEdit()}
         onCloseEdit={editMode.exit}

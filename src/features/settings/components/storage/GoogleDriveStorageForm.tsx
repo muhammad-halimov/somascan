@@ -14,7 +14,7 @@ import { useUploadErrorText } from '@/features/uploads/useUploadErrorText'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { settingsStore } from '../../store/SettingsStore'
 import { useSettings } from '../../store/useSettings'
-import { StrictLayoutField } from './StrictLayoutField'
+import { TableRulesField } from './TableRulesField'
 import { TableSheetField } from './TableSheetField'
 import { useTableCheck } from './useTableCheck'
 import { useTableLock } from './useTableLock'
@@ -22,7 +22,7 @@ import './StorageForms.css'
 
 /**
  * Google Drive: вход через Google (нативный выбор аккаунта и согласие на доступ к Drive; после входа — почта
- * аккаунта, а справа в заголовке, напротив значка Google, — «Выйти»: отзывает доступ), таблица (папка и имя файла под замком, итог проверки, лист, строгое строение)
+ * аккаунта, а справа в заголовке, напротив значка Google, — «Выйти»: отзывает доступ), таблица (папка и имя файла под замком, итог проверки, лист, правила записи)
  * и «Проверить подключение».
  */
 export function GoogleDriveStorageForm() {
@@ -103,7 +103,7 @@ export function GoogleDriveStorageForm() {
         </Field>
         {googleDrive.account && <div className="storage-check" role="status">{check.status}</div>}
         <TableSheetField />
-        <StrictLayoutField />
+        <TableRulesField />
       </FormSection>
 
       <Button variant="tonal" icon={<PlugIcon />} busy={check.isTesting} disabled={check.isChecking || !googleDrive.account} onClick={() => void check.testConnection()}>

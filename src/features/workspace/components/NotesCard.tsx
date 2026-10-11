@@ -5,6 +5,7 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { Tabs } from '@/components/ui/Tabs'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
 import { MAX_SCAN_ITEMS, type RecognitionStatus } from '../hooks/useScanSession'
+import type { HeatDuplicate } from '../utils/sendReadiness'
 import { LabelFields } from './LabelFields'
 import './NotesCard.css'
 
@@ -30,6 +31,8 @@ export interface NotesCardProps {
   canRetry: boolean
   /** Бирка без фото: поля заполняют вручную, поля по умолчанию обязательны. */
   isManual: boolean
+  /** Плавка открытой бирки повторяется (`heatDuplicates`). */
+  heatDuplicate?: HeatDuplicate | null
   /** Поле бирки отредактировано. */
   onFieldChange: (key: LabelKey, value: string) => void
   /** «Правка»: включить режим правки, а нажатая ещё раз — отменить изменения и выйти. */
@@ -59,7 +62,7 @@ export interface NotesCardProps {
  * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const isRecognizing = status.kind === 'recognizing'
   const actionsRef = useRef<HTMLDivElement>(null)
@@ -134,7 +137,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
       )}
 
       {status.kind === 'done' ? (
-        <LabelFields key={`${itemKey}-${isEditing ? 'edit' : 'view'}`} label={status.label} isEditing={isEditing} onFieldChange={onFieldChange} manual={isManual} />
+        <LabelFields key={`${itemKey}-${isEditing ? 'edit' : 'view'}`} label={status.label} isEditing={isEditing} onFieldChange={onFieldChange} manual={isManual} heatDuplicate={heatDuplicate} />
       ) : status.kind === 'failed' ? (
         <p className="notes-message is-error anim-enter" role="alert">
           <span className="notes-message-title">{t('errors:recognitionFailed')}</span>

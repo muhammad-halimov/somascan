@@ -93,6 +93,19 @@
   opacity: 1;
 }
 
+/* Плавка повторяется: значение цветом ошибки, под строкой — с чем совпала. */
+.label-field.is-duplicate .label-field-value {
+  color: var(--danger);
+}
+
+.label-field-note {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+  color: var(--danger);
+  font-size: 12.5px;
+  line-height: 17px;
+}
+
 /* Системный выбор формы — в стиле полей ввода; стрелка справа рисуется фоном. */
 .label-field-select {
   appearance: none;

@@ -123,7 +123,7 @@
     "recognizingMessage": "Încă se recunoaște — așteptați câteva secunde.",
     "failedMessage": "Nu a putut fi recunoscută — atingeți „Reîncearcă” sau deselectați-o în grilă.",
     "partialTitle": "Trimiteți pe cele gata?",
-    "partialMessage": "Gata de trimis: {{ready}} din {{total}}. Celelalte ({{rest}}) încă se recunosc, au eșuat sau nu au formă — rămân pe ecran.",
+    "partialMessage": "Gata de trimis: {{ready}} din {{total}}. Restul ({{rest}}) nu sunt încă gata — se recunosc, au eșuat, fără formă, cu câmpuri obligatorii goale sau cu șarja repetată; vor rămâne pe ecran.",
     "sendReady": "Trimite {{count}}"
   },
   "grid": {
@@ -158,5 +158,10 @@
     "openLabel": "Deschide eticheta selectată",
     "grid": "Grilă",
     "gridLabel": "Toate etichetele în grilă"
+  },
+  "heatDialog": {
+    "title": "Șarja se repetă",
+    "tagMessage": "Eticheta {{number}} are aceeași șarjă {{heat}} ca eticheta {{other}}. Fiecare șarjă se scrie în registru o singură dată — corectați numărul șarjei sau eliminați eticheta.",
+    "sentMessage": "Șarja {{heat}} a etichetei {{number}} a fost deja trimisă (nr. {{record}} în „Încărcări”). Fiecare șarjă se scrie în registru o singură dată — corectați numărul șarjei sau eliminați eticheta."
   }
 }

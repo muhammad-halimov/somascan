@@ -139,6 +139,13 @@
     "strict": {
       "label": "Strict table structure",
       "hint": "Write only to a sheet with all journal columns in order: Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate."
+    },
+    "rules": "Write rules",
+    "uniqueHeat": {
+      "label": "Each heat number once",
+      "hint": "Do not write a heat number that is already in the journal, in “Uploads” or on another tag on screen. Turn off if several coils of one heat arrive.",
+      "lock": "Lock the “Each heat number once” rule",
+      "unlock": "Unlock the “Each heat number once” rule to change it"
     }
   },
   "advanced": {

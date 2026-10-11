@@ -8,7 +8,7 @@ import { SecretInput } from '@/components/ui/SecretInput'
 import { TextInput } from '@/components/ui/TextInput'
 import { settingsStore } from '../../store/SettingsStore'
 import { useSettings } from '../../store/useSettings'
-import { StrictLayoutField } from './StrictLayoutField'
+import { TableRulesField } from './TableRulesField'
 import { TableSheetField } from './TableSheetField'
 import { useTableCheck } from './useTableCheck'
 import { useTableLock } from './useTableLock'
@@ -16,7 +16,7 @@ import './StorageForms.css'
 
 /**
  * Сетевой диск Windows: расположение (сервер, общая папка, путь к таблице под замком, итог проверки,
- * лист, строгое строение, короткое пояснение под ними), учётная запись и «Проверить подключение».
+ * лист, правила записи, короткое пояснение под ними), учётная запись и «Проверить подключение».
  */
 export function SmbStorageForm() {
   const { t } = useTranslation('settings')
@@ -44,7 +44,7 @@ export function SmbStorageForm() {
         </Field>
         <div className="storage-check" role="status">{check.status}</div>
         <TableSheetField />
-        <StrictLayoutField />
+        <TableRulesField />
       </FormSection>
 
       <FormSection title={t('storage.smb.account')} icon={<UserIcon />}>

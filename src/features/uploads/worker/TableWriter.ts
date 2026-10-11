@@ -23,7 +23,7 @@
 import type { UploadRecord } from '../store/UploadStore'
 import { UploadError } from '../UploadError'
 import { BackupPolicy } from '../xlsx/BackupPolicy'
-import { LabelWorkbook, snapshotKey, type PlannedRow, type WorkbookSnapshot } from '../xlsx/LabelWorkbook'
+import { LabelWorkbook, snapshotKey, type AppendOptions, type PlannedRow, type WorkbookSnapshot } from '../xlsx/LabelWorkbook'
 import { sameCell } from '../xlsx/tableCell'
 import type { TableBackend } from './TableBackend'
 
@@ -64,12 +64,10 @@ export class TableWriter {
   /**
    * Дописывает запись в журнал.
    * @param onStep Ход записи: доля пройденного (0…1) после каждого шага.
-   * @param sheet Лист из настроек хранилища на момент записи; пусто — лист года. Свой лист бирки
-   *   (поле «Лист») важнее.
-   * @param strict Строгое строение таблицы: лист без всех колонок журнала по порядку — `layoutMismatch`.
+   * @param options Лист и правила записи из настроек хранилища на момент записи (`AppendOptions`).
    * @throws {UploadError} Любой сбой; по коду `UploadWorker` решает, повторять ли попытку.
    */
-  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void, sheet = '', strict = false): Promise<TableWriteResult> {
+  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void, options: AppendOptions = {}): Promise<TableWriteResult> {
     const step = (fraction: number) => onStep?.(fraction)
     /** Останавливает запись, если её отменили: до замены файла журнал не тронут. */
     const checkCancelled = () => {
@@ -89,7 +87,7 @@ export class TableWriter {
       const existing = workbook.locate(record.localNumber)
       if (existing) return { sheet: existing.sheet, rowNumber: existing.row, item: workbook.itemAt(existing), duplicate: true }
       const before = workbook.snapshot()
-      const planned = workbook.append(record, writtenAt, sheet, strict)
+      const planned = workbook.append(record, writtenAt, options)
       const bytes = await workbook.toBytes()
       await TableWriter.checkIntact(before, bytes, planned)
       step(STEP.prepared)

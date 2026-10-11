@@ -41,5 +41,9 @@
   "sheet": {
     "default": "{{sheet}} — ca în setări",
     "currentYear": "foaia {{year}}"
+  },
+  "duplicateHeat": {
+    "tag": "Șarja există deja la eticheta {{number}}",
+    "sent": "Șarja a fost deja trimisă — nr. {{record}} în „Încărcări”"
   }
 }

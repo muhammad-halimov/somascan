@@ -41,5 +41,9 @@
   "sheet": {
     "default": "{{sheet}} — as in settings",
     "currentYear": "sheet {{year}}"
+  },
+  "duplicateHeat": {
+    "tag": "Heat number already on tag {{number}}",
+    "sent": "Heat number already sent — No. {{record}} in “Uploads”"
   }
 }

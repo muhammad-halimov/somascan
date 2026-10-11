@@ -108,6 +108,11 @@ export class SettingsStore extends Store<AppSettings> {
     this.setState((state) => ({ ...state, storage: { ...state.storage, strictLayout } }))
   }
 
+  /** Включает или выключает правило «каждая плавка — один раз». */
+  setUniqueHeat(uniqueHeat: boolean) {
+    this.setState((state) => ({ ...state, storage: { ...state.storage, uniqueHeat } }))
+  }
+
   /** Обновляет часть полей SMB. */
   updateSmb(patch: Partial<SmbSettings>) {
     this.setState((state) => ({ ...state, storage: { ...state.storage, smb: { ...state.storage.smb, ...patch } } }))

@@ -123,7 +123,7 @@
     "recognizingMessage": "It is still being recognized — wait a few seconds.",
     "failedMessage": "It could not be recognized — tap “Retry” or deselect it in the grid.",
     "partialTitle": "Send the ready ones?",
-    "partialMessage": "{{ready}} of {{total}} are ready to send. The others ({{rest}}) are still recognizing, failed or have no form — they stay on the screen.",
+    "partialMessage": "{{ready}} of {{total}} are ready to send. The rest ({{rest}}) are not ready yet — still recognizing, failed, without a form, with empty required fields or a repeated heat number; they will stay on screen.",
     "sendReady": "Send {{count}}"
   },
   "grid": {
@@ -158,5 +158,10 @@
     "openLabel": "Open the selected tag",
     "grid": "Grid",
     "gridLabel": "All tags as a grid"
+  },
+  "heatDialog": {
+    "title": "Heat number repeats",
+    "tagMessage": "Tag {{number}} has the same heat number {{heat}} as tag {{other}}. Each heat number goes into the journal once — fix the heat number or remove the tag.",
+    "sentMessage": "Heat number {{heat}} of tag {{number}} has already been sent (No. {{record}} in “Uploads”). Each heat number goes into the journal once — fix the heat number or remove the tag."
   }
 }

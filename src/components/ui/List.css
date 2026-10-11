@@ -105,3 +105,46 @@
     background: color-mix(in srgb, var(--text) 6%, transparent);
   }
 }
+
+/*
+ * Строка-кнопка со своей кнопкой справа (`action`, например замок): обе в одном ряду, линия под строкой —
+ * у всего ряда, а нажатие кнопки справа строку не нажимает.
+ */
+.list-item-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.list > .list-item-row:last-child {
+  border-bottom: 0;
+}
+
+.list-item-row > .list-item {
+  min-width: 0;
+  flex: 1 1 auto;
+  border-bottom: 0;
+}
+
+.list-item-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+/* Кнопка в потоке, но позиционированная: волна нажатия рисуется на ней, а не от угла листа (см. TextInput.css). */
+.list-item-action .input-action {
+  position: relative;
+  right: auto;
+}
+
+
+/* Строка под замком: не нажимается, текст приглушён, как поле под замком (`.text-input.is-locked`). */
+.list-item.is-locked {
+  cursor: default;
+}
+
+.list-item.is-locked .list-item-primary,
+.list-item.is-locked .list-item-trailing {
+  color: var(--text);
+}

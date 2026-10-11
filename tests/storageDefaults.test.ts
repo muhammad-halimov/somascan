@@ -32,4 +32,6 @@ test('лист журнала: по умолчанию пусто (лист те
   assert.equal(defaults.storage.strictLayout, true, 'строгое строение таблицы — по умолчанию')
   assert.equal(parseSettings({ storage: { strictLayout: false } }, defaults).storage.strictLayout, false)
   assert.equal(parseSettings({ storage: { strictLayout: 'no' } }, defaults).storage.strictLayout, true)
+  assert.equal(defaults.storage.uniqueHeat, true, 'каждая плавка — один раз — по умолчанию')
+  assert.equal(parseSettings({ storage: { uniqueHeat: false } }, defaults).storage.uniqueHeat, false)
 })

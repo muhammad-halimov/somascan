@@ -86,12 +86,12 @@ test('новый год — новый лист первым, с той же ш�
 test('выбранный лист: из настроек или свой у бирки (он важнее); выбранного листа нет — sheetNotFound', async () => {
   const workbook = await LabelWorkbook.open(template)
   // Год записи — 2027, но выбран лист 2026: лист 2027 не создаётся.
-  const fromSettings = workbook.append(entry(1, { producer: 'Sovel', heat: '1', size: '10', weight_kg: 1, product_form: 'bobina' }), at(2027, 1, 5), '2026')
+  const fromSettings = workbook.append(entry(1, { producer: 'Sovel', heat: '1', size: '10', weight_kg: 1, product_form: 'bobina' }), at(2027, 1, 5), { sheet: '2026' })
   assert.deepEqual([fromSettings.sheet, fromSettings.row, fromSettings.newSheet], ['2026', 7, false])
-  const own = workbook.append(entry(2, { producer: 'Sovel', heat: '2', size: '10', weight_kg: 1, product_form: 'bobina', sheet: '2026' }), at(2027, 1, 5), 'Nope')
+  const own = workbook.append(entry(2, { producer: 'Sovel', heat: '2', size: '10', weight_kg: 1, product_form: 'bobina', sheet: '2026' }), at(2027, 1, 5), { sheet: 'Nope' })
   assert.equal(own.sheet, '2026', 'свой лист бирки важнее листа из настроек')
   assert.deepEqual(workbook.sheetNames, ['2026'])
-  assert.throws(() => workbook.append(entry(3, { heat: '3', product_form: 'bara' }), at(2026, 10, 8), 'Nope'), (error: Error & { code?: string; params?: { detail?: string } }) => error.code === 'sheetNotFound' && error.params?.detail === 'Nope')
+  assert.throws(() => workbook.append(entry(3, { heat: '3', product_form: 'bara' }), at(2026, 10, 8), { sheet: 'Nope' }), (error: Error & { code?: string; params?: { detail?: string } }) => error.code === 'sheetNotFound' && error.params?.detail === 'Nope')
   assert.throws(() => workbook.append(entry(4, { heat: '4', product_form: 'bara', sheet: 'somascan-journal' }), at(2026, 10, 8)), (error: Error & { code?: string }) => error.code === 'sheetNotFound', 'служебный лист не выбирается')
 })
 
@@ -106,7 +106,7 @@ test('строки дописываются после последней с д�
   sheet.getCell('D9').value = '300Kg'
   sheet.getCell('E9').value = '11.02.2026' // дату отправки на испытание вписала лаборатория
   const workbook = await LabelWorkbook.open(new Uint8Array(await raw.xlsx.writeBuffer() as ArrayBuffer))
-  const planned = workbook.append(entry(1, { producer: 'Habas', heat: '1', size: '8', weight_kg: 1, product_form: 'bobina' }), at(2026, 10, 8))
+  const planned = workbook.append(entry(1, { producer: 'Habas', heat: '2', size: '8', weight_kg: 1, product_form: 'bobina' }), at(2026, 10, 8))
   assert.equal(planned.row, 10)
   assert.equal(planned.cells.get(3), 4, 'Nr. Crt. — следующий после номера строки 9')
   assert.equal(planned.item, 4)
@@ -123,7 +123,7 @@ async function edited(bytes: Uint8Array, change: (workbook: ExcelJS.Workbook) =>
 
 test('строгое строение: журнал подходит, лист без колонки журнала — layoutMismatch; без строгости пишется', async () => {
   const strictOk = await LabelWorkbook.open(template)
-  assert.equal(strictOk.append(entry(1, { heat: '1', product_form: 'bara' }), at(2026, 10, 8), '', true).row, 7)
+  assert.equal(strictOk.append(entry(1, { heat: '1', product_form: 'bara' }), at(2026, 10, 8), { strict: true }).row, 7)
   assert.deepEqual(strictOk.structure().sheets, [{ name: '2026', journal: true, mismatch: null }])
 
   // Шапка «Cantitatea» стёрта (объединение D4:D6 — значение в D4).
@@ -131,7 +131,7 @@ test('строгое строение: журнал подходит, лист �
     raw.getWorksheet('2026')!.getCell('D4').value = null
   })
   const strict = await LabelWorkbook.open(withoutQuantity)
-  assert.throws(() => strict.append(entry(1, { heat: '1', product_form: 'bara' }), at(2026, 10, 8), '', true),
+  assert.throws(() => strict.append(entry(1, { heat: '1', product_form: 'bara' }), at(2026, 10, 8), { strict: true }),
     (error: Error & { code?: string; params?: { detail?: string } }) => error.code === 'layoutMismatch' && error.params?.detail === '2026')
   const lenient = await LabelWorkbook.open(withoutQuantity)
   const planned = lenient.append(entry(1, { heat: '1', weight_kg: 5, product_form: 'bara' }), at(2026, 10, 8))
@@ -155,6 +155,23 @@ test('строгое строение: порядок колонок и чужи
   assert.deepEqual(check(['Cantitatea', 'Nr. Crt.', ...titles.slice(2)]), { missing: [], outOfOrder: true, extra: [] })
   assert.deepEqual(check([...titles.slice(0, 5), 'Note', ...titles.slice(5)]), { missing: [], outOfOrder: false, extra: ['Note'] })
   assert.deepEqual(check(titles.filter((title) => title !== 'Cantitatea')), { missing: ['quantity'], outOfOrder: false, extra: [] })
+})
+
+test('плавки уникальны: плавка, которая уже есть в журнале, не записывается второй раз — duplicateHeat', async () => {
+  const workbook = await LabelWorkbook.open(template)
+  workbook.append(entry(1, { producer: 'OAM', heat: '25R00581', size: '12', weight_kg: 2650, product_form: 'bobina' }), at(2026, 10, 8))
+  workbook.append(entry(2, { producer: 'Arcelor-Mittal', heat: '253830', size: '10', weight_kg: 8126, product_form: 'bobina' }), at(2026, 10, 8))
+  const reopened = await LabelWorkbook.open(await workbook.toBytes())
+  /** Отказ `duplicateHeat` с подробностями «плавка — лист, строка». */
+  const duplicateOf = (detail: string) => (error: Error & { code?: string; params?: { detail?: string } }) =>
+    error.code === 'duplicateHeat' && error.params?.detail === detail
+  // Без пробелов и регистра; число в журнале и такой же текст — одна плавка.
+  assert.throws(() => reopened.append(entry(3, { heat: '25r00581', product_form: 'bara' }), at(2026, 10, 9), { uniqueHeat: true }), duplicateOf('25r00581 — 2026, 7'))
+  assert.throws(() => reopened.append(entry(4, { heat: ' 253 830 ', product_form: 'bara' }), at(2026, 10, 9), { uniqueHeat: true }), duplicateOf('253 830 — 2026, 8'))
+  assert.deepEqual(reopened.findHeat('253830'), { sheet: '2026', row: 8 })
+  assert.equal(reopened.findHeat('999'), null)
+  assert.equal(reopened.append(entry(5, { heat: '25R00582', product_form: 'bara' }), at(2026, 10, 9), { uniqueHeat: true }).row, 9, 'другая плавка пишется')
+  assert.equal(reopened.append(entry(6, { heat: '25R00581', product_form: 'bara' }), at(2026, 10, 9)).row, 10, 'правило выключено — повтор плавки пишется')
 })
 
 test('чужая книга без шапки журнала — unknownLayout', async () => {

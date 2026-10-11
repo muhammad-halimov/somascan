@@ -39,6 +39,7 @@
     "driveNotConfigured": "Google sign-in is not set up in this build of the app (no Google OAuth client).",
     "folderNotFound": "The Google Drive folder was not found or this account has no access to it.",
     "cancelled": "Sign-in cancelled.",
-    "layoutMismatch": "Sheet “{{detail}}” does not match the journal structure: it needs the columns Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate, in this order. Fix the sheet or turn off “Strict table structure” in “Settings → Storage” — the write will retry by itself. The table check there shows what exactly is wrong."
+    "layoutMismatch": "Sheet “{{detail}}” does not match the journal structure: it needs the columns Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate, in this order. Fix the sheet or turn off “Strict table structure” in “Settings → Storage” — the write will retry by itself. The table check there shows what exactly is wrong.",
+    "duplicateHeat": "The heat number is already in the journal ({{detail}} — sheet, row). Each heat number is written once: if this is another tag, fix the heat number and send it again, and delete this record."
   }
 }

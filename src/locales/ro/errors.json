@@ -39,6 +39,7 @@
     "driveNotConfigured": "Conectarea cu Google nu este configurată în această versiune a aplicației (lipsește clientul OAuth Google).",
     "folderNotFound": "Folderul Google Drive nu a fost găsit sau acest cont nu are acces la el.",
     "cancelled": "Conectare anulată.",
-    "layoutMismatch": "Foaia „{{detail}}” nu corespunde structurii registrului: sunt necesare coloanele Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate, în această ordine. Corectați foaia sau dezactivați „Structură strictă a tabelului” în „Setări → Stocare” — scrierea se va relua singură. Verificarea tabelului de acolo arată ce anume nu este în regulă."
+    "layoutMismatch": "Foaia „{{detail}}” nu corespunde structurii registrului: sunt necesare coloanele Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate, în această ordine. Corectați foaia sau dezactivați „Structură strictă a tabelului” în „Setări → Stocare” — scrierea se va relua singură. Verificarea tabelului de acolo arată ce anume nu este în regulă.",
+    "duplicateHeat": "Șarja există deja în registru ({{detail}} — foaie, rând). Fiecare șarjă se scrie o singură dată: dacă este altă etichetă, corectați numărul șarjei și trimiteți-o din nou, iar această înregistrare ștergeți-o."
   }
 }

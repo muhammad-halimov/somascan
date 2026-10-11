@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDropDownIcon, ChevronUpDownIcon } from '@/components/icons/Icons'
+import { HEAT_KEY } from '@/features/recognition/label/heatNumber'
 import { enabledLabelFields, isEnabledByDefault, isMissingValue, SHEET_KEY, type LabelFieldKind, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { useLabelFormatter } from '@/features/recognition/label/useLabelFormatter'
@@ -8,6 +9,7 @@ import { isProductForm, PRODUCT_FORM_KEY, PRODUCT_FORMS } from '@/features/recog
 import { useSettings } from '@/features/settings/store/useSettings'
 import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
 import { useStore } from '@/lib/store/useStore'
+import type { HeatDuplicate } from '../utils/sendReadiness'
 import './LabelFields.css'
 
 /** Клавиатура по виду поля: коды — заглавными без автозамены, названия — с заглавной буквы, числа — цифрами. */
@@ -40,6 +42,8 @@ export interface LabelFieldsProps {
   onFieldChange: (key: LabelKey, value: string) => void
   /** Бирка без фото: пустое поле — «Не заполнено» (у распознанной — «Не распознано»). */
   manual?: boolean
+  /** Плавка повторяется (`heatDuplicates`): поле — цветом ошибки, под ним — с чем совпала. */
+  heatDuplicate?: HeatDuplicate | null
 }
 
 /**
@@ -49,7 +53,7 @@ export interface LabelFieldsProps {
  * Дальше — только поля, выбранные в настройках («Расширенные» → «Поля»); поле «Лист» (куда записать
  * бирку) выбирают, как форму, из списка — с фото оно не читается.
  */
-export function LabelFields({ label, isEditing, onFieldChange, manual = false }: LabelFieldsProps) {
+export function LabelFields({ label, isEditing, onFieldChange, manual = false, heatDuplicate = null }: LabelFieldsProps) {
   const { t } = useTranslation('label')
   const formatter = useLabelFormatter()
   const fieldName = useLabelFieldName()
@@ -71,8 +75,12 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false }:
           // Поля по умолчанию (производитель, размер, плавка, вес) обязательны у любой бирки: пустые — цветом
           // ошибки, как невыбранная форма; у бирки без фото — «Обязательное поле», у распознанной — «Не распознано».
           const required = isEnabledByDefault(key)
+          const duplicate = key === HEAT_KEY && !missing ? heatDuplicate : null
+          const duplicateNote = duplicate && (duplicate.kind === 'tag'
+            ? t('duplicateHeat.tag', { number: duplicate.number })
+            : t('duplicateHeat.sent', { record: duplicate.localNumber }))
           return (
-            <label className={`label-field${required && missing ? ' is-required' : ''}`} key={key}>
+            <label className={`label-field${(required && missing) || duplicate ? ' is-required' : ''}${duplicate ? ' is-duplicate' : ''}`} key={key}>
               <span className="label-field-name">{name}</span>
               {isEditing ? (
                 <input
@@ -82,6 +90,7 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false }:
                   value={formatter.editValue(field.kind, value, key)}
                   placeholder={required ? t('requiredField') : manual ? t('notFilled') : t('notRecognized')}
                   aria-required={required || undefined}
+                  aria-invalid={duplicate ? true : undefined}
                   onChange={(event) => onFieldChange(key, event.target.value)}
                   onKeyDown={moveToNextField}
                   autoComplete="off"
@@ -91,10 +100,11 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false }:
                   {...(key === 'size' ? FIELD_KEYBOARD.weight : FIELD_KEYBOARD[field.kind])}
                 />
               ) : (
-                <span className={`label-field-value${missing ? ' is-missing' : ''}${required && missing ? ' is-required' : ''}`}>
+                <span className={`label-field-value${missing ? ' is-missing' : ''}${(required && missing) || duplicate ? ' is-required' : ''}`}>
                   {missing && manual ? (required ? t('requiredField') : t('notFilled')) : formatter.value(field.kind, value, key)}
                 </span>
               )}
+              {duplicateNote && <span className="label-field-note" role="alert">{duplicateNote}</span>}
             </label>
           )
         })}

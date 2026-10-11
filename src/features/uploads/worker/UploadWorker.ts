@@ -239,7 +239,7 @@ export class UploadWorker {
       const result = await this.writer.write(job, backend, controller.signal, (fraction) => {
         this.step = fraction
         this.onActivity()
-      }, storage.sheet ?? '', storage.strictLayout ?? true)
+      }, { sheet: storage.sheet ?? '', strict: storage.strictLayout ?? true, uniqueHeat: storage.uniqueHeat ?? true })
       // Отмена пришла, когда файл уже заменялся: бирка в журнале — запись завершена.
       this.store.markCompleted(job.id, result.rowNumber, result.sheet, result.item ?? undefined)
     } catch (error) {

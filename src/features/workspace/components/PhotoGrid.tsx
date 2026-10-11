@@ -4,8 +4,10 @@ import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/component
 import { missingRequiredLabelFields, type LabelFieldDefinition } from '@/features/recognition/label/labelFields'
 import { hasProductForm } from '@/features/recognition/label/productForm'
 import { useSettings } from '@/features/settings/store/useSettings'
+import { useHeatDuplicates } from '../hooks/useHeatDuplicates'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
+import type { HeatDuplicate } from '../utils/sendReadiness'
 import './PhotoGrid.css'
 
 /** Свойства `PhotoGrid`. */
@@ -27,7 +29,7 @@ export interface PhotoGridProps {
 /** Состояние бирки для значка в углу ячейки. */
 type CellState = 'busy' | 'failed' | 'noPhoto' | 'noForm' | 'incomplete' | 'done' | 'none'
 
-function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[]): CellState {
+function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[], duplicates: ReadonlyMap<string, HeatDuplicate>): CellState {
   if (item.hasError || item.status.kind === 'failed') return 'failed'
   if (item.status.kind === 'recognizing') return 'busy'
   if (item.status.kind !== 'done') return 'none'
@@ -36,6 +38,8 @@ function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[]): Cel
   if (!hasProductForm(item.status.label)) return 'noForm'
   // Поля по умолчанию обязательны — и у распознанной бирки, и у бирки без фото.
   if (missingRequiredLabelFields(item.status.label, fields).length > 0) return 'incomplete'
+  // Плавка повторяется (на экране или в «Загрузках»): такая бирка не отправится.
+  if (duplicates.has(item.id)) return 'incomplete'
   return 'done'
 }
 
@@ -45,14 +49,15 @@ function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[]): Cel
  *
  * Выбранные для отправки бирки обведены акцентным цветом, открытая — контрастным (у выбранной
  * открытой — оба кольца); выбор — «радиокнопка» в левом нижнем углу (кольцо, у выбранной — точка). Состояние — в правом нижнем:
- * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма; у бирки без фото — и не заполнены
- * обязательные поля), красный знак (ошибка).
+ * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма, не заполнены обязательные поля
+ * или плавка повторяется), красный знак (ошибка).
  * Нажатие на ячейку открывает бирку (карточка увеличивает ячейку до одной бирки). Когда бирки уходят
  * (отправка, «Сброс»), оставшиеся плавно переезжают на освободившиеся места.
  */
 export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, onToggleSelected }: PhotoGridProps) {
   const { t } = useTranslation('workspace')
   const { advanced } = useSettings()
+  const duplicates = useHeatDuplicates(items)
 
   // Где стояли ячейки бирок: после отправки или «Сброса» оставшиеся переезжают на освободившиеся места
   // плавно, а не перескакивают (позиции — раскладки, без учёта transform перехода к одной бирке).
@@ -97,7 +102,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
             </div>
           )
         }
-        const state = cellState(item, advanced.labelFields)
+        const state = cellState(item, advanced.labelFields, duplicates)
         const stateText = state === 'none' ? '' : t(`grid.state.${state}`)
         const name = item.manual ? `${t('grid.item', { number })}, ${t('grid.manual')}` : t('grid.item', { number })
         const classes = ['photo-grid-cell', 'has-photo', item.manual && 'is-manual', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')

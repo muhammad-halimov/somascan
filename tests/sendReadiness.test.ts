@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createDefaultLabelFields, type LabelRecord } from '../src/features/recognition/label/labelFields'
 import type { ScanItem } from '../src/features/workspace/hooks/useScanSession'
-import { awaitsPhoto, isReadyToSend, labelForQueue, missingRequiredFields } from '../src/features/workspace/utils/sendReadiness'
+import { awaitsPhoto, heatDuplicates, isReadyToSend, labelForQueue, missingRequiredFields } from '../src/features/workspace/utils/sendReadiness'
 
 const fields = createDefaultLabelFields()
 const done = (label: LabelRecord, extra: Partial<ScanItem> = {}): ScanItem => ({
@@ -40,4 +40,22 @@ test('свой лист уходит в очередь, только если п
   const withSheet = fields.map((field) => (field.key === 'sheet' ? { ...field, enabled: true } : field))
   assert.deepEqual(labelForQueue(label, withSheet), { heat: '1', sheet: '2025' })
   assert.deepEqual(labelForQueue({ heat: '1', sheet: '' }, withSheet), { heat: '1' }, 'не выбран — как в настройках')
+})
+
+test('плавка уникальна: повтор на экране и уже отправленная плавка не отправляются', () => {
+  const full = { producer: 'OAM', size: '12', weight_kg: 2650, product_form: 'bobina' }
+  const items = [
+    done({ ...full, heat: '25R00581' }, { id: 'a' }),
+    done({ ...full, heat: '25r 00581' }, { id: 'b' }),
+    done({ ...full, heat: '253830' }, { id: 'c' }),
+    done({ ...full, heat: '999' }, { id: 'd' }),
+  ]
+  const duplicates = heatDuplicates(items, [{ localNumber: 'SCN-261011-7F3A', label: { heat: 253830 } }])
+  assert.equal(duplicates.has('a'), false, 'первая бирка с плавкой остаётся')
+  assert.deepEqual(duplicates.get('b'), { kind: 'tag', number: 1 })
+  assert.deepEqual(duplicates.get('c'), { kind: 'sent', localNumber: 'SCN-261011-7F3A' })
+  assert.equal(duplicates.has('d'), false)
+  assert.equal(isReadyToSend(items[0]!, fields, duplicates), true)
+  assert.equal(isReadyToSend(items[1]!, fields, duplicates), false)
+  assert.equal(isReadyToSend(items[2]!, fields, duplicates), false)
 })

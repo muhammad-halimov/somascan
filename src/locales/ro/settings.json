@@ -139,6 +139,13 @@
     "strict": {
       "label": "Structură strictă a tabelului",
       "hint": "Se scrie doar într-o foaie cu toate coloanele registrului, în ordine: Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate."
+    },
+    "rules": "Reguli de scriere",
+    "uniqueHeat": {
+      "label": "Fiecare șarjă o singură dată",
+      "hint": "Nu se scrie o șarjă care există deja în registru, în „Încărcări” sau la altă etichetă de pe ecran. Dezactivați dacă sosesc mai mulți colaci din aceeași șarjă.",
+      "lock": "Blocați regula „Fiecare șarjă o singură dată”",
+      "unlock": "Deblocați regula „Fiecare șarjă o singură dată” pentru a o modifica"
     }
   },
   "advanced": {

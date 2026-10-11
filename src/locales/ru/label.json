@@ -41,5 +41,9 @@
   "sheet": {
     "default": "{{sheet}} — как в настройках",
     "currentYear": "лист {{year}}"
+  },
+  "duplicateHeat": {
+    "tag": "Плавка уже есть у бирки {{number}}",
+    "sent": "Плавка уже отправлена — № {{record}} в «Загрузках»"
   }
 }

@@ -11,18 +11,26 @@ export interface TableLock {
   action: InputAction
 }
 
+/** Подписи замка для экранного диктора: закрыть и открыть. */
+export interface LockLabels {
+  lock: string
+  unlock: string
+}
+
 /**
- * Замок пути и имени таблицы: по умолчанию поля закрыты, чтобы их не сбили случайно; замок открывает их,
- * пока форма на экране (ушли с вкладки «Хранилище» или закрыли настройки — снова закрыт).
+ * Замок настройки: по умолчанию закрыт, чтобы её не сбили случайно; открывается значком замка, пока форма
+ * на экране (ушли с вкладки «Хранилище» или закрыли настройки — снова закрыт). Без подписей — замок пути
+ * и имени таблицы.
  */
-export function useTableLock(): TableLock {
+export function useTableLock(labels?: LockLabels): TableLock {
   const { t } = useTranslation('settings')
   const [unlocked, setUnlocked] = useState(false)
+  const { lock, unlock } = labels ?? { lock: t('storage.table.lock'), unlock: t('storage.table.unlock') }
   return {
     locked: !unlocked,
     action: {
       icon: unlocked ? <LockOpenIcon /> : <LockIcon />,
-      label: unlocked ? t('storage.table.lock') : t('storage.table.unlock'),
+      label: unlocked ? lock : unlock,
       tone: unlocked ? 'accent' : undefined,
       onClick: () => setUnlocked((current) => !current),
     },

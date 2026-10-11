@@ -6,14 +6,15 @@ import { hasProductForm } from '@/features/recognition/label/productForm'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { settingsStore } from '@/features/settings/store/SettingsStore'
 import { isDriveConfigured } from '@/features/uploads/drive/driveSettings'
-import { uploadQueue } from '@/features/uploads/queue/appQueue'
+import { uploadQueue, uploadStore } from '@/features/uploads/queue/appQueue'
 import { isSmbConfigured } from '@/features/uploads/smb/smbSettings'
 import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
 import { buildUploadColumns } from '@/features/uploads/xlsx/uploadColumns'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import type { PhotoCardHandle } from '../components/PhotoCard'
 import { flyToUploads } from '../utils/sendFlight'
-import { awaitsPhoto, isReadyToSend, labelForQueue, missingRequiredFields } from '../utils/sendReadiness'
+import { HEAT_KEY } from '@/features/recognition/label/heatNumber'
+import { awaitsPhoto, heatDuplicates, isReadyToSend, labelForQueue, missingRequiredFields, type HeatDuplicate } from '../utils/sendReadiness'
 import type { useEditMode } from './useEditMode'
 import type { ScanItem, useScanSession } from './useScanSession'
 
@@ -51,7 +52,7 @@ export function useSendSelected({ session, editMode, notesCardRef, photoCardRef 
   const [isHandingOff, setIsHandingOff] = useState(false)
 
   /** Открывает бирку, которая мешает отправке, и объясняет, что с ней. */
-  const showNotReady = async (blocker: ScanItem) => {
+  const showNotReady = async (blocker: ScanItem, duplicates: ReadonlyMap<string, HeatDuplicate>) => {
     const index = session.items.indexOf(blocker)
     session.select(index)
     const number = index + 1
@@ -77,6 +78,21 @@ export function useSendSelected({ session, editMode, notesCardRef, photoCardRef 
       window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-required')?.scrollIntoView({ block: 'nearest' }), 0)
       return
     }
+    const duplicate = duplicates.get(blocker.id)
+    if (duplicate && blocker.status.kind === 'done') {
+      // Плавка повторяется: каждая плавка записывается один раз — объясняем, с чем совпала, и открываем правку.
+      const heat = String(blocker.status.label[HEAT_KEY] ?? '').trim()
+      await NativeDialogs.alert({
+        title: t('heatDialog.title'),
+        message: duplicate.kind === 'tag'
+          ? t('heatDialog.tagMessage', { number, heat, other: duplicate.number })
+          : t('heatDialog.sentMessage', { number, heat, record: duplicate.localNumber }),
+        buttonTitle: t('common:ok'),
+      })
+      if (!editMode.isEditing) editMode.toggle()
+      window.setTimeout(() => notesCardRef.current?.querySelector('.label-field.is-duplicate')?.scrollIntoView({ block: 'nearest' }), 0)
+      return
+    }
     await NativeDialogs.alert({
       title: t('sendDialog.notReadyTitle', { number }),
       message: blocker.status.kind === 'recognizing' ? t('sendDialog.recognizingMessage') : t('sendDialog.failedMessage'),
@@ -92,10 +108,13 @@ export function useSendSelected({ session, editMode, notesCardRef, photoCardRef 
       await NativeDialogs.alert({ title: t('sendDialog.noneTitle'), message: t('sendDialog.noneMessage'), buttonTitle: t('common:ok') })
       return
     }
-    const ready = selected.filter((candidate) => isReadyToSend(candidate, advanced.labelFields))
-    const blocker = selected.find((candidate) => !isReadyToSend(candidate, advanced.labelFields))
+    // Повтор плавки — с биркой раньше на экране или с уже отправленной: такая бирка не готова
+    // (если в настройках хранилища включено «Каждая плавка — один раз»).
+    const duplicates = storage.uniqueHeat ? heatDuplicates(session.items, uploadStore.getSnapshot()) : new Map<string, HeatDuplicate>()
+    const ready = selected.filter((candidate) => isReadyToSend(candidate, advanced.labelFields, duplicates))
+    const blocker = selected.find((candidate) => !isReadyToSend(candidate, advanced.labelFields, duplicates))
     if (blocker && ready.length === 0) {
-      await showNotReady(blocker)
+      await showNotReady(blocker, duplicates)
       return
     }
     if (blocker) {
@@ -106,7 +125,7 @@ export function useSendSelected({ session, editMode, notesCardRef, photoCardRef 
         cancelButtonTitle: t('common:cancel'),
       })
       if (!confirmed) {
-        await showNotReady(blocker)
+        await showNotReady(blocker, duplicates)
         return
       }
     }

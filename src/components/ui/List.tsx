@@ -55,13 +55,15 @@ export interface ListItemProps {
   expanded?: boolean
   /** Id элемента, который строка раскрывает (`aria-controls`). */
   controls?: string
+  /** Своя кнопка справа, вне строки-кнопки (например, замок): её нажатие не нажимает строку. */
+  action?: ReactNode
 }
 
 /**
  * Строка списка. С `onClick` вся строка — кнопка; без него — просто строка
  * (в `trailing` можно положить свою кнопку, например «удалить»).
  */
-export function ListItem({ primary, secondary, secondaryTone = 'default', leading, trailing, selected = false, disabled = false, onClick, itemRole, className = '', expanded, controls }: ListItemProps) {
+export function ListItem({ primary, secondary, secondaryTone = 'default', leading, trailing, selected = false, disabled = false, onClick, itemRole, className = '', expanded, controls, action }: ListItemProps) {
   const classes = `list-item${selected ? ' is-selected' : ''}${className ? ` ${className}` : ''}`
   const content = (
     <>
@@ -74,9 +76,10 @@ export function ListItem({ primary, secondary, secondaryTone = 'default', leadin
     </>
   )
 
-  if (!onClick) return <li className={classes}>{content}</li>
+  const aside = action && <span className="list-item-action">{action}</span>
+  if (!onClick) return <li className={classes}>{content}{aside}</li>
   return (
-    <li role="none">
+    <li role="none" className={action ? 'list-item-row' : undefined}>
       <button
         type="button"
         role={itemRole}
@@ -89,6 +92,7 @@ export function ListItem({ primary, secondary, secondaryTone = 'default', leadin
       >
         {content}
       </button>
+      {aside}
     </li>
   )
 }
