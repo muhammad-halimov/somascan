@@ -16,7 +16,10 @@ export interface AppHeaderProps {
   onTogglePanel: (panel: AppPanel) => void
 }
 
-/** Шапка: логотип, кнопки «Загрузки» (со счётчиком очереди) и «Настройки» с подписями. */
+/**
+ * Шапка: логотип и рядом название приложения, кнопки «Загрузки» (со счётчиком очереди) и «Настройки»
+ * с подписями. Название — шрифтом высотой с логотип; если до кнопок места меньше, оно уменьшается само.
+ */
 export function AppHeader({ openPanel, onTogglePanel }: AppHeaderProps) {
   const { t } = useTranslation(['common', 'uploads', 'settings'])
   const appName = t('appName')
@@ -29,6 +32,10 @@ export function AppHeader({ openPanel, onTogglePanel }: AppHeaderProps) {
       {/* Логотип — не ссылка: переход на «/» перезагружал бы весь экран приложения. */}
       <div className="brand" role="img" aria-label={appName}>
         <img src={faviconUrl} alt="" draggable={false} />
+      </div>
+      {/* Подпись дублирует имя логотипа (`aria-label` выше) — экранному диктору её не читаем. */}
+      <div className="brand-name" aria-hidden="true">
+        <span className="brand-name-text">{appName}</span>
       </div>
       <nav className="header-actions" aria-label={t('mainMenu')}>
         <ActionButton

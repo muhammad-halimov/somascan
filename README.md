@@ -1,359 +1,362 @@
+**English** · [Русский](README.ru.md)
+
 # <img src="src/assets/favicon.ico" alt="Somaco" height="40" align="middle"> Somascan
 
 🇬🇧 English · 🇷🇴 Română · 🇹🇯 Тоҷикӣ · 🇷🇺 Русский
 
-Мобильное приложение для **Somaco (Holcim), Румыния** — OCR-сканирование этикеток (накладных) входящих материалов на заводе.
+A mobile app for **Somaco (Holcim), Romania** — OCR scanning of the labels (delivery notes) of incoming materials at the plant.
 
-Сотрудник фотографирует этикетку (арматура, катанка в бунтах и т. п.), приложение распознаёт её с помощью ИИ, извлекает поля и дописывает строку в таблицу `.xlsx`. Таблица хранится на сетевом диске Windows либо в Google Drive.
+An employee photographs a label (rebar, wire rod in coils and so on); the app recognizes it with AI, extracts the fields and appends a row to an `.xlsx` table. The table is kept on a Windows network drive or in Google Drive.
 
-**Стек:** Vite · React 19 · TypeScript · Capacitor 8 (Android / iOS) · oxlint.
+**Stack:** Vite · React 19 · TypeScript · Capacitor 8 (Android / iOS) · oxlint.
 
-## Скриншоты
+## Screenshots
 
-Тёмная тема, русский интерфейс; распознаёт LM Studio. Android — Material 3, iPhone — iOS 26 (Liquid Glass); на iOS 18 и раньше — классические материалы UIKit.
+Dark theme, Russian interface; recognition by LM Studio. Android — Material 3, iPhone — iOS 26 (Liquid Glass); on iOS 18 and earlier — classic UIKit materials.
 
 **Android**
 
-| Главный экран | Распознанная бирка | Правка | Бирка без фото | Сетка 3 × 3 |
+| Main screen | Recognized tag | Editing | Tag without a photo | 3 × 3 grid |
 |---|---|---|---|---|
-| <img src="docs/screenshots/android/01-main.webp" width="160" alt="Главный экран"> | <img src="docs/screenshots/android/02-result.webp" width="160" alt="Распознанная бирка"> | <img src="docs/screenshots/android/03-editing.webp" width="160" alt="Правка"> | <img src="docs/screenshots/android/04-no-photo.webp" width="160" alt="Бирка без фото"> | <img src="docs/screenshots/android/05-grid.webp" width="160" alt="Сетка 3 × 3"> |
+| <img src="docs/screenshots/android/01-main.webp" width="160" alt="Main screen"> | <img src="docs/screenshots/android/02-result.webp" width="160" alt="Recognized tag"> | <img src="docs/screenshots/android/03-editing.webp" width="160" alt="Editing"> | <img src="docs/screenshots/android/04-no-photo.webp" width="160" alt="Tag without a photo"> | <img src="docs/screenshots/android/05-grid.webp" width="160" alt="3 × 3 grid"> |
 
-| «Загрузки» | Модель LM Studio | Сетевой диск | Google Drive | «Расширенные» |
+| “Uploads” | LM Studio model | Network drive | Google Drive | “Advanced” |
 |---|---|---|---|---|
-| <img src="docs/screenshots/android/06-uploads.webp" width="160" alt="«Загрузки»"> | <img src="docs/screenshots/android/07-settings-model.webp" width="160" alt="Модель LM Studio"> | <img src="docs/screenshots/android/08-settings-storage.webp" width="160" alt="Сетевой диск"> | <img src="docs/screenshots/android/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/android/10-settings-advanced.webp" width="160" alt="«Расширенные»"> |
+| <img src="docs/screenshots/android/06-uploads.webp" width="160" alt="“Uploads”"> | <img src="docs/screenshots/android/07-settings-model.webp" width="160" alt="LM Studio model"> | <img src="docs/screenshots/android/08-settings-storage.webp" width="160" alt="Network drive"> | <img src="docs/screenshots/android/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/android/10-settings-advanced.webp" width="160" alt="“Advanced”"> |
 
 **iPhone**
 
-| Главный экран | Распознанная бирка | Правка | Бирка без фото | Сетка 3 × 3 |
+| Main screen | Recognized tag | Editing | Tag without a photo | 3 × 3 grid |
 |---|---|---|---|---|
-| <img src="docs/screenshots/ios/01-main.webp" width="160" alt="Главный экран"> | <img src="docs/screenshots/ios/02-result.webp" width="160" alt="Распознанная бирка"> | <img src="docs/screenshots/ios/03-editing.webp" width="160" alt="Правка"> | <img src="docs/screenshots/ios/04-no-photo.webp" width="160" alt="Бирка без фото"> | <img src="docs/screenshots/ios/05-grid.webp" width="160" alt="Сетка 3 × 3"> |
+| <img src="docs/screenshots/ios/01-main.webp" width="160" alt="Main screen"> | <img src="docs/screenshots/ios/02-result.webp" width="160" alt="Recognized tag"> | <img src="docs/screenshots/ios/03-editing.webp" width="160" alt="Editing"> | <img src="docs/screenshots/ios/04-no-photo.webp" width="160" alt="Tag without a photo"> | <img src="docs/screenshots/ios/05-grid.webp" width="160" alt="3 × 3 grid"> |
 
-| «Загрузки» | Модель LM Studio | Сетевой диск | Google Drive | «Расширенные» |
+| “Uploads” | LM Studio model | Network drive | Google Drive | “Advanced” |
 |---|---|---|---|---|
-| <img src="docs/screenshots/ios/06-uploads.webp" width="160" alt="«Загрузки»"> | <img src="docs/screenshots/ios/07-settings-model.webp" width="160" alt="Модель LM Studio"> | <img src="docs/screenshots/ios/08-settings-storage.webp" width="160" alt="Сетевой диск"> | <img src="docs/screenshots/ios/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/ios/10-settings-advanced.webp" width="160" alt="«Расширенные»"> |
+| <img src="docs/screenshots/ios/06-uploads.webp" width="160" alt="“Uploads”"> | <img src="docs/screenshots/ios/07-settings-model.webp" width="160" alt="LM Studio model"> | <img src="docs/screenshots/ios/08-settings-storage.webp" width="160" alt="Network drive"> | <img src="docs/screenshots/ios/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/ios/10-settings-advanced.webp" width="160" alt="“Advanced”"> |
 
-Снимки собирает `scripts/screenshots/capture.mjs` (Chrome без окна, поддельный LM Studio, фото `scripts/screenshots/tag.jpg`; ключей и настоящих хранилищ нет):
+The screenshots are made by `scripts/screenshots/capture.mjs` (headless Chrome, a fake LM Studio, the photo `scripts/screenshots/tag.jpg`; no keys and no real storage):
 
 ```bash
 npm run build && node scripts/screenshots/capture.mjs
 ```
 
-## Оглавление
+## Contents
 
-- [Скриншоты](#скриншоты)
-- [Как это работает](#как-это-работает)
-  - [Форматы фото](#форматы-фото)
-  - [Качество фото](#качество-фото)
-  - [Настройки распознавания («Расширенные»)](#настройки-распознавания-расширенные)
-  - [Известные поставщики](#известные-поставщики)
-  - [Провайдеры распознавания](#провайдеры-распознавания)
-  - [Несколько бирок сразу (сетка)](#несколько-бирок-сразу-сетка)
-  - [Хранилище таблицы .xlsx](#хранилище-таблицы-xlsx)
-  - [Какие этикетки обрабатываются](#какие-этикетки-обрабатываются)
-- [Журнал проб (Probe otel.xlsx)](#журнал-проб-probe-otelxlsx)
-- [Выгрузка в таблицу на сетевой диск](#выгрузка-в-таблицу-на-сетевой-диск)
-  - [Как проходит одна запись (TableWriter + SmbTableBackend)](#как-проходит-одна-запись-tablewriter--smbtablebackend)
-  - [Повторы и ошибки](#повторы-и-ошибки)
-  - [Фоновая выгрузка (движок очереди)](#фоновая-выгрузка-движок-очереди)
-  - [Настройки](#настройки)
-  - [Реализация](#реализация)
-  - [Проверка без сервера завода](#проверка-без-сервера-завода)
-- [Выгрузка в Google Drive](#выгрузка-в-google-drive)
-  - [Настройка Google Cloud (один раз)](#настройка-google-cloud-один-раз)
-- [Быстрый старт](#быстрый-старт)
-- [Android — установка SDK с нуля (macOS)](#android--установка-sdk-с-нуля-macos)
-- [Сборка APK](#сборка-apk)
-  - [Установка на устройство по Wi-Fi](#установка-на-устройство-по-wi-fi)
-  - [Подпись (debug и release)](#подпись-debug-и-release)
-- [iOS (только macOS)](#ios-только-macos)
-  - [Если simctl не находится](#если-simctl-не-находится)
-  - [Xcode 27: cap run ios падает на Simulator.app](#xcode-27-cap-run-ios-падает-на-simulatorapp)
-  - [Безопасные зоны и статус-бар](#безопасные-зоны-и-статус-бар)
-  - [CORS для iOS / Android](#cors-для-ios--android)
-- [Иконка и сплэш-экран](#иконка-и-сплэш-экран)
-- [Структура](#структура)
-  - [Соглашения](#соглашения)
-  - [Как добавить…](#как-добавить)
-- [Известные риски](#известные-риски)
-- [Лицензия](#лицензия)
+- [Screenshots](#screenshots)
+- [How it works](#how-it-works)
+  - [Photo formats](#photo-formats)
+  - [Photo quality](#photo-quality)
+  - [Recognition settings (Advanced)](#recognition-settings-advanced)
+  - [Known suppliers](#known-suppliers)
+  - [Recognition providers](#recognition-providers)
+  - [Several tags at once (grid)](#several-tags-at-once-grid)
+  - [Table storage (.xlsx)](#table-storage-xlsx)
+  - [Which labels are processed](#which-labels-are-processed)
+- [Steel sample log (Probe otel.xlsx)](#steel-sample-log-probe-otelxlsx)
+- [Writing to a network drive](#writing-to-a-network-drive)
+  - [How one write goes (TableWriter + SmbTableBackend)](#how-one-write-goes-tablewriter--smbtablebackend)
+  - [Retries and errors](#retries-and-errors)
+  - [Background upload (queue engine)](#background-upload-queue-engine)
+  - [Settings](#settings)
+  - [Implementation](#implementation)
+  - [Testing without the plant's server](#testing-without-the-plants-server)
+- [Writing to Google Drive](#writing-to-google-drive)
+  - [Google Cloud setup (once)](#google-cloud-setup-once)
+- [Quick start](#quick-start)
+- [Android — installing the SDK from scratch (macOS)](#android--installing-the-sdk-from-scratch-macos)
+- [Building the APK](#building-the-apk)
+  - [Installing on a device over Wi-Fi](#installing-on-a-device-over-wi-fi)
+  - [Signing (debug and release)](#signing-debug-and-release)
+- [iOS (macOS only)](#ios-macos-only)
+  - [If simctl is not found](#if-simctl-is-not-found)
+  - [Xcode 27: cap run ios fails on Simulator.app](#xcode-27-cap-run-ios-fails-on-simulatorapp)
+  - [Safe areas and the status bar](#safe-areas-and-the-status-bar)
+  - [CORS for iOS / Android](#cors-for-ios--android)
+- [Icon and splash screen](#icon-and-splash-screen)
+- [Structure](#structure)
+  - [Conventions](#conventions)
+  - [How to add…](#how-to-add)
+- [Known risks](#known-risks)
+- [License](#license)
+- [AI disclosure](#ai-disclosure)
 
 ---
 
-## Как это работает
+## How it works
 
 ```
-Фото этикетки ──► OCR / распознавание (Gemini | Claude | OpenAI | LM Studio)
-              ──► структурированные поля ──► строка в .xlsx
-              ──► хранилище: сетевой диск Windows | Google Drive
+Label photo ──► OCR / recognition (Gemini | Claude | OpenAI | LM Studio)
+            ──► structured fields ──► row in .xlsx
+            ──► storage: Windows network drive | Google Drive
 ```
 
-### Форматы фото
+### Photo formats
 
-Фото в HEIC/HEIF («эффективный формат» камеры многих телефонов, например HONOR и Samsung) WebView Android не показывает и не декодирует, поэтому на Android такое фото из галереи или из файлов сразу после выбора перекодируется в JPEG нативно (`PhotoImportPlugin.java`, Android 9+, с учётом ориентации, длинная сторона — до 4096 px; копии лежат в кэше и удаляются при следующем запуске). Тип фото при распознавании берётся из ответа, а если его там нет (фото из галереи Android приходят без Content-Type) — по первым байтам файла (`recognition/image/imageType.ts`); формат, который принимают не все провайдеры (HEIC, GIF, BMP…), перекодируется в JPEG.
+The Android WebView neither shows nor decodes photos in HEIC/HEIF (the “high efficiency” camera format of many phones, e.g. HONOR and Samsung), so on Android such a photo from the gallery or from files is re-encoded to JPEG natively right after it is picked (`PhotoImportPlugin.java`, Android 9+, orientation is respected, the long side is up to 4096 px; the copies live in the cache and are deleted on the next launch). For recognition the photo type is taken from the response, and if it is not there (photos from the Android gallery come without a Content-Type) — from the first bytes of the file (`recognition/image/imageType.ts`); a format that not every provider accepts (HEIC, GIF, BMP…) is re-encoded to JPEG.
 
-### Качество фото
+### Photo quality
 
-Вместе с полями модель оценивает само фото (ключ `_photo` в ответе: `ok` и коды проблем — размыто, блики, темно, бирка не целиком в кадре и т. п.), а приложение дополнительно проверяет пиксели на явное размытие, темноту и пересвет (`recognition/image/PhotoQuality.ts`). Если фото стоит переснять, после распознавания показывается системный алерт «Фото плохого качества» с причинами и кнопкой «ОК»; распознанные поля при этом остаются на экране.
+Along with the fields, the model rates the photo itself (the `_photo` key in the answer: `ok` and problem codes — blurry, glare, dark, the tag is not fully in the frame, etc.), and the app also checks the pixels for obvious blur, darkness and overexposure (`recognition/image/PhotoQuality.ts`). If the photo should be retaken, after recognition a system alert “Poor photo quality” is shown with the reasons and an “OK” button; the recognized fields stay on screen.
 
-### Настройки распознавания («Расширенные»)
+### Recognition settings (Advanced)
 
-- **Промпт** — инструкция для модели; правится прямо во вкладке, «Вернуть по умолчанию» возвращает встроенную. Список полей с пояснениями, правило известных поставщиков, оценка фото и форма JSON добавляются к ней автоматически (`recognition/label/labelPrompt.ts`).
-- **Поля** — какие поля читаются с фото: встроенные (по умолчанию включены четыре — производитель, размер, номер плавки, вес; остальные, например марка стали и документ качества, — по желанию) и свои (название на языках и пояснение для модели). Поле «Лист» — не с фото: им выбирают лист журнала у бирки (см. «Настройки» выгрузки).
-- **Известные поставщики** — см. ниже.
-- **Модели** — показывать модели не старше 3 / 6 / 12 месяцев или все; **списки моделей** — дата обновления у каждого провайдера и «Обновить все».
-- **Фото** — до какого размера (по длинной стороне) уменьшать снимок перед отправкой: 1024 / 1600 / 2048 px (по умолчанию) или оригинал; Claude принимает фото до 5 МБ, поэтому для него — не больше 2048.
-- **«Сбросить»** в шапке настроек возвращает настройки по умолчанию, кроме API-ключей и настроек хранилища.
+- **Prompt** — instructions for the model; edited right in the tab, “Restore default” brings back the built-in one. The list of fields with explanations, the known-suppliers rule, the photo rating and the JSON shape are appended to it automatically (`recognition/label/labelPrompt.ts`).
+- **Fields** — which fields are read from the photo: built-in ones (four are on by default — producer, size, heat number, weight; the others, such as steel grade and quality document, are optional) and custom ones (a name in each language and an explanation for the model). The “Sheet” field does not come from the photo: it picks the log sheet for the tag (see “Settings” under “Writing to a network drive”).
+- **Known suppliers** — see below.
+- **Models** — show models no older than 3 / 6 / 12 months, or all; **model lists** — the update date for each provider and “Refresh all”.
+- **Photo** — the size (by the long side) to shrink the shot to before sending: 1024 / 1600 / 2048 px (default) or the original; Claude accepts photos up to 5 MB, so for it — no more than 2048.
+- **“Reset”** in the settings header restores the default settings, except API keys and storage settings.
 
-### Известные поставщики
+### Known suppliers
 
-В «Расширенных» — список заводов-поставщиков (`recognition/label/knownSuppliers.ts`). Он добавляется в промпт после списка полей: если название производителя на бирке читается плохо и модель прочла что-то отдалённо похожее, она берёт написание из списка вместо выдуманного; чётко напечатанное название переписывается как есть, а без признаков поставщика — `null`. По умолчанию — 35 заводов из журнала проб стали для лаборатории (2016–2026, варианты написания и опечатки сведены в одно название). Список можно править карандашом: добавить, переименовать, удалить, вернуть стандартный; пустой список — правило в промпт не добавляется.
+“Advanced” holds a list of supplier mills (`recognition/label/knownSuppliers.ts`). It is added to the prompt after the list of fields: if the producer name on the tag is hard to read and the model read something vaguely similar, it takes the spelling from the list instead of a made-up one; a clearly printed name is copied as is, and with no sign of a supplier — `null`. By default — 35 mills from the steel sample log for the lab (2016–2026, spelling variants and typos merged into one name). The list can be edited with the pencil: add, rename, delete, restore the default one; with an empty list the rule is not added to the prompt.
 
-### Провайдеры распознавания
+### Recognition providers
 
-| Провайдер | Где работает | Примечание |
+| Provider | Where it runs | Note |
 |---|---|---|
-| **Gemini** | облако (Google) | нужен API-ключ |
-| **Claude** | облако (Anthropic) | нужен API-ключ |
-| **OpenAI** | облако | нужен API-ключ |
-| **LM Studio** | локально, в сети завода | OpenAI-совместимый локальный сервер, данные не уходят наружу |
+| **Gemini** | cloud (Google) | API key required |
+| **Claude** | cloud (Anthropic) | API key required |
+| **OpenAI** | cloud | API key required |
+| **LM Studio** | locally, in the plant network | OpenAI-compatible local server, data does not leave the network |
 
-**API-ключи** вводятся в приложении: «Настройки → Основные → API-ключ» (глазок показывает ключ). В сборку они не попадают — файлов `.env` в проекте нет, ведь всё, что подставляется при сборке, читается из APK/IPA.
+**API keys** are entered in the app: “Settings → General → API key” (the eye icon shows the key). They do not go into the build — there are no `.env` files in the project, since anything substituted at build time can be read from the APK/IPA.
 
-**Списки моделей** не зашиты в код:
+**Model lists** are not hard-coded:
 
-- с ключом — список берётся из API самого провайдера;
-- без ключа — показывается предпросмотр из открытого каталога [models.dev](https://models.dev) (серым, выбрать модель нельзя, пока не введён ключ);
-- LM Studio — модели с типом `vlm` из `/api/v0/models` локального сервера. У каждой точка: зелёная — модель в памяти сервера, красная — нет. Выбор модели выгружает прежнюю и загружает новую (REST API LM Studio 0.4+: `/api/v1/models/unload`, `/load`); пока идёт загрузка, точка мигает жёлтым, а список серый, под списком — «Модель загружается в LM Studio…» и «Отменить» (выбор вернётся к прежней модели).
-- LM Studio — общий сервер нескольких телефонов, и модель в его памяти одна на всех. Поэтому смена модели **ждёт**, пока на этом сервере никто не распознаёт и не меняет модель — ни другие телефоны, ни этот же («LM Studio занят (устройств: N) — модель сменится, когда все закончат или отменят»); ожидание тоже можно отменить. Распознавание, в свою очередь, ждёт, пока идёт чужая или своя смена модели. Сам LM Studio не сообщает, занята ли модель, поэтому телефоны отмечаются в хранилище таблицы — там же, где журнал: на сетевом диске папка `somascan-lmstudio` рядом с таблицей (файл `<id устройства>.json`), в Google Drive — файлы `somascan-lmstudio-<id устройства>` в папке таблицы (`recognition/catalog/ModelUseGate.ts`, `uploads/leases/`). Отметка продлевается, пока телефон занят, и сама истекает через минуту — выключенный или упавший телефон перестаёт мешать. Хранилище не настроено или не отвечает — телефон работает без очереди, как раньше. Распознавание через LM Studio из-за отметки начинается на долю секунды позже.
+- with a key — the list comes from the provider's own API;
+- without a key — a preview from the public [models.dev](https://models.dev) directory is shown (greyed out; a model cannot be chosen until a key is entered);
+- LM Studio — models of type `vlm` from `/api/v0/models` of the local server. Each has a dot: green — the model is in the server's memory, red — it is not. Choosing a model unloads the previous one and loads the new one (LM Studio 0.4+ REST API: `/api/v1/models/unload`, `/load`); while loading, the dot blinks yellow and the list is greyed out, and under the list there are “Loading the model into LM Studio…” and “Cancel” (the choice goes back to the previous model).
+- LM Studio is a server shared by several phones, and there is one model in its memory for everyone. So switching the model **waits** until nobody on this server is recognizing or switching the model — neither other phones nor this one (“LM Studio is busy (devices: N) — the model will switch once everyone finishes or cancels”); the wait can be cancelled too. Recognition, in turn, waits while another phone's or this phone's model switch is in progress. LM Studio itself does not report whether the model is busy, so the phones mark themselves in the table storage — the same place as the log: on the network drive, a `somascan-lmstudio` folder next to the table (file `<device id>.json`); in Google Drive, `somascan-lmstudio-<device id>` files in the table's folder (`recognition/catalog/ModelUseGate.ts`, `uploads/leases/`). The mark is renewed while the phone is busy and expires by itself after a minute — a phone that was switched off or crashed stops getting in the way. Storage not set up or not answering — the phone works without the queue, as before. Because of the mark, recognition through LM Studio starts a fraction of a second later.
 
-У каждой модели показаны дата выхода, контекст, цена, рекомендация для бирок на языке интерфейса и (только в английском интерфейсе, потому что источники пишут по-английски) описание из её источника: API провайдера (Gemini отдаёт описание сам), для Claude и OpenAI — каталог models.dev, для LM Studio — автор сборки, архитектура и квантизация.
+Each model shows its release date, context, price, a recommendation for tags in the interface language and (only in the English interface, because the sources write in English) a description from its source: the provider's API (Gemini returns a description itself), for Claude and OpenAI — the models.dev directory, for LM Studio — the build author, architecture and quantization.
 
-Списки всех провайдеров грузятся при старте, кэшируются на 30 дней и перезапрашиваются при смене ключа или адреса сервера. Показываются только модели, которые читают изображения и вышли за последние N месяцев (по умолчанию 6; меняется в «Настройки → Расширенные → Модели»).
+The lists of all providers are loaded at startup, cached for 30 days and fetched again when the key or server address changes. Only models that read images and were released in the last N months are shown (6 by default; changed in “Settings → Advanced → Models”).
 
-### Несколько бирок сразу (сетка)
+### Several tags at once (grid)
 
-На главном экране можно держать **до девяти бирок**: на пустой ячейке «Фото» (или «Добавить фото») в галерее и в файлах позволяет выбрать несколько снимков сразу — столько, сколько свободно ячеек; камера снимает по одному. Бирки идут **строго по порядку**: новые фото встают в конец, без пропусков, а убранная («Сброс») или отправленная («Далее») бирка сдвигает следующие. Каждое фото распознаётся само (не больше двух запросов одновременно, остальные ждут); для сетки строится уменьшенная копия фото, чтобы девять снимков с телефона не занимали память WebView.
+The main screen can hold **up to nine tags**: on an empty cell, “Photo” (or “Add photo”) lets you pick several shots at once in the gallery and in files — as many as there are free cells; the camera takes one at a time. Tags go **strictly in order**: new photos go to the end, with no gaps, and a removed (“Reset”) or sent (“Next”) tag shifts the following ones. Each photo is recognized on its own (no more than two requests at a time, the rest wait); for the grid a reduced copy of the photo is built, so that nine phone shots do not take up the WebView's memory.
 
-- **«Сетка»** — справа вверху карточки фото: фото уменьшается в свою ячейку, и появляется сетка 3 × 3 — миниатюры с номером и состоянием: спиннер — распознаётся, зелёная галочка — готова, **оранжевый «!» — не выбрана форма**, красный знак — ошибка. Следующая свободная ячейка — «плюс», остальные недоступны (заполнять можно только по порядку). Нажатие на ячейку увеличивает её обратно до одной бирки (пустая ячейка открывает карточку «Добавить фото»); «Фото» в углу сетки и «Открыть» в панели листания (и в пустом списке) и системное «Назад» (жест iOS, кнопка Android) возвращают к открытой бирке.
-- **«Назад»** — слева вверху у бирки, открытой из сетки: снова сетка. Появляется, когда из сетки вернулись (приезжает вместе с биркой), а не в момент её открытия.
-- **«Без фото» / «С фото»** — переключатель справа внизу ячейки без снимка (напротив «Сетки», тот же вид; подписи угловых кнопок помещаются целиком), туда и обратно: на пустой ячейке «Без фото» добавляет в конец бирку, данные которой вводят вручную (правка сама не открывается: бирка показывается в просмотре с пустыми полями, данные вводят по «Правке»); у неё та же кнопка — «С фото»: бирка снова ждёт фото («Добавить фото» на её месте, в сетке — «плюс» и оранжевый «!»), а введённое вручную (поля и форма) **сбрасывается** сразу, без вопросов: бирка как новая — в карточке результата «Здесь появится текст», данные придут с фото; пустая последняя бирка просто убирается — на её месте снова пустая ячейка. На месте фото у неё перечёркнутая картинка с подписью «Без фото», в сетке — тот же значок вместо миниатюры; «Повтор» недоступен (распознавать нечего). Пустые поля по умолчанию у неё подписаны «Обязательное поле», необязательные — «Не заполнено». Форма нужна, как у любой бирки.
-- **Поля по умолчанию обязательны у любой бирки** — и распознанной с фото, и без фото (производитель, размер, номер плавки, вес — те из них, что включены в настройках): пустые — цветом ошибки (у распознанной — «Не распознано», у бирки без фото — «Обязательное поле»; в правке — красная линия или рамка и подсказка «Обязательное поле»), в сетке у такой бирки оранжевый «!», а «Далее» не отправит её, пока они не заполнены, — скажет, у какой бирки каких полей нет, и откроет правку у первого из них (`missingRequiredLabelFields`).
-- **Каждая плавка — один раз** (переключатель в «Хранилище» → «Правила записи», по умолчанию включён и под замком; выключают, если приходит несколько бунтов одной плавки). Номер плавки сравнивается без пробелов и регистра (`25r 00581` = `25R00581`, число = такой же текст; `recognition/label/heatNumber.ts`). Если та же плавка уже у бирки раньше на экране или уже в «Загрузках» (в очереди или записана), у бирки поле плавки — цветом ошибки с подсказкой «Плавка уже есть у бирки N» / «уже отправлена — № SCN-…», в сетке — оранжевый «!», а «Далее» её не отправит: скажет, с чем совпало, и откроет правку (`heatDuplicates` в `workspace/utils/sendReadiness.ts`). Журнал проверяет то же при записи — см. «Журнал проб».
-- **Панель листания** — нижняя полоса блока фото (общая рамка с карточкой фото, фото внутри скруглено по всем углам): компактные кнопки без подписей ‹ › и справа переключатель вида: в сетке — «Открыть» (значок фото), у одной бирки — «Сетка» (значок сетки); на iOS 26+ — стеклянная «пилюля» внутри блока. Панель выезжает и уходит плавно (в пустом списке — вместе с переходом к сетке и обратно): блок фото растёт и сжимается по высоте вместе с отступами панели, с той же кривой и длительностью, что и переход, карточка результата съезжает за ним без рывков. В сетке та же кнопка — в правом верхнем углу, с подписью «Фото». У одной бирки стрелки листают бирки как слайды (фото въезжает сбоку), в сетке — передвигают выбор по ячейкам, «Открыть» увеличивает выбранную до одной бирки.
-- **Выбор для отправки**: все загруженные фото выбраны сразу; «радиокнопка» в левом нижнем углу ячейки (кольцо 26 px, у выбранной — точка) снимает и ставит выбор (не выбранная — приглушена). Выбранные обведены акцентным цветом внутри ячейки, открытая — толстой бирюзовой обводкой снаружи с ярким широким свечением (фирменный цвет логотипа; в сетке оно выходит за края карточки и блока фото, не обрезается) и чуть крупнее соседних, выбранная открытая — обоими.
-- **«+ Фото»** в панели действий и «Добавить фото» на открытой бирке **заменяют её фото** (бирке без фото — добавляют его), новой бирки не появляется; если пропадут распознанные или введённые вручную данные — сначала подтверждение. Новые бирки добавляются в пустой ячейке («+» в конце сетки, номеров бирок и листания).
-- **Номера бирок** в карточке результата (над полями: вкладки Material на Android, сегменты на iOS; в конце всегда «+» — пустая ячейка для следующей) — переход к любой бирке без сетки.
-- Вверху карточки результата — узкая плашка-примечание «Проверьте данные перед отправкой» (пока бирка распознана): отдельный скруглённый элемент с отступами от краёв карточки, не полоса во всю ширину; под ней — узкая шапка: заголовок и «пилюля» «✎ Правка» (в правке на её месте — «✕ Отмена» и главная «✓ Готово», как «Отмена» и «Готово» в панелях Android и iOS: «Готово» сохраняет изменения, «Отмена» **отменяет** их — если что-то изменилось, сначала спрашивает «Отменить изменения?» — и поля всех бирок, исправленных за эту правку, возвращаются к прежним). Вход в правку и выход анимированы (View Transitions): блок фото уезжает, карточка результата плавно переезжает и растягивается на весь экран, строки просмотра сменяются полями ввода без просвечивания; без поддержки в WebView и при «уменьшить движение» — сразу. «Пилюли» в шапке — тональная кнопка с иконкой Material 3 на Android, тонированная капсула UIKit на iOS 18, она же с бликом стекла на iOS 26+ (`ActionButton` с `layout="inline"`).
-- **«Далее»** отправляет **все выбранные** готовые бирки пачкой (на кнопке — сколько выбрано) и убирает их с экрана: их фото (в сетке — ячейки, по очереди; у одной бирки — само фото, а следом и её данные из карточки результата) улетают по дуге к кнопке «Загрузки», уменьшаясь и растворяясь, значок «Загрузок» коротко пульсирует, а оставшиеся бирки в сетке плавно переезжают на освободившиеся места (`workspace/utils/sendFlight.ts`; при «уменьшить движение» фото просто гаснут). Если часть выбранных не готова (распознаётся, ошибка, нет формы, ждёт фото, пусты обязательные поля, плавка повторяется) — сначала вопрос «Отправить готовые?», отказ открывает первую неготовую.
+- **“Grid”** — at the top right of the photo card: the photo shrinks into its cell, and a 3 × 3 grid appears — thumbnails with a number and a state: spinner — being recognized, green check mark — ready, **orange “!” — form not chosen**, red sign — error. The next free cell is a “plus”, the others are unavailable (cells can only be filled in order). Tapping a cell enlarges it back to a single tag (an empty cell opens the “Add photo” card); “Photo” in the corner of the grid, “Open” in the browsing bar (and in an empty list) and the system “Back” (iOS gesture, Android button) return to the open tag.
+- **“Back”** — at the top left of a tag opened from the grid: back to the grid. It appears once the tag has arrived from the grid (it slides in together with the tag), not at the moment the tag is opened.
+- **“No photo” / “Photo”** — a toggle at the bottom right of a cell without a shot (opposite “Grid”, same look; the captions of the corner buttons fit in full), both ways: on an empty cell “No photo” adds a tag at the end whose data is entered by hand (editing does not open by itself: the tag is shown in view mode with empty fields, the data is entered via “Edit”); that tag has the same button — “Photo”: the tag waits for a photo again (“Add photo” in its place, in the grid — a “plus” and an orange “!”), and what was entered by hand (fields and form) is **reset** at once, without asking: the tag is as new — the result card shows “Text will appear here”, the data will come from the photo; an empty last tag is simply removed — an empty cell is in its place again. In place of the photo it has a crossed-out picture captioned “No photo”, in the grid — the same icon instead of a thumbnail; “Retry” is unavailable (there is nothing to recognize). Its empty default fields are labelled “Required”, optional ones — “Not filled in”. A form is needed, as for any tag.
+- **Default fields are required for any tag** — both recognized from a photo and without a photo (producer, size, heat number, weight — those of them that are enabled in the settings): empty ones are in the error colour (on a recognized tag — “Not recognized”, on a tag without a photo — “Required”; in editing — a red line or border and the hint “Required”), in the grid such a tag has an orange “!”, and “Next” will not send it until they are filled in — it says which tag is missing which fields and opens editing at the first of them (`missingRequiredLabelFields`).
+- **Each heat number once** (a toggle in “Storage” → “Write rules”, on by default and behind a lock; it is turned off if several coils of one heat arrive). The heat number is compared ignoring spaces and case (`25r 00581` = `25R00581`, a number = the same text; `recognition/label/heatNumber.ts`). If the same heat number is already on an earlier tag on screen or already in “Uploads” (queued or written), the tag's heat number field is in the error colour with the hint “Heat number already on tag N” / “already sent — No. SCN-…”, in the grid — an orange “!”, and “Next” will not send it: it says what it matched and opens editing (`heatDuplicates` in `workspace/utils/sendReadiness.ts`). The log checks the same when writing — see “Steel sample log”.
+- **Browsing bar** — the bottom strip of the photo block (a shared frame with the photo card, the photo inside is rounded at all corners): compact buttons without captions ‹ › and, on the right, a view toggle: in the grid — “Open” (photo icon), on a single tag — “Grid” (grid icon); on iOS 26+ — a glass “pill” inside the block. The bar slides in and out smoothly (in an empty list — together with the transition to the grid and back): the photo block grows and shrinks in height together with the bar's padding, with the same curve and duration as the transition, and the result card slides after it without jerks. In the grid the same button is in the top right corner, captioned “Photo”. On a single tag the arrows flip through tags like slides (the photo slides in from the side), in the grid they move the selection across cells, and “Open” enlarges the selected one to a single tag.
+- **Selection for sending**: all loaded photos are selected right away; the “radio button” in the bottom left corner of a cell (a 26 px ring, with a dot when selected) clears and sets the selection (an unselected one is dimmed). Selected ones are outlined in the accent colour inside the cell, the open one — with a thick turquoise outline outside with a bright wide glow (the brand colour of the logo; in the grid it extends past the edges of the card and the photo block and is not clipped) and slightly larger than its neighbours, a selected open one — with both.
+- **“+ Photo”** in the action bar and “Add photo” on the open tag **replace its photo** (for a tag without a photo — add one), no new tag appears; if recognized or hand-entered data would be lost — a confirmation first. New tags are added in an empty cell (the “+” at the end of the grid, of the tag numbers and of browsing).
+- **Tag numbers** in the result card (above the fields: Material tabs on Android, segments on iOS; at the end there is always a “+” — an empty cell for the next one) — jump to any tag without the grid.
+- At the top of the result card there is a narrow note “Check the data before sending” (once the tag is recognized): a separate rounded element with margins from the card edges, not a full-width strip; below it — a narrow header: the title and an “✎ Edit” “pill” (in editing, in its place — “✕ Cancel” and the primary “✓ Done”, like “Cancel” and “Done” in the Android and iOS bars: “Done” saves the changes, “Cancel” **discards** them — if anything changed, it first asks “Discard changes?” — and the fields of all tags corrected during this editing go back to what they were). Entering and leaving editing is animated (View Transitions): the photo block slides away, the result card smoothly moves and stretches to the full screen, the view rows are replaced by input fields without showing through; without WebView support and with “reduce motion” — instantly. The “pills” in the header are a Material 3 tonal button with an icon on Android, a tinted UIKit capsule on iOS 18, the same with a glass highlight on iOS 26+ (`ActionButton` with `layout="inline"`).
+- **“Next”** sends **all selected** ready tags as a batch (the button shows how many are selected) and removes them from the screen: their photos (in the grid — the cells, one after another; on a single tag — the photo itself, followed by its data from the result card) fly along an arc to the “Uploads” button, shrinking and fading, the “Uploads” icon pulses briefly, and the remaining tags in the grid smoothly move into the freed places (`workspace/utils/sendFlight.ts`; with “reduce motion” the photos simply fade out). If some of the selected ones are not ready (being recognized, error, no form, waiting for a photo, empty required fields, repeated heat number) — first the question “Send the ready ones?”; declining opens the first one that is not ready.
 
-Переход между сеткой и одной биркой — анимация «камеры» (Web Animations API) с кривой платформы: Material 3 emphasized на Android, системная кривая iOS; кольца выбора и обводка открытой бирки на время перехода скрыты (увеличенные втрое, они выглядели бы толстой рамкой) и проявляются после, «Фото» в углу сетки появляется, когда «Сетка» уже погасла; пока фото декодируется, на его месте — миниатюра, а слой, с которого ушли, убирается в том же кадре, что кончается анимация (без мигания). Кнопки и значки — в стиле платформы: Material на Android, классические материалы UIKit на iOS 18, Liquid Glass на iOS 26+ (`workspace/components/PhotoCard`, `PhotoGrid`, `hooks/useScanSession`).
+The transition between the grid and a single tag is a “camera” animation (Web Animations API) with the platform curve: Material 3 emphasized on Android, the system curve on iOS; the selection rings and the outline of the open tag are hidden during the transition (scaled up threefold, they would look like a thick frame) and fade in afterwards, and “Photo” in the corner of the grid appears once “Grid” has already faded out; while the photo is decoding, a thumbnail is in its place, and the layer being left is removed in the same frame in which the animation ends (no flicker). Buttons and icons follow the platform style: Material on Android, classic UIKit materials on iOS 18, Liquid Glass on iOS 26+ (`workspace/components/PhotoCard`, `PhotoGrid`, `hooks/useScanSession`).
 
-**Вертикально на iOS и Android** (телефоны и планшеты; браузер на компьютере — нет): под полями оставалось место на две-три строки (блок фото, примечание, шапка, номера бирок и панель действий забирали почти весь экран), поэтому в просмотре поля не прокручиваются внутри карточки, а **прокручивается весь экран**: блок фото уезжает вверх, карточка показывает все поля. Панель действий («Фото», «Сброс», «Повтор», «Далее») — **панель внизу экрана**, компактная (круги 42), и «Далее» всегда под рукой: на Android — нижняя панель Material 3 во всю ширину, подписи над зоной полоски жестов; на iOS 18 — панель инструментов (UIToolbar) из материала во всю ширину; на iOS 26+ — парящая стеклянная «пилюля» над полоской «Домой». Содержимое прокручивается под ней, а рабочая область оставляет под панелью место (высоту панели меряет `NotesCard`, `--notes-actions-height`). В правке, на телефоне в горизонтальном положении и в браузере на компьютере панель — в карточке, как раньше; при входе в правку она переезжает на место вместе с переходом. Рабочая область — своя стопка слоёв (`isolation: isolate`): кнопки в углах карточки фото при прокрутке уходят под шапку, а не рисуются поверх неё и статус-бара (так было на iOS).
+**Portrait on iOS and Android** (phones and tablets; not a desktop browser): there was room for only two or three rows under the fields (the photo block, the note, the header, the tag numbers and the action bar took up almost the whole screen), so in view mode the fields do not scroll inside the card; instead **the whole screen scrolls**: the photo block moves up, and the card shows all fields. The action bar (“Photo”, “Reset”, “Retry”, “Next”) is a **bar at the bottom of the screen**, compact (42 px circles), and “Next” is always at hand: on Android — a full-width Material 3 bottom bar, captions above the gesture bar area; on iOS 18 — a full-width material toolbar (UIToolbar); on iOS 26+ — a floating glass “pill” above the Home indicator. Content scrolls under it, and the workspace leaves room under the bar (the bar height is measured by `NotesCard`, `--notes-actions-height`). In editing, on a phone in landscape and in a desktop browser the bar is in the card, as before; when entering editing it moves into place together with the transition. The workspace is its own stacking context (`isolation: isolate`): buttons in the corners of the photo card go under the header when scrolling, instead of being drawn over it and the status bar (as used to happen on iOS).
 
-**Горизонтальное положение** (телефон, высота экрана до 600 px): фото — слева во всю высоту рабочей области (размер считается от её высоты через единицы контейнера `cqh`, под ним — панель листания), карточка результата — справа на всю высоту, её поля прокручиваются внутри, а сама область не прокручивается: данные правят, глядя на фото, в правке тоже. Шапка ниже (52 px), логотип меньше, кнопки действий карточки плотнее; вырез и закругления экрана учитываются по бокам (safe-area). Окна «Настройки» и «Загрузки» прокручиваются внутри, просмотр фото — на весь экран (он рендерится в `body`: контейнер размеров удержал бы fixed-слой в своих границах). Планшеты в горизонтальном положении и браузер на компьютере остаются в обычной раскладке.
+**Landscape** (phone, screen height up to 600 px): the photo is on the left at the full height of the workspace (its size is computed from that height via the `cqh` container units, with the browsing bar under it), the result card is on the right at full height, its fields scroll inside, and the area itself does not scroll: data is edited while looking at the photo, in editing too. The header is lower (52 px), the logo smaller, the card's action buttons denser; the notch and rounded screen corners are taken into account on the sides (safe-area). The “Settings” and “Uploads” windows scroll inside, the photo viewer is full screen (it is rendered in `body`: a size container would keep a fixed layer within its bounds). Tablets in landscape and a desktop browser keep the normal layout.
 
-### Хранилище таблицы `.xlsx`
+### Table storage (`.xlsx`)
 
-- **Сетевой диск Windows** (SMB-шара) — таблица лежит на файловом сервере завода. Работает: см. «Выгрузка в таблицу на сетевой диск».
-- **Google Drive** — таблица в папке Drive (в том числе на общем диске). Работает после настройки OAuth-клиентов Google: см. «Выгрузка в Google Drive».
+- **Windows network drive** (SMB share) — the table is on the plant's file server. Works: see “Writing to a network drive”.
+- **Google Drive** — the table is in a Drive folder (including on a shared drive). Works after setting up the Google OAuth clients: see “Writing to Google Drive”.
 
-### Какие этикетки обрабатываются
+### Which labels are processed
 
-Этикетки разных производителей отличаются по формату, языку (EN / RO / HU / EL) и качеству печати. Они часто ржавые, поцарапанные, перекошенные и снимаются под углом, поэтому распознавание должно быть устойчивым к этому. Примеры:
+Labels from different producers differ in format, language (EN / RO / HU / EL) and print quality. They are often rusty, scratched, skewed and shot at an angle, so recognition has to be robust to this. Examples:
 
-| Производитель | Типичные поля |
+| Producer | Typical fields |
 |---|---|
-| Greek rebar (Sovel) | Date, Time, Size (mm), Weight (Kg), Heat No, Shift No, Code, технич. соглашение (`AT 016-01/…`) |
+| Greek rebar (Sovel) | Date, Time, Size (mm), Weight (Kg), Heat No, Shift No, Code, technical agreement (`AT 016-01/…`) |
 | Suez Steel Co | P.Date, Heat number, Size, Grade, Standard, Weight (Ton), N. of bars, Work Order, Technical agreement no., Customer, Serial Number |
 | OAM Ózdi Acélművek (Hungary) | Charge, Diameter (mm), Weight (kg), Package, Grade, Date, Standard, Technical doc. |
 | ArcelorMittal Kryvyi Rih | Contract, Destination, Size, Grade, Standard, Heat (SARJA), Batch / № of coil, Weight, Comparator ref. |
 
-Куда попадают данные — журнал проб стали для лаборатории (`Probe otel.xlsx`), см. «Журнал проб».
+Where the data goes — the steel sample log for the lab (`Probe otel.xlsx`), see “Steel sample log”.
 
-> Статус: распознавание и выгрузка в таблицу (сетевой диск, Google Drive) работают.
+> Status: recognition and upload to the table (network drive, Google Drive) work.
 
 ---
 
-## Журнал проб (`Probe otel.xlsx`)
+## Steel sample log (`Probe otel.xlsx`)
 
-Бирки пишутся в журнал проб стали — тот же файл, который ведёт цех (`A:\ATELIER ARMATURI\Probe si Sarje Otel\Probe otel.xlsx`). Устройство журнала:
+Tags are written to the steel sample log — the same file the workshop keeps (`A:\ATELIER ARMATURI\Probe si Sarje Otel\Probe otel.xlsx`). How the log is laid out:
 
-- **по листу на год** (`2026`, `2025`, …, новые слева); бирка пишется в лист года записи. Если его нет (первая запись в январе), он создаётся первым в книге с шапкой, ширинами, объединениями, фильтром и оформлением самого нового листа;
-- **шапка** в строках 4–6 с объединёнными ячейками, данные — со строки 7. Строки обычно размечены заранее (рамки, заливка) и в «Nr. Crt.» бывают проставлены номера наперёд — такие строки считаются пустыми;
-- колонки, которые заполняет приложение:
+- **one sheet per year** (`2026`, `2025`, …, newest on the left); a tag is written to the sheet of the year it is written in. If that sheet does not exist (the first write in January), it is created first in the workbook with the header, widths, merges, filter and formatting of the newest sheet;
+- **header** in rows 4–6 with merged cells, data — from row 7. Rows are usually pre-formatted (borders, fill) and “Nr. Crt.” sometimes has numbers filled in ahead — such rows count as empty;
+- columns the app fills in:
 
-| Колонка | Что пишется | Откуда |
+| Column | What is written | Source |
 |---|---|---|
-| Nr. Crt. | номер предыдущей строки + 1 | — |
-| Cantitatea | вес как в журнале: `8126Kg` | поле «Вес» |
-| Data trimetere la incercat | **не заполняется** — дату отправки на испытание вписывает лаборатория | — |
-| Data intrare | день записи в журнал, `ДД.ММ.ГГГГ` | — |
-| Sarja | номер плавки: только цифры — числом, иначе текстом (`0016`, `25R00205` сохраняются как есть) | поле «Номер плавки» |
-| Producator | завод | поле «Производитель» |
-| BST 500 Ø Bobina / Ø Bara | диаметр числом (`10 mm` → `10`) — в колонку по форме поставки | поле «Размер» + «Форма» (выбирается вручную из выпадающего списка прямо на карточке результата — касанием значения, без режима правки) |
-| Doc. de calitate | документ качества | необязательное поле «Док. качества» (выключено по умолчанию; модель читает номер сертификата, если он напечатан, или его вписывают в режиме правки) |
+| Nr. Crt. | the previous row's number + 1 | — |
+| Cantitatea | weight as in the log: `8126Kg` | “Weight” field |
+| Data trimetere la incercat | **not filled in** — the date of sending for testing is entered by the lab | — |
+| Data intrare | the day of writing to the log, `DD.MM.YYYY` | — |
+| Sarja | heat number: digits only — as a number, otherwise as text (`0016`, `25R00205` are kept as is) | “Heat number” field |
+| Producator | mill | “Producer” field |
+| BST 500 Ø Bobina / Ø Bara | diameter as a number (`10 mm` → `10`) — into the column for the product form | “Size” field + “Form” (chosen by hand from a drop-down right on the result card — by tapping the value, without edit mode) |
+| Doc. de calitate | quality document | optional “Quality document” field (off by default; the model reads the certificate number if it is printed, or it is entered in edit mode) |
 
-Колонки ищутся **по тексту шапки** (без учёта регистра и диакритики, с известными вариантами: «Data sosirii», «Acte de calitate», «Data trimitere…»), а не по буквам, — журнал *subject to change*: колонки можно переставить, а добавленная колонка с названием какого-либо поля бирки на любом языке (например, «Marcă oțel») тоже будет заполняться. Новых колонок приложение не добавляет; лист без узнаваемой шапки — ошибка `unknownLayout` (запись ждёт исправления пути).
+Columns are found **by header text** (ignoring case and diacritics, with known variants: “Data sosirii”, “Acte de calitate”, “Data trimitere…”), not by column letters — the log is *subject to change*: columns can be rearranged, and an added column named after any tag field in any language (e.g. “Marcă oțel”) will be filled in too. The app does not add new columns; a sheet without a recognizable header is an `unknownLayout` error (the write waits for the path to be fixed).
 
-**Каждая плавка записывается один раз** (если включено «Каждая плавка — один раз»; в настоящем журнале прошлых лет одна плавка встречается и по нескольку раз — несколько бунтов). Перед записью журнал ищет эту плавку на всех листах с шапкой журнала (без пробелов и регистра); нашлась — запись не идёт, ошибка `duplicateHeat` с листом и строкой, где плавка уже есть (`LabelWorkbook.findHeat`). Так ловятся и повторы с других телефонов, которых нет в «Загрузках» этого. Повтор после обрыва записи этим не считается: свою же бирку журнал узнаёт по номеру записи раньше.
+**Each heat number is written once** (if “Each heat number once” is on; in the real log of past years the same heat number does appear several times — several coils). Before writing, the log looks for this heat number on all sheets with a log header (ignoring spaces and case); if it is found, nothing is written: a `duplicateHeat` error with the sheet and row where the heat number already is (`LabelWorkbook.findHeat`). This also catches repeats from other phones that are not in this phone's “Uploads”. A retry after an interrupted write does not count as a repeat: the log recognizes its own tag by the record number first.
 
-**Строгое строение таблицы** (по умолчанию включено, «Хранилище» → под выбором листа): запись идёт только в лист, где есть все колонки журнала — Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate — по порядку и без других колонок с названием между ними (свои колонки правее не мешают; `strictMismatch` в `uploads/xlsx/labTableLayout.ts`). Иначе бирка ждёт с ошибкой `layoutMismatch`, а выключение переключателя повторяет запись сама. В нынешнем журнале строгому строению соответствуют листы 2025 и 2026; старые (2016–2024 — без «Cantitatea», в другом порядке) — нет. Выключено — как раньше: колонки ищутся по названиям, недостающие пропускаются.
+**Strict table structure** (on by default, “Storage” → under the sheet choice): writing goes only to a sheet that has all the log columns — Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate — in order and with no other named columns between them (your own columns further right do not get in the way; `strictMismatch` in `uploads/xlsx/labTableLayout.ts`). Otherwise the tag waits with a `layoutMismatch` error, and turning the toggle off retries the write by itself. In the current log the sheets 2025 and 2026 match the strict structure; the old ones (2016–2024 — without “Cantitatea”, in a different order) do not. Off — as before: columns are found by name, missing ones are skipped.
 
-**Своей таблицы приложение не создаёт.** Журнал должен уже лежать по пути из настроек; если его нет, запись невозможна: бирка ждёт в очереди с ошибкой `tableNotFound` («Таблица не найдена»), пока путь не исправят. Ни таблица, ни папки к ней не создаются — только служебные блокировка (`<таблица>.lock`) и папка `backups` рядом с уже существующей таблицей. Наличие таблицы проверяется значком сверки в конце поля «Путь к таблице» (у Google Drive — «Имя файла») во вкладке «Хранилище» (итог — строкой под полями: найдена, с размером и датой изменения; не найдена; не удалось проверить) и кнопкой «Проверить подключение» (итог — диалогом). Если проверка уже показала, что таблицы нет, «Далее» сразу предупреждает об этом.
+**The app does not create a table of its own.** The log must already be at the path from the settings; if it is not there, writing is impossible: the tag waits in the queue with a `tableNotFound` error (“Table not found”) until the path is fixed. Neither the table nor folders for it are created — only the service lock (`<table>.lock`) and the `backups` folder next to the already existing table. Whether the table exists is checked with the check icon at the end of the “Table path” field (for Google Drive — “File name”) in the “Storage” tab (the result is a line under the fields: found, with size and modification date; not found; could not check) and with the “Test connection” button (the result is a dialog). If the check has already shown that there is no table, “Next” warns about it right away.
 
-**Пустой журнал** для тестов — `tests/fixtures/Probe otel.xlsx`: лист `2026` настоящего журнала с той же шапкой, ширинами, фильтром и 380 размеченными строками, без данных. Им же можно завести новый журнал вручную (положить на сетевой диск или в Drive). Пересобирается из журнала:
+**An empty log** for tests — `tests/fixtures/Probe otel.xlsx`: the `2026` sheet of the real log with the same header, widths, filter and 380 pre-formatted rows, without data. It can also be used to start a new log by hand (put it on the network drive or in Drive). It is rebuilt from the log:
 
 ```bash
 npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe otel.xlsx" "tests/fixtures/Probe otel.xlsx"
 ```
 
-**Какие бирки уже записаны** — в скрытом листе `somascan-journal` (состояние `veryHidden`: его не видно ни в ярлыках, ни в «Показать» Excel): номер записи `SCN-…` → лист и строка. По нему повтор после обрыва не дублирует строку, а проверка после сохранения находит её.
+**Which tags are already written** — in the hidden sheet `somascan-journal` (state `veryHidden`: it is visible neither in the sheet tabs nor in Excel's “Unhide”): record number `SCN-…` → sheet and row. Thanks to it, a retry after an interruption does not duplicate the row, and the check after saving finds it.
 
-## Выгрузка в таблицу на сетевой диск
+## Writing to a network drive
 
-Кнопка **«Далее»** на карточке результата ставит выбранные распознанные (и поправленные) бирки в очередь и открывает следующую бирку (или пустую карточку для новой). Если хранилище ещё не настроено, бирки всё равно встают в очередь, а «Далее» сразу говорит об этом диалогом «Хранилище не настроено» — запись начнётся после настройки. Запись идёт **в фоне, строго по одной** — очередь хранится на устройстве и переживает перезапуск; на телефоне её пишет движок вне WebView — и в свёрнутом, и в закрытом приложении (см. «Фоновая выгрузка»). Состояние каждой записи видно в «Загрузках» — на вкладках **«Активные»** (ждут, пишутся, не записаны) и **«История»** (записанные), под вкладками — узкая лента: сколько бирок и что с ними (в работе, не записано — «Повтор», записано): *в очереди → запись в таблицу → записано* (лист, строка и номер элемента в журнале — «Nr. Crt.» записанной строки) либо *не записано* с причиной и кнопкой «Повторить» (на вкладке «Активные» — ещё «Повторить все», на «Истории» — «Очистить»); счётчик очереди — на кнопке «Загрузки» в шапке. Незаписанную бирку можно **отменить** (кнопка «Отмена» вместо «Удалить»): ждущая убирается из очереди сразу, пишущаяся останавливается на ближайшем шаге до замены файла (журнал не тронут, блокировка снимается); если файл уже заменяется, запись доводится до конца. Удалить из истории можно только записанную бирку.
+The **“Next”** button on the result card puts the selected recognized (and edited) tags into the queue and opens the next tag (or an empty card for a new one). If storage is not set up yet, the tags still go into the queue, and “Next” says so right away with the “Storage is not set up” dialog — writing starts once storage is set up. Writing runs **in the background, strictly one at a time** — the queue is kept on the device and survives a restart; on a phone it is written by an engine outside the WebView — both when the app is minimized and when it is closed (see “Background upload (queue engine)”). The state of each record is shown in “Uploads” — on the **“Active”** (waiting, being written, not written) and **“History”** (written) tabs; below the tabs is a narrow strip: how many tags there are and what is happening with them (in progress, not written — “Retry”, written): *queued → writing to the table → written* (sheet, row and item number in the log — the “Nr. Crt.” of the written row) or *not written* with the reason and a “Retry” button (the “Active” tab also has “Retry all”, “History” has “Clear”); the queue counter is on the “Uploads” button in the header. An unwritten tag can be **cancelled** (the “Cancel” button instead of “Delete”): a waiting one is removed from the queue at once, one that is being written stops at the nearest step before the file is replaced (the log is untouched, the lock is released); if the file is already being replaced, the write is carried through to the end. Only a written tag can be deleted from the history.
 
-### Как проходит одна запись (`TableWriter` + `SmbTableBackend`)
+### How one write goes (`TableWriter` + `SmbTableBackend`)
 
-1. **Блокировка.** Рядом с таблицей атомарно создаётся папка `<таблица>.lock` с файлом `owner.json` (устройство, время). Пока она есть, другие устройства получают `busy` и повторяют попытку позже. Брошенная блокировка (старше 5 минут) снимается.
-2. **Восстановление.** Если таблицы нет, а временный файл прошлой записи остался, он становится таблицей.
-3. **Чтение.** Журнал читается с сервера **каждый раз заново** — его могли изменить в Excel или с другого телефона. Если файла нет — `tableNotFound`: таблица не создаётся, запись ждёт исправления пути (если нет и папки таблицы, это видно уже на шаге 1 — блокировку негде создать, та же ошибка).
-4. **Идемпотентность.** Если бирка с таким номером записи уже есть в скрытом листе (запись оборвалась после сохранения), ничего не дописывается — запись считается выполненной.
-5. **Строка** дописывается в выбранный лист (см. «Настройки»; по умолчанию — лист года) после последней заполненной (см. «Журнал проб»); если строка не размечена, она получает оформление строки выше. Затем — **сверка до замены**: новая книга перечитывается, и каждое прежнее значение во всех листах должно остаться на месте, новые — только в записанной строке. Иначе — `integrityFailed`, файл на сервере не трогается и запись ждёт разбора.
-6. **Атомарная замена с резервной копией** (нативный плагин, один вызов, чтобы не прерываться при уходе в фон): новая версия пишется во временный файл `<таблица>.tmp` → перечитывается и сверяется по SHA-256 → прежний файл переименовывается в резервную копию `backups/<имя>.<ГГГГ-ММ-ДД_ЧЧ-ММ-СС-мс>.xlsx` рядом с таблицей → временный переименовывается в таблицу → сверяется размер.
-7. **Проверка.** Таблица перечитывается, записанная строка сверяется по каждой ячейке. Расхождение — `verifyFailed`, запись повторится.
-8. **Очистка копий.** Резервные копии старше **7 дней** удаляются (только файлы с шаблоном имени копии, чужие не трогаются).
+1. **Lock.** A folder `<table>.lock` with an `owner.json` file (device, time) is created atomically next to the table. While it exists, other devices get `busy` and try again later. An abandoned lock (older than 5 minutes) is removed.
+2. **Recovery.** If the table is missing but the temporary file of a previous write is left over, it becomes the table.
+3. **Reading.** The log is read from the server **anew every time** — it may have been changed in Excel or from another phone. If the file is missing — `tableNotFound`: the table is not created, the record waits for the path to be fixed (if the table's folder is missing too, this shows already at step 1 — there is nowhere to create the lock, same error).
+4. **Idempotency.** If a tag with this record number is already in the hidden sheet (the write broke off after saving), nothing is appended — the record counts as done.
+5. **The row** is appended to the chosen sheet (see “Settings”; by default, the year's sheet) after the last filled one (see “Steel sample log (Probe otel.xlsx)”); if the row has no formatting, it gets the formatting of the row above. Then comes the **check before replacement**: the new workbook is read back, and every previous value on all sheets must stay in place, new ones may appear only in the written row. Otherwise — `integrityFailed`, the file on the server is not touched and the record waits to be looked into.
+6. **Atomic replacement with a backup** (a native plugin, one call, so that it is not interrupted when the app goes to the background): the new version is written to a temporary file `<table>.tmp` → read back and checked by SHA-256 → the previous file is renamed to the backup `backups/<name>.<YYYY-MM-DD_HH-MM-SS-ms>.xlsx` next to the table → the temporary file is renamed to the table → the size is checked.
+7. **Verification.** The table is read again, and the written row is checked cell by cell. A mismatch — `verifyFailed`, the write will be retried.
+8. **Backup cleanup.** Backups older than **7 days** are deleted (only files matching the backup name pattern; other files are not touched).
 
-Остальные листы, стили, объединения, ширины, фильтры и примечания книги сохраняются (ExcelJS; проверено на настоящем журнале 2016–2026: после записи отличаются только ячейки новой строки).
+The workbook's other sheets, styles, merged cells, widths, filters and notes are preserved (ExcelJS; tested on the real 2016–2026 log: after a write only the cells of the new row differ).
 
-### Повторы и ошибки
+### Retries and errors
 
-Временные сбои (нет сети, сервер не отвечает, таблица открыта в Excel, занята другим устройством, проверка не прошла) повторяются с растущей паузой: 15 с, 30 с, 1, 2, 5, 10, затем каждые 15 минут. Постоянные (неверный пароль, нет общей папки, нет прав, не настроен диск, нет таблицы по пути из настроек, нет выбранного листа, файл не `.xlsx`, в файле нет журнала проб, сверка до замены нашла бы изменения чужих данных) ждут пользователя: после изменения настроек хранилища все незаписанные записи возвращаются в очередь сами. Очередь просыпается при появлении записи, возврате сети, возвращении приложения на передний план и запуске фоновой задачи. Коды ошибок — `UploadError`, тексты — `errors:upload.*`.
+Temporary failures (no network, the server is not responding, the table is open in Excel, it is held by another device, verification failed) are retried with a growing pause: 15 s, 30 s, 1, 2, 5, 10, then every 15 minutes. Permanent ones (wrong password, no share, no permissions, the drive is not set up, no table at the path from the settings, no chosen sheet, the file is not `.xlsx`, the file has no steel sample log, the check before replacement would find changes to other data) wait for the user: after the storage settings are changed, all unwritten records go back into the queue by themselves. The queue wakes up when a record appears, when the network comes back, when the app returns to the foreground and when a background task starts. Error codes — `UploadError`, texts — `errors:upload.*`.
 
-### Фоновая выгрузка (движок очереди)
+### Background upload (queue engine)
 
-Раньше очередь обрабатывалась в WebView экрана: в свёрнутом приложении Android замораживал процесс, а iOS приостанавливал страницу — запись «висела» и мгновенно доходила при возврате, а закрытое посреди записи приложение оставляло на сервере свою блокировку, и потом 5 минут сыпалось «таблицу пишет другое устройство». Теперь очередь пишет **движок** — отдельный JS-файл `upload-engine.js` (`src/engine`, сборка `vite.engine.config.ts`, входит в `npm run build`), который нативная часть держит вне экрана:
+Previously the queue was processed in the screen's WebView: when the app was minimized, Android froze the process and iOS suspended the page — the write “hung” and went through instantly on return, and an app closed in the middle of a write left its lock on the server, and then for 5 minutes there was a stream of “another device is writing to the table”. Now the queue is written by the **engine** — a separate JS file `upload-engine.js` (`src/engine`, built with `vite.engine.config.ts`, part of `npm run build`), which the native side keeps outside the screen:
 
 | | Android | iOS |
 |---|---|---|
-| Где работает | скрытый WebView процесса (`UploadEngine.java`), не связан с экраном | JavaScriptCore (`UploadEngine.swift`), вне WKWebView |
-| Свёрнуто | фоновая работа WorkManager (`UploadWork.java`) как foreground service типа `dataSync` с уведомлением «Выгрузка в таблицу · Осталось записать: N», пока очередь не допишется | фоновое время приложения (`beginBackgroundTask`, ~30 с); iOS 26+ — продолжаемая задача (`BGContinuedProcessingTask`) с системным прогрессом, без ограничения ~30 с |
-| Прогресс | уведомление (`UploadNotification.java`) показывает движок сразу, по каждой активности очереди — синхронно с «Загрузками», не дожидаясь фоновой работы (она переводит в foreground service это же уведомление). Системный `NotificationCompat.ProgressStyle`: Android 16 — полоса из отрезков цвета приложения (одна бирка — один отрезок, до 12), проценты в тексте и Live Update (чип «42 %» в строке состояния и на экране блокировки, разрешение `POST_PROMOTED_NOTIFICATIONS`); Android 15 и ниже — стандартная полоса прогресса уведомления. Пачка дописана — 4 с держится итог («Записано в таблицу: 3» или «Не всё записано») | iOS 26+ — прогресс `BGContinuedProcessingTask` (системный интерфейс хода задачи); до iOS 26 — Live Activity (`UploadLiveActivity.swift`, расширение `UploadActivity`): экран блокировки и Dynamic Island, полоса и проценты (обновление раз в секунду, переходы анимирует система), в конце — итог на 4 с |
-| Закрыто (смахнули) | процесс остаётся, пока идёт фоновая работа, — очередь дописывается | iOS не запускает в фоне приложение, закрытое пользователем: очередь продолжится при открытии |
-| Ждёт сети / паузы после сбоя | WorkManager запустит работу (условие «есть сеть»), поднимет процесс и движок — без открытия приложения | `BGAppRefreshTask` / `BGProcessingTask` (сеть) — когда разрешит система |
+| Where it runs | a hidden WebView of the process (`UploadEngine.java`), not tied to the screen | JavaScriptCore (`UploadEngine.swift`), outside WKWebView |
+| Minimized | WorkManager background work (`UploadWork.java`) as a foreground service of type `dataSync` with the notification “Writing to the table · Left to write: N”, until the queue is written | the app's background time (`beginBackgroundTask`, ~30 s); iOS 26+ — a continued processing task (`BGContinuedProcessingTask`) with system progress, without the ~30 s limit |
+| Progress | the notification (`UploadNotification.java`) is shown by the engine right away, on every queue activity — in sync with “Uploads”, without waiting for the background work (which turns this same notification into the foreground service one). System `NotificationCompat.ProgressStyle`: Android 16 — a bar of segments in the app's colour (one tag — one segment, up to 12), percent in the text and Live Update (a “42 %” chip in the status bar and on the lock screen, permission `POST_PROMOTED_NOTIFICATIONS`); Android 15 and lower — the standard notification progress bar. Once the batch is written, the result stays for 4 s (“Written to the table: 3” or “Not everything was written”) | iOS 26+ — `BGContinuedProcessingTask` progress (the system task progress UI); before iOS 26 — Live Activity (`UploadLiveActivity.swift`, extension `UploadActivity`): lock screen and Dynamic Island, bar and percent (updated once per second, transitions are animated by the system), at the end — the result for 4 s |
+| Closed (swiped away) | the process stays alive while the background work runs — the queue gets written | iOS does not launch an app closed by the user in the background: the queue continues when the app is opened |
+| Waiting for network / pause after a failure | WorkManager starts the work (condition “network available”), brings up the process and the engine — without opening the app | `BGAppRefreshTask` / `BGProcessingTask` (network) — when the system allows |
 
-Ход выгрузки считает движок (`EngineActivity.progress`: обработано из всех в текущей пачке, новые бирки добавляются к ней, а `current` — сколько пройдено в бирке, которая пишется сейчас, по шагам записи: блокировка, чтение, подготовка, замена, проверка; `fraction` — плавный ход пачки для полосы и процентов: между шагами он подтягивается к следующему шагу, не обгоняя его и не возвращаясь назад, движок обновляет его каждые 300 мс — так полоса идёт ровно и в пачке из одной бирки; `EngineActivity.finished`: итог дописанной пачки — записано из всех), поэтому на обеих платформах прогресс и итог одинаковые.
+The upload progress is computed by the engine (`EngineActivity.progress`: processed out of all in the current batch, new tags are added to it, and `current` — how far the tag being written now has got, by write steps: lock, read, prepare, replace, verify; `fraction` — the smooth progress of the batch for the bar and the percent: between steps it moves towards the next step without overtaking it or going back, the engine updates it every 300 ms — so the bar moves evenly even in a batch of one tag; `EngineActivity.finished`: the result of the written batch — written out of all), so the progress and the result are the same on both platforms.
 
-Live Activity (iOS 16.2+) — цель-расширение `UploadActivity` в `App.xcodeproj` (`ios/App/UploadActivity/`, встраивается фазой «Embed Foundation Extensions», bundle id `com.somascan.app.UploadActivity`), общая модель — `App/UploadActivityAttributes.swift` (входит в обе цели), в `Info.plist` приложения — `NSSupportsLiveActivities`. Тексты приходят из приложения на его языке. iOS начинает Live Activity только у приложения на виду: пачка, начатая фоновой задачей, идёт без неё. Для подписи расширения нужна та же команда разработчика, что у приложения (Signing & Capabilities цели `UploadActivity`).
+Live Activity (iOS 16.2+) is the extension target `UploadActivity` in `App.xcodeproj` (`ios/App/UploadActivity/`, embedded by the “Embed Foundation Extensions” phase, bundle id `com.somascan.app.UploadActivity`), the shared model is `App/UploadActivityAttributes.swift` (part of both targets), and the app's `Info.plist` has `NSSupportsLiveActivities`. The texts come from the app in its language. iOS starts a Live Activity only for an app in the foreground: a batch started by a background task runs without it. Signing the extension needs the same developer team as the app (Signing & Capabilities of the `UploadActivity` target).
 
-Экран приложения — только окно в очередь: плагин `UploadEngine` (`uploads/queue/NativeUploadQueue.ts`) шлёт команды (поставить, повторить, отменить, удалить), настройки хранилища и id устройства и получает снимки очереди. Очередь и настройки движок хранит в файлах приложения (Android `files/upload-engine/`, iOS `Application Support/upload-engine/`); очередь прежней версии из `localStorage` переносится при первом запуске. Протокол — `src/engine/protocol.ts`, нативный хост (`SomascanHost`) даёт хранилище, сетевой диск (те же `SmbOps` / `SmbShareOps`, что у плагина `SmbShare`), HTTP для Drive, токен Google, таймеры и журнал. В браузере очередь по-прежнему обрабатывается на странице (`LocalUploadQueue`).
+The app screen is only a window into the queue: the `UploadEngine` plugin (`uploads/queue/NativeUploadQueue.ts`) sends commands (enqueue, retry, cancel, delete), the storage settings and the device id, and receives queue snapshots. The engine keeps the queue and the settings in the app's files (Android `files/upload-engine/`, iOS `Application Support/upload-engine/`); the queue of the previous version is moved over from `localStorage` on the first launch. The protocol is `src/engine/protocol.ts`; the native host (`SomascanHost`) provides storage, the network drive (the same `SmbOps` / `SmbShareOps` as the `SmbShare` plugin), HTTP for Drive, the Google token, timers and logging. In the browser the queue is still processed on the page (`LocalUploadQueue`).
 
-**Своя блокировка** (этого же устройства) при новой попытке снимается сразу: устройство пишет таблицу только из движка и по одной записи, поэтому своя блокировка — след оборванной записи, а не чужая работа. Чужая свежая блокировка — по-прежнему `busy`, брошенная — снимается через 5 минут.
+**Own lock** (of this same device) is removed right away on a new attempt: the device writes the table only from the engine and one record at a time, so its own lock is a trace of a broken-off write, not someone else's work. Another device's fresh lock is still `busy`; an abandoned one is removed after 5 minutes.
 
-На Android 13+ разрешение на уведомления спрашивается при отправке, если его нет (раз за запуск; без него выгрузка идёт, но уведомление не видно). Если уведомления выключены (разрешение, уведомления приложения или канал «Выгрузка в таблицу»; на iOS до 26 — Live Activity), в «Загрузках» — предупреждение с кнопкой «Включить», она открывает системные настройки уведомлений приложения. Журнал движка: Android — `adb logcat -s UploadEngine UploadWork UploadNotification`, iOS — Console.app, процесс App, `[UploadEngine]`. Проверка без телефона: `npm test` запускает собранный движок в «голом» JS-контексте (как JavaScriptCore) с поддельным хостом — запись на сетевой диск и в Drive, перезапуск посреди записи со своей блокировкой, отсутствующая таблица (`tests/engine.test.ts`).
+On Android 13+ the notification permission is requested when sending, if it is not granted (once per launch; without it the upload still runs, but the notification is not visible). If notifications are off (the permission, the app's notifications or the “Writing to the table” channel; on iOS before 26 — Live Activity), “Uploads” shows a warning with a “Turn on” button, which opens the app's system notification settings. Engine log: Android — `adb logcat -s UploadEngine UploadWork UploadNotification`, iOS — Console.app, process App, `[UploadEngine]`. Testing without a phone: `npm test` runs the built engine in a “bare” JS context (like JavaScriptCore) with a fake host — writing to a network drive and to Drive, a restart in the middle of a write with its own lock, a missing table (`tests/engine.test.ts`).
 
-### Настройки
+### Settings
 
-«Настройки → Хранилище → Сетевой диск»:
+“Settings → Storage → Network share”:
 
-- **Сервер** (`fileserver`, `10.0.0.5` или `10.0.0.5:445`), **общая папка**, **путь к таблице** внутри неё — к уже существующему журналу (оканчивается на `.xlsx`; ни таблица, ни папки не создаются). По умолчанию — `Probe otel.xlsx` в корне общей папки (`DEFAULT_TABLE_FILE`); пустой путь из прежних версий заменяется им. **Домен** (необязательно), **пользователь**, **пароль** — хранится в `localStorage` WebView (см. замечание в `SettingsStore`).
-- **Замок.** Путь к таблице (у Google Drive — папка и имя файла) закрыт для правки: текст приглушён, клавиатура не открывается. Значок замка в поле открывает его — пока открыта вкладка «Хранилище»; так путь не сбивают случайно.
-- **Проверка таблицы.** Значок сверки в конце поля пути проверяет, есть ли таблица (цвет значка — итог), итог — строкой под полями; «Проверить подключение» делает то же и сообщает итог диалогом. Итог (`uploads/store/TableCheckStore.ts`) относится к настройкам, с которыми получен: после правки сервера, папки или пути — снова «не проверено» (выбор листа его не сбрасывает). Найденная таблица сверяется и по строению листа, куда пойдёт запись (выбранного или листа года; `uploads/xlsx/tableStructure.ts`): нет шапки журнала — «запись не пойдёт», а при строгом строении — ещё и чего не хватает (нет колонок, не по порядку, лишние между ними). Строение всех листов запоминается при проверке, поэтому смена листа или переключателя видна сразу.
-- **Правила записи** — под листом, оба по умолчанию включены (см. «Журнал проб»): **строгое строение таблицы** и **каждая плавка — один раз**. «Каждая плавка — один раз» — под замком, как путь к таблице: переключатель закрыт, значок замка справа открывает его, пока открыта вкладка «Хранилище». Смена любого правила повторяет незаписанные бирки сразу.
-- **Лист** — под таблицей: куда записываются бирки. По умолчанию — лист текущего года (если его нет, он создаётся); можно выбрать любой лист таблицы. Список листов читается при проверке таблицы (а при открытии вкладки, если списка этой таблицы ещё нет, — сам) и хранится на устройстве вместе с расположением таблицы (`somascan.tableSheets.v1`). Лист из настроек берётся в момент записи — его смена действует и на бирки в очереди. Выбранного листа в таблице нет — ошибка `sheetNotFound`: бирка ждёт (смена листа в настройках повторяет запись сама).
-- **Свой лист бирки** — необязательное поле «Лист» («Расширенные» → «Поля», по умолчанию выключено): выбирается в карточке результата из того же списка, как форма, первым вариантом — «как в настройках». С фото не читается, модели не отправляется, в колонку журнала не пишется, переживает «Повтор».
+- **Server** (`fileserver`, `10.0.0.5` or `10.0.0.5:445`), **shared folder**, **table path** inside it — to an already existing log (ends with `.xlsx`; neither the table nor folders are created). By default — `Probe otel.xlsx` in the root of the share (`DEFAULT_TABLE_FILE`); an empty path from earlier versions is replaced with it. **Domain** (optional), **user**, **password** — stored in the WebView's `localStorage` (see the note in `SettingsStore`).
+- **Lock.** The table path (for Google Drive — the folder and the file name) is locked for editing: the text is dimmed, the keyboard does not open. The lock icon in the field unlocks it — while the “Storage” tab is open; this way the path is not changed by accident.
+- **Table check.** The check icon at the end of the path field checks whether the table exists (the icon colour is the result), and the result is shown in a line below the fields; “Test connection” does the same and reports the result in a dialog. The result (`uploads/store/TableCheckStore.ts`) belongs to the settings it was obtained with: after editing the server, the folder or the path it is “Table not checked yet” again (choosing a sheet does not reset it). A found table is also checked by the structure of the sheet the write will go to (the chosen one or the year's sheet; `uploads/xlsx/tableStructure.ts`): no log header — “nothing will be written”, and with strict structure — also what is missing (missing columns, wrong order, extra columns between them). The structure of all sheets is remembered during the check, so changing the sheet or the switch shows up at once.
+- **Write rules** — below the sheet, both on by default (see “Steel sample log (Probe otel.xlsx)”): **strict table structure** and **each heat number once**. “Each heat number once” is behind a lock, like the table path: the switch is locked, the lock icon on the right unlocks it while the “Storage” tab is open. Changing any rule retries unwritten tags at once.
+- **Sheet** — below the table: where the tags are written. By default — the current year's sheet (if it does not exist, it is created); any sheet of the table can be chosen. The sheet list is read during the table check (and by itself on opening the tab, if there is no list for this table yet) and is stored on the device together with the table location (`somascan.tableSheets.v1`). The sheet from the settings is taken at the moment of writing — changing it also affects tags in the queue. If the chosen sheet is not in the table — error `sheetNotFound`: the tag waits (changing the sheet in the settings retries the write by itself).
+- **Tag's own sheet** — an optional “Sheet” field (“Advanced” → “Fields”, off by default): it is chosen in the result card from the same list, like the product form, with “as in settings” as the first option. It is not read from the photo, not sent to the model, not written to a log column, and it survives “Retry”.
 
-### Реализация
+### Implementation
 
-| Слой | Где | Что |
+| Layer | Where | What |
 |---|---|---|
-| Очередь | `features/uploads/store/UploadStore.ts` | записи со статусами, паузы, лимит истории |
-| Обработчик | `features/uploads/worker/UploadWorker.ts`, `RetryPolicy.ts` | одна запись за раз; настройки, сеть и пробуждения — от среды |
-| Движок | `src/engine/` (`Engine`, `main`, `host`, `polyfills`, `HostSmbShare`, `hostFetch`, `protocol`) | очередь вне WebView: Android — `UploadEngine.java` + `UploadWork.java` (WorkManager) + `UploadNotification.java`, iOS — `UploadEngine.swift` + `UploadBackground.swift` + `UploadLiveActivity.swift` |
-| Экран | `features/uploads/queue/` | `NativeUploadQueue` (плагин `UploadEngine`), `LocalUploadQueue` (браузер), `appQueue` (экземпляры), `appBackends` (проверка таблицы) |
-| Запись | `features/uploads/worker/TableWriter.ts`, `TableBackend.ts`, `tableBackends.ts` | общий цикл записи; хранилище (SMB или Drive) — по настройкам |
-| Журнал | `features/uploads/xlsx/` | `LabelWorkbook` (ExcelJS, грузится лениво), `excelInternals` (недокументированное в ExcelJS, см. «Известные риски»), `labTableLayout` (шапка), `labTableCells` (значения), `tableCell`, `uploadColumns`, `BackupPolicy` |
-| SMB | `features/uploads/smb/smbFiles.ts`, `SmbShare.ts`, `smbSettings.ts`, `SmbTableBackend.ts` | контракт операций, обёртка над плагином, разбор настроек и путей, блокировка и замена на общей папке |
-| Google Drive | `features/uploads/drive/` | `DriveClient` (REST API v3), `DriveTableBackend`, `GoogleDriveAuth` (вход), `driveSettings` |
-| Android | `android/.../SmbSharePlugin.java`, `SmbOps.java`, `SmbShareClient.java` | [smbj](https://github.com/hierynomus/smbj) (Apache-2.0), один поток, wake lock на время операции |
-| iOS | `ios/App/App/SmbSharePlugin.swift`, `SmbShareClient.swift` (`SmbShareOps`) | [AMSMB2](https://github.com/amosavian/AMSMB2) (MIT) поверх libsmb2 (LGPL-2.1, подключён динамическим фреймворком — фаза «Embed Frameworks»), очередь задач, фоновое время на операцию |
+| Queue | `features/uploads/store/UploadStore.ts` | records with statuses, pauses, history limit |
+| Worker | `features/uploads/worker/UploadWorker.ts`, `RetryPolicy.ts` | one record at a time; settings, network and wake-ups come from the environment |
+| Engine | `src/engine/` (`Engine`, `main`, `host`, `polyfills`, `HostSmbShare`, `hostFetch`, `protocol`) | the queue outside the WebView: Android — `UploadEngine.java` + `UploadWork.java` (WorkManager) + `UploadNotification.java`, iOS — `UploadEngine.swift` + `UploadBackground.swift` + `UploadLiveActivity.swift` |
+| Screen | `features/uploads/queue/` | `NativeUploadQueue` (`UploadEngine` plugin), `LocalUploadQueue` (browser), `appQueue` (instances), `appBackends` (table check) |
+| Writing | `features/uploads/worker/TableWriter.ts`, `TableBackend.ts`, `tableBackends.ts` | the shared write cycle; storage (SMB or Drive) — according to the settings |
+| Log | `features/uploads/xlsx/` | `LabelWorkbook` (ExcelJS, loaded lazily), `excelInternals` (undocumented parts of ExcelJS, see “Known risks”), `labTableLayout` (header), `labTableCells` (values), `tableCell`, `uploadColumns`, `BackupPolicy` |
+| SMB | `features/uploads/smb/smbFiles.ts`, `SmbShare.ts`, `smbSettings.ts`, `SmbTableBackend.ts` | operations contract, wrapper over the plugin, parsing of settings and paths, lock and replacement on the share |
+| Google Drive | `features/uploads/drive/` | `DriveClient` (REST API v3), `DriveTableBackend`, `GoogleDriveAuth` (sign-in), `driveSettings` |
+| Android | `android/.../SmbSharePlugin.java`, `SmbOps.java`, `SmbShareClient.java` | [smbj](https://github.com/hierynomus/smbj) (Apache-2.0), one thread, wake lock for the duration of an operation |
+| iOS | `ios/App/App/SmbSharePlugin.swift`, `SmbShareClient.swift` (`SmbShareOps`) | [AMSMB2](https://github.com/amosavian/AMSMB2) (MIT) on top of libsmb2 (LGPL-2.1, linked as a dynamic framework — the “Embed Frameworks” phase), task queue, background time per operation |
 
-Контракт операций сетевого диска (`probe`, `read`, `write`, `commit`, `rename`, `remove`, `list`, `mkdir`, `mkdirs`) описан в `smbFiles.ts` — общий для плагина `SmbShare` и хоста движка; пути — через `/` от корня общей папки, данные — base64.
+The network drive operations contract (`probe`, `read`, `write`, `commit`, `rename`, `remove`, `list`, `mkdir`, `mkdirs`) is described in `smbFiles.ts` — it is shared by the `SmbShare` plugin and the engine host; paths go with `/` from the root of the share, data is base64.
 
-### Проверка без сервера завода
+### Testing without the plant's server
 
 ```bash
-npm test                                   # все проверки: журнал, копии, SMB и Drive на поддельных серверах, движок очереди, настройки, распознавание (node:test + tsx)
+npm test                                   # all checks: log, backups, SMB and Drive on fake servers, queue engine, settings, recognition (node:test + tsx)
 ```
 
-Локальный SMB-сервер (Samba в Docker) с готовой командой и `smb.conf` — в `scripts/smb-test-server/`. В приложении: сервер `10.0.2.2:1445` (эмулятор Android) или `127.0.0.1:1445` (симулятор iOS), папка `Warehouse`, путь `Probe si Sarje Otel\Probe otel.xlsx` (положите туда копию журнала или пустой журнал `tests/fixtures/Probe otel.xlsx` — сама таблица не создаётся). Вне production-сборки (`npm run dev`, `vite build --mode development`) сторы доступны из консоли отладчика как `window.__somascan`.
+A local SMB server (Samba in Docker) with a ready-made command and `smb.conf` is in `scripts/smb-test-server/`. In the app: server `10.0.2.2:1445` (Android emulator) or `127.0.0.1:1445` (iOS simulator), shared folder `Warehouse`, path `Probe si Sarje Otel\Probe otel.xlsx` (put a copy of the log or the empty log `tests/fixtures/Probe otel.xlsx` there — the table itself is not created). Outside a production build (`npm run dev`, `vite build --mode development`) the stores are available from the debugger console as `window.__somascan`.
 
 ---
 
-## Выгрузка в Google Drive
+## Writing to Google Drive
 
-Тот же конвейер, что и для сетевого диска (`TableWriter`): очередь, блокировка, резервная копия, атомарная замена, проверка, очистка копий. Различия — в `features/uploads/drive/DriveTableBackend.ts`:
+The same pipeline as for the network drive (`TableWriter`): queue, lock, backup, atomic replacement, verification, backup cleanup. The differences are in `features/uploads/drive/DriveTableBackend.ts`:
 
-- **Вход.** «Настройки → Хранилище → Google Drive → Войти через Google»: нативный выбор аккаунта и согласие на доступ к Drive (Android — Google Identity `AuthorizationClient`, iOS — Google Sign-In SDK; плагин `GoogleDriveAuth`). Дальше очередь берёт свежий токен сама, без интерфейса. Если доступ отозван — записи ждут со статусом «Нет доступа к Google Drive», пока пользователь не войдёт снова.
-- **Папка и файл.** Ссылка на папку из адресной строки Drive или её ID (пусто — корень «Моего диска»), имя таблицы (`.xlsx` добавится само). Таблица должна уже лежать в папке — приложение её не создаёт (проверка — значком сверки в конце поля «Имя файла»); папка `backups` создаётся при первой записи.
-- **Блокировка.** Файл `<таблица>.lock` с id устройства; при одновременной записи побеждает самый ранний, остальные повторяют позже. Брошенная блокировка снимается через 5 минут.
-- **Конфликт версий.** Если таблицу изменили между чтением и записью (Excel онлайн, другой телефон), запись не затирает чужие строки, а повторяется с новыми данными.
-- **Проверка.** MD5, посчитанный Drive после загрузки, сверяется с отправленными байтами; затем таблица перечитывается, и записанная строка сверяется по каждой ячейке.
-- **Резервные копии** делаются на сервере (`files.copy`) в папку `backups` и удаляются через 7 дней.
+- **Sign-in.** “Settings → Storage → Google Drive → Sign in with Google”: the native account picker and consent to Drive access (Android — Google Identity `AuthorizationClient`, iOS — Google Sign-In SDK; the `GoogleDriveAuth` plugin). After that the queue gets a fresh token by itself, without any UI. If access is revoked, records wait with the status “No access to Google Drive” until the user signs in again.
+- **Folder and file.** A link to the folder from the Drive address bar or its ID (empty — the root of “My Drive”), the table name (`.xlsx` is added automatically). The table must already be in the folder — the app does not create it (check it with the check icon at the end of the “File name” field); the `backups` folder is created on the first write.
+- **Lock.** A `<table>.lock` file with the device id; with simultaneous writes the earliest one wins, the others try again later. An abandoned lock is removed after 5 minutes.
+- **Version conflict.** If the table was changed between reading and writing (Excel online, another phone), the write does not overwrite other people's rows but is retried with the new data.
+- **Verification.** The MD5 computed by Drive after the upload is compared with the bytes sent; then the table is read again, and the written row is checked cell by cell.
+- **Backups** are made on the server (`files.copy`) into the `backups` folder and deleted after 7 days.
 
-### Настройка Google Cloud (один раз)
+### Google Cloud setup (once)
 
-1. В [Google Cloud Console](https://console.cloud.google.com/) создать проект, включить **Google Drive API**.
-2. Экран согласия OAuth: тип **Internal** для аккаунтов Google Workspace компании (без проверки Google) или **External** с тестовыми пользователями. Область — `https://www.googleapis.com/auth/drive`: приложению нужен доступ к уже существующей папке, а `drive.file` видит только файлы, созданные самим приложением.
-3. **OAuth-клиент Android:** пакет `com.somascan.app` и SHA-1 ключа подписи проекта `AA:67:2E:F2:C4:DB:4C:CD:2A:EB:78:15:64:C5:C6:2A:FD:88:87:88` (см. «Подпись»): им подписаны и debug, и release, поэтому клиента одного хватает на любой машине, где лежит `android/keystore.properties`. Сборка без него подписана debug-ключом машины (`~/.android/debug.keystore`, свой на каждом компьютере) — для неё нужен свой клиент. Для Google Play — ещё клиент на ключ Google Play App Signing. Client ID в код не вписывается.
-4. **OAuth-клиент iOS:** bundle ID `com.somascan.app`. Client ID — в `ios/App/App/Info.plist` → `GIDClientID`, обратный ID — там же в `CFBundleURLTypes` → `CFBundleURLSchemes`: это тот же client ID с частями в обратном порядке (`697326360300-xxxx.apps.googleusercontent.com` → `com.googleusercontent.apps.697326360300-xxxx`; в консоли — поле «iOS URL scheme» клиента, в его `.plist` — `REVERSED_CLIENT_ID`). Сейчас оба заданы — клиент проекта `697326360300`; сменили клиента — поменять оба значения. С пустым `GIDClientID` вход отвечает «Вход через Google не настроен в этой сборке» — приложение не падает. `CFBundleName` — «Somascan»: это имя iOS показывает в запросе «… хочет войти через accounts.google.com».
-5. **Тестовые пользователи.** Пока экран согласия External в режиме «Testing», войти могут только аккаунты из списка Test users — добавьте туда аккаунты склада. Internal (Google Workspace) ограничения нет.
+1. In [Google Cloud Console](https://console.cloud.google.com/) create a project and enable **Google Drive API**.
+2. OAuth consent screen: type **Internal** for the company's Google Workspace accounts (no Google verification) or **External** with test users. Scope — `https://www.googleapis.com/auth/drive`: the app needs access to an already existing folder, while `drive.file` sees only files created by the app itself.
+3. **Android OAuth client:** package `com.somascan.app` and the SHA-1 of the project's signing key `AA:67:2E:F2:C4:DB:4C:CD:2A:EB:78:15:64:C5:C6:2A:FD:88:87:88` (see “Signing (debug and release)”): both debug and release are signed with it, so a single client is enough on any machine that has `android/keystore.properties`. A build without it is signed with the machine's debug key (`~/.android/debug.keystore`, different on every computer) — it needs its own client. For Google Play — one more client for the Google Play App Signing key. The Client ID is not written into the code.
+4. **iOS OAuth client:** bundle ID `com.somascan.app`. The Client ID goes in `ios/App/App/Info.plist` → `GIDClientID`, the reversed ID goes in the same file in `CFBundleURLTypes` → `CFBundleURLSchemes`: it is the same client ID with its parts in reverse order (`697326360300-xxxx.apps.googleusercontent.com` → `com.googleusercontent.apps.697326360300-xxxx`; in the console — the client's “iOS URL scheme” field, in its `.plist` — `REVERSED_CLIENT_ID`). Both are set now — the client of project `697326360300`; if you change the client, change both values. With an empty `GIDClientID`, sign-in answers “Google sign-in is not set up in this build” — the app does not crash. `CFBundleName` is “Somascan”: this is the name iOS shows in the “… Wants to Use ‘accounts.google.com’ to Sign In” prompt.
+5. **Test users.** While the External consent screen is in “Testing” mode, only accounts from the Test users list can sign in — add the warehouse accounts there. Internal (Google Workspace) has no such restriction.
 
-Проверка без сети и аккаунта: `npm test` гоняет запись через поддельный Drive API (`tests/fakeDrive.ts`): отсутствующая таблица не создаётся, дописывание, копии, блокировки, конфликт версий, очистка.
+Testing without network or an account: `npm test` runs writes through a fake Drive API (`tests/fakeDrive.ts`): a missing table is not created, appending, backups, locks, version conflict, cleanup.
 
 ---
 
-## Быстрый старт
+## Quick start
 
 ```bash
 npm install
-npm run dev        # веб-версия, http://localhost:5173
+npm run dev        # web version, http://localhost:5173
 ```
 
-| Команда | Что делает |
+| Command | What it does |
 |---|---|
-| `npm run dev` | dev-сервер Vite |
-| `npm run build` | `tsc -b` + `vite build` (страница) + сборка движка очереди → `dist/upload-engine.js` |
-| `npm test` | все проверки (`node:test` + `tsx`) |
-| `npm run preview` | локальный просмотр prod-сборки |
-| `npm run lint` | линтер (oxlint) |
-| `npm run cap:sync` | сборка веба + `cap sync` во все платформы |
-| `npm run cap:android` | сборка, sync и открытие проекта в Android Studio |
-| `npm run cap:ios` | сборка, sync и открытие проекта в Xcode (macOS) |
-| `npm run cap:run:android` | сборка + запуск на эмуляторе/устройстве Android |
-| `npm run cap:run:ios` | сборка + запуск на iOS-симуляторе |
+| `npm run dev` | Vite dev server |
+| `npm run build` | `tsc -b` + `vite build` (page) + queue engine build → `dist/upload-engine.js` |
+| `npm test` | all checks (`node:test` + `tsx`) |
+| `npm run preview` | local preview of the prod build |
+| `npm run lint` | linter (oxlint) |
+| `npm run cap:sync` | web build + `cap sync` to all platforms |
+| `npm run cap:android` | build, sync and open the project in Android Studio |
+| `npm run cap:ios` | build, sync and open the project in Xcode (macOS) |
+| `npm run cap:run:android` | build + run on an Android emulator/device |
+| `npm run cap:run:ios` | build + run on the iOS simulator |
 
-После любого изменения веб-кода нужен `npm run build && npx cap sync` (все `cap:*`-скрипты делают это сами).
+After any change to the web code you need `npm run build && npx cap sync` (all `cap:*` scripts do this themselves).
 
-Идентификатор приложения: `com.somascan.app` (`capacitor.config.ts`).
+App ID: `com.somascan.app` (`capacitor.config.ts`).
 
 ---
 
-# Мобильная сборка
+# Mobile build
 
-## Android — установка SDK с нуля (macOS)
+## Android — installing the SDK from scratch (macOS)
 
-### 1. Установить cask
+### 1. Install the casks
 
 ```bash
 brew install --cask android-commandlinetools
 ```
 
-SDK ставится в `/opt/homebrew/share/android-commandlinetools` (только `cmdline-tools`).
+The SDK is installed into `/opt/homebrew/share/android-commandlinetools` (only `cmdline-tools`).
 
-### 2. Переменные окружения
+### 2. Environment variables
 
-В `~/.zshrc` (один раз):
+In `~/.zshrc` (once):
 
 ```bash
 export ANDROID_HOME="/opt/homebrew/share/android-commandlinetools"
@@ -361,17 +364,17 @@ export ANDROID_SDK_ROOT="$ANDROID_HOME"
 export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 ```
 
-затем `source ~/.zshrc`.
+then `source ~/.zshrc`.
 
-На Windows/Linux — то же самое, но с путём к SDK из Android Studio (`SDK Manager`), либо поставьте Android Studio, и SDK подтянется сам.
+On Windows/Linux it is the same, but with the SDK path from Android Studio (`SDK Manager`), or install Android Studio and the SDK will be pulled in by itself.
 
-### 3. Принять лицензии
+### 3. Accept the licenses
 
 ```bash
 yes | sdkmanager --licenses --sdk_root="$ANDROID_HOME"
 ```
 
-### 4. Поставить пакеты
+### 4. Install the packages
 
 ```bash
 sdkmanager --sdk_root="$ANDROID_HOME" \
@@ -382,9 +385,9 @@ sdkmanager --sdk_root="$ANDROID_HOME" \
   "system-images;android-35;google_apis;arm64-v8a"
 ```
 
-`arm64-v8a` — для Apple Silicon; на Intel / Windows нужен `x86_64`. Качается долго: эмулятор ~1.2 GB, образ ~3.8 GB. Проект собирается под Android 16 (`compileSdk`/`targetSdk` 36, `minSdk` 24, `android/variables.gradle`); образ эмулятора — Android 15 (35), на нём нет того, что появилось в Android 16 (полоса прогресса из отрезков и Live Update в уведомлении выгрузки) — для этого нужен образ `system-images;android-36;…`.
+`arm64-v8a` is for Apple Silicon; Intel / Windows need `x86_64`. The download takes a long time: the emulator is ~1.2 GB, the image ~3.8 GB. The project is built for Android 16 (`compileSdk`/`targetSdk` 36, `minSdk` 24, `android/variables.gradle`); the emulator image is Android 15 (35), and it lacks what appeared in Android 16 (the segmented progress bar and Live Update in the upload notification) — for that you need the `system-images;android-36;…` image.
 
-### 5. Создать AVD
+### 5. Create an AVD
 
 ```bash
 avdmanager create avd -n somascan_pixel7 -k "system-images;android-35;google_apis;arm64-v8a" -d pixel_7 --force
@@ -392,13 +395,13 @@ avdmanager create avd -n somascan_pixel7 -k "system-images;android-35;google_api
 
 ### 6. `local.properties`
 
-Файл `android/local.properties` в `.gitignore` — у каждого свой путь к SDK:
+The `android/local.properties` file is in `.gitignore` — everyone has their own SDK path:
 
 ```bash
 echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 ```
 
-### 7. Запустить эмулятор
+### 7. Start the emulator
 
 ```bash
 emulator -avd somascan_pixel7 &
@@ -406,78 +409,78 @@ adb wait-for-device
 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 1; done'
 ```
 
-### 8. Собрать и запустить
+### 8. Build and run
 
 ```bash
 npm run cap:run:android
 ```
 
-Если несколько устройств — выберите нужное (id из `adb devices`):
+If there are several devices, pick the one you need (id from `adb devices`):
 
 ```bash
 npx cap run android --target emulator-5554
 ```
 
-Если приложение свернулось:
+If the app was minimized:
 
 ```bash
 adb shell am start -n com.somascan.app/.MainActivity
 ```
 
-## Сборка APK
+## Building the APK
 
 ```bash
 npm run build && npx cap sync android && cd android && ./gradlew assembleDebug && cd ..
 ```
 
-Файл: `android/app/build/outputs/apk/debug/app-debug.apk`.
+File: `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-Debug-сборка подписана ключом проекта (`android/keystore`, см. «Подпись»; без `android/keystore.properties` — debug-ключом машины) — годится для установки на устройство/эмулятор (`adb install -r android/app/build/outputs/apk/debug/app-debug.apk`).
+The debug build is signed with the project key (`android/keystore`, see “Signing (debug and release)”; without `android/keystore.properties` — with the machine's debug key) and is fine for installing on a device/emulator (`adb install -r android/app/build/outputs/apk/debug/app-debug.apk`).
 
-### Установка на устройство по Wi-Fi
+### Installing on a device over Wi-Fi
 
-Телефон: Параметры разработчика → Отладка по Wi-Fi. Затем:
+Phone: Developer options → Wireless debugging. Then:
 
 ```bash
-adb connect 192.168.1.1:5555      # IP:порт устройства
-adb devices -l                    # устройство должно быть в списке
+adb connect 192.168.1.1:5555      # device IP:port
+adb devices -l                    # the device must be in the list
 npm run build && npx cap sync android && (cd android && ./gradlew assembleDebug)
 adb -s 192.168.1.1:5555 install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### Подпись (debug и release)
+### Signing (debug and release)
 
-Приложение подписывается **общим ключом проекта**, а не debug-ключом машины: `android/keystore/somascan.jks` (алиас `somascan`), пароли — в `android/keystore.properties`. Оба файла **не в git** (`android/.gitignore`); на другую машину их копируют вручную и хранят резервную копию — с потерянным ключом нельзя обновить установленное приложение, и для Google Drive понадобится новый OAuth-клиент. `app/build.gradle` подписывает этим ключом и `assembleDebug`, и `assembleRelease`; без `keystore.properties` debug подписывается обычным `~/.android/debug.keystore`.
+The app is signed with a **shared project key**, not the machine's debug key: `android/keystore/somascan.jks` (alias `somascan`), the passwords are in `android/keystore.properties`. Both files are **not in git** (`android/.gitignore`); they are copied to another machine by hand and a backup copy is kept — with a lost key the installed app cannot be updated, and Google Drive will need a new OAuth client. `app/build.gradle` signs both `assembleDebug` and `assembleRelease` with this key; without `keystore.properties` debug is signed with the usual `~/.android/debug.keystore`.
 
-SHA-1 ключа (для OAuth-клиента Android в Google Cloud, см. «Выгрузка в Google Drive»):
+The key's SHA-1 (for the Android OAuth client in Google Cloud, see “Writing to Google Drive”):
 
 ```
 AA:67:2E:F2:C4:DB:4C:CD:2A:EB:78:15:64:C5:C6:2A:FD:88:87:88
 ```
 
-Проверить: `cd android && ./gradlew signingReport` или `apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk`. Сборку с этим ключом нельзя поставить поверх сборки, подписанной другим ключом (прежним debug-ключом): сначала удалить приложение с устройства — вместе с его данными (настройки, ключи API, очередь).
+To check: `cd android && ./gradlew signingReport` or `apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk`. A build with this key cannot be installed over a build signed with another key (the former debug key): first uninstall the app from the device — together with its data (settings, API keys, queue).
 
-## iOS (только macOS)
+## iOS (macOS only)
 
-Проект `ios/` уже в репозитории (цель приложения, расширение `UploadActivity`, локальные плагины) — `npx cap add ios` не нужен:
+The `ios/` project is already in the repository (the app target, the `UploadActivity` extension, local plugins) — `npx cap add ios` is not needed:
 
 ```bash
-npm run cap:ios          # сборка, sync и открытие проекта в Xcode, дальше Run на симуляторе
-# или
+npm run cap:ios          # build, sync and open the project in Xcode, then Run on a simulator
+# or
 npm run cap:run:ios
 ```
 
-Нужен Xcode 26+ (Swift 6.2: фоновая задача iOS 26 собирается только им, `UploadBackground.swift`). Зависимости — Swift Package Manager (`CapApp-SPM`, AMSMB2, GoogleSignIn), CocoaPods не нужен. Минимальная версия — iOS 16.2.
+Xcode 26+ is required (Swift 6.2: the iOS 26 background task builds only with it, `UploadBackground.swift`). Dependencies come from Swift Package Manager (`CapApp-SPM`, AMSMB2, GoogleSignIn), CocoaPods is not needed. The minimum version is iOS 16.2.
 
-### Если `simctl` не находится
+### If `simctl` is not found
 
-Ошибка при `npx cap run ios`:
+Error on `npx cap run ios`:
 
 ```
 Unable to retrieve simulator list: xcrun: error: unable to find utility "simctl", not a developer tool or in PATH
 ```
 
-`xcode-select` указывает на Command Line Tools, а не на Xcode.app. Лечится (нужен пароль):
+`xcode-select` points to the Command Line Tools, not to Xcode.app. The fix (needs a password):
 
 ```bash
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
@@ -485,146 +488,149 @@ sudo xcodebuild -license accept
 sudo xcodebuild -runFirstLaunch
 ```
 
-Проверка:
+Check:
 
 ```bash
 xcodebuild -version
 xcrun simctl list devices available
 ```
 
-### Xcode 27: `cap run ios` падает на Simulator.app
+### Xcode 27: `cap run ios` fails on Simulator.app
 
-Сборка проходит, а в конце:
+The build succeeds, but at the end:
 
 ```
 [error] ERR_UNKNOWN: There was an error opening simulator: The file
         /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app does not exist.
 ```
 
-В Xcode 27 `Simulator.app` по старому пути нет, и `native-run` падает на вспомогательном шаге. Сам симулятор и `xcrun simctl` работают. Обходной путь: собрать и запустить проект из Xcode (`npm run cap:ios`, затем Run) либо собрать `xcodebuild` и поставить/запустить через `xcrun simctl install` / `xcrun simctl launch`.
+In Xcode 27 `Simulator.app` is no longer at the old path, and `native-run` fails on a helper step. The simulator itself and `xcrun simctl` work. Workaround: build and run the project from Xcode (`npm run cap:ios`, then Run), or build with `xcodebuild` and install/launch via `xcrun simctl install` / `xcrun simctl launch`.
 
-Если `simctl` отвечает `Mach error -308 (server died)` — упал CoreSimulator: `xcrun simctl shutdown all` и повторите; на слабых ноутбуках держите запущенным один симулятор.
+If `simctl` answers `Mach error -308 (server died)`, CoreSimulator has crashed: run `xcrun simctl shutdown all` and try again; on weak laptops keep only one simulator running.
 
-### Безопасные зоны и статус-бар
+### Safe areas and the status bar
 
-Веб-вью рисуется на весь экран, вырезы и полоски учитывает CSS:
+The web view is drawn over the whole screen; cutouts and bars are handled by CSS:
 
-- `ios.contentInset: 'never'` в `capacitor.config.ts` — UIKit не добавляет своих отступов;
-- `viewport-fit=cover` в meta viewport (`index.html`), отступы — через `--safe-top/right/bottom/left` (`src/styles/tokens.css`: `env(safe-area-inset-*)` или переменные `--safe-area-inset-*` от Capacitor);
-- Android: встроенный плагин `SystemBars` (`insetsHandling: 'css'`). На WebView 140+ страница рисуется под системными панелями, а их высоты приходят в CSS; на более старых WebView Capacitor сам ставит страницу между панелями (отступы тогда 0);
-- цвет статус-бара и панели навигации под тему — локальный плагин `NativeTheme` (`src/lib/theme/`).
+- `ios.contentInset: 'never'` in `capacitor.config.ts` — UIKit does not add its own insets;
+- `viewport-fit=cover` in the meta viewport (`index.html`), the insets come from `--safe-top/right/bottom/left` (`src/styles/tokens.css`: `env(safe-area-inset-*)` or the `--safe-area-inset-*` variables from Capacitor);
+- Android: the built-in `SystemBars` plugin (`insetsHandling: 'css'`). On WebView 140+ the page is drawn under the system bars, and their heights arrive in CSS; on older WebViews Capacitor itself places the page between the bars (the insets are then 0);
+- the colour of the status bar and the navigation bar follows the theme — the local `NativeTheme` plugin (`src/lib/theme/`).
 
-### CORS для iOS / Android
+### CORS for iOS / Android
 
-Страница приложения открывается с origin `capacitor://localhost` (iOS) и `https://localhost` (Android). Если у API/прокси включён CORS, эти origin нужно разрешить, иначе запросы молча падут (`didFailResourceLoad` в логе WebKit). Для локального **LM Studio** это не нужно: его запросы приложение отправляет нативно (плагин `NativeHttp`), поэтому не мешают ни CORS, ни блокировка `http://` из WebView; «Сброс» во время распознавания закрывает соединение, и LM Studio прекращает генерацию. Облачные провайдеры (Gemini, Claude, OpenAI) отменяются обрывом запроса — отдельной команды отмены у их синхронных API нет. Адрес можно ввести коротко — `192.168.1.14`, схема `http://` и порт 1234 подставятся сами.
+The app page is opened from the origin `capacitor://localhost` (iOS) and `https://localhost` (Android). If CORS is enabled on the API/proxy, these origins must be allowed, otherwise requests fail silently (`didFailResourceLoad` in the WebKit log). For a local **LM Studio** this is not needed: the app sends its requests natively (the `NativeHttp` plugin), so neither CORS nor the WebView's blocking of `http://` gets in the way; “Reset” during recognition closes the connection, and LM Studio stops generating. Cloud providers (Gemini, Claude, OpenAI) are cancelled by dropping the request — their synchronous APIs have no separate cancel command. The address can be entered in short form — `192.168.1.14`, the `http://` scheme and port 1234 are added automatically.
 
-## Иконка и сплэш-экран
+## Icon and splash screen
 
-Иконка приложения — логотип Somaco (слон с надписью «somaco») на белом фоне. Исходник — увеличенный логотип `scripts/somaco-logo.png`: скрипт вырезает из него знак (белый фон → прозрачный, сглаженный край) и перекрашивает в чистый фирменный бирюзовый, поэтому артефакты апскейла в иконку не попадают. Из того же исходника скрипт делает и сплэш-экран (светлый и тёмный): iOS — `Splash.imageset`, Android 12+ — значок системного сплэша `mipmap-*/splash_icon.png`, Android до 12 — `drawable*/splash.png`. Чтобы сменить иконку и сплэш, замените этот файл и запустите скрипт. Всё делает `scripts/generate-app-icon.py`: рисует исходники во временной папке, раскладывает их по размерам через `@capacitor/assets` и дописывает варианты для тем.
+The app icon is the Somaco logo (an elephant with the word “somaco”) on a white background. The source is the upscaled logo `scripts/somaco-logo.png`: the script cuts the mark out of it (white background → transparent, smoothed edge) and recolours it in the pure brand turquoise, so upscaling artifacts do not get into the icon. From the same source the script also makes the splash screen (light and dark): iOS — `Splash.imageset`, Android 12+ — the system splash icon `mipmap-*/splash_icon.png`, Android before 12 — `drawable*/splash.png`. To change the icon and splash screen, replace this file and run the script. Everything is done by `scripts/generate-app-icon.py`: it draws the sources in a temporary folder, lays them out in all sizes via `@capacitor/assets` and adds the theme variants.
 
-| Файл | Назначение |
+| File | Purpose |
 |---|---|
-| `AppIcon-512@2x.png` в `AppIcon.appiconset` (1024×1024, белый фон, **без прозрачности** — требование iOS) | светлая иконка iOS |
-| `mipmap-*/ic_launcher*.png` | обычная и adaptive-иконка Android (знак в «безопасной зоне») |
-| `AppIcon-Dark-512@2x.png`, `AppIcon-Tinted-512@2x.png` в `AppIcon.appiconset` | тёмная и «тонированная» иконки iOS 18+ |
-| `mipmap-*/ic_launcher_monochrome.png`, `values-night/ic_launcher_background.xml` | тематическая иконка Android 13+ и тёмный фон иконки в ночной теме |
+| `AppIcon-512@2x.png` in `AppIcon.appiconset` (1024×1024, white background, **no transparency** — an iOS requirement) | light iOS icon |
+| `mipmap-*/ic_launcher*.png` | regular and adaptive Android icon (the mark inside the “safe area”) |
+| `AppIcon-Dark-512@2x.png`, `AppIcon-Tinted-512@2x.png` in `AppIcon.appiconset` | dark and “tinted” iOS 18+ icons |
+| `mipmap-*/ic_launcher_monochrome.png`, `values-night/ic_launcher_background.xml` | Android 13+ themed icon and the dark icon background in night theme |
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install pillow   # один раз
-.venv/bin/python scripts/generate-app-icon.py            # исходники, все размеры и варианты для тем
+python3 -m venv .venv && .venv/bin/pip install pillow   # once
+.venv/bin/python scripts/generate-app-icon.py            # sources, all sizes and theme variants
 ```
 
-Фавикон и логотип в шапке — `src/assets/favicon.ico`.
-
-## Структура
+The favicon and the header logo — `src/assets/favicon.ico`.
+## Structure
 
 ```
 src/
-  main.tsx                 точка входа: стили, переводы, первый рендер
-  app/                     корневой компонент, шапка, офлайн-баннер, глобальная синхронизация
-  components/              общий UI без бизнес-логики
-    icons/                   SVG-иконки
-    ui/                      ActionButton (иконка с подписью), Tabs (вкладки Material), List, Button, TextInput, ActionTextInput (кнопки-значки в поле: замок, сверка), SelectInput (системный выбор), SecretInput, Field, FormSection…
-  features/                функциональные модули; каждый — свои компоненты, хуки и логика
-    recognition/             распознавание (без UI)
-      providers/               RecognitionProvider (базовый класс) → Gemini, Anthropic, OpenAI, LM Studio
-      catalog/                 ModelCatalog (кэш списков), ModelFilter (vision + возраст), PublicModelDirectory (models.dev), modelFit (рекомендация для бирок), LocalModelLoader (загрузка модели в LM Studio), ModelUseGate (очередь к LM Studio между устройствами)
-      label/                   поля бирки, промпт, LabelParser, LabelFormatter, measure (размер и вес), productForm, knownSuppliers
-      image/                   InlineImage (загрузка и уменьшение фото), imageType (тип по первым байтам), PhotoQuality (проверка качества)
-      LabelRecognizer.ts       фото → провайдер → поля бирки
-    workspace/               главный экран: до 9 бирок (сетка 3 × 3), фото, жесты, просмотр на весь экран, результат, режим правки;
-                             hooks/useScanSession (бирки), hooks/usePhotoPicker (выбор фото; HEIC на Android — в JPEG, utils/pickedPhotoUrl),
-                             hooks/useSendSelected («Далее»), utils/sendReadiness (готовность к отправке)
-    settings/                лист настроек: вкладки «Основные», «Хранилище», «Расширенные»; SettingsStore;
-                             components/storage/ — формы сетевого диска и Google Drive, проверка таблицы, замок, выбор листа
-    uploads/                 очередь выгрузки и история («Загрузки»): UploadStore, TableCheckStore (проверка наличия таблицы), queue (экран ↔ движок), worker (UploadWorker, TableWriter, RetryPolicy), xlsx (LabelWorkbook, labTableLayout — колонки журнала и строгое строение, tableStructure — строение для проверки, excelInternals — недокументированное в ExcelJS…), smb (плагин SmbShare), drive (Google Drive и вход), leases (отметки очереди к LM Studio в хранилище таблицы), UploadError
-  engine/                  движок очереди выгрузки (upload-engine.js): работает вне WebView — Android скрытый WebView, iOS JavaScriptCore
-  hooks/                   общие React-хуки (тема, сеть, панели, слои истории, кнопка «Назад» Android…)
-  i18n/                    настройка i18next, список языков, типизация ключей
-  locales/<язык>/<модуль>.json   переводы: en, ro, tj, ru × common, workspace, label, settings, uploads, errors
-  lib/                     инфраструктура без React и бизнес-логики
-    store/                   Store — наблюдаемое состояние для useSyncExternalStore
-    storage/                 безопасная обёртка над localStorage
-    encoding/                base64 для передачи файлов через мост Capacitor, md5 (сверка файла в Google Drive)
+  main.tsx                 entry point: styles, translations, first render
+  app/                     root component, header, offline banner, global sync
+  components/              shared UI without business logic
+    icons/                   SVG icons
+    ui/                      ActionButton (icon with a caption), Tabs (Material tabs), List, Button, TextInput, ActionTextInput (icon buttons in the field: lock, check), SelectInput (system picker), SecretInput, Field, FormSection…
+  features/                feature modules; each has its own components, hooks and logic
+    recognition/             recognition (no UI)
+      providers/               RecognitionProvider (base class) → Gemini, Anthropic, OpenAI, LM Studio
+      catalog/                 ModelCatalog (list cache), ModelFilter (vision + age), PublicModelDirectory (models.dev), modelFit (recommendation for tags), LocalModelLoader (loading a model in LM Studio), ModelUseGate (queue for LM Studio between devices)
+      label/                   tag fields, prompt, LabelParser, LabelFormatter, measure (size and weight), productForm, knownSuppliers
+      image/                   InlineImage (loading and downscaling photos), imageType (type by the first bytes), PhotoQuality (quality check)
+      LabelRecognizer.ts       photo → provider → tag fields
+    workspace/               main screen: up to 9 tags (3 × 3 grid), photo, gestures, full-screen view, result, edit mode;
+                             hooks/useScanSession (tags), hooks/usePhotoPicker (photo picking; HEIC on Android → JPEG, utils/pickedPhotoUrl),
+                             hooks/useSendSelected (“Next”), utils/sendReadiness (readiness to send)
+    settings/                settings sheet: “General”, “Storage”, “Advanced” tabs; SettingsStore;
+                             components/storage/ — network drive and Google Drive forms, table check, lock, sheet choice
+    uploads/                 upload queue and history (“Uploads”): UploadStore, TableCheckStore (checks that the table exists), queue (screen ↔ engine), worker (UploadWorker, TableWriter, RetryPolicy), xlsx (LabelWorkbook, labTableLayout — log columns and strict structure, tableStructure — structure for the check, excelInternals — undocumented parts of ExcelJS…), smb (SmbShare plugin), drive (Google Drive and sign-in), leases (LM Studio queue marks in the table storage), UploadError
+  engine/                  upload queue engine (upload-engine.js): runs outside the WebView — Android hidden WebView, iOS JavaScriptCore
+  hooks/                   shared React hooks (theme, network, panels, history layers, Android “Back” button…)
+  i18n/                    i18next setup, language list, key typing
+  locales/<lang>/<module>.json   translations: en, ro, tj, ru × common, workspace, label, settings, uploads, errors
+  lib/                     infrastructure without React or business logic
+    store/                   Store — observable state for useSyncExternalStore
+    storage/                 safe wrapper over localStorage
+    encoding/                base64 for passing files through the Capacitor bridge, md5 (file check in Google Drive)
     http/                    requestJson + HttpError
-    interaction/             касания как в нативном приложении: PressController (жизненный цикл нажатия),
-                             PressFeedback (волна Material / подсветка UIKit), TouchDiscipline (фокус, выделение, меню)
-    navigation/              стек обработчиков «Назад»
-    platform/                платформа и дизайн (data-platform, data-ios-design), NativeDialogs (системные диалоги по одному), клавиатура, deviceId
-    theme/                   тема: системная / светлая / тёмная, мост к нативной теме (NativeTheme)
-    validation/              type guards для данных извне
-  styles/                  глобальные стили: токены (цвета, тёмная тема), база, анимации, platform-ios (материалы и стекло), native (отклик на касания)
-  assets/                  логотипы провайдеров, favicon
-tests/                     проверки node:test (npm test): журнал, копии, SMB и Drive на поддельных серверах (fakeSmb, fakeDrive), движок очереди (engineHarness), настройки, распознавание; fixtures/ — пустой журнал «Probe otel.xlsx»
-scripts/                   lab-table (пустой журнал из настоящего), smb-test-server (Samba в Docker), screenshots (снимки для README), generate-app-icon.py (иконка и сплэш)
-guides/                    NATIVE_FEEL_PLAN.md — план «нативного» ощущения интерфейса
-vite.engine.config.ts      сборка движка очереди (upload-engine.js)
-capacitor.config.ts        конфигурация Capacitor (appId: com.somascan.app)
-android/, ios/             нативные проекты; локальные плагины: NativeTheme (обе платформы), NativeSheet (Android, панель действий Material 3), SmbShare, GoogleDriveAuth, NativeHttp, UploadEngine (движок очереди и фоновая выгрузка)
+    interaction/             touches as in a native app: PressController (press lifecycle),
+                             PressFeedback (Material ripple / UIKit highlight), TouchDiscipline (focus, selection, menu)
+    navigation/              stack of “Back” handlers
+    platform/                platform and design (data-platform, data-ios-design), NativeDialogs (system dialogs one at a time), keyboard, deviceId
+    theme/                   theme: system / light / dark, bridge to the native theme (NativeTheme)
+    validation/              type guards for external data
+  styles/                  global styles: tokens (colors, dark theme), base, animations, platform-ios (materials and glass), native (touch feedback)
+  assets/                  provider logos, favicon
+tests/                     node:test checks (npm test): log, backups, SMB and Drive on fake servers (fakeSmb, fakeDrive), queue engine (engineHarness), settings, recognition; fixtures/ — empty log “Probe otel.xlsx”
+scripts/                   lab-table (empty log made from the real one), smb-test-server (Samba in Docker), screenshots (screenshots for the README), generate-app-icon.py (icon and splash screen)
+guides/                    NATIVE_FEEL_PLAN.md — plan for a “native” feel of the interface
+vite.engine.config.ts      build of the queue engine (upload-engine.js)
+capacitor.config.ts        Capacitor configuration (appId: com.somascan.app)
+android/, ios/             native projects; local plugins: NativeTheme (both platforms), NativeSheet (Android, Material 3 action sheet), SmbShare, GoogleDriveAuth, NativeHttp, UploadEngine (queue engine and background upload)
 ```
 
-### Соглашения
+### Conventions
 
-- **Модули.** Код фичи живёт в `features/<фича>/`. Общее для нескольких фич — в `components/`, `hooks/`, `lib/`. `lib/` не знает про React-компоненты и бизнес-логику.
-- **Импорты** — через алиас `@/` (= `src/`), без `../../`.
-- **Имена файлов.** Компоненты и классы — `PascalCase.tsx` / `PascalCase.ts`; хуки — `useSomething.ts`; прочие модули — `camelCase.ts`; папки — строчными буквами.
-- **Стили** лежат рядом с компонентом (`PhotoCard.tsx` + `PhotoCard.css`) и импортируются последней строкой импортов. Классы — kebab-case с префиксом компонента (`photo-card`, `photo-card-…`), состояния — `is-*` (`is-active`, `is-closing`). Цвета берутся только из токенов в `styles/tokens.css`.
-- **Состояние.** Общие данные хранятся в классах-хранилищах (`SettingsStore`, `ModelCatalog`, `UploadStore`) на базе `lib/store/Store`; компоненты читают их через `useStore`/`useSettings` и меняют через методы класса. Локальное состояние экрана — в обычных хуках.
-- **Тексты.** Никаких строк в коде: всё через `t()` и `locales/`. Ключи типизированы: опечатка в ключе или недостающий перевод — ошибка сборки. Сервисы бросают `RecognitionError` с кодом, а UI переводит код в сообщение.
-- **Комментарии** — только на русском. JSDoc у каждого экспорта, класса, метода и поля props; в коде — комментарии там, где неочевидно «почему».
-- **Интерфейс.** Выбор из нескольких вариантов — вкладки (`Tabs`), списки — плоские строки (`List`), у каждой кнопки-иконки есть подпись (`ActionButton`), не шире самой кнопки. Окна закрываются нажатием вне окна, крестиком или системным «Назад», но не свайпом.
-- **Риски** помечаются в коде комментарием `РИСК:` (поиск: `grep -rn 'РИСК:' src ios android scripts`); сводка — в разделе «Известные риски» ниже.
-- **Касания.** На сенсорных платформах (`<html data-press="js">`) отклик на нажатие рисует код (`lib/interaction`), а не `:active`/`:hover` — в WebView они «залипают». Новый нажимаемый элемент добавляется в `PRESSABLE_SELECTOR` (`lib/interaction/pressables.ts`) и получает стили отклика в `styles/native.css`; в CSS компонента `:active`/`:hover`/`:focus-visible` пишутся только для браузера: `:root:not([data-press]) …` (кольцо фокуса ещё и при `:root[data-keyboard]`). Системные диалоги и панели — только через `NativeDialogs`.
+- **Modules.** A feature's code lives in `features/<feature>/`. Code shared by several features goes to `components/`, `hooks/`, `lib/`. `lib/` knows nothing about React components or business logic.
+- **Imports** go through the `@/` alias (= `src/`), no `../../`.
+- **File names.** Components and classes — `PascalCase.tsx` / `PascalCase.ts`; hooks — `useSomething.ts`; other modules — `camelCase.ts`; folders — lowercase.
+- **Styles** live next to the component (`PhotoCard.tsx` + `PhotoCard.css`) and are imported on the last import line. Classes are kebab-case with the component prefix (`photo-card`, `photo-card-…`), states — `is-*` (`is-active`, `is-closing`). Colors come only from the tokens in `styles/tokens.css`.
+- **State.** Shared data is kept in store classes (`SettingsStore`, `ModelCatalog`, `UploadStore`) built on `lib/store/Store`; components read them through `useStore`/`useSettings` and change them through the class methods. Local screen state lives in ordinary hooks.
+- **Texts.** No strings in code: everything goes through `t()` and `locales/`. Keys are typed: a typo in a key or a missing translation is a build error. Services throw `RecognitionError` with a code, and the UI turns the code into a message.
+- **Comments** — in Russian only. JSDoc on every export, class, method and props field; inside the code — comments where the “why” is not obvious.
+- **Interface.** A choice among several options is tabs (`Tabs`), lists are flat rows (`List`), every icon button has a caption (`ActionButton`) no wider than the button itself. Windows close with a tap outside the window, with the × button or with the system “Back”, but not with a swipe.
+- **Risks** are marked in the code with a `РИСК:` (“risk”) comment (search: `grep -rn 'РИСК:' src ios android scripts`); the summary is in the “Known risks” section below.
+- **Touches.** On touch platforms (`<html data-press="js">`) press feedback is drawn by code (`lib/interaction`), not by `:active`/`:hover` — in a WebView they “stick”. A new pressable element is added to `PRESSABLE_SELECTOR` (`lib/interaction/pressables.ts`) and gets its feedback styles in `styles/native.css`; in a component's CSS, `:active`/`:hover`/`:focus-visible` are written only for the browser: `:root:not([data-press]) …` (the focus ring also under `:root[data-keyboard]`). System dialogs and panels — only through `NativeDialogs`.
 
-### Как добавить…
+### How to add…
 
-- **провайдера:** подкласс `RecognitionProvider` (или `OpenAICompatibleProvider`) в `features/recognition/providers/`, регистрация в `ProviderRegistry.ts`, id — в `PROVIDER_IDS` (`features/recognition/types.ts`), значок — в `PROVIDER_ICONS` (`settings/components/providerIcons.tsx`), название — в `settings.json` → `general.providers` для каждого языка;
-- **язык:** папка `locales/<код>/` с теми же JSON и `index.ts`, код — в `i18n/languages.ts`, ресурсы — в `i18n/resources.ts`; тексты системных разрешений iOS — `ios/App/App/<код>.lproj/InfoPlist.strings` (и регион в `knownRegions` проекта);
-- **встроенное поле бирки:** запись в `BUILT_IN_FIELDS` (`features/recognition/label/labelFields.ts`: ключ, вид значения, пояснение для модели по-английски; `manual: true` — поле выбирают вручную, модели оно не отправляется) и название в `label.json` → `fields` для каждого языка. Свои поля пользователь добавляет сам в «Расширенные» → «Поля»;
-- **настройку:** поле в `settingsSchema.ts` (тип, значение по умолчанию, валидация в `parseSettings`), метод в `SettingsStore`, контрол во вкладке.
+- **a provider:** a subclass of `RecognitionProvider` (or `OpenAICompatibleProvider`) in `features/recognition/providers/`, registration in `ProviderRegistry.ts`, the id in `PROVIDER_IDS` (`features/recognition/types.ts`), the icon in `PROVIDER_ICONS` (`settings/components/providerIcons.tsx`), the name in `settings.json` → `general.providers` for each language;
+- **a language:** a `locales/<code>/` folder with the same JSON files and `index.ts`, the code in `i18n/languages.ts`, the resources in `i18n/resources.ts`; iOS system permission texts — `ios/App/App/<code>.lproj/InfoPlist.strings` (and the region in the project's `knownRegions`);
+- **a built-in tag field:** an entry in `BUILT_IN_FIELDS` (`features/recognition/label/labelFields.ts`: key, value kind, explanation for the model in English; `manual: true` — the field is chosen by hand and is not sent to the model) and the name in `label.json` → `fields` for each language. Users add their own fields themselves in “Advanced” → “Fields”;
+- **a setting:** a field in `settingsSchema.ts` (type, default value, validation in `parseSettings`), a method in `SettingsStore`, a control in the tab.
 
-## Известные риски
+## Known risks
 
-То, что работает, но может сломаться или подвести при определённых условиях. В коде каждое место помечено `РИСК:`.
+Things that work but may break or let you down under certain conditions. In the code each such place is marked `РИСК:`.
 
-| Что | Где | Чем грозит и что делать |
+| What | Where | What can go wrong and what to do |
 |---|---|---|
-| Недокументированные места ExcelJS (`findCell`, порядок листов `orderNo`, ширина 9, список объединений) | `uploads/xlsx/excelInternals.ts` | после обновления `exceljs` — `npm test` и сверка настоящего журнала до и после записи |
-| Сверка до замены файла смотрит значения, а не оформление | `uploads/worker/TableWriter.ts` (`checkIntact`) | потерю стиля или ширины не заметит; прежняя версия — в `backups/` |
-| Защита от повторной строки — на скрытом листе `somascan-journal` | `uploads/xlsx/LabelWorkbook.ts` | лист удалили (журнал скопировали в новую книгу) — повтор после обрыва может дописать строку ещё раз |
-| Год листа и «Data intrare» — по часам устройства | `LabelWorkbook.append` | неверная дата на телефоне — не тот лист и не та дата |
-| Брошенная блокировка (5 минут) — по часам разных устройств | `uploads/worker/TableBackend.ts` (`LOCK_STALE_MS`) | расхождение часов больше 5 минут — чужую блокировку можно принять за брошенную и наоборот |
-| Список листов — снимок последней проверки | `uploads/store/TableCheckStore.ts` | лист переименовали в Excel — до новой проверки он в списке, запись получит `sheetNotFound` |
-| Резервные копии живут 7 дней | `uploads/xlsx/BackupPolicy.ts` | долгую историю хранит только бэкап самого сервера или Drive |
-| iOS: «уже есть» / «нет пути» от сервера Windows узнаются по тексту ошибки libsmb2 | `ios/App/App/SmbShareClient.swift` | после обновления AMSMB2 проверить запись в существующую папку на Windows |
-| Очередь к LM Studio — отметки в хранилище таблицы, сроки — по часам телефонов | `recognition/catalog/ModelUseGate.ts`, `uploads/leases/` | Google Drive показывает новые файлы в списке с небольшой задержкой: смена модели и распознавание, начатые на разных телефонах в одну секунду, могут столкнуться (распознавание оборвётся — «Повтор»); у телефонов с разным хранилищем таблицы общей очереди нет |
-| Вход в Google зависит от OAuth-клиентов проекта Google Cloud (iOS — client ID в `Info.plist`, Android — SHA-1 ключа подписи) | `Info.plist`, `android/keystore`, Google Cloud Console | клиента удалили, сменили ключ подписи или экран согласия в «Testing» без аккаунта в Test users — вход перестаёт работать |
-| Android: нижняя панель зависит от версии WebView (до 140 — между системными панелями, с 140 — под ними) | `workspace/components/NotesCard.css` | проверять на старом (эмулятор) и новом WebView (телефон) |
-| Ключи API и пароль SMB — в `localStorage` WebView, без шифрования | `settings/store/SettingsStore.ts` | перед раздачей приложения шире — перенести в Keychain / Keystore |
-| Подсказка «известные поставщики» | `recognition/label/labelPrompt.ts` | на плохом фото модель может «узнать» похожего поставщика — производителя проверяет оператор |
+| Undocumented parts of ExcelJS (`findCell`, sheet order `orderNo`, width 9, merge list) | `uploads/xlsx/excelInternals.ts` | after updating `exceljs` — run `npm test` and compare the real log before and after a write |
+| The check before replacing the file looks at values, not formatting | `uploads/worker/TableWriter.ts` (`checkIntact`) | it will not notice lost styles or widths; the previous version is in `backups/` |
+| Protection against a duplicate row is kept on the hidden `somascan-journal` sheet | `uploads/xlsx/LabelWorkbook.ts` | if the sheet is deleted (the log was copied into a new workbook), a retry after a dropped connection may append the row again |
+| The sheet year and “Data intrare” come from the device clock | `LabelWorkbook.append` | a wrong date on the phone — the wrong sheet and the wrong date |
+| Abandoned lock (5 minutes) — judged by the clocks of different devices | `uploads/worker/TableBackend.ts` (`LOCK_STALE_MS`) | if clocks differ by more than 5 minutes, another device's lock can be taken for abandoned and vice versa |
+| The sheet list is a snapshot of the last check | `uploads/store/TableCheckStore.ts` | a sheet renamed in Excel stays in the list until the next check, and the write gets `sheetNotFound` |
+| Backups are kept for 7 days | `uploads/xlsx/BackupPolicy.ts` | long history is kept only by the server's own backup or by Drive |
+| iOS: “already exists” / “no path” from a Windows server are recognized by the libsmb2 error text | `ios/App/App/SmbShareClient.swift` | after updating AMSMB2, check writing to an existing folder on Windows |
+| LM Studio queue — marks in the table storage, expiry by the phones' clocks | `recognition/catalog/ModelUseGate.ts`, `uploads/leases/` | Google Drive shows new files in the list with a small delay: a model switch and a recognition started on different phones in the same second can collide (the recognition is cut off — “Retry”); phones with different table storage have no shared queue |
+| Google sign-in depends on the OAuth clients of the Google Cloud project (iOS — client ID in `Info.plist`, Android — SHA-1 of the signing key) | `Info.plist`, `android/keystore`, Google Cloud Console | if the client is deleted, the signing key changes, or the consent screen is in “Testing” without the account in Test users — sign-in stops working |
+| Android: the bottom bar depends on the WebView version (before 140 — between the system bars, from 140 — under them) | `workspace/components/NotesCard.css` | check on an old (emulator) and a new WebView (phone) |
+| API keys and the SMB password are in the WebView `localStorage`, unencrypted | `settings/store/SettingsStore.ts` | before distributing the app more widely — move them to Keychain / Keystore |
+| The “Known suppliers” hint | `recognition/label/labelPrompt.ts` | on a poor photo the model may “recognize” a similar supplier — the operator checks the producer |
 
-**Технический долг** (не ошибки, но стоит иметь в виду): экранные сценарии (сетка, правка, отправка, настройки) не покрыты автотестами — проверяются вручную в браузере и на эмуляторе / симуляторе; крупнее всего — `LabelWorkbook.ts` (~390 строк: журнал целиком), `useScanSession.ts` и `ScanWorkspace.tsx` (~360), `PhotoCard.tsx` (~315, анимации сетки и «полёта» к «Загрузкам») — при следующих изменениях их стоит делить дальше.
+**Technical debt** (not bugs, but worth keeping in mind): screen scenarios (grid, editing, sending, settings) are not covered by automated tests — they are checked by hand in the browser and on the emulator / simulator; the largest files are `LabelWorkbook.ts` (~390 lines: the whole log), `useScanSession.ts` and `ScanWorkspace.tsx` (~360), `PhotoCard.tsx` (~315, grid animations and the “flight” to “Uploads”) — they should be split further with the next changes.
 
-## Лицензия
+## License
 
-[Apache License 2.0](LICENSE) © 2026 Muhammad Halimov. Код можно использовать, менять и распространять, в том числе в коммерческих целях, при условии сохранить уведомление об авторстве и лицензии (файл [NOTICE](NOTICE)) и отметить изменённые файлы. Названия и логотипы Somaco, Holcim и сервисов (Google, Google Drive, Anthropic, OpenAI, LM Studio, Windows) — товарные знаки их владельцев: лицензия на них не распространяется. Сторонние библиотеки — под своими лицензиями (libsmb2 — LGPL-2.1, подключён динамически; см. «Реализация» сетевого диска).
+[Apache License 2.0](LICENSE) © 2026 Muhammad Halimov. The code may be used, modified and distributed, including for commercial purposes, provided that the authorship and license notice is kept (the [NOTICE](NOTICE) file) and modified files are marked. The names and logos of Somaco, Holcim and the services (Google, Google Drive, Anthropic, OpenAI, LM Studio, Windows) are trademarks of their owners: the license does not cover them. Third-party libraries are under their own licenses (libsmb2 — LGPL-2.1, linked dynamically; see “Implementation” in the network drive section).
+
+## AI disclosure
+
+The author is responsible for the code, design decisions and maintenance. AI was used in the development of this app.

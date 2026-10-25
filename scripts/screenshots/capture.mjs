@@ -141,7 +141,8 @@ function uploads() {
     item: row - 6,
   })
   return [
-    record(3, 4, { producer: 'OAM Ózdi Acélművek', size: '12', heat: '25R00581', weight_kg: 2650, product_form: 'bobina' }, 389),
+    // Плавка не та, что на фото: иначе распознанная бирка была бы повтором уже отправленной.
+    record(3, 4, { producer: 'OAM Ózdi Acélművek', size: '12', heat: '25R00412', weight_kg: 2610, product_form: 'bobina' }, 389),
     record(2, 11, { producer: 'Arcelor-Mittal', size: '10', heat: '253830', weight_kg: 8126, product_form: 'bobina' }, 388),
     record(1, 26, { producer: 'Icdas', size: '16', heat: '2501-3-328-50', weight_kg: 5050, product_form: 'bara' }, 387),
   ]

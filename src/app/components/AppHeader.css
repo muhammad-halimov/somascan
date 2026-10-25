@@ -1,5 +1,5 @@
 /*
- * Шапка приложения: логотип и кнопки «Загрузки» и «Настройки» с подписями.
+ * Шапка приложения: логотип с названием и кнопки «Загрузки» и «Настройки» с подписями.
  * Учитывает безопасную зону статус-бара на телефонах с вырезом.
  */
 
@@ -13,21 +13,55 @@
   padding: var(--safe-top) max(8px, var(--safe-right)) 0 max(16px, var(--safe-left));
   background: var(--bg);
   border-bottom: 1px solid var(--border);
+  /* Видимая высота логотипа — как у значков в шапке (круг 32 px); по ней же — высота шрифта названия. */
+  --brand-logo-height: 32px;
 }
 
 .brand {
   display: inline-flex;
-  min-width: 88px;
+  flex: 0 0 auto;
   height: 48px;
   align-items: center;
   justify-content: center;
 }
 
+/*
+ * В файле логотипа (256 × 144) слон с подписью — посередине, по бокам прозрачные поля, сверху и снизу
+ * узкие. Высота 42 px даёт видимый логотип 32 px — как значки в шапке; показываем только середину
+ * шириной 27 px: так название встаёт вплотную к самому логотипу, а не через пустое поле.
+ */
 .brand img {
   display: block;
-  width: 88px;
-  height: 52px;
-  object-fit: contain;
+  width: 27px;
+  height: 42px;
+  object-fit: cover;
+}
+
+/*
+ * Название: шрифт высотой с логотип, но не шире места до кнопок справа — тогда шрифт уменьшается
+ * (`cqi` — доля ширины этого места; «Somascan» шириной около 5 кеглей), и надпись не наезжает на кнопки.
+ */
+.brand-name {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  margin: 0 8px 0 10px;
+  container-type: inline-size;
+}
+
+.brand-name-text {
+  overflow: hidden;
+  color: var(--text-h);
+  font-size: min(var(--brand-logo-height), 19.5cqi);
+  font-weight: 700;
+  letter-spacing: -.01em;
+  line-height: 1;
+  white-space: nowrap;
+  /* Строчными — как «somaco» на логотипе. */
+  text-transform: lowercase;
+  /* Чуть ниже середины — вровень со слоном на логотипе. */
+  translate: 0 .04em;
 }
 
 .header-actions {
@@ -36,14 +70,9 @@
   gap: 4px;
 }
 
-/* Телефон в горизонтальном положении: высота экрана на счету — шапка ниже, логотип меньше. */
+/* Телефон в горизонтальном положении: высота экрана на счету — шапка ниже (логотип и так размером со значок). */
 @media (orientation: landscape) and (max-height: 600px) {
   .app-header {
     min-height: calc(52px + var(--safe-top));
-  }
-
-  .brand img {
-    width: 76px;
-    height: 44px;
   }
 }

@@ -25,9 +25,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>The camera is used to take a photo for SomaScan.</string>
+	<string>The camera is used to take a photo for Somascan.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Photo access is needed to choose a picture for SomaScan.</string>
+	<string>Photo access is needed to choose a picture for Somascan.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- http к серверам в локальной сети (LM Studio по IP или имени .local); облако остаётся только по HTTPS. -->
