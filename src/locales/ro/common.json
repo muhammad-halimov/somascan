@@ -1,0 +1,13 @@
+{
+  "sections": "Secțiuni",
+  "tabs": {
+    "home": "Acasă",
+    "storage": "Stocare",
+    "links": "Legături",
+    "advanced": "Avansate"
+  },
+  "theme": {
+    "toLight": "Temă luminoasă",
+    "toDark": "Temă întunecată"
+  }
+}

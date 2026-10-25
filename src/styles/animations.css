@@ -1,0 +1,14 @@
+/*
+ * Анимации: появление содержимого вкладки (`anim-enter`, элемент монтируется заново через `key`) и спиннер.
+ * Режим заполнения — backwards: конечный кадр равен обычным стилям.
+ */
+@keyframes content-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.anim-enter { animation: content-enter 240ms cubic-bezier(.2, .75, .25, 1) backwards; }

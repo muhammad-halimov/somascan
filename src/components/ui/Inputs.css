@@ -1,0 +1,73 @@
+/*
+ * Поля ввода: мягкая заливка, скругление сверху и линия снизу, которая при фокусе становится акцентной и толще.
+ * Кнопки-значки — внутри поля справа (`.input-action`): замок, папка, проверка, «глазок».
+ */
+
+.text-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  color: var(--text-h);
+  background: var(--field-bg);
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  /* линия снизу — тенью, чтобы смена толщины при фокусе не сдвигала текст */
+  box-shadow: inset 0 -1px 0 var(--field-line);
+  font-size: 16px;
+  outline: none;
+  transition: box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.text-input::placeholder { color: var(--text); opacity: .7; }
+.text-input:focus { background: color-mix(in srgb, var(--accent) 6%, var(--field-bg)); box-shadow: inset 0 -2px 0 var(--accent); }
+.text-input:disabled { opacity: .6; cursor: default; }
+
+/* Поле под замком: текст приглушён, линия не загорается. */
+.text-input.is-locked { color: var(--text); cursor: default; }
+.input-with-action .text-input.is-locked:focus { background: var(--field-bg); box-shadow: inset 0 -1px 0 var(--field-line); }
+
+/* Поле с кнопками справа: место под 1–3 кнопки, чтобы текст не уходил под них. */
+.input-with-action { position: relative; display: flex; align-items: center; }
+.input-with-action .text-input { padding-right: 48px; }
+.input-with-action.has-actions-2 .text-input { padding-right: 88px; }
+.input-with-action.has-actions-3 .text-input { padding-right: 128px; }
+.input-actions { position: absolute; right: 4px; display: flex; align-items: center; }
+
+.input-action {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.input-action:hover:not(:disabled) { background: color-mix(in srgb, var(--text) 10%, transparent); }
+.input-action:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.input-action svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.input-action:disabled { cursor: default; opacity: .38; }
+.input-action.is-busy:disabled { opacity: 1; }
+.input-action.is-success { color: var(--success); }
+.input-action.is-danger { color: var(--danger); }
+.input-action.is-accent { color: var(--accent); }
+
+.input-action-spinner {
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 2.5px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 750ms linear infinite;
+}
+
+/* Выбор из списка в виде поля: без стрелки браузера, свой значок справа. */
+.select-input-wrap { position: relative; display: flex; align-items: center; min-width: 0; }
+.select-input { appearance: none; padding-right: 40px; text-overflow: ellipsis; cursor: pointer; }
+.select-input:disabled { cursor: default; color: var(--text); opacity: 1; }
+.select-input-icon { position: absolute; right: 10px; display: grid; place-items: center; color: var(--text); pointer-events: none; }
+.select-input-icon svg { width: 24px; height: 24px; fill: currentColor; }
+.select-input:disabled + .select-input-icon { opacity: .4; }

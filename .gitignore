@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-host/
+dist-engine/
+release/
+_to_delete/
+*.tsbuildinfo
+.DS_Store
+
+# таблицы завода не попадают в репозиторий (Sarjele — конфиденциальный файл)
+*.xlsx
+*.xlsm
+*.xls
+~$*
+.~lock.*#

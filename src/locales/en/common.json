@@ -1,0 +1,13 @@
+{
+  "sections": "Sections",
+  "tabs": {
+    "home": "Home",
+    "storage": "Storage",
+    "links": "Links",
+    "advanced": "Advanced"
+  },
+  "theme": {
+    "toLight": "Light theme",
+    "toDark": "Dark theme"
+  }
+}

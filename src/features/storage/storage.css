@@ -1,0 +1,3 @@
+/* Поле файла и итог его проверки. */
+.file-field { display: flex; flex-direction: column; gap: 6px; }
+.storage-check { min-height: 4px; }

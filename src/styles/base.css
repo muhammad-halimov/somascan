@@ -1,0 +1,22 @@
+/*
+ * Значения по умолчанию для элементов. Документ не прокручивается: вся прокрутка — внутри содержимого вкладки.
+ */
+* { box-sizing: border-box; }
+
+html, body, #root { width: 100%; min-width: 0; height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
+html { background: var(--bg); }
+body { color: var(--text); background: var(--bg); user-select: none; }
+
+/* Выделять можно только поля ввода и журнал. */
+input, textarea, select, [data-selectable='true'] { user-select: text; }
+[data-selectable='true'] { cursor: text; }
+input, textarea, select { min-width: 0; font: inherit; font-size: max(16px, 1em); caret-color: var(--accent); }
+input::selection, textarea::selection, [data-selectable='true'] ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+button { font: inherit; }
+a { color: inherit; }
+a, button, img { -webkit-user-drag: none; }
+
+/* Системная настройка «уменьшить движение». */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

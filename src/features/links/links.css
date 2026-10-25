@@ -1,0 +1,49 @@
+/* Строка «Перечитать файлы». */
+.scan-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* Таблица проектов: Consum | лист Sarjele | замок. */
+.projects-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.projects-table th { padding: 0 6px 6px; color: var(--text); font-size: 12px; font-weight: 600; text-align: left; }
+.projects-table th:nth-child(1) { width: 44%; }
+.projects-table th:nth-child(3) { width: 44px; }
+.projects-table td { padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: middle; }
+.projects-table tr.is-off td:not(:last-child) { opacity: .6; }
+.projects-table tr.project-details td { padding: 0 6px 12px; border-top: 0; }
+.project-name { display: inline-flex; max-width: 100%; align-items: center; gap: 4px; padding: 0; color: var(--text-h); background: none; border: 0; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.project-name svg { width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: var(--text); stroke-width: 2; transform: rotate(-90deg); transition: transform 160ms ease; }
+.project-name[aria-expanded='true'] svg { transform: none; }
+.project-name.is-static { cursor: default; padding-left: 22px; }
+.project-sub { margin-top: 2px; padding-left: 22px; color: var(--text); font-size: 12px; line-height: 1.4; }
+td:nth-child(2) .project-sub { padding-left: 2px; }
+.project-meta { display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; }
+.icon-btn.lock-btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text-h); }
+.icon-btn.lock-btn.is-open { color: var(--accent); }
+.link-btn { padding: 0; color: var(--accent); background: none; border: 0; font-size: inherit; cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+
+/* Подробности проекта. */
+.project-card { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; }
+.alias-row { display: flex; flex-direction: column; gap: 6px; }
+.alias-label { color: var(--text-h); font-size: 13px; font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text-h); font-size: 13px; }
+.chip button { display: grid; width: 22px; height: 22px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; font-size: 16px; line-height: 1; }
+.chip button:hover { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+.chip-input { width: 140px; min-height: 30px; padding: 0 12px; border: 1px dashed var(--field-line); border-radius: 999px; background: transparent; color: var(--text-h); font-size: 13px; }
+.chip-input:focus { outline: none; border-color: var(--accent); }
+.project-hint { color: var(--text); font-size: 12px; }
+.project-foot { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.project-foot .field { width: 96px; }
+.project-foot .project-hint { flex: 1 1 auto; padding-bottom: 12px; }
+.project-actions { display: flex; gap: 4px; }
+.prefix-input { text-transform: uppercase; }
+.project-add { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+
+/* Элементы и их привязка. */
+.link-group { display: flex; flex-direction: column; gap: 6px; }
+.link-group-title { color: var(--accent); font-size: 13px; font-weight: 600; padding: 8px 0 2px; }
+.link-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.link-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 10px 2px; border-bottom: 1px solid var(--border); }
+.link-main { display: flex; min-width: 0; flex: 1 1 260px; flex-direction: column; gap: 6px; }
+.link-name { color: var(--text-h); font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.link-pick { flex: 0 1 260px; min-width: 200px; }

@@ -1,0 +1,155 @@
+{
+  "trigger": {
+    "first": "Prima rulare",
+    "changed": "Consum s-a schimbat",
+    "retry": "Reluarea scrierii amânate",
+    "plan": "Rulare de test",
+    "write": "Rulare reală",
+    "migratePlan": "Migrare de test",
+    "migrateWrite": "Migrare reală",
+    "createSheets": "Crearea foilor",
+    "restore": "Restaurare din backup"
+  },
+  "run": {
+    "running": "{{trigger}} · în curs",
+    "wrote": "{{trigger}} · scris",
+    "planned": "{{trigger}} · doar plan",
+    "nothing": "{{trigger}} · fără modificări",
+    "deferred": "{{trigger}} · scriere amânată",
+    "failed": "{{trigger}} · eroare"
+  },
+  "event": {
+    "appStarted": "Somasync {{version}} a pornit",
+    "resume": "Monitorizarea era pornită la ultima închidere — o reiau",
+    "watchWrite": "Monitorizare pornită: scriere în fișiere, verificare la fiecare {{seconds}} s",
+    "watchDry": "Monitorizare pornită: mod de test, verificare la fiecare {{seconds}} s",
+    "watchStopped": "Monitorizare oprită",
+    "stopping": "Oprire: aștept să se termine rularea curentă",
+    "fileGone": "{{file}} nu este disponibil: fișierul lipsește sau nu există rețea",
+    "fileBack": "{{file}} este din nou disponibil",
+    "busy": "Deja în curs: {{what}}. Așteptați să se termine.",
+    "missingFiles": "Fișiere negăsite: {{files}}. Setați căile în fila „Stocare”.",
+    "smbMounted": "Unitate de rețea conectată: {{mount}}",
+    "smbFailed": "Unitatea de rețea nu a putut fi conectată: {{error}}",
+    "settingsNotSaved": "Setările nu au putut fi salvate: {{error}}",
+    "error": "Eroare: {{error}}",
+    "processGone": "Procesul auxiliar {{type}} s-a încheiat: {{reason}} (cod {{code}})",
+    "windowNotLoaded": "Fereastra nu s-a încărcat: {{error}}",
+    "windowGone": "Procesul ferestrei s-a încheiat: {{reason}} (cod {{code}})",
+    "trayUnavailable": "Pictograma din bara de sistem nu este disponibilă: {{error}}",
+    "engineNotStarted": "Motorul nu a putut porni: {{error}}",
+    "engineExit": "Motorul s-a oprit cu codul {{code}}",
+    "startFailed": "Pornirea a eșuat: {{error}}"
+  },
+  "skip": {
+    "projectNotConfigured": "proiectul „{{project}}” nu este configurat (fila „Legături”)",
+    "noSheet": "proiectul nu are foaie",
+    "manual": "exclus manual (fila „Legături”)",
+    "sheetNotFound": "foaia „{{sheet}}” nu a fost găsită în Sarjele",
+    "badId": "ID ciudat „{{id}}” în coloana ID",
+    "duplicateId": "ID duplicat {{id}} în Consum (rând copiat?)",
+    "foreignId": "ID-ul {{id}} aparține unui element din alt Consum („{{source}}”) — rând copiat? Ștergeți ID-ul din acest rând. Dacă este o lună nouă, eliminați vechiul Consum din listă, în fila „Stocare”",
+    "blockNotFound": "blocul cu ID {{id}} nu a fost găsit în Sarjele",
+    "blockTaken": "blocul {{id}} este deja legat de alt rând",
+    "ambiguous": "mai multe blocuri potrivite: {{blocks}} — alegeți-l pe cel corect în fila „Legături”",
+    "sharedBlock": "blocul „{{title}}” este comun pentru mai multe rânduri — legați-l manual în fila „Legături”",
+    "migrateNoBlock": "blocul nu a fost găsit (migrarea nu creează blocuri noi)",
+    "noRoom": "sub bloc nu e loc pentru {{n}} rânduri noi (consumul este împărțit pe șarje) — eliberați celulele de sub bloc pe foaia „{{sheet}}”",
+    "linkNotFound": "în links.json este ales blocul „{{title}}”, dar foaia „{{sheet}}” nu are un asemenea bloc fără ID — verificați titlul",
+    "linkUnknown": "comandă necunoscută „{{value}}” în links.json (valide: @new și @skip)"
+  },
+  "warn": {
+    "idCellBusy": "{{element}}: lângă titlul blocului este deja scris ceva („{{value}}”), ID-ul nu a fost pus",
+    "sheetNotCreated": "foaia „{{sheet}}” nu a fost creată: {{reason}}",
+    "sheetMissing": "{{element}}: foaia „{{sheet}}” nu există — omis",
+    "noRoomRows": "{{element}}: nu e loc pentru rânduri suplimentare — blocul nu a fost modificat",
+    "noRoomRow": "{{element}}: nu e loc pentru un rând suplimentar ({{heat}})",
+    "noRoomBlock": "{{element}}: nu e loc pentru un bloc nou",
+    "consumIdsSkipped": "Consum: ID-urile nu au fost scrise în rândurile {{rows}} (celulă ocupată sau rând negăsit)",
+    "manualReopen": "șarja {{heat}} este marcată cu galben, dar oțelul a fost returnat — verificați dacă mai este necesară",
+    "probeColumns": "Probe/{{sheet}}: coloanele nu au fost găsite ({{detail}})",
+    "deferredOpen": "Scriere amânată: „{{file}}” este deschis — se reia singură după închidere",
+    "deferredBusy": "Scriere amânată: {{reason}}",
+    "linksBadKey": "links.json: intrarea „{{key}}” a fost ignorată — cheia trebuie să fie „PROIECT|element”",
+    "linksBadValue": "links.json: intrarea „{{key}}” a fost ignorată — valoarea trebuie să fie text: titlul blocului, @new sau @skip",
+    "linksDuplicate": "links.json: „{{key}}” apare de două ori — se aplică ultima intrare"
+  },
+  "note": {
+    "renamed": "{{id}}: titlul blocului actualizat → „{{name}}”",
+    "idMoved": "{{id}}: mutat de la „{{from}}” la „{{to}}”",
+    "linked": "{{id}} ← legat de blocul „{{title}}”",
+    "blockCreated": "{{id}}: blocul „{{name}}” a fost creat",
+    "sheetCreated": "foaia „{{sheet}}” a fost creată în Sarjele",
+    "heatReopened": "șarja {{heat}} este din nou deschisă (galbenul scos)",
+    "consumIdsDeferred": "Consum este deschis — {{n}} ID-uri vor fi scrise la următoarea rulare",
+    "consumNotUpdated": "Consum nu a putut fi actualizat ({{reason}}) — ID-urile vor fi scrise la următoarea rulare",
+    "consumChanged": "Consum s-a schimbat în timpul procesării — ID-urile vor fi scrise la următoarea rulare"
+  },
+  "lock": {
+    "busyHere": "fișierul „{{file}}” este scris acum de altă rulare (acest computer, din {{time}})",
+    "busyHost": "fișierul „{{file}}” este scris acum de altă rulare ({{host}}, din {{time}})",
+    "busyUnknown": "fișierul „{{file}}” este scris acum de altă rulare (alt computer sau o versiune mai veche)",
+    "staleDead": "blocarea abandonată {{lock}} a fost eliminată (rularea care a creat-o s-a încheiat)",
+    "staleGone": "blocarea abandonată {{lock}} a fost eliminată (folderul blocării a dispărut)",
+    "staleOld": "blocarea abandonată {{lock}} a fost eliminată (mai veche de {{minutes}} min)"
+  },
+  "sheet": {
+    "badName": "numele de foaie „{{name}}” nu este permis în Excel (permis: „{{safe}}”)",
+    "noSample": "nu s-a găsit un model de formatare (Sarjele nu are niciun bloc)"
+  },
+  "verify": {
+    "kg": "șarja {{heat}}: în Sarjele {{got}} kg, calculat {{want}} kg",
+    "idMissing": "ID-ul {{id}} nu a fost găsit la niciun bloc din Sarjele",
+    "idUnregistered": "ID-ul {{id}} lipsește din registrul Sarjele",
+    "notPainted": "șarja {{heat}} nu este colorată cu galben în Probe",
+    "notUnpainted": "galbenul nu a fost scos de la șarja {{heat}} în Probe",
+    "consumId": "Consum, rândul {{row}}: lipsește ID-ul {{id}}"
+  },
+  "error": {
+    "noConsumSheet": "Consum nu are foaia „{{sheet}}”",
+    "noCopies": "Nu există copii pentru {{stamp}}",
+    "usage": "Fișierele Consum, Sarjele și Probe nu sunt setate",
+    "other": "{{error}}",
+    "linksBroken": "links.json nu poate fi citit: {{error}}. Corectați fișierul (Avansate → Legături manuale) sau ștergeți-l — cât timp este stricat, rulările sunt oprite",
+    "linksNotObject": "links.json trebuie să fie un obiect { \"PROIECT|element\": \"titlul blocului\" } — rulările sunt oprite până la corectarea fișierului"
+  },
+  "check": {
+    "noPath": "Calea nu este setată",
+    "notFound": "Fișierul nu a fost găsit",
+    "ok": "Găsit · foi: {{n}} · modificat {{date}}",
+    "okOpen": "Găsit · foi: {{n}} · modificat {{date}} · deschis într-un editor",
+    "noConsumSheet": "Lipsește foaia „Decont Lunar”",
+    "noYearSheet": "Lipsește foaia {{year}} — alegeți foaia manual",
+    "noProjectSheets": "Lipsesc foile proiectelor: {{sheets}}",
+    "unreadable": "Nu s-a putut citi: {{error}}"
+  },
+  "smb": {
+    "noHost": "Introduceți serverul și folderul partajat",
+    "unsupported": "Conectați unitatea de rețea din sistem și alegeți fișierele de pe ea"
+  },
+  "scan": {
+    "busy": "Citirea este deja în curs",
+    "failed": "Nu s-a putut citi {{file}}: {{error}}"
+  },
+  "tray": {
+    "watchingWrite": "Rulează · scriere în fișiere",
+    "watchingDry": "Rulează · mod de test",
+    "stopping": "Se oprește…",
+    "idle": "Oprit",
+    "busy": "{{what}}…",
+    "pending": "Amânat: {{files}}",
+    "start": "Pornește",
+    "stop": "Oprește",
+    "write": "Scrie în fișiere",
+    "journal": "Jurnal",
+    "empty": "Gol",
+    "openJournal": "Deschide jurnalul",
+    "logFile": "Arată fișierul jurnal",
+    "show": "Arată Somasync",
+    "quit": "Ieșire",
+    "ok": "Continuă",
+    "cancel": "Anulare",
+    "startFailed": "Somasync nu a pornit",
+    "logAt": "Jurnal: {{file}}"
+  }
+}

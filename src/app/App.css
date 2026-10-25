@@ -1,0 +1,23 @@
+/* Каркас окна: заголовок (macOS), вкладки, прокручиваемое содержимое. */
+.shell { display: flex; height: 100%; flex-direction: column; background: var(--bg); }
+.content { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.content-inner { box-sizing: border-box; min-height: 100%; display: flex; max-width: 760px; margin: 0 auto; flex-direction: column; gap: 24px; padding: 20px 20px 32px; }
+.content-inner.is-fill { padding-bottom: 16px; }
+
+/* Заголовок macOS: за него окно перетаскивается; слева — место под кнопки окна. */
+.titlebar { display: flex; flex: 0 0 auto; height: 52px; align-items: center; justify-content: flex-end; padding: 0 14px 0 88px; border-bottom: 1px solid var(--border); -webkit-app-region: drag; user-select: none; }
+.titlebar-btn { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; -webkit-app-region: no-drag; }
+.titlebar-btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text-h); }
+.titlebar-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.titlebar + .tabs { border-top: 0; }
+
+/* Иконки в строках списков. */
+.list-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Круглая кнопка-значок (удалить, замок). */
+.icon-btn { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; }
+.icon-btn:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Текст только для экранных дикторов. */
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

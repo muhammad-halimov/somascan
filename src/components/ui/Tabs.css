@@ -1,0 +1,39 @@
+/* Вкладки: ряд кнопок, у выбранной — акцентный цвет и полоска-индикатор. */
+.tabs { position: relative; display: flex; overflow-x: auto; border-bottom: 1px solid var(--border); overscroll-behavior-x: contain; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  display: flex;
+  flex: 1 0 auto;
+  min-height: 48px;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0 6px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+.tab:hover { color: var(--text-h); background: color-mix(in srgb, var(--text) 6%, transparent); }
+.tab:active { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.tab.is-active, .tab.is-active:hover { color: var(--accent); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Индикатор рисуется под содержимым и совпадает с ним по ширине. */
+.tab-content { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 12px 2px; }
+.tabs-indicator { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent); border-radius: 3px 3px 0 0; pointer-events: none; }
+.tabs-indicator.is-animated { transition: translate 280ms cubic-bezier(.2, .75, .25, 1), width 280ms cubic-bezier(.2, .75, .25, 1); }
+
+/* Контурные иконки берут цвет вкладки; логотипы и флаги сохраняют свои цвета. */
+.tab-icon { display: inline-grid; height: 20px; place-items: center; line-height: 1; }
+.tab-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab-icon svg.brand-icon { stroke: none; }
+.tab:not(.is-active) .tab-icon svg.brand-icon { opacity: .85; }
+.tab-icon svg.flag { width: 24px; height: 16px; stroke: none; border-radius: 2px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 25%, transparent); }
+.tab:not(.is-active) .tab-icon svg.brand-icon { stroke: none; }
+.tab:not(.is-active) .tab-icon svg.brand-icon { opacity: .85; }
+.tab-icon svg.flag { opacity: .8; }

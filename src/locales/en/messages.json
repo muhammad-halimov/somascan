@@ -1,0 +1,155 @@
+{
+  "trigger": {
+    "first": "First run",
+    "changed": "Consum changed",
+    "retry": "Retry of a postponed write",
+    "plan": "Trial run",
+    "write": "Actual run",
+    "migratePlan": "Trial migration",
+    "migrateWrite": "Actual migration",
+    "createSheets": "Creating sheets",
+    "restore": "Restore from backup"
+  },
+  "run": {
+    "running": "{{trigger}} · running",
+    "wrote": "{{trigger}} · written",
+    "planned": "{{trigger}} · plan only",
+    "nothing": "{{trigger}} · no changes",
+    "deferred": "{{trigger}} · write postponed",
+    "failed": "{{trigger}} · error"
+  },
+  "event": {
+    "appStarted": "Somasync {{version}} started",
+    "resume": "Watching was on when the app was last closed — resuming",
+    "watchWrite": "Watching started: writing to files, checking every {{seconds}} s",
+    "watchDry": "Watching started: trial mode, checking every {{seconds}} s",
+    "watchStopped": "Watching stopped",
+    "stopping": "Stopping: waiting for the current run to finish",
+    "fileGone": "{{file}} is unavailable: the file is missing or the network is down",
+    "fileBack": "{{file}} is available again",
+    "busy": "Already running: {{what}}. Wait until it finishes.",
+    "missingFiles": "Files not found: {{files}}. Set the paths on the Storage tab.",
+    "smbMounted": "Network drive connected: {{mount}}",
+    "smbFailed": "Could not connect the network drive: {{error}}",
+    "settingsNotSaved": "Could not save the settings: {{error}}",
+    "error": "Error: {{error}}",
+    "processGone": "Helper process {{type}} exited: {{reason}} (code {{code}})",
+    "windowNotLoaded": "The window did not load: {{error}}",
+    "windowGone": "The window process exited: {{reason}} (code {{code}})",
+    "trayUnavailable": "The tray icon is unavailable: {{error}}",
+    "engineNotStarted": "Could not start the engine: {{error}}",
+    "engineExit": "The engine exited with code {{code}}",
+    "startFailed": "Could not start: {{error}}"
+  },
+  "skip": {
+    "projectNotConfigured": "project “{{project}}” is not set up (Links tab)",
+    "noSheet": "the project has no sheet",
+    "manual": "excluded by hand (Links tab)",
+    "sheetNotFound": "sheet “{{sheet}}” not found in Sarjele",
+    "badId": "odd ID “{{id}}” in the ID column",
+    "duplicateId": "duplicate ID {{id}} in Consum (copied row?)",
+    "foreignId": "ID {{id}} belongs to an element of another Consum (“{{source}}”) — a copied row? Clear the ID in this row. If this is a new month, remove the old Consum from the list on the Storage tab",
+    "blockNotFound": "block with ID {{id}} not found in Sarjele",
+    "blockTaken": "block {{id}} is already linked to another row",
+    "ambiguous": "several matching blocks: {{blocks}} — choose one on the Links tab",
+    "sharedBlock": "block “{{title}}” is shared by several rows — link it by hand on the Links tab",
+    "migrateNoBlock": "block not found (migration does not create new blocks)",
+    "noRoom": "no room under the block for {{n}} new rows (consumption split over heats) — free the cells under the block on sheet “{{sheet}}”",
+    "linkNotFound": "links.json points to block “{{title}}”, but sheet “{{sheet}}” has no such block without an ID — check the title",
+    "linkUnknown": "unknown command “{{value}}” in links.json (valid: @new and @skip)"
+  },
+  "warn": {
+    "idCellBusy": "{{element}}: something is already written next to the block title (“{{value}}”), the ID was not placed",
+    "sheetNotCreated": "sheet “{{sheet}}” was not created: {{reason}}",
+    "sheetMissing": "{{element}}: sheet “{{sheet}}” does not exist — skipped",
+    "noRoomRows": "{{element}}: no room for extra rows — the block was not changed",
+    "noRoomRow": "{{element}}: no room for an extra row ({{heat}})",
+    "noRoomBlock": "{{element}}: no room for a new block",
+    "consumIdsSkipped": "Consum: IDs not written to rows {{rows}} (cell taken or row not found)",
+    "manualReopen": "heat {{heat}} is marked yellow but steel was taken back — check whether it is needed again",
+    "probeColumns": "Probe/{{sheet}}: columns not found ({{detail}})",
+    "deferredOpen": "Write postponed: “{{file}}” is open — it will retry by itself once closed",
+    "deferredBusy": "Write postponed: {{reason}}",
+    "linksBadKey": "links.json: entry “{{key}}” skipped — the key must be “PROJECT|element”",
+    "linksBadValue": "links.json: entry “{{key}}” skipped — the value must be text: a block title, @new or @skip",
+    "linksDuplicate": "links.json: “{{key}}” appears twice — the last entry applies"
+  },
+  "note": {
+    "renamed": "{{id}}: block title updated → “{{name}}”",
+    "idMoved": "{{id}}: moved from “{{from}}” to “{{to}}”",
+    "linked": "{{id}} ← linked to block “{{title}}”",
+    "blockCreated": "{{id}}: block “{{name}}” created",
+    "sheetCreated": "sheet “{{sheet}}” created in Sarjele",
+    "heatReopened": "heat {{heat}} is open again (yellow removed)",
+    "consumIdsDeferred": "Consum is open — {{n}} IDs will be written on the next run",
+    "consumNotUpdated": "Could not update Consum ({{reason}}) — the IDs will be written on the next run",
+    "consumChanged": "Consum changed while being processed — the IDs will be written on the next run"
+  },
+  "lock": {
+    "busyHere": "file “{{file}}” is being written by another run (this computer, since {{time}})",
+    "busyHost": "file “{{file}}” is being written by another run ({{host}}, since {{time}})",
+    "busyUnknown": "file “{{file}}” is being written by another run (another computer or an older version)",
+    "staleDead": "removed abandoned lock {{lock}} (the run that took it has ended)",
+    "staleGone": "removed abandoned lock {{lock}} (the lock folder disappeared)",
+    "staleOld": "removed abandoned lock {{lock}} (older than {{minutes}} min)"
+  },
+  "sheet": {
+    "badName": "sheet name “{{name}}” is not allowed in Excel (allowed: “{{safe}}”)",
+    "noSample": "no sample layout found (Sarjele has no blocks at all)"
+  },
+  "verify": {
+    "kg": "heat {{heat}}: {{got}} kg in Sarjele, {{want}} kg calculated",
+    "idMissing": "ID {{id}} not found at a block in Sarjele",
+    "idUnregistered": "ID {{id}} is missing from the Sarjele registry",
+    "notPainted": "heat {{heat}} is not marked yellow in Probe",
+    "notUnpainted": "yellow was not removed from heat {{heat}} in Probe",
+    "consumId": "Consum, row {{row}}: ID {{id}} is missing"
+  },
+  "error": {
+    "noConsumSheet": "Consum has no sheet “{{sheet}}”",
+    "noCopies": "No copies for {{stamp}}",
+    "usage": "The Consum, Sarjele and Probe files are not set",
+    "other": "{{error}}",
+    "linksBroken": "links.json cannot be read: {{error}}. Fix the file (Advanced → Manual links) or delete it — runs are stopped while it is broken",
+    "linksNotObject": "links.json must be an object { \"PROJECT|element\": \"block title\" } — runs are stopped until the file is fixed"
+  },
+  "check": {
+    "noPath": "No path set",
+    "notFound": "File not found",
+    "ok": "Found · sheets: {{n}} · changed {{date}}",
+    "okOpen": "Found · sheets: {{n}} · changed {{date}} · open in an editor",
+    "noConsumSheet": "No “Decont Lunar” sheet",
+    "noYearSheet": "No {{year}} sheet — choose the sheet by hand",
+    "noProjectSheets": "Project sheets missing: {{sheets}}",
+    "unreadable": "Could not read: {{error}}"
+  },
+  "smb": {
+    "noHost": "Enter the server and the shared folder",
+    "unsupported": "Connect the network drive with system tools and choose the files on it"
+  },
+  "scan": {
+    "busy": "Reading is already in progress",
+    "failed": "Could not read {{file}}: {{error}}"
+  },
+  "tray": {
+    "watchingWrite": "Running · writing to files",
+    "watchingDry": "Running · trial mode",
+    "stopping": "Stopping…",
+    "idle": "Stopped",
+    "busy": "{{what}}…",
+    "pending": "Postponed: {{files}}",
+    "start": "Start",
+    "stop": "Stop",
+    "write": "Write to files",
+    "journal": "Journal",
+    "empty": "Empty",
+    "openJournal": "Open journal",
+    "logFile": "Show log file",
+    "show": "Show Somasync",
+    "quit": "Quit",
+    "ok": "Continue",
+    "cancel": "Cancel",
+    "startFailed": "Somasync did not start",
+    "logAt": "Log: {{file}}"
+  }
+}

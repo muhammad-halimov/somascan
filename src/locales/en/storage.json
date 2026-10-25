@@ -1,0 +1,43 @@
+{
+  "intro": "The spreadsheets must already exist: the app does not create them. Before every write a copy is saved next to the file in the backups folder (kept {{days}} days); restore it on the Advanced tab.",
+  "target": {
+    "title": "Storage location",
+    "local": "This computer",
+    "smb": "Network drive (SMB)"
+  },
+  "smb": {
+    "title": "Network drive",
+    "hint": "After connecting, choose the files below with the folder icon.",
+    "host": "Server",
+    "hostPlaceholder": "192.168.1.10 or server.local",
+    "share": "Shared folder",
+    "domain": "Domain",
+    "username": "User",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "mount": "Connect drive",
+    "mounting": "Connecting…"
+  },
+  "files": {
+    "title": "Files",
+    "hint": "Paths are locked against accidental edits.",
+    "consum": "Consum (steel consumption)",
+    "consumN": "Consum #{{n}} (steel consumption)",
+    "sarjele": "Sarjele din elemente",
+    "probe": "Probe otel (sample log)",
+    "unlock": "Unlock path",
+    "lock": "Lock path",
+    "pick": "Choose file",
+    "remove": "Remove this Consum",
+    "check": "Check file",
+    "checking": "Checking…"
+  },
+  "probeSheet": {
+    "title": "Probe sheet",
+    "hint": "The app reads one year's sheet. By default the current one; while the new year's sheet is still empty, the previous year is read too.",
+    "label": "Sample log sheet",
+    "auto": "Auto — current year's sheet ({{year}})",
+    "missing": "{{sheet}} (not found in the file)"
+  }
+}

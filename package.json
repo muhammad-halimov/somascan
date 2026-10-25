@@ -1,0 +1,89 @@
+{
+  "name": "somasync",
+  "productName": "Somasync",
+  "version": "1.0.0",
+  "description": "Somasync — Consum → Sarjele / Probe",
+  "main": "dist-host/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && npm run build:engine && npm run build:host",
+    "build:engine": "vite build --config vite.engine.config.ts",
+    "build:host": "vite build --config vite.host.config.ts && vite build --config vite.host.config.ts --mode preload",
+    "start": "npm run build && electron .",
+    "test": "tsx --tsconfig tsconfig.node.json --test tests/*.test.ts",
+    "dist": "npm run build && electron-builder --mac --arm64",
+    "dist:x64": "npm run build && electron-builder --mac --x64",
+    "dist:win": "npm run build && electron-builder --win --x64"
+  },
+  "author": "Muhammad Halimov",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3",
+    "i18next": "^26.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-i18next": "^17.0.16",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  },
+  "build": {
+    "appId": "ro.somaco.somasync",
+    "productName": "Somasync",
+    "asar": false,
+    "icon": "build/icon.png",
+    "files": [
+      "dist/**",
+      "dist-host/**",
+      "dist-engine/**",
+      "assets/**",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "identity": null,
+      "category": "public.app-category.productivity",
+      "artifactName": "Somasync-${version}-mac-${arch}.${ext}"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "compression": "maximum",
+    "electronLanguages": [
+      "en",
+      "en-US",
+      "ru"
+    ],
+    "publish": null,
+    "win": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Somasync-${version}-win-${arch}.${ext}",
+      "icon": "build/icon-win.png"
+    }
+  }
+}

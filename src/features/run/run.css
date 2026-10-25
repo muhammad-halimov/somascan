@@ -1,0 +1,53 @@
+/* Главная: состояние и кнопка. */
+.hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 20px; border-radius: 24px; background: var(--social-bg); }
+.hero-state { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 10px; }
+.hero-meta { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
+.hero-meta svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+.hero-button { width: auto; min-width: 140px; }
+.hero-button.is-stop { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.hero-pending { flex-basis: 100%; }
+
+/* Журнал растягивается до низа окна. */
+.journal-section { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 260px; }
+.journal-section > .form-section { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+.journal-actions { display: flex; gap: 4px; }
+.journal { display: flex; flex: 1 1 0; flex-direction: column; gap: 6px; min-height: 0; overflow: auto; padding: 10px; border-radius: 16px; background: var(--field-bg); color: var(--text-h); font-size: 13px; line-height: 1.45; }
+.journal-empty { padding: 4px; color: var(--text); }
+.journal-time { flex: 0 0 auto; color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Событие: одна строка. */
+.journal-event { display: flex; gap: 10px; padding: 2px 4px; overflow-wrap: anywhere; }
+.journal-event.is-ok { color: var(--success); }
+.journal-event.is-warn { color: var(--attention); }
+.journal-event.is-err { color: var(--danger); }
+
+/* Карточка прогона: цвет полоски слева — итог. */
+.run-card { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-left: 3px solid var(--text); border-radius: 10px; background: var(--bg); }
+.run-card.is-running, .run-card.is-planned { border-left-color: var(--accent); }
+.run-card.is-wrote { border-left-color: var(--success); }
+.run-card.is-nothing { border-left-color: var(--border); }
+.run-card.is-deferred { border-left-color: var(--attention); }
+.run-card.is-failed { border-left-color: var(--danger); }
+.run-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.run-title { display: inline-flex; flex: 1 1 auto; align-items: baseline; gap: 8px; flex-wrap: wrap; font-weight: 600; }
+.run-file, .run-mode { color: var(--text); font-size: 12px; font-weight: 400; }
+.run-mode { padding: 0 6px; border: 1px solid var(--border); border-radius: 999px; }
+.run-body { display: flex; flex-direction: column; gap: 6px; }
+.run-section-title { color: var(--text); font-size: 12px; font-weight: 600; }
+.run-section ul { margin: 2px 0 0; padding-left: 18px; }
+.run-section li { overflow-wrap: anywhere; }
+.run-section.is-warn .run-section-title, .run-line.is-warn, .run-warn { color: var(--attention); }
+.run-section.is-err .run-section-title, .run-line.is-err { color: var(--danger); }
+.run-line.is-ok { color: var(--success); }
+.run-line { overflow-wrap: anywhere; }
+.run-dim { color: var(--text); }
+.run-more { align-self: flex-start; padding: 0; color: var(--accent); background: none; border: 0; font-size: 12px; font-weight: 600; cursor: pointer; }
+.run-more:hover { text-decoration: underline; }
+
+/* Технический вывод движка. */
+.run-tech { max-height: 320px; overflow: auto; padding: 8px 10px; border-radius: 8px; background: var(--field-bg); font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tech-line.is-head { color: var(--accent); font-weight: 600; }
+.tech-line.is-ok { color: var(--success); }
+.tech-line.is-warn { color: var(--attention); }
+.tech-line.is-err { color: var(--danger); }
+.tech-line.is-plan { color: var(--focus); }
