@@ -1,6 +1,8 @@
 [English](README.md) · **Русский**
 
-# Somasync
+# <img src="docs/favicon.ico" alt="Somaco" height="40" align="middle"> Somasync
+
+🇬🇧 English · 🇷🇴 Română · 🇹🇯 Тоҷикӣ · 🇷🇺 Русский
 
 Настольная программа (macOS и Windows) для Somaco (Holcim, Румыния), которая сама ведёт учёт арматурной стали по плавкам. Она переносит расход из месячного отчёта Consum в таблицы Sarjele и Probe — раньше это делали вручную.
 

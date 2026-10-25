@@ -1,6 +1,8 @@
 **English** · [Русский](README.ru.md)
 
-# Somasync
+# <img src="docs/favicon.ico" alt="Somaco" height="40" align="middle"> Somasync
+
+🇬🇧 English · 🇷🇴 Română · 🇹🇯 Тоҷикӣ · 🇷🇺 Русский
 
 A desktop app (macOS and Windows) for Somaco (Holcim, Romania) that keeps track of reinforcing steel by heat. It carries consumption over from the monthly Consum report into the Sarjele and Probe spreadsheets — work that used to be done by hand.
 
