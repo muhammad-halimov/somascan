@@ -18,6 +18,8 @@
 .icon-btn { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; }
 .icon-btn:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn.lock-btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text-h); }
+.icon-btn.lock-btn.is-open { color: var(--accent); }
 
 /* Текст только для экранных дикторов. */
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

@@ -4,7 +4,8 @@
  */
 import { useState, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarIcon, ClockIcon, FactoryIcon, FlagGB, FlagRO, FlagRU, FlagTJ, LinkIcon, ListIcon, LockIcon, PlayIcon, ResetIcon, SunIcon, TableIcon, WrenchIcon } from '@/components/icons/Icons'
+import { CalendarIcon, ClockIcon, FactoryIcon, FileIcon, FlagGB, FlagRO, FlagRU, FlagTJ, LinkIcon, ListIcon, PlayIcon, ResetIcon, SunIcon, TableIcon, WrenchIcon } from '@/components/icons/Icons'
+import { LockButton } from '@/components/ui/Button'
 import { FormSection, Notice } from '@/components/ui/Layout'
 import { List, ListItem, Switch } from '@/components/ui/List'
 import { Tabs } from '@/components/ui/Tabs'
@@ -90,6 +91,8 @@ function ActionsSection({ settings, busy, goHome }: { settings: AppSettings; bus
   const { t } = useTranslation('settings')
   const { dateTime } = useLocale()
   const [backups, setBackups] = useState<string[] | null>(null)
+  const [guardLocked, setGuardLocked] = useState(true)
+  const toggleGuard = () => settingsStore.update({ guardOpenFiles: !settings.guardOpenFiles })
 
   const act = async (name: ActionName) => {
     if (name === 'write' || name === 'migrate-write') {
@@ -119,14 +122,24 @@ function ActionsSection({ settings, busy, goHome }: { settings: AppSettings; bus
         <ListItem leading={<PlayIcon />} primary={t('actions.write')} secondary={t('actions.writeHint')} onClick={() => void act('write')} disabled={busy} />
         <ListItem leading={<TableIcon />} primary={t('actions.migratePlan')} secondary={t('actions.migratePlanHint')} onClick={() => void act('migrate-plan')} disabled={busy} />
         <ListItem leading={<TableIcon />} primary={t('actions.migrateWrite')} secondary={t('actions.migrateWriteHint')} onClick={() => void act('migrate-write')} disabled={busy} />
+        {/* переключатель за замком; замок закрывается снова при уходе с вкладки */}
         <ListItem
           itemRole="checkbox"
-          leading={<LockIcon />}
+          leading={<FileIcon />}
           primary={t('actions.guard')}
           secondary={t('actions.guardHint')}
           selected={settings.guardOpenFiles}
-          trailing={<Switch on={settings.guardOpenFiles} />}
-          onClick={() => settingsStore.update({ guardOpenFiles: !settings.guardOpenFiles })}
+          disabled={guardLocked}
+          aside={
+            <>
+              <LockButton locked={guardLocked} label={guardLocked ? t('actions.guardUnlock') : t('actions.guardLock')} onToggle={() => setGuardLocked(!guardLocked)} />
+              {/* переключатель справа от замка — отдельной кнопкой (строку тоже можно нажать) */}
+              <button type="button" className="switch-btn" tabIndex={-1} aria-hidden="true" disabled={guardLocked} onClick={toggleGuard}>
+                <Switch on={settings.guardOpenFiles} />
+              </button>
+            </>
+          }
+          onClick={toggleGuard}
         />
         <ListItem
           itemRole="checkbox"

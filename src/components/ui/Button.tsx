@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { LockIcon, LockOpenIcon } from '@/components/icons/Icons'
 import './Button.css'
 
 /**
@@ -30,6 +31,15 @@ export function Button({ variant = 'text', icon, busy = false, disabled, classNa
     >
       {icon && <span className="button-icon-wrap" aria-hidden="true">{icon}</span>}
       <span>{children}</span>
+    </button>
+  )
+}
+
+/** Кнопка замка: закрытый замок защищает поле или настройку от случайной правки, открытый — акцентный. */
+export function LockButton({ locked, onToggle, label }: { locked: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button type="button" className={`icon-btn lock-btn${locked ? '' : ' is-open'}`} aria-label={label} title={label} aria-pressed={!locked} onClick={onToggle}>
+      {locked ? <LockIcon /> : <LockOpenIcon />}
     </button>
   )
 }

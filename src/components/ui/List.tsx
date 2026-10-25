@@ -45,6 +45,8 @@ export interface ListItemProps {
   leading?: ReactNode
   /** Элемент справа (галочка, кнопка). */
   trailing?: ReactNode
+  /** Своя кнопка справа, вне строки-кнопки (замок): вложить кнопку в кнопку нельзя. */
+  aside?: ReactNode
   /** Выбранный пункт: акцентный цвет. */
   selected?: boolean
   /** Пункт нельзя нажать. */
@@ -65,7 +67,7 @@ export interface ListItemProps {
  * Строка списка. С `onClick` вся строка — кнопка; без него — просто строка
  * (в `trailing` можно положить свою кнопку, например «удалить»).
  */
-export function ListItem({ primary, secondary, secondaryTone = 'default', leading, trailing, selected = false, disabled = false, onClick, itemRole, className = '', expanded, controls }: ListItemProps) {
+export function ListItem({ primary, secondary, secondaryTone = 'default', leading, trailing, aside, selected = false, disabled = false, onClick, itemRole, className = '', expanded, controls }: ListItemProps) {
   // у переключателей состояние показывает сам переключатель — строку не выделяем
   const classes = `list-item${selected && itemRole !== 'checkbox' ? ' is-selected' : ''}${className ? ` ${className}` : ''}`
   const content = (
@@ -81,7 +83,7 @@ export function ListItem({ primary, secondary, secondaryTone = 'default', leadin
 
   if (!onClick) return <li className={classes}>{content}</li>
   return (
-    <li role="none">
+    <li role="none" className={aside ? 'list-row' : undefined}>
       <button
         type="button"
         role={itemRole}
@@ -94,6 +96,7 @@ export function ListItem({ primary, secondary, secondaryTone = 'default', leadin
       >
         {content}
       </button>
+      {aside}
     </li>
   )
 }

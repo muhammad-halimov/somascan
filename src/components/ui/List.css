@@ -32,6 +32,16 @@
   border-bottom: 0;
 }
 
+/* Строка-кнопка со своей кнопкой справа (`aside`): линия — у всей строки. */
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+.list-row > .list-item { flex: 1 1 auto; min-width: 0; border-bottom: 0; }
+.list > .list-row:last-child { border-bottom: 0; }
+
 .list-item.is-interactive {
   cursor: pointer;
   border-radius: 8px;
@@ -112,3 +122,8 @@
 .switch.is-on { background: var(--accent); }
 .switch.is-on i { transform: translateX(16px); background: var(--on-accent); }
 .list-item:disabled .switch { opacity: .5; }
+
+/* Переключатель отдельной кнопкой справа от строки (между ними — замок). */
+.switch-btn { display: inline-flex; align-items: center; align-self: stretch; padding: 0 6px 0 8px; background: none; border: 0; cursor: pointer; }
+.switch-btn:disabled { cursor: default; }
+.switch-btn:disabled .switch { opacity: .5; }

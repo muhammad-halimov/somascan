@@ -11,6 +11,12 @@ import { applyTheme, registerIpc } from './ipc'
 const QUIT_WAIT_MS = 60_000
 /** Шаг ожидания, мс. */
 const QUIT_POLL_MS = 500
+/**
+ * Сколько после запуска свёрнутым не показывать окно по повторному запуску, мс. При входе в систему macOS
+ * открывает программу дважды (пункт входа и «Открывать окна снова при входе»): второй запуск приходит
+ * как `activate` / `second-instance` и показал бы окно. Из трея окно открывается всегда.
+ */
+const HIDDEN_START_GRACE_MS = 30_000
 
 app.setName('Somasync')
 // Windows: без аппаратного ускорения — на виртуальных машинах и со старыми драйверами окно иначе может не отрисоваться
@@ -19,7 +25,12 @@ if (process.platform === 'win32') app.disableHardwareAcceleration()
 if (!app.requestSingleInstanceLock()) app.quit()
 else {
   const h = new HostServices()
-  app.on('second-instance', () => h.window.show())
+  /** До этого времени повторный запуск окно не показывает (запуск свёрнутым). */
+  let quietUntil = 0
+  const reopen = () => {
+    if (Date.now() >= quietUntil) h.window.show()
+  }
+  app.on('second-instance', reopen)
   // ошибки главного процесса — в журнал (log.txt), а не в никуда
   process.on('uncaughtException', (e) => h.journal.event('err', message('event.error', { error: e.stack ?? e.message })))
   process.on('unhandledRejection', (e) => h.journal.event('err', message('event.error', { error: e instanceof Error ? (e.stack ?? e.message) : String(e) })))
@@ -36,14 +47,16 @@ else {
     const trayProblem = h.tray.create()
     if (trayProblem) h.journal.event('warn', message('event.trayUnavailable', { error: trayProblem }))
     // свёрнутым — только если есть значок, из которого окно можно открыть
-    const win = h.window.create(h.settings.getSnapshot().startMinimized && h.tray.exists)
+    const hidden = h.settings.getSnapshot().startMinimized && h.tray.exists
+    if (hidden) quietUntil = Date.now() + HIDDEN_START_GRACE_MS
+    const win = h.window.create(hidden)
     h.journal.event('info', message('event.appStarted', { version: app.getVersion() }))
     // продолжаем с того же места: если слежение было включено перед выходом — включаем снова
     if (h.settings.getSnapshot().running) {
       h.journal.event('info', message('event.resume'))
       win.webContents.once('did-finish-load', () => void h.watcher.start())
     }
-    app.on('activate', () => h.window.show())
+    app.on('activate', reopen)
   }).catch((e: unknown) => {
     // запуск не удался: сказать об этом, а не висеть процессом без окна
     const text = e instanceof Error ? (e.stack ?? e.message) : String(e)

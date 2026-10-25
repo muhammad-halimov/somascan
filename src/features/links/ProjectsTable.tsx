@@ -8,8 +8,8 @@
  */
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AddIcon, ChevronDownIcon, FactoryIcon, LockIcon, LockOpenIcon, TableIcon, TrashIcon } from '@/components/icons/Icons'
-import { Button } from '@/components/ui/Button'
+import { AddIcon, ChevronDownIcon, FactoryIcon, TableIcon, TrashIcon } from '@/components/icons/Icons'
+import { Button, LockButton as Lock } from '@/components/ui/Button'
 import { SelectInput, TextInput } from '@/components/ui/Inputs'
 import { Field, FormSection, Notice, StatusBadge } from '@/components/ui/Layout'
 import { List, ListItem, Switch } from '@/components/ui/List'
@@ -116,15 +116,10 @@ function sheetChoice(scan: ScanData | null, current: string, t: ReturnType<typeo
   }
 }
 
-/** Кнопка замка. */
+/** Кнопка замка листа проекта. */
 function LockButton({ locked, onToggle, name }: { locked: boolean; onToggle: () => void; name: string }) {
   const { t } = useTranslation('links')
-  const label = locked ? t('projects.unlock', { name }) : t('projects.lockIt', { name })
-  return (
-    <button type="button" className={`icon-btn lock-btn${locked ? '' : ' is-open'}`} aria-label={label} title={label} aria-pressed={!locked} onClick={onToggle}>
-      {locked ? <LockIcon /> : <LockOpenIcon />}
-    </button>
-  )
+  return <Lock locked={locked} onToggle={onToggle} label={locked ? t('projects.unlock', { name }) : t('projects.lockIt', { name })} />
 }
 
 /** Настроенный проект. */
