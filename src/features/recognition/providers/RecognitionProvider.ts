@@ -1,6 +1,7 @@
 import { HttpError } from '@/lib/http/HttpError'
 import { requestJson, type JsonRequestInit } from '@/lib/http/requestJson'
 import type { InlineImage } from '../image/InlineImage'
+import type { LabelFieldDefinition } from '../label/labelFields'
 import { ModelFilter, type ModelAgeLimit } from '../catalog/ModelFilter'
 import type { DirectoryModel } from '../catalog/PublicModelDirectory'
 import { fromTimestamp } from '../catalog/releaseDate'
@@ -15,6 +16,10 @@ export interface RecognitionRequest {
   model: string
   /** Инструкция для модели. */
   prompt: string
+  /** Поля, которые нужно прочитать (то же, что в промпте, — для распознавания на устройстве, где промпта нет). */
+  fields: readonly LabelFieldDefinition[]
+  /** Известные поставщики (то же, что в промпте). */
+  suppliers: readonly string[]
   /** Учётные данные и отмена. */
   access: ProviderAccess
 }
@@ -41,6 +46,11 @@ export abstract class RecognitionProvider {
   readonly reportsReleaseDates: boolean = true
   /** Ключ провайдера в публичном каталоге моделей или `null`, если его там нет. */
   readonly directoryId: string | null = null
+  /**
+   * Распознаёт на самом устройстве, без сети: нет ни ключа, ни сервера, ни списка моделей
+   * (настройки их не показывают, каталог моделей не загружается).
+   */
+  readonly onDevice: boolean = false
 
   /** Можно ли выполнить запрос с этими учётными данными. */
   isConfigured(access: Pick<ProviderAccess, 'apiKey'>) {

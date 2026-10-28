@@ -1,0 +1,16 @@
+/*
+ * Распознавание на устройстве во вкладке «Основные»: пояснение и статус.
+ */
+
+.on-device-text {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.on-device-status {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}

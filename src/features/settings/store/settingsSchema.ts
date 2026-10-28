@@ -4,7 +4,7 @@ import { DEFAULT_KNOWN_SUPPLIERS, normalizeSuppliers } from '@/features/recognit
 import { BUILT_IN_FIELDS, createDefaultLabelFields, isEnabledByDefault, type LabelFieldDefinition, type LabelFieldKind } from '@/features/recognition/label/labelFields'
 import { LANGUAGES } from '@/i18n/languages'
 import type { ProviderRegistry } from '@/features/recognition/providers/ProviderRegistry'
-import { isProviderId, PROVIDER_IDS, type ProviderId } from '@/features/recognition/types'
+import { isModelProviderId, isProviderId, PROVIDER_IDS, type ModelProviderId, type ProviderId } from '@/features/recognition/types'
 import { THEME_PREFERENCES, type ThemePreference } from '@/lib/theme/theme'
 import { isOneOf, isRecord, isString, readField } from '@/lib/validation/guards'
 
@@ -17,8 +17,10 @@ export interface GeneralSettings {
   language: Language
   /** Тема оформления: как в системе, светлая или тёмная. */
   theme: ThemePreference
-  /** Провайдер, используемый для распознавания. */
+  /** Провайдер, используемый для распознавания: на устройстве или ИИ-модель. */
   provider: ProviderId
+  /** ИИ-провайдер, выбранный последним: на него переключает «ИИ-модель», когда распознаёт телефон. */
+  modelProvider: ModelProviderId
   /** Выбранная модель для каждого провайдера; пустое значение или модель, которой больше нет в списке, означает «самая новая из предлагаемых». */
   models: PerProvider<string>
   /** API-ключ каждого провайдера, вводится пользователем. */
@@ -137,7 +139,8 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
     general: {
       language: DEFAULT_LANGUAGE,
       theme: 'system',
-      provider: 'google',
+      provider: 'device',
+      modelProvider: 'google',
       models: perProvider(() => ''),
       apiKeys: perProvider(() => ''),
       endpoints: perProvider((id) => registry.get(id).defaultEndpoint),
@@ -279,6 +282,9 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
       language: readLanguageCode(isRecord(general) ? general.language : undefined) ?? defaults.general.language,
       theme: readField(general, 'theme', isOneOf(THEME_PREFERENCES), defaults.general.theme),
       provider: readField(general, 'provider', isProviderId, defaults.general.provider),
+      // Нет сохранённого (настройки прежней версии) — ИИ-провайдер, которым распознавали до сих пор.
+      modelProvider: readField(general, 'modelProvider', isModelProviderId,
+        readField(general, 'provider', isModelProviderId, defaults.general.modelProvider)),
       models: readPerProvider(isRecord(general) ? general.models : undefined, defaults.general.models),
       apiKeys: readPerProvider(isRecord(general) ? general.apiKeys : undefined, defaults.general.apiKeys),
       endpoints: readPerProvider(isRecord(general) ? general.endpoints : undefined, defaults.general.endpoints),

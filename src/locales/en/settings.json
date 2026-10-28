@@ -14,12 +14,25 @@
   },
   "general": {
     "language": "Interface language",
+    "recognition": "Recognition",
+    "recognitionModes": {
+      "device": "Phone",
+      "model": "AI model"
+    },
     "provider": "AI provider",
     "providers": {
+      "device": "On device",
       "google": "Google",
       "anthropic": "Anthropic",
       "openai": "OpenAI",
       "lmstudio": "LM Studio"
+    },
+    "onDevice": {
+      "title": "On-device recognition",
+      "text": "The phone reads the tag itself with {{engine}} — no internet, keys or server: photos never leave the device. Fields are found by the captions printed on the tag (Heat, Charge, Șarjă, Weight, Greutate, Diameter…) and by the look of the values; the producer is matched against the known suppliers.",
+      "offline": "Works offline",
+      "unavailable": "Only in the Android and iOS app",
+      "notice": "Experimental: tags with unusual captions are read worse than by an AI model. Fill in anything missing in edit mode."
     },
     "model": "Model",
     "refresh": "Refresh",
@@ -196,7 +209,7 @@
     "cancelCaption": "Cancel",
     "fieldsSummary": "Selected: {{count}} of {{total}}",
     "suppliers": "Known suppliers",
-    "suppliersHint": "When the mill name on a tag is hard to read, the model checks this list and picks the matching supplier instead of guessing letters. A clearly printed name is copied as is.",
+    "suppliersHint": "When the mill name on a tag is hard to read, recognition checks this list and picks the matching supplier instead of guessing letters. A clearly printed name is copied as is.",
     "suppliersEditHint": "Tap a supplier to rename or delete it. Write names the way they appear on tags.",
     "suppliersSummary": "Suppliers: {{count}}",
     "suppliersEmpty": "List is empty — the model reads names without hints",

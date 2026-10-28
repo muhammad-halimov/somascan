@@ -17,6 +17,8 @@ final class SomascanBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(NativeHttpPlugin())
         // Очередь выгрузки: движок вне WKWebView, пишет таблицу и в свёрнутом приложении.
         bridge?.registerPluginInstance(UploadEnginePlugin())
+        // Распознавание бирки на устройстве: Vision читает текст и коды без сети.
+        bridge?.registerPluginInstance(TagOcrPlugin())
 
         guard let webView = bridge?.webView else { return }
         let scrollView = webView.scrollView

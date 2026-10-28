@@ -9,10 +9,17 @@ import { getProviderAccess } from '@/features/settings/store/providerAccess'
 import { settingsStore } from '@/features/settings/store/SettingsStore'
 import { lmStudioGate } from '@/features/uploads/leases/lmStudioGate'
 
-/** Выбирает модель; если списка ещё нет в кэше — сначала загружает его. */
+/**
+ * Длинная сторона фото для распознавания на устройстве: мелкий текст бирки (номера сертификатов) читается
+ * лучше, чем на уменьшенном для облака фото, а в сеть фото не уходит.
+ */
+const ON_DEVICE_IMAGE_SIDE = 2560
+
+/** Выбирает модель; если списка ещё нет в кэше — сначала загружает его. У распознавания на устройстве модели нет. */
 async function resolveModel(signal: AbortSignal) {
   const { general, advanced } = settingsStore.getSnapshot()
   const id = general.provider
+  if (providerRegistry.get(id).onDevice) return ''
   const offered = () => modelCatalog.modelsOf(modelCatalog.getSnapshot(), id, advanced.modelMaxAgeMonths)
   let model = ModelFilter.pick(general.models[id], offered())
   if (!model && !providerRegistry.get(id).allowsDefaultModel) {
@@ -58,7 +65,7 @@ async function recognizeNow(imageUrl: string, signal: AbortSignal) {
     model,
     access: { ...access, signal },
     imageUrl,
-    maxImageSide: advanced.maxImageSide,
+    maxImageSide: provider.onDevice ? ON_DEVICE_IMAGE_SIDE : advanced.maxImageSide,
     instructions: advanced.prompt,
     fields: recognizedLabelFields(advanced.labelFields),
     suppliers: advanced.knownSuppliers,

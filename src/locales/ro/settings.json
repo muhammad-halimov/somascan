@@ -14,12 +14,25 @@
   },
   "general": {
     "language": "Limba interfeței",
+    "recognition": "Recunoaștere",
+    "recognitionModes": {
+      "device": "Telefon",
+      "model": "Model AI"
+    },
     "provider": "Furnizor AI",
     "providers": {
+      "device": "Pe dispozitiv",
       "google": "Google",
       "anthropic": "Anthropic",
       "openai": "OpenAI",
       "lmstudio": "LM Studio"
+    },
+    "onDevice": {
+      "title": "Recunoaștere pe dispozitiv",
+      "text": "Telefonul citește singur eticheta — {{engine}}, fără internet, chei sau server: fotografiile nu pleacă nicăieri. Câmpurile se găsesc după inscripțiile de pe etichetă (Heat, Charge, Șarjă, Weight, Greutate, Diameter…) și după forma valorilor; producătorul se compară cu lista furnizorilor cunoscuți.",
+      "offline": "Funcționează fără internet",
+      "unavailable": "Doar în aplicația pentru Android și iOS",
+      "notice": "Funcție experimentală: etichetele cu inscripții neobișnuite sunt citite mai slab decât de un model AI. Completați ce lipsește în modul de editare."
     },
     "model": "Model",
     "refresh": "Actualizează",
@@ -196,7 +209,7 @@
     "cancelCaption": "Anulare",
     "fieldsSummary": "Selectate: {{count}} din {{total}}",
     "suppliers": "Furnizori cunoscuți",
-    "suppliersHint": "Când numele producătorului de pe etichetă se citește greu, modelul verifică această listă și alege furnizorul potrivit în loc să ghicească literele. Un nume tipărit clar este copiat ca atare.",
+    "suppliersHint": "Când numele producătorului de pe etichetă se citește greu, recunoașterea verifică această listă și alege furnizorul potrivit în loc să ghicească literele. Un nume tipărit clar este copiat ca atare.",
     "suppliersEditHint": "Atingeți un furnizor pentru a-l redenumi sau șterge. Scrieți numele așa cum apar pe etichete.",
     "suppliersSummary": "Furnizori: {{count}}",
     "suppliersEmpty": "Lista este goală — modelul citește numele fără indicii",

@@ -29,6 +29,8 @@ export type RecognitionErrorCode =
   | 'noApiKey'
   /** Для провайдера нет доступной модели. */
   | 'noModel'
+  /** Распознавание на устройстве недоступно (в браузере). */
+  | 'onDeviceUnavailable'
 
 /** Значения, подставляемые в локализованное сообщение. */
 export interface RecognitionErrorParams {

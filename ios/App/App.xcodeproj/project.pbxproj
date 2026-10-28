@@ -29,6 +29,7 @@
 		FE03BACF25D94C95A241139E /* UploadEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 548978CE709245A4A0D1C83B /* UploadEngine.swift */; };
 		9A01D235F62A4DEEB5378978 /* UploadBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD35C1693C414E659ACF9D18 /* UploadBackground.swift */; };
 		31BAD9F8E1A344769434E993 /* UploadEnginePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B19026139B43368526F5B2 /* UploadEnginePlugin.swift */; };
+		F77D317EF547D339A0F30678 /* TagOcrPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92031BA955C2B9649B4D3900 /* TagOcrPlugin.swift */; };
 		61A2BBE1F219DC56F96B132E /* UploadActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3153791EC5058A7A5D000D59 /* UploadActivityAttributes.swift */; };
 		2BEFB229B4D88C5E9297249C /* UploadLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68D7FA80CEBD94C5244DFAA /* UploadLiveActivity.swift */; };
 		1A838CF77D8A737D7F8337DE /* UploadActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3153791EC5058A7A5D000D59 /* UploadActivityAttributes.swift */; };
@@ -61,6 +62,7 @@
 		548978CE709245A4A0D1C83B /* UploadEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadEngine.swift; sourceTree = "<group>"; };
 		AD35C1693C414E659ACF9D18 /* UploadBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadBackground.swift; sourceTree = "<group>"; };
 		C4B19026139B43368526F5B2 /* UploadEnginePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadEnginePlugin.swift; sourceTree = "<group>"; };
+		92031BA955C2B9649B4D3900 /* TagOcrPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagOcrPlugin.swift; sourceTree = "<group>"; };
 		3153791EC5058A7A5D000D59 /* UploadActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadActivityAttributes.swift; sourceTree = "<group>"; };
 		A68D7FA80CEBD94C5244DFAA /* UploadLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadLiveActivity.swift; sourceTree = "<group>"; };
 		7B985025E5C064CC84467E6C /* UploadActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadActivityWidget.swift; sourceTree = "<group>"; };
@@ -154,6 +156,7 @@
 				E8FBE714201AF0C1C979E31F /* GoogleDriveAuthPlugin.swift */,
 				9259E0EA7096BC0A13DEB46D /* NativeHttpPlugin.swift */,
 				C4B19026139B43368526F5B2 /* UploadEnginePlugin.swift */,
+				92031BA955C2B9649B4D3900 /* TagOcrPlugin.swift */,
 				AD35C1693C414E659ACF9D18 /* UploadBackground.swift */,
 				548978CE709245A4A0D1C83B /* UploadEngine.swift */,
 				A68D7FA80CEBD94C5244DFAA /* UploadLiveActivity.swift */,
@@ -309,6 +312,7 @@
 				DDB230B26D8276B886E1424B /* GoogleDriveAuthPlugin.swift in Sources */,
 				369885684A50055D8346D06E /* NativeHttpPlugin.swift in Sources */,
 				31BAD9F8E1A344769434E993 /* UploadEnginePlugin.swift in Sources */,
+				F77D317EF547D339A0F30678 /* TagOcrPlugin.swift in Sources */,
 				9A01D235F62A4DEEB5378978 /* UploadBackground.swift in Sources */,
 				FE03BACF25D94C95A241139E /* UploadEngine.swift in Sources */,
 				2BEFB229B4D88C5E9297249C /* UploadLiveActivity.swift in Sources */,

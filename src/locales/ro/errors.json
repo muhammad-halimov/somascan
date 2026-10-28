@@ -11,7 +11,8 @@
     "imageUnreadable": "Fotografia nu a putut fi citită.",
     "notAnImage": "Fișierul selectat nu este o imagine.",
     "noApiKey": "Introduceți o cheie API pentru {{provider}} în setări.",
-    "noModel": "Niciun model disponibil pentru {{provider}}. Actualizați lista în setări."
+    "noModel": "Niciun model disponibil pentru {{provider}}. Actualizați lista în setări.",
+    "onDeviceUnavailable": "Recunoașterea pe dispozitiv funcționează doar în aplicația pentru Android și iOS. Alegeți alt furnizor în setări."
   },
   "uploadFailed": "Eroare la scriere",
   "upload": {

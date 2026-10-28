@@ -2,6 +2,7 @@ import type { ProviderId } from '../types'
 import { AnthropicProvider } from './AnthropicProvider'
 import { GeminiProvider } from './GeminiProvider'
 import { LMStudioProvider } from './LMStudioProvider'
+import { OnDeviceProvider } from './OnDeviceProvider'
 import { OpenAIProvider } from './OpenAIProvider'
 import type { RecognitionProvider } from './RecognitionProvider'
 
@@ -30,6 +31,7 @@ export class ProviderRegistry {
 
 /** Провайдеры приложения. Чтобы добавить нового: унаследуйте `RecognitionProvider` и зарегистрируйте здесь. */
 export const providerRegistry = new ProviderRegistry([
+  new OnDeviceProvider(),
   new GeminiProvider(),
   new AnthropicProvider(),
   new OpenAIProvider(),

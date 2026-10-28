@@ -65,7 +65,8 @@ export function AdvancedTab() {
         action={<Button icon={<RefreshIcon />} busy={isRefreshing} onClick={refreshAll}>{t('advanced.refreshAll')}</Button>}
       >
         <List>
-          {providerRegistry.all().map(({ id }) => {
+          {/* У распознавания на устройстве списка моделей нет. */}
+          {providerRegistry.all().filter((provider) => !provider.onDevice).map(({ id }) => {
             const entry = catalog.entries[id]
             const error = catalog.errors[id]
             const isLoading = catalog.loading[id] ?? false

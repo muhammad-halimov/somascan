@@ -22,6 +22,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PhotoImportPlugin.class);
         // Очередь выгрузки: движок вне WebView экрана, пишет таблицу и в свёрнутом/закрытом приложении.
         registerPlugin(UploadEnginePlugin.class);
+        // Распознавание бирки на устройстве: ML Kit читает текст и коды без сети.
+        registerPlugin(TagOcrPlugin.class);
         super.onCreate(savedInstanceState);
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

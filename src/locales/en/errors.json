@@ -11,7 +11,8 @@
     "imageUnreadable": "Couldn't read the photo.",
     "notAnImage": "The selected file is not an image.",
     "noApiKey": "Enter an API key for {{provider}} in settings.",
-    "noModel": "No model available for {{provider}}. Refresh the list in settings."
+    "noModel": "No model available for {{provider}}. Refresh the list in settings.",
+    "onDeviceUnavailable": "On-device recognition works only in the Android and iOS app. Choose another provider in settings."
   },
   "uploadFailed": "Upload error",
   "upload": {

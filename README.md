@@ -6,7 +6,7 @@
 
 A mobile app for **Somaco (Holcim), Romania** — OCR scanning of the labels (delivery notes) of incoming materials at the plant.
 
-An employee photographs a label (rebar, wire rod in coils and so on); the app recognizes it with AI, extracts the fields and appends a row to an `.xlsx` table. The table is kept on a Windows network drive or in Google Drive.
+An employee photographs a label (rebar, wire rod in coils and so on); the app recognizes it right on the phone (ML Kit / Apple Vision, no internet) or with an AI model, extracts the fields and appends a row to an `.xlsx` table. The table is kept on a Windows network drive or in Google Drive.
 
 **Stack:** Vite · React 19 · TypeScript · Capacitor 8 (Android / iOS) · oxlint.
 
@@ -48,6 +48,7 @@ npm run build && node scripts/screenshots/capture.mjs
   - [Photo quality](#photo-quality)
   - [Recognition settings (Advanced)](#recognition-settings-advanced)
   - [Known suppliers](#known-suppliers)
+  - [On-device recognition (ML Kit / Vision)](#on-device-recognition-ml-kit--vision)
   - [Recognition providers](#recognition-providers)
   - [Several tags at once (grid)](#several-tags-at-once-grid)
   - [Table storage (.xlsx)](#table-storage-xlsx)
@@ -85,7 +86,7 @@ npm run build && node scripts/screenshots/capture.mjs
 ## How it works
 
 ```
-Label photo ──► OCR / recognition (Gemini | Claude | OpenAI | LM Studio)
+Label photo ──► OCR / recognition (on device: ML Kit | Vision; Gemini | Claude | OpenAI | LM Studio)
             ──► structured fields ──► row in .xlsx
             ──► storage: Windows network drive | Google Drive
 ```
@@ -100,7 +101,7 @@ Along with the fields, the model rates the photo itself (the `_photo` key in the
 
 ### Recognition settings (Advanced)
 
-- **Prompt** — instructions for the model; edited right in the tab, “Restore default” brings back the built-in one. The list of fields with explanations, the known-suppliers rule, the photo rating and the JSON shape are appended to it automatically (`recognition/label/labelPrompt.ts`).
+- **Prompt** — instructions for the model (on-device recognition has neither a prompt nor models); edited right in the tab, “Restore default” brings back the built-in one. The list of fields with explanations, the known-suppliers rule, the photo rating and the JSON shape are appended to it automatically (`recognition/label/labelPrompt.ts`).
 - **Fields** — which fields are read from the photo: built-in ones (four are on by default — producer, size, heat number, weight; the others, such as steel grade and quality document, are optional) and custom ones (a name in each language and an explanation for the model). The “Sheet” field does not come from the photo: it picks the log sheet for the tag (see “Settings” under “Writing to a network drive”).
 - **Known suppliers** — see below.
 - **Models** — show models no older than 3 / 6 / 12 months, or all; **model lists** — the update date for each provider and “Refresh all”.
@@ -111,10 +112,26 @@ Along with the fields, the model rates the photo itself (the `_photo` key in the
 
 “Advanced” holds a list of supplier mills (`recognition/label/knownSuppliers.ts`). It is added to the prompt after the list of fields: if the producer name on the tag is hard to read and the model read something vaguely similar, it takes the spelling from the list instead of a made-up one; a clearly printed name is copied as is, and with no sign of a supplier — `null`. By default — 35 mills from the steel sample log for the lab (2016–2026, spelling variants and typos merged into one name). The list can be edited with the pencil: add, rename, delete, restore the default one; with an empty list the rule is not added to the prompt.
 
+### On-device recognition (ML Kit / Vision)
+
+The default provider, **On device**, needs neither internet nor keys nor a server: the phone reads the tag text itself — Google ML Kit on Android (Text Recognition v2 for Latin script and Barcode Scanning; the models are bundled into the APK, Google Play Services are not needed — `TagOcrPlugin.java`), Apple Vision on iPhone (`VNRecognizeTextRequest` in accurate mode, Latin-script languages, no dictionary correction, and `VNDetectBarcodesRequest` — `TagOcrPlugin.swift`). The engine returns lines of text with their frames, and rules in `recognition/ocr/` assemble the fields from them — no model and no training:
+
+1. **Captions.** Each field knows how mills caption it in different languages (`fieldRules.ts`): heat — Heat, Heat No, Charge, Șarjă, Adag, Wytop, Colata, Döküm, Плавка…; weight — Weight, Greutate, Tömeg, Waga, Ağırlık…; size — Size, Diameter, Diametru, Átmérő, Przekrój… The comparison ignores case, diacritics, spaces and punctuation (OCR often reads “/” as “l”, and “ChargelAdag” still gives two captions); of overlapping captions the longer one wins (“production date” is not “product”). Custom fields are found by their names in every language.
+2. **Where the value is.** After the caption in the same line (“Heat No: 251216”), otherwise to the right in the same row of the tag, otherwise right below the caption; another caption in between is a boundary. The frames are straightened by the overall tilt of the tag (a photo taken at an angle), and distances are measured in line heights (`pageLayout.ts`).
+3. **What the value looks like** (`valueReaders.ts`). The heat is a code with digits (“25R00581”). The size is a number from 4 to 60 with Ø, R or mm (“12” in a “(mm)” row gives “12 mm”). The weight is in kilograms, with the unit taken from the value or the caption (“2.0 Ton Approx” gives 2000, “2 650 kg” gives 2650). Dates are in ISO and times in 24-hour format. A value that looks exactly like its field outweighs a doubtful one, and each value line goes to one field only.
+4. **Producer** — from the known suppliers list, forgiving one or two OCR errors in long names: first next to the “Producer” caption, then anywhere on the tag (header, logo, address). The product, the steel grade (“B500C”) and a size marked with “Ø” are found without a caption too.
+5. **Codes.** If a number is also in the QR or DataMatrix code, look-alike characters are fixed from the code (“25R0O581” becomes “25R00581”). “key: value” pairs inside a code are read like lines of the tag.
+6. **Rotation.** If few captions are found, the photo is read again turned by 90°, 270° and 180°, and the turn with the most captions wins (a tag shot sideways).
+
+The answer has the same shape as a model's (fields plus `_photo`), so everything after it is unchanged: the card, required fields, heat duplicates, the queue. A photo with no text gets “no tag in the photo”, and text without a single caption gets “retake”. The rules are covered by tests on real OCR text of a tag (`tests/onDeviceLabel.test.ts`, fixtures in `tests/fixtures/ocr/`).
+
+**Experimental:** a tag with unusual captions is read worse than by an AI model; the missing required fields are filled in during editing. In the browser (dev server) on-device recognition is unavailable — choose another provider.
+
 ### Recognition providers
 
 | Provider | Where it runs | Note |
 |---|---|---|
+| **On device** (default) | on the phone: ML Kit (Android), Apple Vision (iOS) | no internet, keys or server; fields by rules, experimental |
 | **Gemini** | cloud (Google) | API key required |
 | **Claude** | cloud (Anthropic) | API key required |
 | **OpenAI** | cloud | API key required |

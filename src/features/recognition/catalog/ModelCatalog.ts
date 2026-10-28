@@ -142,6 +142,8 @@ export class ModelCatalog extends Store<ModelCatalogState> {
   /** Откуда брать список для этих учётных данных или `null`, если загрузить его нельзя. */
   private sourceFor(id: ProviderId, access: SyncAccess): { source: CatalogSource; fingerprint: string } | null {
     const provider = this.registry.get(id)
+    // У распознавания на устройстве моделей нет — и списка тоже.
+    if (provider.onDevice) return null
     if (provider.isConfigured(access)) return { source: 'provider', fingerprint: fingerprintOf(access) }
     if (provider.directoryId) return { source: 'directory', fingerprint: 'public' }
     return null

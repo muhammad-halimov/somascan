@@ -65,10 +65,12 @@ export class LabelRecognizer {
    * Распознаёт одно фото: промпт собирается из инструкции, выбранных полей и известных поставщиков;
    * заодно оценивается качество фото.
    */
-  async recognize({ providerId, model, access, imageUrl, maxImageSide, instructions, fields, suppliers }: LabelRecognitionRequest): Promise<LabelRecognition> {
-    const image = await InlineImage.fromUrl(imageUrl, { maxSide: maxImageSide })
+  async recognize({ providerId, model, access, imageUrl, maxImageSide, instructions, fields, suppliers = [] }: LabelRecognitionRequest): Promise<LabelRecognition> {
+    const provider = this.registry.get(providerId)
+    // Распознаванию на устройстве — всегда перерисованное фото: поворот из EXIF уже применён.
+    const image = await InlineImage.fromUrl(imageUrl, { maxSide: maxImageSide, redraw: provider.onDevice })
     const prompt = buildLabelPrompt(instructions, fields, suppliers)
-    const text = await this.registry.get(providerId).recognize({ image, model, prompt, access })
+    const text = await provider.recognize({ image, model, prompt, fields, suppliers, access })
     const { label, photo } = this.parser.parseAnswer(text, fields.map((field) => field.key))
     // Проблемы, названные моделью, учитываем, только если она сочла фото непригодным.
     const issues = mergePhotoIssues(photo.ok ? [] : photo.issues, image.issues)

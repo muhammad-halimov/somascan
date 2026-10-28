@@ -4,7 +4,7 @@ import { Store } from '@/lib/store/Store'
 import type { Language } from '@/i18n/languages'
 import type { ThemePreference } from '@/lib/theme/theme'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
-import type { ProviderId } from '@/features/recognition/types'
+import { isModelProviderId, type ProviderId } from '@/features/recognition/types'
 import { cleanSupplierName, DEFAULT_KNOWN_SUPPLIERS, normalizeSuppliers, supplierKey } from '@/features/recognition/label/knownSuppliers'
 import { createDefaultLabelFields, createLabelKey, isEnabledByDefault, type LabelFieldDefinition, type LabelKey } from '@/features/recognition/label/labelFields'
 import { DEFAULT_LABEL_INSTRUCTIONS } from '@/features/recognition/label/labelPrompt'
@@ -73,9 +73,9 @@ export class SettingsStore extends Store<AppSettings> {
     this.updateGeneral((general) => ({ ...general, theme }))
   }
 
-  /** Задаёт провайдера распознавания. */
+  /** Задаёт провайдера распознавания; ИИ-провайдер запоминается (к нему вернёт «ИИ-модель»). */
   setProvider(provider: ProviderId) {
-    this.updateGeneral((general) => ({ ...general, provider }))
+    this.updateGeneral((general) => ({ ...general, provider, modelProvider: isModelProviderId(provider) ? provider : general.modelProvider }))
   }
 
   /** Запоминает выбранную модель провайдера. */

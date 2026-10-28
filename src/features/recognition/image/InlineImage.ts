@@ -9,6 +9,11 @@ export interface InlineImageOptions {
    * Фото с телефона — 12+ Мп; изображение поменьше загружается быстрее и стоит меньше токенов.
    */
   maxSide: number | null
+  /**
+   * Всегда перерисовывать фото в JPEG, даже небольшое: поворот из EXIF применяется к пикселям.
+   * Нужно распознаванию на устройстве — нативный декодер EXIF не читает.
+   */
+  redraw?: boolean
 }
 
 /** Качество JPEG при уменьшении и перекодировании изображения. */
@@ -45,7 +50,7 @@ export class InlineImage {
    * который принимают не все провайдеры (HEIC, GIF, BMP…), перекодируется в JPEG, если платформа его декодирует.
    * @throws {RecognitionError} `imageUnreadable` или `notAnImage`.
    */
-  static async fromUrl(url: string, { maxSide }: InlineImageOptions): Promise<InlineImage> {
+  static async fromUrl(url: string, { maxSide, redraw = false }: InlineImageOptions): Promise<InlineImage> {
     let blob: Blob
     try {
       const response = await fetch(url)
@@ -68,7 +73,7 @@ export class InlineImage {
     if (!type && !bitmap) throw new RecognitionError('notAnImage')
     try {
       const issues = bitmap ? analyzePhoto(bitmap) : []
-      const prepared = bitmap ? await InlineImage.prepare(blob, type, bitmap, maxSide) : blob
+      const prepared = bitmap ? await InlineImage.prepare(blob, redraw ? null : type, bitmap, maxSide) : blob
       const dataUrl = await InlineImage.readAsDataUrl(prepared)
       const mimeType = prepared === blob ? (type ?? 'image/jpeg') : prepared.type || 'image/jpeg'
       return new InlineImage(mimeType, dataUrl.slice(dataUrl.indexOf(',') + 1), issues)

@@ -2,15 +2,24 @@
  * Общие типы функциональности распознавания.
  */
 
-/** Все поддерживаемые ИИ-провайдеры в порядке показа в настройках. */
-export const PROVIDER_IDS = ['google', 'anthropic', 'openai', 'lmstudio'] as const
+/** Все поддерживаемые провайдеры распознавания в порядке показа в настройках: первым — на устройстве. */
+export const PROVIDER_IDS = ['device', 'google', 'anthropic', 'openai', 'lmstudio'] as const
 
-/** Идентификатор ИИ-провайдера. */
+/** Идентификатор провайдера распознавания. */
 export type ProviderId = (typeof PROVIDER_IDS)[number]
 
 /** Проверка типа для `ProviderId`. */
 export const isProviderId = (value: unknown): value is ProviderId =>
   typeof value === 'string' && (PROVIDER_IDS as readonly string[]).includes(value)
+
+/** Распознавание на самом устройстве (без модели). */
+export const ON_DEVICE_PROVIDER = 'device' satisfies ProviderId
+
+/** Провайдер ИИ-модели (облако или LM Studio) — всё, кроме распознавания на устройстве. */
+export type ModelProviderId = Exclude<ProviderId, typeof ON_DEVICE_PROVIDER>
+
+/** Проверка типа для `ModelProviderId`. */
+export const isModelProviderId = (value: unknown): value is ModelProviderId => isProviderId(value) && value !== ON_DEVICE_PROVIDER
 
 /** Характеристики модели из её источников (API провайдера, каталог models.dev, LM Studio). */
 export interface ModelDetails {

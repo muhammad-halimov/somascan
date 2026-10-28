@@ -490,6 +490,26 @@ export function TagIcon() {
   )
 }
 
+/** Рамка видоискателя с текстом: распознавание текста на устройстве. */
+export function ScanTextIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+      <path d="M7 8h8M7 12h10M7 16h6" />
+    </svg>
+  )
+}
+
+/** Телефон: распознавание на самом устройстве. */
+export function SmartphoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="6" y="2" width="12" height="20" rx="2.5" />
+      <path d="M11 18h2" />
+    </svg>
+  )
+}
+
 /** Завод: известные поставщики. */
 export function FactoryIcon() {
   return (
