@@ -19,9 +19,9 @@
   min-width: 0;
   max-width: 100%;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   margin: 0;
-  padding: 6px 12px 6px 7px;
+  padding: 6px 12px 6px 9px;
   color: #f1f3f4;
   background: rgb(24 26 31 / 52%);
   border: 1px solid rgb(255 255 255 / 16%);
@@ -38,25 +38,18 @@
   animation: backdrop-exit 200ms ease-in forwards;
 }
 
-/* Значок — как оранжевый «!» в сетке; на 1 px выше центра строки: так он ровно с буквами, а не со строкой. */
-.retake-hint-icon {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  place-items: center;
-  color: #fff;
-  background: var(--attention);
-  border-radius: 50%;
-  translate: 0 -0.5px;
-}
-
-.retake-hint-icon svg {
-  width: 12px;
-  height: 12px;
+/*
+ * Значок — «i» в круге, как у примечания «Проверьте данные» (спокойнее оранжевого «!»). Цвет — акцент тёмной темы:
+ * таблетка тёмная в обеих темах. На 1 px выше центра строки: так он ровно с буквами, а не со строкой.
+ */
+.retake-hint svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  translate: 0 -1px;
   fill: none;
-  stroke: currentColor;
-  stroke-width: 3;
+  stroke: #a7b4ff;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
