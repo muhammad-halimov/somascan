@@ -81,7 +81,6 @@
   display: inline-grid;
   height: 20px;
   place-items: center;
-  font-size: 18px;
   line-height: 1;
 }
 
@@ -102,6 +101,19 @@
 }
 
 .tab:not(.is-active) .tab-icon svg.brand-icon {
+  opacity: .85;
+}
+
+/* Флаги языков — свои цвета, прямоугольник 3:2 с тонкой рамкой (как в настольной версии). */
+.tab-icon svg.flag {
+  width: 24px;
+  height: 16px;
+  stroke: none;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 25%, transparent);
+}
+
+.tab:not(.is-active) .tab-icon svg.flag {
   opacity: .85;
 }
 
