@@ -43,8 +43,7 @@
     "currentYear": "варақи {{year}}"
   },
   "producer": {
-    "notListed": "{{name}} (дар рӯйхат нест)",
-    "own": "Варианти худ…",
+    "own": "Номи худро нависед",
     "ownPlaceholder": "Номи истеҳсолкунанда"
   },
   "duplicateHeat": {

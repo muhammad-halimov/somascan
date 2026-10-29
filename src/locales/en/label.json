@@ -43,8 +43,7 @@
     "currentYear": "sheet {{year}}"
   },
   "producer": {
-    "notListed": "{{name}} (not in the list)",
-    "own": "Other…",
+    "own": "Type your own name",
     "ownPlaceholder": "Producer name"
   },
   "duplicateHeat": {

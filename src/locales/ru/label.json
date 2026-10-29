@@ -43,8 +43,7 @@
     "currentYear": "лист {{year}}"
   },
   "producer": {
-    "notListed": "{{name}} (нет в списке)",
-    "own": "Свой вариант…",
+    "own": "Вписать своё название",
     "ownPlaceholder": "Название производителя"
   },
   "duplicateHeat": {

@@ -43,8 +43,7 @@
     "currentYear": "foaia {{year}}"
   },
   "producer": {
-    "notListed": "{{name}} (nu este în listă)",
-    "own": "Altul…",
+    "own": "Scrieți alt nume",
     "ownPlaceholder": "Numele producătorului"
   },
   "duplicateHeat": {
