@@ -33,14 +33,12 @@ export interface LanguageOption {
   code: Language
   /** Название на самом языке, чтобы пользователи узнавали его независимо от текущего языка интерфейса. */
   nativeName: string
-  /** Эмодзи флага. */
-  flag: string
 }
 
-/** Порядок в выборе: английский, румынский, таджикский, русский. */
+/** Порядок в выборе: английский, румынский, таджикский, русский. Флаги — `LanguageFlag`. */
 export const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
-  { code: 'en', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'ro', nativeName: 'Română', flag: '🇷🇴' },
-  { code: 'tj', nativeName: 'Тоҷикӣ', flag: '🇹🇯' },
-  { code: 'ru', nativeName: 'Русский', flag: '🇷🇺' },
+  { code: 'en', nativeName: 'English' },
+  { code: 'ro', nativeName: 'Română' },
+  { code: 'tj', nativeName: 'Тоҷикӣ' },
+  { code: 'ru', nativeName: 'Русский' },
 ]

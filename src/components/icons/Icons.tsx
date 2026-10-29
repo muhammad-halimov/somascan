@@ -4,6 +4,7 @@
  * Иконки декоративные (`aria-hidden`): доступное имя несёт кнопка, в которой лежит иконка.
  * Обводка, заливка и размер задаются CSS контейнера, поэтому одна иконка подходит везде.
  */
+import { useId } from 'react'
 import lmStudioLogoUrl from '@/assets/brands/lmstudio.png'
 import './Icons.css'
 
@@ -610,6 +611,66 @@ export function ChevronRightIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="m9.5 5 7 7-7 7" />
+    </svg>
+  )
+}
+
+// ── Флаги языков (свои цвета, без контура; как в настольной версии) ──────────────────
+
+/** Флаг Великобритании. */
+export function FlagGB() {
+  // Несколько флагов на экране (выбор языка и названия полей) — у каждой обрезки свой id.
+  const clipId = `flag-gb-${useId()}`
+  return (
+    <svg className="flag" viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <clipPath id={clipId}>
+        <path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z" />
+      </clipPath>
+      <path d="M0,0 v30 h60 v-30 z" fill="#012169" />
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+      <path d="M0,0 L60,30 M60,0 L0,30" clipPath={`url(#${clipId})`} stroke="#C8102E" strokeWidth="4" />
+      <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
+      <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
+    </svg>
+  )
+}
+
+/** Флаг Румынии. */
+export function FlagRO() {
+  return (
+    <svg className="flag" viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="1" height="2" fill="#002B7F" />
+      <rect x="1" width="1" height="2" fill="#FCD116" />
+      <rect x="2" width="1" height="2" fill="#CE1126" />
+    </svg>
+  )
+}
+
+/** Звёзды над короной на флаге Таджикистана. */
+const TJ_STARS = [[10.9, 6.6], [11.5, 5.6], [12.6, 5], [14, 4.8], [15.4, 5], [16.5, 5.6], [17.1, 6.6]] as const
+
+/** Флаг Таджикистана (упрощённый: корона и семь звёзд — точками). */
+export function FlagTJ() {
+  return (
+    <svg className="flag" viewBox="0 0 28 14" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="28" height="4" fill="#CC0000" />
+      <rect y="4" width="28" height="6" fill="#fff" />
+      <rect y="10" width="28" height="4" fill="#006600" />
+      <path d="M11.6 8.6h4.8l-.5-1.9-1 .9L14 6.1l-.9 1.5-1-.9z" fill="#F8C300" />
+      <g fill="#F8C300">
+        {TJ_STARS.map(([x, y]) => <circle key={x} cx={x} cy={y} r=".4" />)}
+      </g>
+    </svg>
+  )
+}
+
+/** Флаг России. */
+export function FlagRU() {
+  return (
+    <svg className="flag" viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="3" height=".667" fill="#fff" />
+      <rect y=".667" width="3" height=".667" fill="#0039A6" />
+      <rect y="1.333" width="3" height=".667" fill="#D52B1E" />
     </svg>
   )
 }

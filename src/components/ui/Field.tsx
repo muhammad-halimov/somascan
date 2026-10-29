@@ -3,8 +3,8 @@ import './Field.css'
 
 /** Свойства `Field`. */
 export interface FieldProps {
-  /** Подпись над элементом управления. */
-  label: string
+  /** Подпись над элементом управления (текст, может быть с иконкой — например, флагом языка). */
+  label: ReactNode
   /** Элемент управления (input, select…); оборачивающий `<label>` связывает подпись с ним. */
   children: ReactNode
 }

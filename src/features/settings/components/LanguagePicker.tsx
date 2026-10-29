@@ -1,3 +1,4 @@
+import { LanguageFlag } from '@/components/icons/LanguageFlag'
 import { Tabs } from '@/components/ui/Tabs'
 import { LANGUAGE_OPTIONS, type Language } from '@/i18n/languages'
 
@@ -20,7 +21,7 @@ export function LanguagePicker({ value, onChange, label }: LanguagePickerProps) 
     <Tabs
       label={label}
       value={value}
-      options={LANGUAGE_OPTIONS.map((option) => ({ value: option.code, label: option.nativeName, icon: option.flag }))}
+      options={LANGUAGE_OPTIONS.map((option) => ({ value: option.code, label: option.nativeName, icon: <LanguageFlag language={option.code} /> }))}
       onChange={onChange}
     />
   )

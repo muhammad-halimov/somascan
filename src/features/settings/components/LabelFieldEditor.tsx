@@ -7,6 +7,7 @@ import { TextArea } from '@/components/ui/TextArea'
 import { TextInput } from '@/components/ui/TextInput'
 import type { LabelFieldDefinition } from '@/features/recognition/label/labelFields'
 import { LANGUAGE_OPTIONS } from '@/i18n/languages'
+import { LanguageFlag } from '@/components/icons/LanguageFlag'
 import './LabelFieldEditor.css'
 
 /** Что сохраняет редактор: названия на языках и пояснение для модели. */
@@ -39,10 +40,11 @@ export function LabelFieldEditor({ field, defaultNames = {}, onSave, onCancel, o
 
   return (
     <div className="label-field-editor anim-enter">
-      {LANGUAGE_OPTIONS.map(({ code, nativeName, flag }) => {
+      {LANGUAGE_OPTIONS.map(({ code, nativeName }) => {
         const required = code === 'en' && englishRequired
+        const caption = `${nativeName}${required ? ' *' : code === 'en' ? '' : ` · ${t('advanced.fieldOptional')}`}`
         return (
-          <Field key={code} label={`${flag} ${nativeName}${required ? ' *' : code === 'en' ? '' : ` · ${t('advanced.fieldOptional')}`}`}>
+          <Field key={code} label={<><LanguageFlag language={code} />{caption}</>}>
             <TextInput
               value={names[code] ?? ''}
               placeholder={defaultNames[code] ?? (code === 'en' ? t('advanced.fieldNamePlaceholder') : names.en ?? '')}
