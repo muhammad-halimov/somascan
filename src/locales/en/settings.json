@@ -17,10 +17,10 @@
     "recognition": "Recognition",
     "recognitionModes": {
       "device": "On-device",
-      "model": "AI model"
+      "model": "AI models"
     },
     "recognitionUnlock": "Locked — tap to unlock",
-    "recognitionLockHint": "“AI model” is locked so it is not switched on by accident: tap it to open the lock, then once more to choose it.",
+    "recognitionLockHint": "“AI models” is locked so it is not switched on by accident: tap it to open the lock, then once more to choose it.",
     "provider": "AI provider",
     "providers": {
       "device": "On-device",
