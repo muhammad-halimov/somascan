@@ -16,25 +16,13 @@ Dark theme, Russian interface; recognition by LM Studio. Android — Material 3,
 
 **Android**
 
-| Main screen | Recognized tag | Editing | Tag without a photo | 3 × 3 grid |
-|---|---|---|---|---|
-| <img src="docs/screenshots/android/01-main.webp" width="160" alt="Main screen"> | <img src="docs/screenshots/android/02-result.webp" width="160" alt="Recognized tag"> | <img src="docs/screenshots/android/03-editing.webp" width="160" alt="Editing"> | <img src="docs/screenshots/android/04-no-photo.webp" width="160" alt="Tag without a photo"> | <img src="docs/screenshots/android/05-grid.webp" width="160" alt="3 × 3 grid"> |
-
-| “Uploads” | LM Studio model | Network drive | Google Drive | “Advanced” |
-|---|---|---|---|---|
-| <img src="docs/screenshots/android/06-uploads.webp" width="160" alt="“Uploads”"> | <img src="docs/screenshots/android/07-settings-model.webp" width="160" alt="LM Studio model"> | <img src="docs/screenshots/android/08-settings-storage.webp" width="160" alt="Network drive"> | <img src="docs/screenshots/android/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/android/10-settings-advanced.webp" width="160" alt="“Advanced”"> |
+<img src="docs/screenshots/android/overview.en.webp" alt="Android: main screen, recognized tag, editing, tag without a photo, 3 × 3 grid, “Uploads”, LM Studio model, network drive, Google Drive, “Advanced”">
 
 **iPhone**
 
-| Main screen | Recognized tag | Editing | Tag without a photo | 3 × 3 grid |
-|---|---|---|---|---|
-| <img src="docs/screenshots/ios/01-main.webp" width="160" alt="Main screen"> | <img src="docs/screenshots/ios/02-result.webp" width="160" alt="Recognized tag"> | <img src="docs/screenshots/ios/03-editing.webp" width="160" alt="Editing"> | <img src="docs/screenshots/ios/04-no-photo.webp" width="160" alt="Tag without a photo"> | <img src="docs/screenshots/ios/05-grid.webp" width="160" alt="3 × 3 grid"> |
+<img src="docs/screenshots/ios/overview.en.webp" alt="iPhone: main screen, recognized tag, editing, tag without a photo, 3 × 3 grid, “Uploads”, LM Studio model, network drive, Google Drive, “Advanced”">
 
-| “Uploads” | LM Studio model | Network drive | Google Drive | “Advanced” |
-|---|---|---|---|---|
-| <img src="docs/screenshots/ios/06-uploads.webp" width="160" alt="“Uploads”"> | <img src="docs/screenshots/ios/07-settings-model.webp" width="160" alt="LM Studio model"> | <img src="docs/screenshots/ios/08-settings-storage.webp" width="160" alt="Network drive"> | <img src="docs/screenshots/ios/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/ios/10-settings-advanced.webp" width="160" alt="“Advanced”"> |
-
-The screenshots are made by `scripts/screenshots/capture.mjs` (headless Chrome, a fake LM Studio, the photo `scripts/screenshots/tag.jpg`; no keys and no real storage):
+The screenshots are made by `scripts/screenshots/capture.mjs` (headless Chrome, a fake LM Studio, the photo `scripts/screenshots/tag.jpg`; no keys and no real storage). Both platforms are shot on a screen of the same size (402 × 874 points), so all frames are the same — 804 × 1748 px; above is an overview of each platform (a 5 × 2 grid with captions, `overview.en.webp` / `overview.ru.webp`), and the separate frames are next to it in `docs/screenshots/<android|ios>/`. On Linux, pass the path to Chrome or Chromium in `CHROME`:
 
 ```bash
 npm run build && node scripts/screenshots/capture.mjs
