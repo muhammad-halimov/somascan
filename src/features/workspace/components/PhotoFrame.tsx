@@ -22,6 +22,8 @@ export interface PhotoFrameProps {
  * Пока картинка не загрузилась, её пропорции неизвестны и рамка размечена по заглушке 4:3 —
  * поэтому до загрузки фото скрыто и проявляется уже в правильных пропорциях
  * (иначе на первых кадрах оно растягивалось на всю ширину и затем «сжималось»).
+ * «Загрузилось» — значит, ещё и декодировано: фото с телефона (12+ Мп) после загрузки декодируется
+ * заметную долю секунды, и показанная раньше картинка оставляла рамку пустой (фото «моргало» при листании).
  */
 export function PhotoFrame({ url, alt, transform, onLoad, onError }: PhotoFrameProps) {
   const { offset, layout, rotation, scale } = transform
@@ -46,8 +48,13 @@ export function PhotoFrame({ url, alt, transform, onLoad, onError }: PhotoFrameP
           draggable={false}
           decoding="async"
           onLoad={(event) => {
-            onLoad?.({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })
-            setLoaded(true)
+            const image = event.currentTarget
+            const size = { width: image.naturalWidth, height: image.naturalHeight }
+            void image.decode().catch(() => undefined).then(() => {
+              if (!image.isConnected) return
+              onLoad?.(size)
+              setLoaded(true)
+            })
           }}
           onError={onError}
         />
