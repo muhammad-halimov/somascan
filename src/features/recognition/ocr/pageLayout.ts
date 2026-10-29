@@ -47,8 +47,8 @@ function topEdge(corners: readonly number[]) {
  * Общий наклон бирки — взвешенная по длине медиана наклонов строк (длинные строки точнее,
  * а одиночные кривые рамки — например, логотипы — медиану не сдвигают).
  */
-function pageSkew(page: OcrPage): number {
-  const edges = page.lines
+function pageSkew(lines: ReadonlyArray<{ text: string; corners: readonly number[] }>): number {
+  const edges = lines
     .filter((line) => line.corners.length >= 8 && line.text.trim().length >= 3)
     .map((line) => topEdge(line.corners))
     .filter((edge) => edge.length > 0 && Math.abs(edge.angle) < MAX_SKEW)
@@ -62,17 +62,34 @@ function pageSkew(page: OcrPage): number {
   return 0
 }
 
+/** Точка, повёрнутая на `turns` четвертей оборота против часовой стрелки (на экране, где y растёт вниз). */
+function turnPoint(x: number, y: number, turns: number): [number, number] {
+  switch (((turns % 4) + 4) % 4) {
+    case 1: return [y, -x]
+    case 2: return [-x, -y]
+    case 3: return [-y, x]
+    default: return [x, y]
+  }
+}
+
 /**
  * Строки страницы с выпрямленными рамками. Пустые строки и строки без рамки пропускаются.
  * @param page Текст фото в одном повороте.
+ * @param turns На сколько четвертей оборота повернуть координаты строк, прежде чем выпрямлять: движок мог
+ *   прочесть повёрнутую бирку и отдать рамки боком или вверх ногами (и в своих координатах) — какой поворот
+ *   верный, решает разбор (`extractLabel` пробует все четыре).
  */
-export function layoutPage(page: OcrPage): PageLine[] {
+export function layoutPage(page: OcrPage, turns = 0): PageLine[] {
   const scale = page.height > 0 ? page.height : 1
-  const skew = pageSkew(page)
+  const turned = page.lines.map((line) => ({
+    ...line,
+    corners: line.corners.length < 8 ? line.corners : [0, 1, 2, 3].flatMap((point) => turnPoint(line.corners[point * 2]!, line.corners[point * 2 + 1]!, turns)),
+  }))
+  const skew = pageSkew(turned)
   const cos = Math.cos(-skew)
   const sin = Math.sin(-skew)
   const lines: PageLine[] = []
-  for (const line of page.lines) {
+  for (const line of turned) {
     const text = line.text.replace(/\s+/g, ' ').trim()
     if (!text || line.corners.length < 8) continue
     const xs: number[] = []

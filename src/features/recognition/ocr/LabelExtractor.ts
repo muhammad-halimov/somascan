@@ -46,6 +46,11 @@ export interface Extraction {
   score: number
   /** Сколько текста прочитано (с поправкой на уверенность): второй признак удачного поворота. */
   textWeight: number
+  /**
+   * На сколько четвертей оборота пришлось повернуть координаты строк: не 0 — движок прочёл бирку боком
+   * или вверх ногами (такой текст он читает хуже — фото стоит перечитать повёрнутым).
+   */
+  turns: number
 }
 
 /** Найденная подпись поля в строке. */
@@ -144,13 +149,21 @@ function inlineText(rest: string): { text: string; colon: boolean } {
 const confidenceFactor = (line: PageLine) => 0.8 + 0.2 * (line.confidence ?? 1)
 
 /**
- * Разбирает страницу.
+ * Разбирает страницу. Движок мог прочесть повёрнутую бирку и отдать строки боком или вверх ногами — причём
+ * в координатах исходного или повёрнутого фото, смотря по движку и платформе. Поэтому разбор пробует все четыре
+ * поворота координат и берёт тот, где подписи нашли свои значения (`Extraction.score`): это миллисекунды,
+ * а от договорённостей движка о координатах результат не зависит.
  * @returns Поля, оценка фото и признаки удачного поворота.
  */
-export function extractLabel({ page, codes, fields, suppliers }: ExtractionInput): Extraction {
-  const rules = buildFieldRules(fields)
+export function extractLabel(input: ExtractionInput): Extraction {
+  const rules = buildFieldRules(input.fields)
+  return bestExtraction([0, 1, 2, 3].map((turns) => extractTurned(input, rules, turns)))!
+}
+
+/** Разбор страницы, координаты строк которой повёрнуты на `turns` четвертей оборота. */
+function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rules: readonly FieldRule[], turns: number): Extraction {
   const ruleOf = new Map(rules.map((rule) => [rule.key, rule]))
-  const lines = layoutPage(page)
+  const lines = layoutPage(page, turns)
   const lineHeight = typicalLineHeight(lines)
   // Коды — тоже текст: в них бывает «HEAT: 251216». В соседстве они не участвуют (рамки нет).
   const codeLines: PageLine[] = codes.flatMap((code) => code.text.split(/[\r\n;|]+/))
@@ -267,7 +280,7 @@ export function extractLabel({ page, codes, fields, suppliers }: ExtractionInput
   const photo: PhotoAssessment = lines.length === 0
     ? { ok: false, issues: ['noTag'] }
     : { ok: score > 0, issues: [] }
-  return { label, photo, score, textWeight }
+  return { label, photo, score, textWeight, turns }
 }
 
 /**

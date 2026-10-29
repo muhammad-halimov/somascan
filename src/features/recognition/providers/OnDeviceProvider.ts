@@ -47,7 +47,8 @@ export class OnDeviceProvider extends RecognitionProvider {
   }
 
   /**
-   * Читает фото в исходном повороте; если подписей полей мало — ещё в трёх других и берёт лучший.
+   * Читает фото в исходном повороте; если подписей полей мало или текст прочитан боком либо вверх ногами
+   * (повёрнутый текст движок читает хуже) — ещё в трёх других поворотах и берёт лучший.
    * @throws {RecognitionError} `onDeviceUnavailable` в браузере, `requestFailed` при сбое движка.
    */
   protected async complete({ image, fields, suppliers, access }: RecognitionRequest): Promise<string> {
@@ -57,7 +58,7 @@ export class OnDeviceProvider extends RecognitionProvider {
     throwIfAborted(access.signal)
     const pages = [...first.pages]
     let best = bestExtraction(pages.map((page) => extract(page, first.codes)))
-    if (!best || best.score < CONFIDENT_SCORE) {
+    if (!best || best.score < CONFIDENT_SCORE || best.turns !== 0) {
       const turned = await this.read(image.data, OTHER_ROTATIONS, false)
       throwIfAborted(access.signal)
       pages.push(...turned.pages)

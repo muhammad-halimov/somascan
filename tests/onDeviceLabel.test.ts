@@ -65,16 +65,53 @@ test('бирка OAM Ózd под наклоном 12°: строки выпря�
   assert.deepEqual(label, { producer: 'OAM Ózdi Acélművek', size: '12 mm', heat: '25R00581', weight_kg: 2650 })
 })
 
-test('бирка снята боком: прочитанная как есть не годится, лучший поворот — правильный', () => {
+test('бирка снята боком: строки, прочитанные боком и вверх ногами, тоже разбираются, лучший поворот — правильный', () => {
   const sideways = extract(fixture('oam-ozd-sideways'))
   const upsideDown = extract(fixture('oam-ozd-upside-down'))
   const turned = extract(fixture('oam-ozd-turned'))
-  assert.equal(sideways.score, 0)
-  assert.equal(sideways.photo.ok, false)
-  assert.ok(turned.score > upsideDown.score)
+  // Прочитанное боком и вверх ногами разбирается в повёрнутых координатах — но такое фото стоит перечитать.
+  assert.notEqual(sideways.turns, 0)
+  assert.notEqual(upsideDown.turns, 0)
+  assert.equal(turned.turns, 0)
+  assert.equal(sideways.label.heat, '25R00581')
+  assert.equal(upsideDown.label.heat, '25R00581')
   assert.equal(bestExtraction([sideways, upsideDown, turned]), turned)
   const { producer, size, heat, weight_kg } = turned.label
   assert.deepEqual({ producer, size, heat, weight_kg }, { producer: 'OAM Ózdi Acélművek', size: '12 mm', heat: '25R00581', weight_kg: 2650 })
+})
+
+/**
+ * Страница, повёрнутая на `quarters` четвертей оборота по часовой стрелке: как если бы движок отдал рамки
+ * повёрнутой бирки. `axisAligned` — рамки по осям фото (углы не по ходу текста), иначе — по ходу текста.
+ */
+function rotatePage(page: OcrPage, quarters: 1 | 2 | 3, axisAligned = false): OcrPage {
+  const { width, height } = page
+  const turn = (x: number, y: number): [number, number] =>
+    quarters === 1 ? [height - y, x] : quarters === 2 ? [width - x, height - y] : [y, width - x]
+  return {
+    ...page,
+    width: quarters === 2 ? width : height,
+    height: quarters === 2 ? height : width,
+    lines: page.lines.map((line) => {
+      const points = [0, 1, 2, 3].map((point) => turn(line.corners[point * 2]!, line.corners[point * 2 + 1]!))
+      if (!axisAligned) return { ...line, corners: points.flat() }
+      const xs = points.map(([x]) => x)
+      const ys = points.map(([, y]) => y)
+      const [left, right, top, bottom] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
+      return { ...line, corners: [left, top, right, top, right, bottom, left, bottom] }
+    }),
+  }
+}
+
+test('координаты движка повёрнуты на 90°, 180° или 270° — поля те же, что у ровной бирки', () => {
+  const upright = extract(fixture('oam-ozd'), DEFAULT_FIELDS).label
+  for (const quarters of [1, 2, 3] as const) {
+    for (const axisAligned of [false, true]) {
+      const turned = extract(rotatePage(fixture('oam-ozd'), quarters, axisAligned), DEFAULT_FIELDS)
+      assert.deepEqual(turned.label, upright, `поворот ${quarters * 90}°${axisAligned ? ', рамки по осям' : ''}`)
+      assert.notEqual(turned.turns, 0)
+    }
+  }
 })
 
 test('грязная бирка SOVEL: значения в строку, время с двоеточиями, смена без точки', () => {
