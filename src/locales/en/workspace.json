@@ -29,7 +29,7 @@
     "cancelled": "Recognition cancelled. The photo is kept — tap “Retry” to recognize it again.",
     "checkBeforeSend": "Check the data before sending"
   },
-  "retakeHint": "Rotate or retake the photo",
+  "retakeHint": "Try rotating the photo",
   "editing": {
     "edit": "Edit text",
     "finish": "Finish editing",

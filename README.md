@@ -84,7 +84,7 @@ The Android WebView neither shows nor decodes photos in HEIC/HEIF (the “high e
 
 Along with the fields, the model rates the photo itself (the `_photo` key in the answer: `ok` and problem codes — blurry, glare, dark, the tag is not fully in the frame, etc.), and the app also checks the pixels for obvious blur, darkness and overexposure (`recognition/image/PhotoQuality.ts`). If the photo should be retaken, after recognition a system alert “Poor photo quality” is shown with the reasons and an “OK” button; the recognized fields stay on screen.
 
-If a recognized tag still has empty required fields (or a retake is advised), a one-line hint appears on the photo between “Back” and “Grid”: “Rotate or retake the photo” — translucent like the corner buttons, it zooms with the photo when switching to the grid and back. “Rotate” on the photo really turns it: the rotation belongs to the tag — it is kept when switching tags, shown in the grid and in the full-screen view — and “Retry” sends the photo for recognition already turned (`workspace/utils/retakeHint.ts`, `InlineImage` `rotation`). “Reset” on the photo brings back the original scale and rotation.
+If a recognized tag still has empty required fields (or a retake is advised), a one-line hint appears on the photo between “Back” and “Grid”: “Try rotating the photo” — translucent like the corner buttons, it zooms with the photo when switching to the grid and back. “Rotate” on the photo really turns it: the rotation belongs to the tag — it is kept when switching tags, shown in the grid and in the full-screen view — and “Retry” sends the photo for recognition already turned (`workspace/utils/retakeHint.ts`, `InlineImage` `rotation`). “Reset” on the photo brings back the original scale and rotation.
 
 ### Recognition settings (Advanced)
 
@@ -623,4 +623,4 @@ Things that work but may break or let you down under certain conditions. In the 
 
 ## AI disclosure
 
-The author is responsible for the code, design decisions and maintenance. AI was used in the development of this app.
+The author is responsible for the code, design decisions and maintenance. AI tools were involved in the development of this app.
