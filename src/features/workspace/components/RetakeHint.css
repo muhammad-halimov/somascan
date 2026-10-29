@@ -1,33 +1,54 @@
 /*
- * Подсказка «Не распозналось? Поверните или переснимите» над панелью листания: узкая плашка цвета внимания
- * (как оранжевый «!» в сетке), одна строка без переноса.
+ * Подсказка «Поверните или переснимите» поверх фото, в верхнем ряду между «Назад» и «Сеткой»: полупрозрачная
+ * таблетка, как подложка угловых кнопок (фото видно сквозь неё), одна строка без переноса.
  */
+
+/* Место между угловыми кнопками (по центру фото, есть «Назад» или нет); по высоте — по центру их кругов. */
+.retake-hint-slot {
+  position: absolute;
+  top: 7px;
+  right: calc(var(--corner-button) + 4px);
+  left: calc(var(--corner-button) + 4px);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
 
 .retake-hint {
   display: flex;
   min-width: 0;
+  max-width: 100%;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0 0;
-  padding: 7px 12px;
-  color: var(--text-h);
-  background: color-mix(in srgb, var(--attention) 12%, var(--bg));
-  border-radius: 10px;
+  gap: 7px;
+  margin: 0;
+  padding: 6px 12px 6px 7px;
+  color: #f1f3f4;
+  background: rgb(24 26 31 / 52%);
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 999px;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   font-size: 12.5px;
-  line-height: 1.35;
+  font-weight: 500;
+  line-height: 18px;
+  animation: backdrop-enter 220ms ease-out backwards;
+}
+
+.retake-hint.is-closing {
+  animation: backdrop-exit 200ms ease-in forwards;
 }
 
 /* Значок — как оранжевый «!» в сетке; на 1 px выше центра строки: так он ровно с буквами, а не со строкой. */
 .retake-hint-icon {
   display: grid;
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
   place-items: center;
   color: #fff;
   background: var(--attention);
   border-radius: 50%;
-  translate: 0 -1px;
+  translate: 0 -0.5px;
 }
 
 .retake-hint-icon svg {
@@ -45,9 +66,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
 }
 
-/* iOS: скругление как у плашки «Проверьте данные» в карточке. */
-:root[data-platform='ios'] .retake-hint {
-  border-radius: calc(var(--ios-radius-card) - 10px);
+/* Во время перехода между сеткой и фото — без размытия, как у угловых кнопок (переход не дёргается). */
+.photo-card.is-zooming .retake-hint {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

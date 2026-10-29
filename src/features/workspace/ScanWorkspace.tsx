@@ -9,7 +9,6 @@ import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
 import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
-import { RetakeHint } from './components/RetakeHint'
 import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
 import { useHeatDuplicates } from './hooks/useHeatDuplicates'
@@ -296,8 +295,8 @@ export function ScanWorkspace() {
   /** Панель выезжает и уходит плавно: пока она схлопывается, остаётся в DOM. */
   const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
 
-  /** Открытая бирка распознана не полностью (в сетке подсказки нет — там свои значки). */
-  const showRetakeHint = view === 'single' && needsRetakeHint(item, advanced.labelFields)
+  /** Открытая бирка распознана не полностью: на фото — подсказка повернуть или переснять. */
+  const showRetakeHint = needsRetakeHint(item, advanced.labelFields)
 
   /** Сколько бирок выбрано для отправки. */
   const selectedCount = session.items.filter((candidate) => candidate.selected).length
@@ -310,7 +309,7 @@ export function ScanWorkspace() {
     >
       <input className="photo-input" {...picker.inputProps} />
       {/* Карточка фото и панель листания под ней — один блок. */}
-      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}${showRetakeHint ? ' has-retake-hint' : ''}`}>
+      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}`}>
         <PhotoCard
           handleRef={photoCardRef}
           item={item}
@@ -320,6 +319,7 @@ export function ScanWorkspace() {
           showBack={usedGrid}
           isReceiving={picker.isReceiving}
           transform={transform}
+          retakeHint={showRetakeHint}
           onPick={() => void addPhotos()}
           onToggleManual={toggleManual}
           onOpen={() => setIsViewerOpen(true)}
@@ -330,8 +330,6 @@ export function ScanWorkspace() {
           onOpenActive={closeGrid}
           onToggleSelected={session.toggleSelected}
         />
-        {/* Бирка распознана не полностью — подсказка над панелью листания: повернуть и «Повтор» или переснять. */}
-        {showRetakeHint && <RetakeHint />}
         {slideBar.mounted && (
           <SlideBar
             isClosing={slideBar.closing}
