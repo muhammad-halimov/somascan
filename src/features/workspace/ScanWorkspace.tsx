@@ -1,3 +1,4 @@
+import { ActionSheetButtonStyle } from '@capacitor/action-sheet'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
@@ -206,6 +207,23 @@ export function ScanWorkspace() {
     session.remove(activeIndex)
   }
 
+  /** Удержание «Сброса»: убрать все бирки — очистить сетку (после выбора в панели действий). */
+  const clearAll = async () => {
+    const count = session.items.length
+    if (count === 0) return
+    const choice = await NativeDialogs.showActions({
+      title: t('clearAllDialog.title', { count }),
+      cancelable: true,
+      options: [
+        { title: t('clearAllDialog.confirm'), style: ActionSheetButtonStyle.Destructive },
+        { title: t('common:cancel'), style: ActionSheetButtonStyle.Cancel },
+      ],
+    })
+    if (choice?.index !== 0) return
+    editMode.exit()
+    session.removeMany(session.items.map((candidate) => candidate.id))
+  }
+
   /**
    * Правка: до первого изменения бирки запоминаются её поля — «Правка», нажатая ещё раз, отменяет
    * изменения (всех бирок, исправленных за эту правку), «Готово» и системное «Назад» их оставляют.
@@ -360,6 +378,7 @@ export function ScanWorkspace() {
         onCloseEdit={editMode.exit}
         onAddPhoto={() => void addPhotos()}
         onClear={() => void removeItem()}
+        onClearAll={() => void clearAll()}
         onCancel={() => session.abort(activeIndex)}
         onRetry={retry}
         onNext={() => void sender.send()}
