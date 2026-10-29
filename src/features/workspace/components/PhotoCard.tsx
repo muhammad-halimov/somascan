@@ -14,6 +14,9 @@ import { PhotoGrid } from './PhotoGrid'
 import { RetakeHint } from './RetakeHint'
 import './PhotoCard.css'
 
+/** Сколько проявляется показанное фото (`.photo-pan-layer.is-loaded` в PhotoCard.css, 260 мс), с запасом на кадр. */
+const PHOTO_FADE_MS = 300
+
 /** Что показывает карточка: одну бирку или сетку всех. */
 export type PhotoCardView = 'single' | 'grid'
 
@@ -94,7 +97,10 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   const isBusy = isReceiving || (item !== null && (item.isLoading || item.status.kind === 'recognizing') && !hasError)
   const overlay = usePresence(isBusy)
   const gridSingle = usePresence(view === 'grid')
-  /** Бирка, чьё фото уже загрузилось в карточке: до этого вместо него — миниатюра (фото с телефона декодируется не сразу). */
+  /**
+   * Бирка, чьё фото уже показано в карточке: до этого на его месте — миниатюра (фото с телефона декодируется
+   * не сразу). Миниатюра уходит, когда фото проявилось поверх неё, — между ними нет пустой рамки.
+   */
   const [loadedId, setLoadedId] = useState<string | null>(null)
   const placeholder = hasPhoto && item?.thumbUrl && item.thumbUrl !== photoUrl && loadedId !== item.id ? item.thumbUrl : null
   /** Подсказка повернуть или переснять — у показанного фото; появляется и уходит плавно. */
@@ -181,7 +187,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   }, [view])
 
   // Другая бирка в одиночном виде — слайд: фото въезжает с той стороны, куда листали
-  // (после «Далее» и «Сброса» бирка меняется на месте — только проявляется).
+  // (после «Далее» и «Сброса» бирка меняется на месте — только проявляется). Начинает не с прозрачного:
+  // на тёмном фоне глубокое затемнение читалось как моргание, а на месте фото с первого кадра — миниатюра.
   const shownSlide = useRef({ id: item?.id ?? null, index: activeIndex })
   useLayoutEffect(() => {
     const previous = shownSlide.current
@@ -191,7 +198,7 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
     if (prefersReducedMotion()) return
     const direction = Math.sign(activeIndex - previous.index)
     const animation = stage.animate(
-      [{ transform: `translateX(${direction * 36}px)`, opacity: direction === 0 ? 0.3 : 0.2 }, { transform: 'none', opacity: 1 }],
+      [{ transform: `translateX(${direction * 28}px)`, opacity: direction === 0 ? 0.6 : 0.5 }, { transform: 'none', opacity: 1 }],
       { duration: 280, easing: motionTiming().easing },
     )
     return () => animation.cancel()
@@ -232,15 +239,27 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
             onClick={(event) => !wasGesture(event.timeStamp) && onOpen()}
             {...pointerHandlers}
           >
-            {placeholder && <img className="photo-placeholder" src={placeholder} alt="" draggable={false} />}
+            {placeholder && (
+              <img
+                className={`photo-placeholder${transform.rotation % 180 !== 0 ? ' is-sideways' : ''}`}
+                src={placeholder}
+                alt=""
+                draggable={false}
+                // Повёрнута, как фото бирки: фото проявляется поверх неё в том же положении.
+                style={{ rotate: `${transform.rotation}deg` }}
+              />
+            )}
             <PhotoFrame
               key={item?.id}
               url={photoUrl}
               alt={t('photo.alt')}
               transform={transform}
               onLoad={(size) => {
-                setLoadedId(item?.id ?? null)
+                const id = item?.id ?? null
                 onLoad(size)
+                window.setTimeout(() => {
+                  if (itemIdRef.current === id) setLoadedId(id)
+                }, PHOTO_FADE_MS)
               }}
               onError={onError}
             />

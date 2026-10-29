@@ -168,6 +168,8 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  /* Единицы контейнера для повёрнутой миниатюры (`.photo-placeholder.is-sideways`). */
+  container-type: size;
   padding: 0;
   background: transparent;
   border: 0;
@@ -361,7 +363,11 @@
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%), 0 4px 14px rgb(0 0 0 / 10%);
 }
 
-/* Миниатюра на месте фото, пока оно декодируется (переход из сетки не показывает пустой фон). */
+/*
+ * Миниатюра на месте фото, пока оно декодируется (переход из сетки и листание не показывают пустой фон);
+ * фото проявляется поверх неё. Повёрнута, как фото: боком — стороны меняются местами, чтобы после поворота
+ * она вписалась в рамку так же, как фото (единицы контейнера — рамка фото).
+ */
 .photo-placeholder {
   position: absolute;
   inset: 0;
@@ -371,6 +377,15 @@
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.photo-placeholder.is-sideways {
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  width: 100cqh;
+  height: 100cqw;
+  translate: -50% -50%;
 }
 
 /* Во время перехода между сеткой и одной биркой — без размытия под кнопками и значками. */
