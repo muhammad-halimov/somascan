@@ -1,6 +1,5 @@
-import { useState, type InputHTMLAttributes, type KeyboardEvent } from 'react'
+import type { InputHTMLAttributes, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowDropDownIcon, ChevronUpDownIcon } from '@/components/icons/Icons'
 import { HEAT_KEY } from '@/features/recognition/label/heatNumber'
 import { enabledLabelFields, isEnabledByDefault, isMissingValue, SHEET_KEY, type LabelFieldKind, type LabelKey, type LabelRecord, type LabelValue } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
@@ -9,8 +8,9 @@ import { isProductForm, PRODUCT_FORM_KEY, PRODUCT_FORMS } from '@/features/recog
 import { useSettings } from '@/features/settings/store/useSettings'
 import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
 import { useStore } from '@/lib/store/useStore'
-import { OWN_PRODUCER, producerChoice } from '../utils/producerChoice'
+import { listedSupplier } from '../utils/producerChoice'
 import type { HeatDuplicate } from '../utils/sendReadiness'
+import { DropdownField } from './DropdownField'
 import './LabelFields.css'
 
 /** Клавиатура по виду поля: коды — заглавными без автозамены, названия — с заглавной буквы, числа — цифрами. */
@@ -27,7 +27,8 @@ const FIELD_KEYBOARD: Record<LabelFieldKind, Pick<InputHTMLAttributes<HTMLInputE
 function moveToNextField(event: KeyboardEvent<HTMLInputElement>) {
   if (event.key !== 'Enter') return
   event.preventDefault()
-  const inputs = [...event.currentTarget.form?.querySelectorAll<HTMLInputElement>('.label-field-input') ?? document.querySelectorAll<HTMLInputElement>('.label-field-input')]
+  const selector = 'input.label-field-input, input.label-field-dropdown-text'
+  const inputs = [...event.currentTarget.form?.querySelectorAll<HTMLInputElement>(selector) ?? document.querySelectorAll<HTMLInputElement>(selector)]
   const next = inputs[inputs.indexOf(event.currentTarget) + 1]
   if (next) next.focus()
   else event.currentTarget.blur()
@@ -118,60 +119,6 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false, h
   )
 }
 
-/** Свойства `PickerField`. */
-interface PickerFieldProps {
-  /** Название строки (и доступное имя выбора). */
-  name: string
-  /** Выбранное значение; пустая строка — первый вариант (не выбрано / по умолчанию). */
-  value: string
-  /** Варианты: значение и подпись на языке интерфейса. */
-  options: ReadonlyArray<{ value: string; label: string; disabled?: boolean }>
-  /** Режим правки: выбор в виде поля ввода; в просмотре — в виде значения строки. */
-  isEditing: boolean
-  /** Пустое значение — ошибка (без него бирку не отправить): подпись и значок цветом ошибки. */
-  required?: boolean
-  /** Дополнительный класс строки. */
-  className?: string
-  /** Выбрано новое значение. */
-  onChange: (value: string) => void
-}
-
-/**
- * Строка карточки с системным выбором (`<select>`: список на Android, меню или колесо на iOS) в обоих
- * режимах. В просмотре он выглядит как значение строки со значком выпадающего списка (Material —
- * треугольник, iOS — двойной уголок всплывающего меню) и открывается касанием, без карандаша; пустое
- * значение — приглушённо (или цветом ошибки, если оно обязательно). В правке — в стиле полей ввода.
- */
-function PickerField({ name, value, options, isEditing, required = false, className = '', onChange }: PickerFieldProps) {
-  const missing = value === ''
-  const select = (
-    <select
-      className={isEditing ? 'label-field-input label-field-select' : `label-field-value label-field-picker${missing ? ` is-missing${required ? ' is-required' : ''}` : ''}`}
-      aria-label={name}
-      aria-required={required || undefined}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    >
-      {options.map((option) => <option key={option.value} value={option.value} disabled={option.disabled}>{option.label}</option>)}
-    </select>
-  )
-  return (
-    <label className={`label-field${className ? ` ${className}` : ''}${required && missing ? ' is-required' : ''}`}>
-      <span className="label-field-name">{name}</span>
-      {isEditing ? select : (
-        <span className="label-field-picker-wrap">
-          {select}
-          {/* Нужный значок показывает CSS по платформе, как у шторок (Disclosure). */}
-          <span className="label-field-picker-icon" aria-hidden="true">
-            <ChevronUpDownIcon />
-            <ArrowDropDownIcon />
-          </span>
-        </span>
-      )}
-    </label>
-  )
-}
-
 /** Ключ поля «Производитель». */
 const PRODUCER_KEY = 'producer'
 
@@ -188,54 +135,25 @@ interface ProducerFieldProps {
 }
 
 /**
- * Производитель в правке: выбор из известных поставщиков. Название, которого в списке нет (так распознано
- * или вписано), стоит первым вариантом с пометкой «нет в списке» — его можно оставить. «Свой вариант…»
- * превращает строку в поле ввода с текущим названием; когда поле теряет фокус, снова выбор.
+ * Производитель в правке: выпадающий список известных поставщиков (название из списка совпадает без учёта
+ * регистра). Название не из списка (так распознано) остаётся в поле как есть; карандаш слева от уголка
+ * делает текст полем ввода на том же месте — так вписывают своё название или правят распознанное.
  */
 function ProducerField({ name, value, suppliers, onChange }: ProducerFieldProps) {
   const { t } = useTranslation('label')
-  const [typing, setTyping] = useState(false)
   const text = value === null || value === undefined ? '' : String(value)
-  if (typing) {
-    return (
-      <label className={`label-field is-producer${text.trim() === '' ? ' is-required' : ''}`}>
-        <span className="label-field-name">{name}</span>
-        <input
-          className="label-field-input"
-          aria-label={name}
-          value={text}
-          placeholder={t('producer.ownPlaceholder')}
-          aria-required
-          // Поле появляется по выбору «Свой вариант…» — сразу вводим.
-          autoFocus
-          onChange={(event) => onChange(event.target.value)}
-          onBlur={() => setTyping(false)}
-          onKeyDown={moveToNextField}
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          enterKeyHint="next"
-          {...FIELD_KEYBOARD.text}
-        />
-      </label>
-    )
-  }
-  const { selected, unlisted } = producerChoice(text, suppliers)
-  const options = [
-    ...(selected === '' ? [{ value: '', label: t('requiredField'), disabled: true }] : []),
-    ...(unlisted ? [{ value: unlisted, label: t('producer.notListed', { name: unlisted }) }] : []),
-    ...suppliers.map((supplier) => ({ value: supplier, label: supplier })),
-    { value: OWN_PRODUCER, label: t('producer.own') },
-  ]
   return (
-    <PickerField
+    <DropdownField
       name={name}
-      value={selected}
-      options={options}
+      value={text}
+      selected={listedSupplier(text, suppliers)}
+      options={suppliers.map((supplier) => ({ value: supplier, label: supplier }))}
+      placeholder={t('requiredField')}
       isEditing
       required
       className="is-producer"
-      onChange={(next) => (next === OWN_PRODUCER ? setTyping(true) : onChange(next))}
+      onChange={onChange}
+      own={{ label: t('producer.own'), placeholder: t('producer.ownPlaceholder'), keyboard: FIELD_KEYBOARD.text, onKeyDown: moveToNextField }}
     />
   )
 }
@@ -256,15 +174,12 @@ interface ChoiceFieldProps {
  */
 function ProductFormField({ value, isEditing, onChange }: ChoiceFieldProps) {
   const { t } = useTranslation('label')
-  const options = [
-    { value: '', label: t('productForm.placeholder'), disabled: true },
-    ...PRODUCT_FORMS.map((form) => ({ value: form, label: t(`productForm.${form}`) })),
-  ]
   return (
-    <PickerField
+    <DropdownField
       name={t('productForm.name')}
       value={isProductForm(value) ? value : ''}
-      options={options}
+      options={PRODUCT_FORMS.map((form) => ({ value: form, label: t(`productForm.${form}`) }))}
+      placeholder={t('productForm.placeholder')}
       isEditing={isEditing}
       required
       className="is-product-form"
@@ -289,5 +204,5 @@ function SheetField({ name, value, isEditing, onChange }: ChoiceFieldProps & { n
     ...sheets.map((sheet) => ({ value: sheet, label: sheet })),
     ...(selected && !sheets.includes(selected) ? [{ value: selected, label: selected }] : []),
   ]
-  return <PickerField name={name} value={selected} options={options} isEditing={isEditing} className="is-sheet" onChange={onChange} />
+  return <DropdownField name={name} value={selected} options={options} placeholder={options[0]!.label} isEditing={isEditing} className="is-sheet" onChange={onChange} />
 }
