@@ -1,13 +1,11 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/components/icons/Icons'
-import { missingRequiredLabelFields, type LabelFieldDefinition } from '@/features/recognition/label/labelFields'
-import { hasProductForm } from '@/features/recognition/label/productForm'
 import { useSettings } from '@/features/settings/store/useSettings'
 import { useHeatDuplicates } from '../hooks/useHeatDuplicates'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
-import type { HeatDuplicate } from '../utils/sendReadiness'
+import { tagState } from '../utils/tagState'
 import './PhotoGrid.css'
 
 /** Свойства `PhotoGrid`. */
@@ -24,23 +22,6 @@ export interface PhotoGridProps {
   onOpen: (index: number) => void
   /** Выбрать бирку для отправки или снять выбор. */
   onToggleSelected: (index: number) => void
-}
-
-/** Состояние бирки для значка в углу ячейки. */
-type CellState = 'busy' | 'failed' | 'noPhoto' | 'noForm' | 'incomplete' | 'done' | 'none'
-
-function cellState(item: ScanItem, fields: readonly LabelFieldDefinition[], duplicates: ReadonlyMap<string, HeatDuplicate>): CellState {
-  if (item.hasError || item.status.kind === 'failed') return 'failed'
-  if (item.status.kind === 'recognizing') return 'busy'
-  if (item.status.kind !== 'done') return 'none'
-  // Переключена обратно «с фото», а снимка нет.
-  if (!item.manual && !item.photoUrl) return 'noPhoto'
-  if (!hasProductForm(item.status.label)) return 'noForm'
-  // Поля по умолчанию обязательны — и у распознанной бирки, и у бирки без фото.
-  if (missingRequiredLabelFields(item.status.label, fields).length > 0) return 'incomplete'
-  // Плавка повторяется (на экране или в «Загрузках»): такая бирка не отправится.
-  if (duplicates.has(item.id)) return 'incomplete'
-  return 'done'
 }
 
 /**
@@ -102,7 +83,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
             </div>
           )
         }
-        const state = cellState(item, advanced.labelFields, duplicates)
+        const state = tagState(item, advanced.labelFields, duplicates)
         const stateText = state === 'none' ? '' : t(`grid.state.${state}`)
         const name = item.manual ? `${t('grid.item', { number })}, ${t('grid.manual')}` : t('grid.item', { number })
         const classes = ['photo-grid-cell', 'has-photo', item.manual && 'is-manual', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')

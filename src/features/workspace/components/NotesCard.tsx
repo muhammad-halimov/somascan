@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AddIcon, CheckIcon, CloseIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
+import { AddIcon, CheckIcon, CloseIcon, ExclamationIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
-import { Tabs } from '@/components/ui/Tabs'
+import { Tabs, type TabOption } from '@/components/ui/Tabs'
 import { useLongPress } from '@/hooks/useLongPress'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
 import { MAX_SCAN_ITEMS, type RecognitionStatus } from '../hooks/useScanSession'
 import type { HeatDuplicate } from '../utils/sendReadiness'
+import { needsAttention, type TagState } from '../utils/tagState'
 import { LabelFields } from './LabelFields'
 import './NotesCard.css'
 
@@ -18,6 +19,8 @@ export interface NotesCardProps {
   itemKey: string
   /** Сколько бирок на экране. */
   itemCount: number
+  /** Состояние каждой бирки по порядку: у ждущих действий (нет формы, полей, фото) рядом с номером — оранжевый «!». */
+  itemStates: readonly TagState[]
   /** Номер открытой бирки (`itemCount` — пустая ячейка). */
   activeIndex: number
   /** Перейти к бирке. */
@@ -65,7 +68,7 @@ export interface NotesCardProps {
  * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const clearAllPress = useLongPress(onClearAll)
   const isRecognizing = status.kind === 'recognizing'
@@ -94,8 +97,19 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
 
   // Заголовок карточки: «Данные с бирки» для результата, иначе нейтральное «Результат».
   const title = status.kind === 'done' ? t('label:title') : t('notes.label')
-  // Номера бирок и (пока их меньше девяти) «+» — пустая ячейка для следующей.
-  const itemOptions = Array.from({ length: itemCount }, (_, index) => ({ value: index, label: String(index + 1) }))
+  // Номера бирок и (пока их меньше девяти) «+» — пустая ячейка для следующей. У бирки, которая ждёт действий,
+  // рядом с номером — оранжевый «!», как в углу её ячейки в сетке (и та же причина для диктора).
+  const itemOptions: TabOption<number>[] = Array.from({ length: itemCount }, (_, index) => {
+    const state = itemStates[index] ?? 'none'
+    const label = String(index + 1)
+    if (!needsAttention(state)) return { value: index, label }
+    return {
+      value: index,
+      label,
+      badge: <span className="notes-item-attention"><ExclamationIcon /></span>,
+      ariaLabel: `${t('grid.item', { number: index + 1 })}: ${t(`grid.state.${state}`)}`,
+    }
+  })
   if (itemCount < MAX_SCAN_ITEMS) itemOptions.push({ value: itemCount, label: '+' })
 
   return (

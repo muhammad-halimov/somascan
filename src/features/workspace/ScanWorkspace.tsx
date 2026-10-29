@@ -18,6 +18,7 @@ import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
 import { IDLE, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
 import { needsRetakeHint } from './utils/retakeHint'
+import { tagState } from './utils/tagState'
 import './ScanWorkspace.css'
 
 /**
@@ -372,6 +373,7 @@ export function ScanWorkspace() {
         cardRef={notesCardRef}
         itemKey={item?.id ?? `empty-${activeIndex}`}
         itemCount={session.items.length}
+        itemStates={session.items.map((candidate) => tagState(candidate, advanced.labelFields, duplicates))}
         activeIndex={activeIndex}
         onSelectItem={selectItem}
         isEditing={editMode.isEditing}
