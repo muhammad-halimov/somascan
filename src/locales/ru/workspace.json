@@ -64,7 +64,9 @@
     "confirm": "Сбросить"
   },
   "clearAllDialog": {
-    "title": "Сбросить все бирки ({{count}})?",
+    "sheetTitle": "Бирок на экране: {{count}}",
+    "title": "Сбросить все бирки?",
+    "message": "Фото и данные всех бирок на экране ({{count}}) будут удалены.",
     "confirm": "Сбросить все"
   },
   "removeDialog": {

@@ -1,24 +1,37 @@
 package com.somascan.app;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Size;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Перекодирует выбранное фото в JPEG.
+ * Выбор фото из галереи с пределом и перекодирование выбранного фото в JPEG.
+ *
+ * Выбор — системный выбор фото Android (Photo Picker; на старых версиях — его копия из Google Play)
+ * с пределом {@code limit}: больше свободных ячеек сетки отметить нельзя. Плагин выбора файлов
+ * такой предел не передаёт (только «одно» или «сколько угодно»). Где системного выбора фото нет,
+ * открывается выбор документов без предела — лишние фото отбрасывает приложение.
  *
  * WebView Android не показывает и не декодирует HEIC/HEIF — а в нём снимают многие телефоны
  * (у HONOR и Samsung это «эффективный формат» камеры). Фото из галереи в таком формате не появилось бы
@@ -61,6 +74,52 @@ public class PhotoImportPlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         executor.shutdown();
+    }
+
+    /**
+     * Открывает системный выбор фото. Параметр {@code limit} — сколько фото можно отметить (не меньше одного);
+     * ответ — {@code { files: [{ path, mimeType }] }} в порядке выбора, отмена — ошибка «canceled».
+     */
+    @PluginMethod
+    public void pickPhotos(PluginCall call) {
+        int limit = Math.max(1, call.getInt("limit", 1));
+        try {
+            PickVisualMediaRequest request = new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build();
+            Intent intent = limit == 1
+                ? new ActivityResultContracts.PickVisualMedia().createIntent(getContext(), request)
+                : new ActivityResultContracts.PickMultipleVisualMedia(limit).createIntent(getContext(), request);
+            startActivityForResult(call, intent, "pickPhotosResult");
+        } catch (Exception error) {
+            call.reject("Не удалось открыть выбор фото: " + error.getMessage(), "failed");
+        }
+    }
+
+    @ActivityCallback
+    private void pickPhotosResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        if (result.getResultCode() == Activity.RESULT_CANCELED) {
+            call.reject("pickPhotos canceled.", "canceled");
+            return;
+        }
+        if (result.getResultCode() != Activity.RESULT_OK) {
+            call.reject("Не удалось выбрать фото", "failed");
+            return;
+        }
+        // Разбор ответа одинаков для одного и нескольких фото (getData или ClipData).
+        List<Uri> uris = new ActivityResultContracts.PickMultipleVisualMedia().parseResult(result.getResultCode(), result.getData());
+        JSArray files = new JSArray();
+        for (Uri uri : uris) {
+            JSObject file = new JSObject();
+            String type = getContext().getContentResolver().getType(uri);
+            file.put("path", uri.toString());
+            file.put("mimeType", type != null ? type : "image/*");
+            files.put(file);
+        }
+        JSObject response = new JSObject();
+        response.put("files", files);
+        call.resolve(response);
     }
 
     /**

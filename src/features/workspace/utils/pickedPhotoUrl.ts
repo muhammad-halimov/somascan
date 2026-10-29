@@ -1,12 +1,20 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
 
-/** Нативное перекодирование фото в JPEG (только Android, `PhotoImportPlugin.java`). */
+/** Нативный импорт фото (только Android, `PhotoImportPlugin.java`): выбор с пределом и перекодирование в JPEG. */
 interface PhotoImportPlugin {
+  /** Системный выбор фото, где больше `limit` не отметить; фото — в порядке выбора. Отмена — ошибка «canceled». */
+  pickPhotos(options: { limit: number }): Promise<{ files: PickedPhoto[] }>
   /** Копия фото `path` в JPEG; ответ — путь копии в кэше приложения. */
   toJpeg(options: { path: string }): Promise<{ path: string }>
 }
 
 const PhotoImport = registerPlugin<PhotoImportPlugin>('PhotoImport')
+
+/**
+ * Фото из галереи Android — системный выбор фото с пределом: больше `limit` (свободных ячеек) отметить нельзя.
+ * Плагин FilePicker предел не передаёт (только «одно» или «сколько угодно»), поэтому выбор — свой.
+ */
+export const pickAndroidPhotos = (limit: number) => PhotoImport.pickPhotos({ limit })
 
 /** Форматы, которые WebView показывает сам; фото в остальных (HEIC/HEIF и др.) на Android перекодируется. */
 const WEBVIEW_IMAGE_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])

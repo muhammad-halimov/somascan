@@ -108,18 +108,18 @@ export function ScanWorkspace() {
   /** Куда идут выбранные фото: в конец (новые бирки) или вместо фото открытой бирки (все девять заняты). */
   const pickTarget = useRef<'add' | 'replace'>('add')
   const picker = usePhotoPicker({
-    onPicked: (urls) => {
+    onPicked: (urls, picked) => {
       editMode.exit()
       if (pickTarget.current === 'replace') {
         session.replace(activeIndex, urls[0]!)
         return
       }
-      // Системный выбор не везде ограничивает число фото: лишние (сверх свободных ячеек) не встают.
-      const overflow = session.add(urls)
-      if (overflow > 0) {
+      // Галерея не даёт отметить больше свободных ячеек, но выбор файлов и браузер — дают: лишние не встают.
+      const added = urls.length - session.add(urls)
+      if (added < picked) {
         void NativeDialogs.alert({
           title: t('photo.add'),
-          message: t('photo.overflow', { added: urls.length - overflow, picked: urls.length, max: MAX_SCAN_ITEMS }),
+          message: t('photo.overflow', { added, picked, max: MAX_SCAN_ITEMS }),
           buttonTitle: t('common:ok'),
         })
       }
@@ -207,19 +207,26 @@ export function ScanWorkspace() {
     session.remove(activeIndex)
   }
 
-  /** Удержание «Сброса»: убрать все бирки — очистить сетку (после выбора в панели действий). */
+  /**
+   * Удержание «Сброса»: убрать все бирки — очистить сетку. Панель действий с одним пунктом «Сбросить все»
+   * (без «Отмены»: закрывается касанием мимо или «Назад»), затем подтверждение, как у обычного «Сброса».
+   */
   const clearAll = async () => {
     const count = session.items.length
     if (count === 0) return
     const choice = await NativeDialogs.showActions({
-      title: t('clearAllDialog.title', { count }),
+      title: t('clearAllDialog.sheetTitle', { count }),
       cancelable: true,
-      options: [
-        { title: t('clearAllDialog.confirm'), style: ActionSheetButtonStyle.Destructive },
-        { title: t('common:cancel'), style: ActionSheetButtonStyle.Cancel },
-      ],
+      options: [{ title: t('clearAllDialog.confirm'), style: ActionSheetButtonStyle.Destructive }],
     })
     if (choice?.index !== 0) return
+    const confirmed = await NativeDialogs.confirm({
+      title: t('clearAllDialog.title'),
+      message: t('clearAllDialog.message', { count }),
+      okButtonTitle: t('clearAllDialog.confirm'),
+      cancelButtonTitle: t('common:cancel'),
+    })
+    if (!confirmed) return
     editMode.exit()
     session.removeMany(session.items.map((candidate) => candidate.id))
   }

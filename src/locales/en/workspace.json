@@ -64,7 +64,9 @@
     "confirm": "Reset"
   },
   "clearAllDialog": {
-    "title": "Reset all tags ({{count}})?",
+    "sheetTitle": "Tags on screen: {{count}}",
+    "title": "Reset all tags?",
+    "message": "The photos and data of all tags on screen ({{count}}) will be deleted.",
     "confirm": "Reset all"
   },
   "removeDialog": {
