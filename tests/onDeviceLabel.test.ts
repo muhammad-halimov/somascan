@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { DEFAULT_KNOWN_SUPPLIERS } from '../src/features/recognition/label/knownSuppliers'
 import { createDefaultLabelFields, enabledLabelFields, recognizedLabelFields, type LabelFieldDefinition } from '../src/features/recognition/label/labelFields'
+import { companyDomains, supplierByDomain } from '../src/features/recognition/ocr/domainProducer'
 import { bestExtraction, extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrCode, OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
@@ -244,6 +245,26 @@ test('поставщик: без регистра и диакритики, с о
   assert.deepEqual(matchSupplier('ArcelorMitta1 Kryvyi Rih', suppliers), { name: 'ArcelorMittal', exact: false })
   assert.deepEqual(matchSupplier('MDA S.A.', suppliers), { name: 'MDA', exact: true })
   assert.equal(matchSupplier('Commda trading', suppliers), null)
+})
+
+test('почта и сайт завода: домены без бесплатной почты, поставщик из списка по домену', () => {
+  assert.deepEqual(companyDomains(['E-mail: office @ oamkft . hu', 'www.suezsteel.com.eg', 'contact: john@gmail.com', 'https://www.oamkft.hu/en']), ['oamkft', 'suezsteel'])
+  assert.deepEqual(companyDomains(['EN 10080.2012', 'B500C.dat', 'Kft. Hungary']), [])
+  assert.equal(supplierByDomain(['oamkft'], DEFAULT_KNOWN_SUPPLIERS), 'OAM Ózdi Acélművek')
+  assert.equal(supplierByDomain(['sovel'], DEFAULT_KNOWN_SUPPLIERS), 'Sovel')
+  assert.equal(supplierByDomain(['suezsteel'], DEFAULT_KNOWN_SUPPLIERS), 'Suez Steel')
+  assert.equal(supplierByDomain(['newmill'], DEFAULT_KNOWN_SUPPLIERS), null)
+})
+
+test('производитель по почте или сайту, когда названия на бирке нет; напечатанное название важнее', () => {
+  const producer = (rows: readonly Row[]) => extract(page(rows), DEFAULT_FIELDS).label.producer
+  const heat: Row = ['Heat No: 25R00581', 0.1, 0.2]
+  assert.equal(producer([heat, ['E-mail: sales@sovel.gr', 0.1, 0.8]]), 'Sovel')
+  assert.equal(producer([heat, ['www.oamkft.hu', 0.1, 0.8]]), 'OAM Ózdi Acélművek')
+  assert.equal(producer([heat, ['info@newmill.com', 0.1, 0.8]]), 'Newmill')
+  assert.equal(producer([heat, ['info@abc.ro', 0.1, 0.8]]), 'ABC')
+  assert.equal(producer([heat, ['john.doe@gmail.com', 0.1, 0.8]]), null)
+  assert.equal(producer([['Producer: Habas', 0.1, 0.1], heat, ['info@sovel.gr', 0.1, 0.8]]), 'Habas')
 })
 
 test('по умолчанию заполняются только включённые поля', () => {

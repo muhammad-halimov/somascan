@@ -17,6 +17,7 @@ import { findLabel, sourceEnd, foldWithMap, type FoldedText } from './foldText'
 import { buildFieldRules, type FieldRule } from './fieldRules'
 import type { OcrCode, OcrPage } from './ocrTypes'
 import { boxHeight, isBelow, isRightOf, layoutPage, sameRow, typicalLineHeight, type PageLine } from './pageLayout'
+import { companyDomains, companyFromDomain, supplierByDomain } from './domainProducer'
 import { findSupplier } from './supplierMatch'
 import { findGrade, findMarkedSize, findProduct } from './valueReaders'
 
@@ -251,20 +252,24 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     return null
   }
 
-  // Производитель: известный поставщик — сначала в строке у подписи, потом где угодно на бирке.
+  // Производитель: известный поставщик — сначала в строке у подписи, потом где угодно на бирке,
+  // потом по почте или сайту завода; нет и его — своё название из домена (когда подписи с названием нет).
   const producerItem = values.get('producer')?.[0]
   const producerLabels = labelLines.filter(({ groups }) => groups.some((group) => group.key === 'producer')).map(({ line }) => line.text)
+  const topDown = [...lines].sort((a, b) => a.box!.top - b.box!.top).map((line) => line.text)
   const supplierTexts = [
     ...(producerItem?.line != null ? [lines[producerItem.line]!.text] : []),
     ...producerLabels,
-    ...[...lines].sort((a, b) => a.box!.top - b.box!.top).map((line) => line.text),
+    ...topDown,
   ]
-  const supplier = suppliers.length > 0 ? findSupplier(supplierTexts, suppliers) : null
+  const domains = companyDomains([...topDown, ...codes.map((code) => code.text)])
+  const supplier = suppliers.length > 0 ? findSupplier(supplierTexts, suppliers) ?? supplierByDomain(domains, suppliers) : null
 
   const label: LabelRecord = {}
   for (const field of fields) {
     let value = found(field.key)
     if (field.key === 'producer' && supplier) value = supplier
+    if (field.key === 'producer' && value === null && domains[0]) value = companyFromDomain(domains[0])
     if (value === null && field.key === 'product') value = firstOf(findProduct)
     if (value === null && field.key === 'grade') value = firstOf(findGrade)
     if (value === null && field.key === 'size') value = firstOf(findMarkedSize)
