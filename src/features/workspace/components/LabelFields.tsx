@@ -1,14 +1,15 @@
-import type { InputHTMLAttributes, KeyboardEvent } from 'react'
+import { useState, type InputHTMLAttributes, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDropDownIcon, ChevronUpDownIcon } from '@/components/icons/Icons'
 import { HEAT_KEY } from '@/features/recognition/label/heatNumber'
-import { enabledLabelFields, isEnabledByDefault, isMissingValue, SHEET_KEY, type LabelFieldKind, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
+import { enabledLabelFields, isEnabledByDefault, isMissingValue, SHEET_KEY, type LabelFieldKind, type LabelKey, type LabelRecord, type LabelValue } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { useLabelFormatter } from '@/features/recognition/label/useLabelFormatter'
 import { isProductForm, PRODUCT_FORM_KEY, PRODUCT_FORMS } from '@/features/recognition/label/productForm'
 import { useSettings } from '@/features/settings/store/useSettings'
 import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
 import { useStore } from '@/lib/store/useStore'
+import { OWN_PRODUCER, producerChoice } from '../utils/producerChoice'
 import type { HeatDuplicate } from '../utils/sendReadiness'
 import './LabelFields.css'
 
@@ -51,7 +52,8 @@ export interface LabelFieldsProps {
  * Первая строка — форма поставки (пруток или катушка): её выбирают вручную, с фото она не читается;
  * выбор открывается касанием значения и в просмотре, без режима правки.
  * Дальше — только поля, выбранные в настройках («Расширенные» → «Поля»); поле «Лист» (куда записать
- * бирку) выбирают, как форму, из списка — с фото оно не читается.
+ * бирку) выбирают, как форму, из списка — с фото оно не читается. Производителя в правке выбирают
+ * из известных поставщиков (`ProducerField`).
  */
 export function LabelFields({ label, isEditing, onFieldChange, manual = false, heatDuplicate = null }: LabelFieldsProps) {
   const { t } = useTranslation('label')
@@ -68,6 +70,9 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false, h
           const { key } = field
           if (key === SHEET_KEY) {
             return <SheetField key={key} name={fieldName(field)} value={label[key]} isEditing={isEditing} onChange={(value) => onFieldChange(key, value)} />
+          }
+          if (key === PRODUCER_KEY && isEditing && advanced.knownSuppliers.length > 0) {
+            return <ProducerField key={key} name={fieldName(field)} value={label[key]} suppliers={advanced.knownSuppliers} onChange={(value) => onFieldChange(key, value)} />
           }
           const value = label[key] ?? null
           const name = fieldName(field)
@@ -164,6 +169,74 @@ function PickerField({ name, value, options, isEditing, required = false, classN
         </span>
       )}
     </label>
+  )
+}
+
+/** Ключ поля «Производитель». */
+const PRODUCER_KEY = 'producer'
+
+/** Свойства `ProducerField`. */
+interface ProducerFieldProps {
+  /** Название строки. */
+  name: string
+  /** Текущее значение. */
+  value: LabelValue | undefined
+  /** Известные поставщики из настроек (по алфавиту). */
+  suppliers: readonly string[]
+  /** Новое значение. */
+  onChange: (value: string) => void
+}
+
+/**
+ * Производитель в правке: выбор из известных поставщиков. Название, которого в списке нет (так распознано
+ * или вписано), стоит первым вариантом с пометкой «нет в списке» — его можно оставить. «Свой вариант…»
+ * превращает строку в поле ввода с текущим названием; когда поле теряет фокус, снова выбор.
+ */
+function ProducerField({ name, value, suppliers, onChange }: ProducerFieldProps) {
+  const { t } = useTranslation('label')
+  const [typing, setTyping] = useState(false)
+  const text = value === null || value === undefined ? '' : String(value)
+  if (typing) {
+    return (
+      <label className={`label-field is-producer${text.trim() === '' ? ' is-required' : ''}`}>
+        <span className="label-field-name">{name}</span>
+        <input
+          className="label-field-input"
+          aria-label={name}
+          value={text}
+          placeholder={t('producer.ownPlaceholder')}
+          aria-required
+          // Поле появляется по выбору «Свой вариант…» — сразу вводим.
+          autoFocus
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={() => setTyping(false)}
+          onKeyDown={moveToNextField}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="next"
+          {...FIELD_KEYBOARD.text}
+        />
+      </label>
+    )
+  }
+  const { selected, unlisted } = producerChoice(text, suppliers)
+  const options = [
+    ...(selected === '' ? [{ value: '', label: t('requiredField'), disabled: true }] : []),
+    ...(unlisted ? [{ value: unlisted, label: t('producer.notListed', { name: unlisted }) }] : []),
+    ...suppliers.map((supplier) => ({ value: supplier, label: supplier })),
+    { value: OWN_PRODUCER, label: t('producer.own') },
+  ]
+  return (
+    <PickerField
+      name={name}
+      value={selected}
+      options={options}
+      isEditing
+      required
+      className="is-producer"
+      onChange={(next) => (next === OWN_PRODUCER ? setTyping(true) : onChange(next))}
+    />
   )
 }
 

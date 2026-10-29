@@ -97,6 +97,8 @@ Along with the fields, the model rates the photo itself (the `_photo` key in the
 
 “Advanced” holds a list of supplier mills (`recognition/label/knownSuppliers.ts`). It is added to the prompt after the list of fields: if the producer name on the tag is hard to read and the model read something vaguely similar, it takes the spelling from the list instead of a made-up one; a clearly printed name is copied as is, and with no sign of a supplier — `null`. By default — 35 mills from the steel sample log for the lab (2016–2026, spelling variants and typos merged into one name). The list can be edited with the pencil: add, rename, delete, restore the default one; with an empty list the rule is not added to the prompt.
 
+In editing, the producer is chosen from this list. A name that is not in the list (as it was recognized or typed) stays as the first item marked “not in the list” and can be kept; “Other…” turns the row into a text field for any name. With an empty list the producer is a plain text field.
+
 ### Recognition providers
 
 | Provider | Where it runs | Note |

@@ -42,6 +42,11 @@
     "default": "{{sheet}} — как в настройках",
     "currentYear": "лист {{year}}"
   },
+  "producer": {
+    "notListed": "{{name}} (нет в списке)",
+    "own": "Свой вариант…",
+    "ownPlaceholder": "Название производителя"
+  },
   "duplicateHeat": {
     "tag": "Плавка уже есть у бирки {{number}}",
     "sent": "Плавка уже отправлена — № {{record}} в «Загрузках»"
