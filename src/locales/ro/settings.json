@@ -16,7 +16,7 @@
     "language": "Limba interfeței",
     "recognition": "Recunoaștere",
     "recognitionModes": {
-      "device": "Telefon",
+      "device": "Pe dispozitiv",
       "model": "Model AI"
     },
     "provider": "Furnizor AI",

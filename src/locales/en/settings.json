@@ -16,7 +16,7 @@
     "language": "Interface language",
     "recognition": "Recognition",
     "recognitionModes": {
-      "device": "Phone",
+      "device": "On device",
       "model": "AI model"
     },
     "provider": "AI provider",

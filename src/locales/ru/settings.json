@@ -16,7 +16,7 @@
     "language": "Язык интерфейса",
     "recognition": "Распознавание",
     "recognitionModes": {
-      "device": "Телефон",
+      "device": "На устройстве",
       "model": "ИИ-модель"
     },
     "provider": "ИИ-провайдер",
