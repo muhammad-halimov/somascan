@@ -1,8 +1,9 @@
 /**
  * Распознавание на устройстве: поля бирки из текста OCR правилами (`LabelExtractor`).
  *
- * Фикстуры `fixtures/ocr/oam-ozd*.json` — настоящий текст с рамками, прочитанный OCR с фото бирки OAM Ózd
- * (`scripts/screenshots/tag.jpg`): ровно и под наклоном 12°. Остальные бирки собраны из строк в тесте.
+ * Фикстуры `fixtures/ocr/*.json` — настоящий текст с рамками, прочитанный OCR с фото бирок: OAM Ózd
+ * (`scripts/screenshots/tag.jpg`) ровно и под наклоном 12°; та же бирка, снятая боком, — прочитанная как есть
+ * (строки сверху вниз), повёрнутой правильно и вверх ногами; грязная бирка SOVEL. Остальные бирки собраны из строк в тесте.
  */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -62,6 +63,29 @@ test('бирка OAM Ózd: обязательные поля и остально
 test('бирка OAM Ózd под наклоном 12°: строки выпрямляются', () => {
   const { label } = extract(fixture('oam-ozd-tilted'), DEFAULT_FIELDS)
   assert.deepEqual(label, { producer: 'OAM Ózdi Acélművek', size: '12 mm', heat: '25R00581', weight_kg: 2650 })
+})
+
+test('бирка снята боком: прочитанная как есть не годится, лучший поворот — правильный', () => {
+  const sideways = extract(fixture('oam-ozd-sideways'))
+  const upsideDown = extract(fixture('oam-ozd-upside-down'))
+  const turned = extract(fixture('oam-ozd-turned'))
+  assert.equal(sideways.score, 0)
+  assert.equal(sideways.photo.ok, false)
+  assert.ok(turned.score > upsideDown.score)
+  assert.equal(bestExtraction([sideways, upsideDown, turned]), turned)
+  const { producer, size, heat, weight_kg } = turned.label
+  assert.deepEqual({ producer, size, heat, weight_kg }, { producer: 'OAM Ózdi Acélművek', size: '12 mm', heat: '25R00581', weight_kg: 2650 })
+})
+
+test('грязная бирка SOVEL: значения в строку, время с двоеточиями, смена без точки', () => {
+  const { label } = extract(fixture('sovel'))
+  assert.equal(label.size, '8 mm')
+  assert.equal(label.heat, '5800')
+  assert.equal(label.weight_kg, 1990)
+  assert.equal(label.production_date, '2025-12-22')
+  assert.equal(label.production_time, '01:38:42')
+  assert.equal(label.shift, '3')
+  assert.equal(label.serial_number, '4985800')
 })
 
 test('значения после двоеточия в той же строке, тонны в килограммах, дата и время', () => {

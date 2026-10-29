@@ -11,8 +11,8 @@ function throwIfAborted(signal: AbortSignal | undefined) {
   if (signal?.aborted) throw new DOMException('Recognition aborted', 'AbortError')
 }
 
-/** Столько подписанных полей на странице — поворот фото верный, другие можно не пробовать. */
-const CONFIDENT_SCORE = 3
+/** С такой оценкой страницы (`Extraction.score`: подписи и найденные значения) поворот фото верный, другие можно не пробовать. */
+const CONFIDENT_SCORE = 5
 
 /** Повороты, которые пробуются, если в исходном мало подписей: бирку сняли боком или вверх ногами. */
 const OTHER_ROTATIONS = [90, 270, 180]

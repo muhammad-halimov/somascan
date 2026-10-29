@@ -53,7 +53,8 @@ const digitCount = (text: string) => text.replace(/\D/g, '').length
 
 /** Код как напечатан (без «No», лишних знаков и пробелов), кириллические двойники — латиницей. */
 export const readCode: ValueReader = (text) => {
-  const value = latinize(cleanValue(text))
+  // Точка после последней цифры — конец фразы на бирке, а не часть кода («Shift No: 3.»).
+  const value = latinize(cleanValue(text)).replace(/(?<=\d)\.$/, '')
   return /[\p{L}\p{N}]/u.test(value) && value.length <= 40 ? value : null
 }
 

@@ -16,7 +16,7 @@ import type { LabelFieldDefinition, LabelKey, LabelRecord, LabelValue } from '..
 import { findLabel, sourceEnd, foldWithMap, type FoldedText } from './foldText'
 import { buildFieldRules, type FieldRule } from './fieldRules'
 import type { OcrCode, OcrPage } from './ocrTypes'
-import { isBelow, isRightOf, layoutPage, sameRow, typicalLineHeight, type PageLine } from './pageLayout'
+import { boxHeight, isBelow, isRightOf, layoutPage, sameRow, typicalLineHeight, type PageLine } from './pageLayout'
 import { findSupplier } from './supplierMatch'
 import { findGrade, findMarkedSize, findProduct } from './valueReaders'
 
@@ -38,7 +38,11 @@ export interface Extraction {
   label: LabelRecord
   /** Оценка фото: без текста — «нет бирки», без единой подписи — переснять. */
   photo: PhotoAssessment
-  /** Сколько разных полей подписано на странице (+1 за известного поставщика): по нему выбирается поворот фото. */
+  /**
+   * Насколько страница похожа на правильно повёрнутую бирку: сколько разных полей подписано, плюс сколько
+   * из них нашли значение, плюс 1 за известного поставщика; 0 — текст боком. По нему выбирается поворот фото
+   * (у перевёрнутой бирки подписи находятся, а значения — нет: они оказываются слева).
+   */
   score: number
   /** Сколько текста прочитано (с поправкой на уверенность): второй признак удачного поворота. */
   textWeight: number
@@ -126,10 +130,11 @@ function groupHits(line: PageLine, hits: readonly LabelHit[]): LabelGroup[] {
 /**
  * Значение в строке подписи: после двоеточия, иначе после подписи — если это не продолжение подписи
  * на других языках («Quality/Minőség/Jakość» — OCR не всё узнал, «/Jakost» — не значение).
+ * Двоеточие подписи — до первой цифры: в «Time01:38:42» (OCR съел двоеточие) двоеточия — часть значения.
  */
 function inlineText(rest: string): { text: string; colon: boolean } {
-  const colon = rest.search(/[:：]/u)
-  if (colon !== -1) return { text: rest.slice(colon + 1), colon: true }
+  const colon = /^[^\d:：]*[:：]/u.exec(rest)
+  if (colon) return { text: rest.slice(colon[0].length), colon: true }
   const text = rest.replace(/^(?:\s*[/|]\s*\p{L}[\p{L}.]*(?=[\s/|(]|$))+/u, '')
   // Двоеточие потерялось, а перед значением с цифрами — ещё слова подписи («…identyfikator 8/7»).
   return { text: /\d/.test(text) ? text.replace(/^(?:\s*\p{L}{5,}(?=\s))+/u, '') : text, colon: false }
@@ -254,12 +259,31 @@ export function extractLabel({ page, codes, fields, suppliers }: ExtractionInput
   }
 
   const labelled = new Set(labelLines.filter(({ line }) => line.box).flatMap(({ groups }) => groups.map((group) => group.key)))
-  const score = labelled.size + (supplier ? 1 : 0)
+  // Текст боком (бирку сняли повёрнутой, а движок прочёл строки сверху вниз): подписи найдены, но «справа»
+  // и «под» не работают — такая страница не годится, её заменит чтение повёрнутого фото.
+  const filled = [...values.keys()].filter((key) => labelled.has(key)).length
+  const score = isUpright(lines) ? labelled.size + filled + (supplier ? 1 : 0) : 0
   const textWeight = lines.reduce((sum, line) => sum + line.text.length * (line.confidence ?? 1), 0)
   const photo: PhotoAssessment = lines.length === 0
     ? { ok: false, issues: ['noTag'] }
     : { ok: score > 0, issues: [] }
   return { label, photo, score, textWeight }
+}
+
+/**
+ * Строки идут слева направо: у большей части текста (по числу знаков, строки от четырёх знаков) рамка шире,
+ * чем выше. Если текст прочитан боком, рамки строк — высокие и узкие.
+ */
+function isUpright(lines: readonly PageLine[]): boolean {
+  let across = 0
+  let along = 0
+  for (const line of lines) {
+    const length = line.text.replace(/\s/g, '').length
+    if (!line.box || length < 4) continue
+    if (line.box.right - line.box.left >= boxHeight(line.box)) across += length
+    else along += length
+  }
+  return across >= along
 }
 
 /** Знаки, которые OCR путает, — к одному виду для сравнения с кодом. */

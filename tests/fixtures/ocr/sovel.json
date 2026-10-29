@@ -1,0 +1,21 @@
+{
+ "rotation": 0,
+ "width": 1152,
+ "height": 2048,
+ "lines": [
+  {"text": "Beginnigg", "corners": [63, 506, 163, 506, 163, 534, 63, 534], "confidence": 0.73},
+  {"text": "20", "corners": [431, 500, 452, 500, 452, 516, 431, 516], "confidence": 0.55},
+  {"text": "Graisco", "corners": [243, 523, 305, 523, 305, 544, 243, 544], "confidence": 0.63},
+  {"text": "denwficatlo", "corners": [56, 533, 164, 531, 164, 555, 56, 557], "confidence": 0.69},
+  {"text": "B500C(BSt500SSD", "corners": [51, 656, 310, 636, 313, 666, 54, 686], "confidence": 0.82},
+  {"text": "INCONF", "corners": [56, 710, 155, 704, 156, 725, 57, 731], "confidence": 0.81},
+  {"text": "NEWAT 016-01/600-2025", "corners": [122, 886, 801, 860, 803, 915, 124, 941], "confidence": 0.86},
+  {"text": "Date:22/12/2025.Time01:38:42", "corners": [135, 973, 994, 951, 995, 1005, 136, 1027], "confidence": 0.83},
+  {"text": "Weight:1990 s", "corners": [591, 1019, 1018, 1010, 1019, 1059, 592, 1068], "confidence": 0.79},
+  {"text": "Size:8mm", "corners": [140, 1029, 434, 1026, 434, 1076, 140, 1079], "confidence": 0.75},
+  {"text": "Cod4985800", "corners": [526, 1076, 967, 1066, 968, 1116, 527, 1126], "confidence": 0.89},
+  {"text": "Heat No:5800", "corners": [145, 1086, 503, 1076, 504, 1123, 146, 1133], "confidence": 0.83},
+  {"text": "Shift No:3.", "corners": [147, 1139, 459, 1133, 460, 1180, 148, 1186], "confidence": 0.83},
+  {"text": "00091990", "corners": [655, 1354, 747, 1354, 747, 1371, 655, 1371], "confidence": 0.6}
+ ]
+}
