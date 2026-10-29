@@ -1,7 +1,9 @@
 import { useId, useRef, useState, type InputHTMLAttributes, type KeyboardEvent } from 'react'
 import { ArrowDropDownIcon, CheckIcon, ChevronDownIcon, PencilIcon } from '@/components/icons/Icons'
 import { List, ListItem } from '@/components/ui/List'
+import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { useHeightTransition } from '@/hooks/useHeightTransition'
+import { matchesSearch } from '@/lib/text/searchText'
 // Меню и уголок — те же, что у шторок настроек (`Disclosure`): поверхность меню Material, список iOS.
 import '@/components/ui/Disclosure.css'
 import './DropdownField.css'
@@ -51,6 +53,8 @@ export interface DropdownFieldProps {
   onChange: (value: string) => void
   /** Можно вписать своё значение (карандаш слева от уголка); без него — только выбор из списка. */
   own?: DropdownOwnValue
+  /** Поиск над вариантами (если их не меньше `LIST_SEARCH_MIN_ITEMS`) — для длинных списков, например поставщиков. */
+  searchable?: boolean
 }
 
 /**
@@ -58,24 +62,33 @@ export interface DropdownFieldProps {
  * список вариантов (галочка у выбранного), выбор сворачивает его. В просмотре — значение строки с уголком
  * справа, в правке — поле во всю ширину. С `own` в поле есть карандаш: текст становится полем ввода
  * прямо на месте (никуда не сдвигается), уход с поля или повторное нажатие карандаша возвращает выбор.
+ * С `searchable` над длинным списком — поле поиска; запрос сбрасывается, когда список сворачивается.
  */
-export function DropdownField({ name, value, selected, options, placeholder, isEditing, required = false, className = '', onChange, own }: DropdownFieldProps) {
+export function DropdownField({ name, value, selected, options, placeholder, isEditing, required = false, className = '', onChange, own, searchable = false }: DropdownFieldProps) {
   const menuId = useId()
   const nameId = useId()
   const menuRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [query, setQuery] = useState('')
   useHeightTransition(menuRef, isOpen)
+  const hasSearch = searchable && options.length >= LIST_SEARCH_MIN_ITEMS
+  const shown = hasSearch ? options.filter((candidate) => matchesSearch(candidate.label, query)) : options
 
   const option = options.find((candidate) => candidate.value === (selected ?? value))
   const missing = !option && value.trim() === ''
   const text = option ? option.label : missing ? placeholder : value
 
-  const toggle = () => setIsOpen((open) => !open)
+  /** Сворачивает список; запрос поиска сбрасывается. */
+  const close = () => {
+    setIsOpen(false)
+    setQuery('')
+  }
+  const toggle = () => (isOpen ? close() : setIsOpen(true))
   const select = (next: string) => {
     onChange(next)
-    setIsOpen(false)
+    close()
   }
   /** Карандаш: начать или закончить ввод своего значения. */
   const toggleTyping = () => {
@@ -83,7 +96,7 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
       inputRef.current?.blur()
       return
     }
-    setIsOpen(false)
+    close()
     setIsTyping(true)
   }
 
@@ -155,21 +168,24 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
       </div>
       <div ref={menuRef} id={menuId} className="disclosure-content label-field-dropdown-menu" inert={!isOpen}>
         <div className="disclosure-inner">
-          <List role="radiogroup" label={name}>
-            {options.map((candidate) => {
-              const checked = candidate.value === option?.value
-              return (
-                <ListItem
-                  key={candidate.value}
-                  itemRole="radio"
-                  primary={candidate.label}
-                  selected={checked}
-                  trailing={checked ? <CheckIcon /> : undefined}
-                  onClick={() => select(candidate.value)}
-                />
-              )
-            })}
-          </List>
+          {hasSearch && <ListSearch value={query} onChange={setQuery} label={name} />}
+          {shown.length === 0 ? <ListSearchEmpty /> : (
+            <List role="radiogroup" label={name}>
+              {shown.map((candidate) => {
+                const checked = candidate.value === option?.value
+                return (
+                  <ListItem
+                    key={candidate.value}
+                    itemRole="radio"
+                    primary={candidate.label}
+                    selected={checked}
+                    trailing={checked ? <CheckIcon /> : undefined}
+                    onClick={() => select(candidate.value)}
+                  />
+                )
+              })}
+            </List>
+          )}
         </div>
       </div>
     </div>

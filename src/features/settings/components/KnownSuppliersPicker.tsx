@@ -8,6 +8,7 @@ import { Disclosure } from '@/components/ui/Disclosure'
 import { Field } from '@/components/ui/Field'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
+import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { TextInput } from '@/components/ui/TextInput'
 import {
   cleanSupplierName,
@@ -20,6 +21,7 @@ import {
 } from '@/features/recognition/label/knownSuppliers'
 import { MAX_TEXT_FILE_BYTES, PickedFileError, pickTextFile, shareTextFile } from '@/lib/platform/files'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
+import { matchesSearch } from '@/lib/text/searchText'
 import { settingsStore } from '../store/SettingsStore'
 import './LabelFieldEditor.css'
 import './LabelFieldsPicker.css'
@@ -51,6 +53,7 @@ const errorText = (error: unknown) => (error instanceof Error ? error.message : 
  *
  * Слева от карандаша — «Экспорт» и «Импорт»: список в файле JSON, чтобы перенести его на другой телефон
  * или раздать коллегам. Импорт добавляет названия к списку или заменяет его.
+ * Над длинным списком — поиск по названиям.
  */
 export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
   const { t } = useTranslation(['settings', 'common'])
@@ -60,6 +63,10 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
   const [target, setTarget] = useState<EditTarget>(null)
   /** Список на момент начала правки — к нему возвращает «Отмена». */
   const snapshot = useRef(value)
+  /** Поиск по названиям (над длинным списком); сбрасывается, когда шторка сворачивается. */
+  const [query, setQuery] = useState('')
+  const hasSearch = value.length >= LIST_SEARCH_MIN_ITEMS
+  const shown = hasSearch ? value.filter((name) => matchesSearch(name, query)) : value
 
   const save = (name: string) => (next: string) => {
     if (settingsStore.renameKnownSupplier(name, next)) setTarget(null)
@@ -193,13 +200,18 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
     >
       <Disclosure
         open={isOpen}
-        onToggle={() => setIsOpen((current) => !current)}
+        onToggle={() => {
+          if (isOpen) setQuery('')
+          setIsOpen(!isOpen)
+        }}
         summary={value.length > 0 ? t('advanced.suppliersSummary', { count: value.length }) : t('advanced.suppliersEmpty')}
         details={value.join(', ') || undefined}
       >
-        {value.length > 0 && (
+        {hasSearch && <ListSearch value={query} onChange={setQuery} label={t('advanced.suppliers')} />}
+        {hasSearch && shown.length === 0 && <ListSearchEmpty />}
+        {shown.length > 0 && (
           <List label={t('advanced.suppliers')} className="label-fields-picker">
-            {value.map((name) => {
+            {shown.map((name) => {
               if (!isEditing) return <ListItem key={name} primary={name} />
               const isSupplierOpen = target?.kind === 'supplier' && target.name === name
               return (

@@ -5,5 +5,8 @@
   "ok": "OK",
   "close": "Close",
   "reset": "Reset",
-  "offline": "No internet connection"
+  "offline": "No internet connection",
+  "search": "Search",
+  "searchClear": "Clear search",
+  "searchEmpty": "Nothing found"
 }

@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/Button'
 import { Disclosure } from '@/components/ui/Disclosure'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
+import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { isDefaultLabelFields, type LabelFieldDefinition, type LabelKey } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { LANGUAGES } from '@/i18n/languages'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
+import { matchesSearch } from '@/lib/text/searchText'
 import { settingsStore } from '../store/SettingsStore'
 import { LabelFieldEditor, type LabelFieldDraft } from './LabelFieldEditor'
 import './LabelFieldsPicker.css'
@@ -33,6 +35,7 @@ type EditTarget = { kind: 'field'; key: LabelKey } | { kind: 'new' } | null
  * английское обязательно, остальные по желанию — и пояснение для модели), внизу можно
  * добавить своё поле. Слева от «Готово» — «Вернуть стандартные» и «Отмена» (возврат к набору
  * полей на момент начала правки).
+ * Над длинным списком — поиск по названиям.
  */
 export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
   const { t, i18n } = useTranslation(['settings', 'label', 'common'])
@@ -43,6 +46,10 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
   const [target, setTarget] = useState<EditTarget>(null)
   /** Поля на момент начала правки — к ним возвращает «Отмена». */
   const snapshot = useRef(value)
+  /** Поиск по названиям полей (над длинным списком); сбрасывается, когда шторка сворачивается. */
+  const [query, setQuery] = useState('')
+  const hasSearch = value.length >= LIST_SEARCH_MIN_ITEMS
+  const shown = hasSearch ? value.filter((field) => matchesSearch(fieldName(field), query)) : value
   const enabledCount = value.filter((field) => field.enabled).length
   /** Включённые поля через запятую — подробности в заголовке шторки. */
   const enabledNames = value.filter((field) => field.enabled).map((field) => fieldName(field)).join(', ')
@@ -125,51 +132,57 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
       <Disclosure
         className="label-fields-disclosure"
         open={isOpen}
-        onToggle={() => setIsOpen((current) => !current)}
+        onToggle={() => {
+          if (isOpen) setQuery('')
+          setIsOpen(!isOpen)
+        }}
         summary={t('advanced.fieldsSummary', { count: enabledCount, total: value.length })}
         details={enabledNames}
       >
-        <List label={t('advanced.fields')} className="label-fields-picker">
-          {value.map((field) => {
-            const name = fieldName(field)
-            const isFieldOpen = target?.kind === 'field' && target.key === field.key
-            if (isEditing) {
+        {hasSearch && <ListSearch value={query} onChange={setQuery} label={t('advanced.fields')} />}
+        {shown.length === 0 ? <ListSearchEmpty /> : (
+          <List label={t('advanced.fields')} className="label-fields-picker">
+            {shown.map((field) => {
+              const name = fieldName(field)
+              const isFieldOpen = target?.kind === 'field' && target.key === field.key
+              if (isEditing) {
+                return (
+                  <Fragment key={field.key}>
+                    <ListItem
+                      primary={name}
+                      secondary={field.builtIn ? undefined : t('advanced.fieldCustom')}
+                      selected={isFieldOpen}
+                      trailing={<PencilIcon />}
+                      onClick={() => setTarget(isFieldOpen ? null : { kind: 'field', key: field.key })}
+                    />
+                    {isFieldOpen && (
+                      <li className="label-fields-picker-form">
+                        <LabelFieldEditor
+                          field={field}
+                          defaultNames={defaultNamesOf(field)}
+                          onSave={save(field.key)}
+                          onCancel={() => setTarget(null)}
+                          onDelete={field.builtIn ? undefined : () => void remove(field)}
+                        />
+                      </li>
+                    )}
+                  </Fragment>
+                )
+              }
               return (
-                <Fragment key={field.key}>
-                  <ListItem
-                    primary={name}
-                    secondary={field.builtIn ? undefined : t('advanced.fieldCustom')}
-                    selected={isFieldOpen}
-                    trailing={<PencilIcon />}
-                    onClick={() => setTarget(isFieldOpen ? null : { kind: 'field', key: field.key })}
-                  />
-                  {isFieldOpen && (
-                    <li className="label-fields-picker-form">
-                      <LabelFieldEditor
-                        field={field}
-                        defaultNames={defaultNamesOf(field)}
-                        onSave={save(field.key)}
-                        onCancel={() => setTarget(null)}
-                        onDelete={field.builtIn ? undefined : () => void remove(field)}
-                      />
-                    </li>
-                  )}
-                </Fragment>
+                <ListItem
+                  key={field.key}
+                  itemRole="checkbox"
+                  primary={name}
+                  selected={field.enabled}
+                  disabled={field.enabled && enabledCount === 1}
+                  trailing={field.enabled ? <CheckIcon /> : undefined}
+                  onClick={() => settingsStore.toggleLabelField(field.key)}
+                />
               )
-            }
-            return (
-              <ListItem
-                key={field.key}
-                itemRole="checkbox"
-                primary={name}
-                selected={field.enabled}
-                disabled={field.enabled && enabledCount === 1}
-                trailing={field.enabled ? <CheckIcon /> : undefined}
-                onClick={() => settingsStore.toggleLabelField(field.key)}
-              />
-            )
-          })}
-        </List>
+            })}
+          </List>
+        )}
 
         {isEditing && target?.kind === 'new' && (
           <LabelFieldEditor field={null} onSave={add} onCancel={() => setTarget(null)} />

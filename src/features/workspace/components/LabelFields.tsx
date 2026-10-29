@@ -154,6 +154,7 @@ function ProducerField({ name, value, suppliers, onChange }: ProducerFieldProps)
       className="is-producer"
       onChange={onChange}
       own={{ label: t('producer.own'), placeholder: t('producer.ownPlaceholder'), keyboard: FIELD_KEYBOARD.text, onKeyDown: moveToNextField }}
+      searchable
     />
   )
 }
