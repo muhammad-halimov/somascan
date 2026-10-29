@@ -1,12 +1,15 @@
 /**
  * Скриншоты приложения для README (`docs/screenshots/<android|ios>/*.webp`): собранное приложение в Chrome
  * без окна, в виде телефона — Android (Material) и iPhone (iOS 26, Liquid Glass), тёмная тема, русский язык.
+ * Обе платформы снимаются на экране одного размера, поэтому все кадры одинаковые. Из десяти кадров платформы
+ * собирается обзор для README (`overview.<en|ru>.webp`): сетка 5 × 2 с подписями на языке README — одна
+ * картинка, которая масштабируется целиком, и кадры в ней всегда одного размера.
  *
  * Распознаёт поддельный LM Studio, который поднимает сам скрипт: первая и третья бирка распознаны целиком,
  * у второй нет веса (видно обязательное поле). Фото — `tag.jpg` рядом. Ключей, паролей и настоящих
  * хранилищ нет: настройки, список листов и история «Загрузок» подкладываются в `localStorage`.
  *
- * Запуск (macOS, нужен Google Chrome; другой путь — переменная `CHROME`):
+ * Запуск (macOS, нужен Google Chrome; другой путь, например Chromium на Linux, — переменная `CHROME`):
  *   npm run build && node scripts/screenshots/capture.mjs
  */
 import { spawn } from 'node:child_process'
@@ -14,7 +17,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import http from 'node:http'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
 const PHOTO = join(ROOT, 'scripts/screenshots/tag.jpg')
@@ -36,19 +39,37 @@ const PHOTOS = [1, 2, 3].map((n) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-/** Устройства: размер экрана в точках и user-agent, по которому приложение выбирает оформление. */
+/** Экран телефона в точках — один для обеих платформ, чтобы кадры Android и iPhone были одного размера (×2 — 804 × 1748). */
+const SCREEN = { width: 402, height: 874 }
+
+/** Устройства: user-agent, по которому приложение выбирает оформление. */
 const DEVICES = {
   android: {
-    width: 412,
-    height: 915,
+    ...SCREEN,
     userAgent: 'Mozilla/5.0 (Linux; Android 15; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
   },
   ios: {
-    width: 393,
-    height: 852,
+    ...SCREEN,
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
   },
 }
+
+/** Кадры в порядке обзора и их подписи на языках README. */
+const SHOTS = [
+  { name: '01-main', en: 'Main screen', ru: 'Главный экран' },
+  { name: '02-result', en: 'Recognized tag', ru: 'Распознанная бирка' },
+  { name: '03-editing', en: 'Editing', ru: 'Правка' },
+  { name: '04-no-photo', en: 'Tag without a photo', ru: 'Бирка без фото' },
+  { name: '05-grid', en: '3 × 3 grid', ru: 'Сетка 3 × 3' },
+  { name: '06-uploads', en: '“Uploads”', ru: '«Загрузки»' },
+  { name: '07-settings-model', en: 'LM Studio model', ru: 'Модель LM Studio' },
+  { name: '08-settings-storage', en: 'Network drive', ru: 'Сетевой диск' },
+  { name: '09-settings-drive', en: 'Google Drive', ru: 'Google Drive' },
+  { name: '10-settings-advanced', en: '“Advanced”', ru: '«Расширенные»' },
+]
+
+/** Ширина кадра в обзоре, px: README показывает обзор шириной ~830 точек — на экранах Retina это ровно ×2. */
+const OVERVIEW_TILE = 300
 
 // --- Поддельный LM Studio -------------------------------------------------------------------------
 
@@ -154,6 +175,8 @@ function uploads() {
 async function openChrome(port) {
   const chrome = spawn(CHROME, [
     '--headless=new',
+    // От root (контейнер, CI) Chrome без песочницы не запускается.
+    ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${join(TEMP, `chrome-${port}`)}`,
     `--host-resolver-rules=MAP ${LMS_HOST} 127.0.0.1`,
@@ -336,6 +359,42 @@ async function capture(platform, port) {
   }
 }
 
+/**
+ * Обзор платформы для README: десять кадров сеткой 5 × 2 с подписями на языке `language`. Фон прозрачный,
+ * подписи серые — читаются и в светлой, и в тёмной теме GitHub.
+ */
+async function overview(platform, language, port) {
+  const dir = join(OUT, platform)
+  const page = join(TEMP, `overview-${platform}-${language}.html`)
+  const figures = SHOTS.map((shot) => `<figure><img src="${pathToFileURL(join(dir, `${shot.name}.webp`))}" alt=""><figcaption>${shot[language]}</figcaption></figure>`).join('')
+  writeFileSync(page, `<!doctype html><meta charset="utf-8"><style>
+    html, body { margin: 0; background: transparent; }
+    body { font: 600 22px/1.25 Inter, ui-sans-serif, system-ui, sans-serif; color: #8c959f; }
+    main { display: grid; grid-template-columns: repeat(5, ${OVERVIEW_TILE}px); gap: 34px 26px; padding: 6px; width: max-content; }
+    figure { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 0; }
+    img { display: block; width: ${OVERVIEW_TILE}px; aspect-ratio: ${SCREEN.width} / ${SCREEN.height}; border-radius: 22px; box-shadow: 0 0 0 1px rgb(140 149 159 / .4); }
+    figcaption { text-align: center; }
+  </style><main>${figures}</main>`)
+  const { send, evaluate, close } = await openChrome(port)
+  try {
+    await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } })
+    await send('Emulation.setDeviceMetricsOverride', { width: 1800, height: 1600, deviceScaleFactor: 1, mobile: false })
+    await send('Page.enable')
+    await send('Page.navigate', { url: pathToFileURL(page).href })
+    await sleep(1500)
+    const size = await evaluate(`(async () => {
+      await Promise.all([...document.images].map((image) => image.decode()))
+      const box = document.querySelector('main').getBoundingClientRect()
+      return { width: Math.ceil(box.width), height: Math.ceil(box.height) }
+    })()`)
+    const { result } = await send('Page.captureScreenshot', { format: 'webp', quality: 90, clip: { x: 0, y: 0, ...size, scale: 1 }, captureBeyondViewport: true })
+    writeFileSync(join(dir, `overview.${language}.webp`), Buffer.from(result.data, 'base64'))
+    console.log(`${platform}/overview.${language}.webp`)
+  } finally {
+    close()
+  }
+}
+
 // --- Запуск ---------------------------------------------------------------------------------------
 
 await new Promise((resolve) => lmStudio.listen(LMS_PORT, '127.0.0.1', resolve))
@@ -351,6 +410,9 @@ try {
   }
   await capture('android', DEBUG_PORT)
   await capture('ios', DEBUG_PORT + 1)
+  for (const platform of ['android', 'ios']) {
+    for (const language of ['en', 'ru']) await overview(platform, language, DEBUG_PORT + 2)
+  }
 } finally {
   preview.kill()
   lmStudio.close()

@@ -16,25 +16,13 @@
 
 **Android**
 
-| Главный экран | Распознанная бирка | Правка | Бирка без фото | Сетка 3 × 3 |
-|---|---|---|---|---|
-| <img src="docs/screenshots/android/01-main.webp" width="160" alt="Главный экран"> | <img src="docs/screenshots/android/02-result.webp" width="160" alt="Распознанная бирка"> | <img src="docs/screenshots/android/03-editing.webp" width="160" alt="Правка"> | <img src="docs/screenshots/android/04-no-photo.webp" width="160" alt="Бирка без фото"> | <img src="docs/screenshots/android/05-grid.webp" width="160" alt="Сетка 3 × 3"> |
-
-| «Загрузки» | Модель LM Studio | Сетевой диск | Google Drive | «Расширенные» |
-|---|---|---|---|---|
-| <img src="docs/screenshots/android/06-uploads.webp" width="160" alt="«Загрузки»"> | <img src="docs/screenshots/android/07-settings-model.webp" width="160" alt="Модель LM Studio"> | <img src="docs/screenshots/android/08-settings-storage.webp" width="160" alt="Сетевой диск"> | <img src="docs/screenshots/android/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/android/10-settings-advanced.webp" width="160" alt="«Расширенные»"> |
+<img src="docs/screenshots/android/overview.ru.webp" alt="Android: главный экран, распознанная бирка, правка, бирка без фото, сетка 3 × 3, «Загрузки», модель LM Studio, сетевой диск, Google Drive, «Расширенные»">
 
 **iPhone**
 
-| Главный экран | Распознанная бирка | Правка | Бирка без фото | Сетка 3 × 3 |
-|---|---|---|---|---|
-| <img src="docs/screenshots/ios/01-main.webp" width="160" alt="Главный экран"> | <img src="docs/screenshots/ios/02-result.webp" width="160" alt="Распознанная бирка"> | <img src="docs/screenshots/ios/03-editing.webp" width="160" alt="Правка"> | <img src="docs/screenshots/ios/04-no-photo.webp" width="160" alt="Бирка без фото"> | <img src="docs/screenshots/ios/05-grid.webp" width="160" alt="Сетка 3 × 3"> |
+<img src="docs/screenshots/ios/overview.ru.webp" alt="iPhone: главный экран, распознанная бирка, правка, бирка без фото, сетка 3 × 3, «Загрузки», модель LM Studio, сетевой диск, Google Drive, «Расширенные»">
 
-| «Загрузки» | Модель LM Studio | Сетевой диск | Google Drive | «Расширенные» |
-|---|---|---|---|---|
-| <img src="docs/screenshots/ios/06-uploads.webp" width="160" alt="«Загрузки»"> | <img src="docs/screenshots/ios/07-settings-model.webp" width="160" alt="Модель LM Studio"> | <img src="docs/screenshots/ios/08-settings-storage.webp" width="160" alt="Сетевой диск"> | <img src="docs/screenshots/ios/09-settings-drive.webp" width="160" alt="Google Drive"> | <img src="docs/screenshots/ios/10-settings-advanced.webp" width="160" alt="«Расширенные»"> |
-
-Снимки собирает `scripts/screenshots/capture.mjs` (Chrome без окна, поддельный LM Studio, фото `scripts/screenshots/tag.jpg`; ключей и настоящих хранилищ нет):
+Снимки собирает `scripts/screenshots/capture.mjs` (Chrome без окна, поддельный LM Studio, фото `scripts/screenshots/tag.jpg`; ключей и настоящих хранилищ нет). Обе платформы снимаются на экране одного размера (402 × 874 точки), поэтому все кадры одинаковые — 804 × 1748 px; выше — обзор каждой платформы (сетка 5 × 2 с подписями, `overview.en.webp` / `overview.ru.webp`), отдельные кадры лежат рядом в `docs/screenshots/<android|ios>/`. На Linux путь к Chrome или Chromium передаётся в `CHROME`:
 
 ```bash
 npm run build && node scripts/screenshots/capture.mjs
