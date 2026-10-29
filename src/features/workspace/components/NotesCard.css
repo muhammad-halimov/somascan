@@ -275,19 +275,40 @@
   }
 }
 
-/* Оранжевый «!» у номера бирки, которая ждёт действий (нет формы, обязательных полей или фото), — как в сетке. */
-.notes-item-attention {
+/*
+ * Значок у номера бирки — как в углу её ячейки в сетке: зелёная галочка у готовой, оранжевый «!» у той,
+ * что ждёт действий (нет формы, обязательных полей или фото, плавка повторяется).
+ */
+.notes-item-mark {
   display: grid;
   width: 15px;
   height: 15px;
   place-items: center;
-  color: #fff;
-  background: var(--attention);
   border-radius: 50%;
 }
 
-.tab-badge .notes-item-attention svg {
+.notes-item-mark.is-attention {
+  color: #fff;
+  background: var(--attention);
+}
+
+.notes-item-mark.is-done {
+  color: var(--on-accent);
+  background: var(--success);
+}
+
+.tab-badge .notes-item-mark svg {
   width: 11px;
+  min-width: 0;
   height: 11px;
+  min-height: 0;
+  flex: none;
+  stroke: currentColor;
   stroke-width: 3.4;
+}
+
+.tab-badge .notes-item-mark.is-done svg {
+  width: 10px;
+  height: 10px;
+  stroke-width: 3.6;
 }

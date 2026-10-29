@@ -315,11 +315,10 @@ async function capture(platform, language, port) {
     // Бирка с фото: распознана, форма выбрана.
     await setFiles([PHOTOS[0]])
     await until(`document.querySelectorAll('.label-field').length > 2`)
-    await evaluate(`(() => {
-      const select = document.querySelector('.label-field.is-product-form select')
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, 'bobina')
-      select.dispatchEvent(new Event('change', { bubbles: true }))
-    })()`)
+    // Форма — выпадающий список: раскрыть и выбрать «Катушку» (пока форма не выбрана, первым идёт «Не выбрана»).
+    await evaluate(`document.querySelector('.label-field.is-product-form .label-field-dropdown-toggle').click()`)
+    await sleep(600)
+    await evaluate(`[...document.querySelectorAll('.label-field.is-product-form .label-field-dropdown-menu .list-item')].at(-1).click()`)
     await sleep(1200)
     await shot('02-result')
 
