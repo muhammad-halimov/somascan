@@ -11,6 +11,7 @@ import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
 import { PhotoGrid } from './PhotoGrid'
+import { RetakeHint } from './RetakeHint'
 import './PhotoCard.css'
 
 /** Что показывает карточка: одну бирку или сетку всех. */
@@ -49,6 +50,8 @@ export interface PhotoCardProps {
   isReceiving: boolean
   /** Масштаб, сдвиг, поворот и обработчики жестов открытого фото. */
   transform: PhotoTransform
+  /** Бирка распознана не полностью: между «Назад» и «Сеткой» — подсказка повернуть или переснять. */
+  retakeHint: boolean
   /** Открывает источник фото (пустая ячейка). */
   onPick: () => void
   /** Угловая кнопка «Без фото» / «С фото»: переключает ячейку между фото и вводом данных вручную. */
@@ -80,7 +83,7 @@ export interface PhotoCardProps {
  * один спиннер с подписью «Распознавание». В правом нижнем углу ячейки без снимка — переключатель «Без фото» /
  * «С фото»: бирка, данные которой вводят вручную (на месте фото — перечёркнутая картинка), и обратно.
  */
-export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -94,6 +97,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   /** Бирка, чьё фото уже загрузилось в карточке: до этого вместо него — миниатюра (фото с телефона декодируется не сразу). */
   const [loadedId, setLoadedId] = useState<string | null>(null)
   const placeholder = hasPhoto && item?.thumbUrl && item.thumbUrl !== photoUrl && loadedId !== item.id ? item.thumbUrl : null
+  /** Подсказка повернуть или переснять — у показанного фото; появляется и уходит плавно. */
+  const hint = usePresence(retakeHint && hasPhoto && !isBusy)
 
   const cardRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -283,11 +288,15 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
 
         {hasPhoto && !isBusy && <PhotoControls className="photo-controls anim-enter" transform={transform} showReset />}
 
-        {/* Переходы: «Назад» к сетке слева, «Сетка» справа — над фото и над спиннером распознавания. */}
+        {/*
+          Переходы: «Назад» к сетке слева, «Сетка» справа — над фото и над спиннером распознавания; между ними —
+          подсказка повернуть или переснять (в слое фото: при переходе к сетке уходит вместе с ним).
+        */}
         <div className="photo-nav">
           {showBack && (
             <ActionButton variant="overlay" size={44} icon={<BackIcon />} caption={t('grid.back')} label={t('grid.backLabel')} onClick={onShowGrid} />
           )}
+          {hint.mounted && <RetakeHint isClosing={hint.closing} />}
           <ActionButton className="photo-nav-grid" variant="overlay" size={44} icon={<GridIcon />} caption={t('grid.open')} label={t('grid.openLabel')} onClick={onShowGrid} />
         </div>
       </div>
