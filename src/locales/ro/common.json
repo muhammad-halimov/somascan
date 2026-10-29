@@ -5,5 +5,8 @@
   "ok": "OK",
   "close": "Închide",
   "reset": "Resetare",
-  "offline": "Fără conexiune la internet"
+  "offline": "Fără conexiune la internet",
+  "search": "Căutare",
+  "searchClear": "Ștergeți căutarea",
+  "searchEmpty": "Nu s-a găsit nimic"
 }
