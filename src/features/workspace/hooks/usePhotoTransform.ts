@@ -41,6 +41,13 @@ export interface PhotoTransformOptions {
   naturalSize: Size | null
   /** Разрешены ли жесты (фото показано и загружено). */
   enabled: boolean
+  /**
+   * Поворот, которым владеет бирка (он же уходит на распознавание): кнопка поворота и «Сброс» меняют его
+   * через `onRotationChange`. Без него поворот — своё состояние просмотра.
+   */
+  rotation?: number
+  /** Новый поворот бирки (по часовой стрелке, 0–270). */
+  onRotationChange?: (rotation: number) => void
 }
 
 /**
@@ -48,13 +55,17 @@ export interface PhotoTransformOptions {
  *
  * Касание: щипок двумя пальцами масштабирует относительно точки между пальцами
  * (и одновременно двигает фото), одним пальцем — перетаскивание увеличенного фото.
- * Мышь: перетаскивание. Кнопки: `zoomIn`, `zoomOut`, `rotate`.
+ * Мышь: перетаскивание. Кнопки: `zoomIn`, `zoomOut`, `rotate`, `reset`.
+ * Поворот может принадлежать бирке (`rotation` и `onRotationChange`) — тогда он сохраняется между бирками
+ * и в сетке, а не только в этом просмотре.
  * Сдвиг всегда ограничен так, чтобы фото не уезжало за края рамки, но до любого
  * края увеличенного фото можно дотянуться.
  */
-export function usePhotoTransform({ naturalSize, enabled }: PhotoTransformOptions) {
+export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotation, onRotationChange }: PhotoTransformOptions) {
   const [scale, setScale] = useState(PhotoGeometry.MIN_SCALE)
-  const [rotation, setRotation] = useState(0)
+  const [viewRotation, setViewRotation] = useState(0)
+  const rotation = ownedRotation ?? viewRotation
+  const setRotation = (next: number) => (onRotationChange ? onRotationChange(next) : setViewRotation(next))
   const [offset, setOffset] = useState<Point>(NO_OFFSET)
   const [frameSize, setFrameSize] = useState<Size>(INITIAL_FRAME)
   const frameElement = useRef<HTMLElement | null>(null)
@@ -107,12 +118,18 @@ export function usePhotoTransform({ naturalSize, enabled }: PhotoTransformOption
     setOffset(clamp(offset, scale, next))
   }
 
-  /** Исходное состояние (для нового фото). */
-  const reset = useCallback(() => {
+  /** Исходный масштаб и сдвиг (другая бирка: её поворот — свой, его не трогаем). */
+  const resetView = useCallback(() => {
     setScale(PhotoGeometry.MIN_SCALE)
-    setRotation(0)
     setOffset(NO_OFFSET)
+    setViewRotation(0)
   }, [])
+
+  /** «Сброс»: исходный масштаб, сдвиг и поворот. */
+  const reset = () => {
+    resetView()
+    setRotation(0)
+  }
 
   /** Запоминает время движения, если оно больше порога касания. */
   const trackMove = (dx: number, dy: number, timeStamp: number) => {
@@ -211,6 +228,7 @@ export function usePhotoTransform({ naturalSize, enabled }: PhotoTransformOption
     zoomOut: () => zoomTo(scale - PhotoGeometry.SCALE_STEP),
     rotate,
     reset,
+    resetView,
     /** `true`, если нажатие (`event.timeStamp`) случилось сразу после жеста: тогда это не «тап». */
     wasGesture: (timeStamp: number) => timeStamp - lastMoveAt.current < TAP_GUARD_MS,
     /** Обработчики касаний (щипок и перетаскивание одним пальцем). */

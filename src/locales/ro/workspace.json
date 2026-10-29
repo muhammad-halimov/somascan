@@ -29,6 +29,7 @@
     "cancelled": "Recunoașterea a fost anulată. Fotografia a rămas — apăsați „Reia” pentru a o recunoaște din nou.",
     "checkBeforeSend": "Verificați datele înainte de trimitere"
   },
+  "retakeHint": "Nerecunoscut? Rotiți sau refaceți poza",
   "editing": {
     "edit": "Editează textul",
     "finish": "Finalizează editarea",

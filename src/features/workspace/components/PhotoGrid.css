@@ -33,10 +33,11 @@
   border-radius: var(--photo-grid-radius);
 }
 
-/* Вся ячейка — кнопка «открыть». */
+/* Вся ячейка — кнопка «открыть»; размеры ячейки — для миниатюры, повёрнутой на четверть оборота. */
 .photo-grid-open {
   position: absolute;
   inset: 0;
+  container-type: size;
   display: grid;
   width: 100%;
   height: 100%;
@@ -96,6 +97,16 @@
 }
 
 /* Не выбранная для отправки — миниатюра приглушена. */
+/* Повёрнутая на 90° или 270° миниатюра: стороны меняются местами, чтобы после поворота она снова заполняла ячейку. */
+.photo-grid-thumb.is-sideways {
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  width: 100cqh;
+  height: 100cqw;
+  translate: -50% -50%;
+}
+
 .photo-grid-cell.has-photo:not(.is-selected) .photo-grid-thumb {
   opacity: .45;
 }

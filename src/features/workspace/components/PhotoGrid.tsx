@@ -115,7 +115,17 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
               aria-current={isActive || undefined}
               onClick={() => onOpen(index)}
             >
-              {item.thumbUrl && !item.hasError && <img className="photo-grid-thumb" src={item.thumbUrl} alt="" draggable={false} decoding="async" />}
+              {/* Миниатюра — с поворотом бирки, как фото в карточке. */}
+              {item.thumbUrl && !item.hasError && (
+                <img
+                  className={`photo-grid-thumb${item.rotation % 180 !== 0 ? ' is-sideways' : ''}`}
+                  style={item.rotation ? { rotate: `${item.rotation}deg` } : undefined}
+                  src={item.thumbUrl}
+                  alt=""
+                  draggable={false}
+                  decoding="async"
+                />
+              )}
               {/* Бирка без фото — перечёркнутая картинка на месте миниатюры. */}
               {item.manual && <span className="photo-grid-manual" aria-hidden="true"><ImageOffIcon /></span>}
               <span className="photo-grid-number" aria-hidden="true">{number}</span>

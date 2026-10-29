@@ -52,10 +52,12 @@
   border-radius: calc(var(--ios-radius-card) - 10px);
 }
 
+/* На 1 px выше центра строки: строка центрирует значок по себе, а буквы визуально сидят выше. */
 .notes-check svg {
   width: 15px;
   height: 15px;
   flex: 0 0 15px;
+  translate: 0 -1px;
   fill: none;
   stroke: var(--accent);
   stroke-width: 2;
