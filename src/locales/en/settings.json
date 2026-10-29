@@ -19,6 +19,8 @@
       "device": "On-device",
       "model": "AI model"
     },
+    "recognitionUnlock": "Locked — tap to unlock",
+    "recognitionLockHint": "“AI model” is locked so it is not switched on by accident: tap it to open the lock, then once more to choose it.",
     "provider": "AI provider",
     "providers": {
       "device": "On-device",

@@ -19,6 +19,8 @@
       "device": "Pe dispozitiv",
       "model": "Model AI"
     },
+    "recognitionUnlock": "Blocat — atingeți pentru a debloca",
+    "recognitionLockHint": "„Model AI” este blocat ca să nu fie pornit din greșeală: atingeți-l pentru a deschide lacătul, apoi încă o dată pentru a-l alege.",
     "provider": "Furnizor AI",
     "providers": {
       "device": "Pe dispozitiv",

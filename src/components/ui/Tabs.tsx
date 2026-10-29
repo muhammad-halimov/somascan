@@ -9,6 +9,12 @@ export interface TabOption<T> {
   label: string
   /** Необязательная иконка над подписью (например, флаг языка). */
   icon?: ReactNode
+  /** Маленький значок сразу после подписи (например, замок вкладки). */
+  badge?: ReactNode
+  /** Значок акцентного цвета (например, открытый замок); по умолчанию — цвета подписи. */
+  badgeAccent?: boolean
+  /** Доступное имя вкладки, если подписи мало (например, «закрыто — нажмите, чтобы открыть»). */
+  ariaLabel?: string
 }
 
 /** Свойства `Tabs`. */
@@ -191,6 +197,7 @@ export function Tabs<T extends string | number | null>({ options, value, onChang
             aria-selected={isTabList ? selected : undefined}
             aria-checked={isTabList ? undefined : selected}
             aria-controls={isTabList && panelIdPrefix ? `${panelIdPrefix}-${String(option.value)}` : undefined}
+            aria-label={option.ariaLabel}
             className={`tab${selected ? ' is-active' : ''}`}
             onPointerDown={() => setIsHoldingActive(selected)}
             onClick={() => onChange(option.value)}
@@ -202,9 +209,12 @@ export function Tabs<T extends string | number | null>({ options, value, onChang
                 жирная, и при переключении начертания плавно сменяются (как у UISegmentedControl),
                 а ширина подписи не меняется — текст не вздрагивает. На Android жирная копия скрыта.
               */}
-              <span className="tab-label">
-                <span className="tab-label-regular">{option.label}</span>
-                <span className="tab-label-bold" aria-hidden="true">{option.label}</span>
+              <span className="tab-label-line">
+                <span className="tab-label">
+                  <span className="tab-label-regular">{option.label}</span>
+                  <span className="tab-label-bold" aria-hidden="true">{option.label}</span>
+                </span>
+                {option.badge && <span className={`tab-badge${option.badgeAccent ? ' is-accent' : ''}`} aria-hidden="true">{option.badge}</span>}
               </span>
             </span>
           </button>

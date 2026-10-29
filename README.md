@@ -117,6 +117,8 @@ The default provider, **On-device**, needs neither internet nor keys nor a serve
 
 The answer has the same shape as a model's (fields plus `_photo`), so everything after it is unchanged: the card, required fields, heat duplicates, the queue. A photo with no text gets “no tag in the photo”, and text without a single caption gets “retake”. The rules are covered by tests on real OCR text of a tag (`tests/onDeviceLabel.test.ts`, fixtures in `tests/fixtures/ocr/`).
 
+In “General” → “Recognition” the “AI model” tab carries a lock, like the table path: so as not to switch to it by accident (photos go to the provider, a key is needed), the first tap opens the lock and the second one chooses it; the lock closes again when you leave the tab or close the settings, and stays open while a model recognizes (`GeneralTab.tsx`, `badge` in `Tabs`).
+
 **Experimental:** a tag with unusual captions is read worse than by an AI model; the missing required fields are filled in during editing. In the browser (dev server) on-device recognition is unavailable — choose another provider.
 
 ### Recognition providers

@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GlobeIcon, LinkIcon, ScanTextIcon, SmartphoneIcon, SparklesIcon } from '@/components/icons/Icons'
+import { GlobeIcon, LinkIcon, LockIcon, LockOpenIcon, ScanTextIcon, SmartphoneIcon, SparklesIcon } from '@/components/icons/Icons'
 import { FormSection } from '@/components/ui/FormSection'
 import { Tabs } from '@/components/ui/Tabs'
 import { TextInput } from '@/components/ui/TextInput'
@@ -19,11 +20,19 @@ type RecognitionMode = 'device' | 'model'
 /**
  * Вкладка «Основные»: язык интерфейса и распознавание — телефоном (вместо ключа и модели — пояснение)
  * или ИИ-моделью: провайдер, адрес сервера, API-ключ и модель.
+ *
+ * «ИИ-модель» закрыта замком, как путь к таблице: чтобы не перейти на неё случайно (фото уходят провайдеру,
+ * нужен ключ), первое нажатие открывает замок, второе — выбирает. Замок снова закрыт, когда ушли с вкладки
+ * или закрыли настройки; пока распознаёт модель, он открыт.
  */
 export function GeneralTab() {
   const { t } = useTranslation('settings')
   const { general } = useSettings()
   const provider = providerRegistry.get(general.provider)
+  const mode: RecognitionMode = provider.onDevice ? 'device' : 'model'
+  const [modelUnlocked, setModelUnlocked] = useState(false)
+  const modelOpen = modelUnlocked || mode === 'model'
+  const modelLabel = t('general.recognitionModes.model')
 
   return (
     <>
@@ -31,15 +40,25 @@ export function GeneralTab() {
         <LanguagePicker value={general.language} onChange={(language) => settingsStore.setLanguage(language)} label={t('general.language')} />
       </FormSection>
 
-      <FormSection title={t('general.recognition')} icon={<ScanTextIcon />}>
+      <FormSection title={t('general.recognition')} icon={<ScanTextIcon />} hint={mode === 'device' ? t('general.recognitionLockHint') : undefined}>
         <Tabs<RecognitionMode>
           label={t('general.recognition')}
-          value={provider.onDevice ? 'device' : 'model'}
+          value={mode}
           options={[
             { value: 'device', label: t('general.recognitionModes.device'), icon: <SmartphoneIcon /> },
-            { value: 'model', label: t('general.recognitionModes.model'), icon: <SparklesIcon /> },
+            {
+              value: 'model',
+              label: modelLabel,
+              icon: <SparklesIcon />,
+              badge: modelOpen ? <LockOpenIcon /> : <LockIcon />,
+              badgeAccent: modelOpen,
+              ariaLabel: modelOpen ? undefined : `${modelLabel}. ${t('general.recognitionUnlock')}`,
+            },
           ]}
-          onChange={(mode) => settingsStore.setProvider(mode === 'device' ? ON_DEVICE_PROVIDER : general.modelProvider)}
+          onChange={(next) => {
+            if (next === 'model' && !modelOpen) setModelUnlocked(true)
+            else settingsStore.setProvider(next === 'device' ? ON_DEVICE_PROVIDER : general.modelProvider)
+          }}
         />
       </FormSection>
 
