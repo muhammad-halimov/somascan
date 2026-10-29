@@ -232,6 +232,8 @@
     "suppliersImportedMessage": "New: {{added}}. In the list: {{total}}.",
     "suppliersImportFailedTitle": "Couldn't import",
     "suppliersImportInvalid": "There is no supplier list in the file. A JSON like the export is needed: {\"suppliers\": [\"…\", \"…\"]}, or just an array of names.",
+    "suppliersImportNotJson": "Choose a .json file — a list saved with “Export”.",
+    "suppliersImportTooLarge": "The file is too large for a supplier list (over {{size}} MB).",
     "suppliersExportFailedTitle": "Couldn't export"
   },
   "theme": {

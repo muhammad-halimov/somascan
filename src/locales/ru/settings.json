@@ -232,6 +232,8 @@
     "suppliersImportedMessage": "Новых: {{added}}. Всего в списке: {{total}}.",
     "suppliersImportFailedTitle": "Не удалось импортировать",
     "suppliersImportInvalid": "В файле нет списка поставщиков. Нужен JSON, как при экспорте: {\"suppliers\": [\"…\", \"…\"]}, или просто массив названий.",
+    "suppliersImportNotJson": "Выберите файл .json — список, сохранённый «Экспортом».",
+    "suppliersImportTooLarge": "Файл слишком большой для списка поставщиков (больше {{size}} МБ).",
     "suppliersExportFailedTitle": "Не удалось экспортировать"
   },
   "theme": {

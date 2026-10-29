@@ -18,7 +18,7 @@ import {
   SUPPLIERS_FILE_NAME,
   suppliersToJson,
 } from '@/features/recognition/label/knownSuppliers'
-import { pickTextFile, shareTextFile } from '@/lib/platform/files'
+import { MAX_TEXT_FILE_BYTES, PickedFileError, pickTextFile, shareTextFile } from '@/lib/platform/files'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { settingsStore } from '../store/SettingsStore'
 import './LabelFieldEditor.css'
@@ -107,9 +107,11 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
     const fail = (message: string) => NativeDialogs.alert({ title: t('advanced.suppliersImportFailedTitle'), message, buttonTitle: t('common:ok') })
     let text: string | null
     try {
-      text = await pickTextFile(['application/json', 'text/plain', '.json'])
+      text = await pickTextFile({ mimeType: 'application/json', extension: '.json' })
     } catch (error) {
-      await fail(errorText(error))
+      if (error instanceof PickedFileError && error.reason === 'wrongType') await fail(t('advanced.suppliersImportNotJson'))
+      else if (error instanceof PickedFileError) await fail(t('advanced.suppliersImportTooLarge', { size: MAX_TEXT_FILE_BYTES / 1024 / 1024 }))
+      else await fail(errorText(error))
       return
     }
     if (text === null) return
