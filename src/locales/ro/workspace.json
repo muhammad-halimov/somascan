@@ -49,6 +49,7 @@
     "addLabel": "Adaugă fotografie",
     "clear": "Resetare",
     "clearLabel": "Resetează zona de lucru",
+    "clearAllLabel": "Resetează toate etichetele",
     "retry": "Reia",
     "retryLabel": "Recunoaște din nou",
     "next": "Înainte",
@@ -61,6 +62,10 @@
     "title": "Resetați zona de lucru?",
     "message": "Fotografia și textul recunoscut vor fi șterse.",
     "confirm": "Resetare"
+  },
+  "clearAllDialog": {
+    "title": "Resetați toate etichetele ({{count}})?",
+    "confirm": "Resetează tot"
   },
   "removeDialog": {
     "title": "Eliminați eticheta?",

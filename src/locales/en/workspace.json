@@ -49,6 +49,7 @@
     "addLabel": "Add photo",
     "clear": "Reset",
     "clearLabel": "Reset workspace",
+    "clearAllLabel": "Reset all tags",
     "retry": "Retry",
     "retryLabel": "Recognize again",
     "next": "Next",
@@ -61,6 +62,10 @@
     "title": "Reset workspace?",
     "message": "Photo and recognized text will be removed.",
     "confirm": "Reset"
+  },
+  "clearAllDialog": {
+    "title": "Reset all tags ({{count}})?",
+    "confirm": "Reset all"
   },
   "removeDialog": {
     "title": "Remove this tag?",

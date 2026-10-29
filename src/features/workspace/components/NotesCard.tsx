@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AddIcon, CheckIcon, CloseIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { Tabs } from '@/components/ui/Tabs'
+import { useLongPress } from '@/hooks/useLongPress'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
 import { MAX_SCAN_ITEMS, type RecognitionStatus } from '../hooks/useScanSession'
 import type { HeatDuplicate } from '../utils/sendReadiness'
@@ -43,6 +44,8 @@ export interface NotesCardProps {
   onAddPhoto: () => void
   /** Крестик «Сброс»: очистить экран. */
   onClear: () => void
+  /** Удержание «Сброса» (или нажатие на пустой ячейке): сбросить все бирки — очистить сетку. */
+  onClearAll: () => void
   /** «Сброс» во время распознавания: прервать запрос, оставив фото. */
   onCancel: () => void
   /** «Повтор»: распознать то же фото заново. */
@@ -62,8 +65,9 @@ export interface NotesCardProps {
  * открытой бирки (или подсказка/ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
+  const clearAllPress = useLongPress(onClearAll)
   const isRecognizing = status.kind === 'recognizing'
   const actionsRef = useRef<HTMLDivElement>(null)
 
@@ -153,13 +157,17 @@ export function NotesCard({ cardRef, itemKey, itemCount, activeIndex, onSelectIt
 
       <div ref={actionsRef} className="notes-actions" role="group" aria-label={t('actions.group')}>
         <ActionButton icon={<AddIcon />} caption={t('actions.add')} label={t('actions.addLabel')} onClick={onAddPhoto} />
-        {/* «Сброс»: пока идёт распознавание — прерывает его, оставляя фото для «Повтора»; иначе очищает экран. */}
+        {/*
+          «Сброс»: пока идёт распознавание — прерывает его, оставляя фото для «Повтора»; иначе убирает открытую
+          бирку. Удержание — «Сбросить все» (очистить сетку); на пустой ячейке, когда другие бирки есть, — сразу оно.
+        */}
         <ActionButton
           icon={<CloseIcon />}
           caption={t('actions.clear')}
-          label={isRecognizing ? t('actions.cancelLabel') : t('actions.clearLabel')}
-          disabled={!hasPhoto}
-          onClick={isRecognizing ? onCancel : onClear}
+          label={!hasPhoto ? t('actions.clearAllLabel') : isRecognizing ? t('actions.cancelLabel') : t('actions.clearLabel')}
+          disabled={!hasPhoto && itemCount === 0}
+          onClick={!hasPhoto ? onClearAll : isRecognizing ? onCancel : onClear}
+          {...clearAllPress}
         />
         <ActionButton icon={<ResetIcon />} caption={t('actions.retry')} label={t('actions.retryLabel')} disabled={!canRetry || isRecognizing} onClick={onRetry} />
         <ActionButton
