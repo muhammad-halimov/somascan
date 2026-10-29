@@ -1,6 +1,7 @@
+import { ActionSheetButtonStyle } from '@capacitor/action-sheet'
 import { Fragment, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AddIcon, CheckIcon, CloseIcon, FactoryIcon, PencilIcon, ResetIcon, TrashIcon } from '@/components/icons/Icons'
+import { AddIcon, CheckIcon, CloseIcon, ExportIcon, FactoryIcon, ImportIcon, PencilIcon, ResetIcon, TrashIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { Button } from '@/components/ui/Button'
 import { Disclosure } from '@/components/ui/Disclosure'
@@ -8,7 +9,16 @@ import { Field } from '@/components/ui/Field'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
 import { TextInput } from '@/components/ui/TextInput'
-import { cleanSupplierName, isDefaultSuppliers, SUPPLIER_NAME_MAX_LENGTH, supplierKey } from '@/features/recognition/label/knownSuppliers'
+import {
+  cleanSupplierName,
+  isDefaultSuppliers,
+  parseSuppliersJson,
+  SUPPLIER_NAME_MAX_LENGTH,
+  supplierKey,
+  SUPPLIERS_FILE_NAME,
+  suppliersToJson,
+} from '@/features/recognition/label/knownSuppliers'
+import { pickTextFile, shareTextFile } from '@/lib/platform/files'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { settingsStore } from '../store/SettingsStore'
 import './LabelFieldEditor.css'
@@ -24,6 +34,12 @@ export interface KnownSuppliersPickerProps {
 /** Какой поставщик сейчас редактируется: название существующего или новый. */
 type EditTarget = { kind: 'supplier'; name: string } | { kind: 'new' } | null
 
+/** Варианты импорта в панели действий (по порядку кнопок). */
+const IMPORT_ACTION = { add: 0, replace: 1 } as const
+
+/** Текст ошибки для сообщения. */
+const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error))
+
 /**
  * Известные поставщики: список заводов, с которым модель сверяет плохо читаемое название
  * производителя (см. `buildLabelPrompt`).
@@ -32,6 +48,9 @@ type EditTarget = { kind: 'supplier'; name: string } | { kind: 'new' } | null
  * Карандаш включает правку: касание строки открывает форму (переименовать или удалить),
  * внизу — «Добавить поставщика». Слева от «Готово» — «Вернуть стандартные» и «Отмена»
  * (возврат к списку на момент начала правки).
+ *
+ * Слева от карандаша — «Экспорт» и «Импорт»: список в файле JSON, чтобы перенести его на другой телефон
+ * или раздать коллегам. Импорт добавляет названия к списку или заменяет его.
  */
 export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
   const { t } = useTranslation(['settings', 'common'])
@@ -74,6 +93,57 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
     setTarget(null)
   }
 
+  /** Экспорт: файл JSON со списком — в системную панель «Поделиться» (в браузере — скачивание). */
+  const exportSuppliers = async () => {
+    try {
+      await shareTextFile(SUPPLIERS_FILE_NAME, suppliersToJson(value), 'application/json', t('advanced.suppliersExport'))
+    } catch (error) {
+      await NativeDialogs.alert({ title: t('advanced.suppliersExportFailedTitle'), message: errorText(error), buttonTitle: t('common:ok') })
+    }
+  }
+
+  /** Импорт: названия из файла JSON добавляются к списку или заменяют его (пустой список просто заполняется). */
+  const importSuppliers = async () => {
+    const fail = (message: string) => NativeDialogs.alert({ title: t('advanced.suppliersImportFailedTitle'), message, buttonTitle: t('common:ok') })
+    let text: string | null
+    try {
+      text = await pickTextFile(['application/json', 'text/plain', '.json'])
+    } catch (error) {
+      await fail(errorText(error))
+      return
+    }
+    if (text === null) return
+    const names = parseSuppliersJson(text)
+    if (!names) {
+      await fail(t('advanced.suppliersImportInvalid'))
+      return
+    }
+    let replace = value.length === 0
+    if (!replace) {
+      const choice = await NativeDialogs.showActions({
+        title: t('advanced.suppliersImportTitle', { count: names.length }),
+        cancelable: true,
+        options: [
+          { title: t('advanced.suppliersImportAdd') },
+          { title: t('advanced.suppliersImportReplace'), style: ActionSheetButtonStyle.Destructive },
+          { title: t('common:cancel'), style: ActionSheetButtonStyle.Cancel },
+        ],
+      })
+      if (choice?.index !== IMPORT_ACTION.add && choice?.index !== IMPORT_ACTION.replace) return
+      replace = choice.index === IMPORT_ACTION.replace
+    }
+    const known = new Set(value.map(supplierKey))
+    settingsStore.setKnownSuppliers(replace ? names : [...value, ...names])
+    await NativeDialogs.alert({
+      title: t('advanced.suppliersImportedTitle'),
+      message: t('advanced.suppliersImportedMessage', {
+        added: names.filter((name) => !known.has(supplierKey(name))).length,
+        total: settingsStore.getSnapshot().advanced.knownSuppliers.length,
+      }),
+      buttonTitle: t('common:ok'),
+    })
+  }
+
   /** Включает правку и раскрывает шторку: править можно только видимый список. */
   const startEditing = () => {
     snapshot.current = value
@@ -109,7 +179,11 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
               <ActionButton variant="ghost" icon={<CheckIcon />} caption={t('advanced.doneCaption')} label={t('advanced.promptDone')} active onClick={finishEditing} />
             </>
           ) : (
-            <ActionButton variant="ghost" icon={<PencilIcon />} caption={t('advanced.editCaption')} label={t('advanced.promptEdit')} onClick={startEditing} />
+            <>
+              <ActionButton variant="ghost" icon={<ExportIcon />} caption={t('advanced.exportCaption')} label={t('advanced.suppliersExport')} disabled={value.length === 0} onClick={() => void exportSuppliers()} />
+              <ActionButton variant="ghost" icon={<ImportIcon />} caption={t('advanced.importCaption')} label={t('advanced.suppliersImport')} onClick={() => void importSuppliers()} />
+              <ActionButton variant="ghost" icon={<PencilIcon />} caption={t('advanced.editCaption')} label={t('advanced.promptEdit')} onClick={startEditing} />
+            </>
           )}
         </div>
       )}

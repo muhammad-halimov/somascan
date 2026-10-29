@@ -6,7 +6,7 @@
  * Здесь второй вызов, пока открыт предыдущий диалог, просто игнорируется:
  * подтверждение считается отклонённым, панель — отменённой.
  */
-import { ActionSheet, type ShowActionsOptions, type ShowActionsResult } from '@capacitor/action-sheet'
+import { ActionSheet, ActionSheetButtonStyle, type ShowActionsOptions, type ShowActionsResult } from '@capacitor/action-sheet'
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { Dialog, type AlertOptions, type ConfirmOptions } from '@capacitor/dialog'
 
@@ -34,9 +34,19 @@ export class NativeDialogs {
 
   /** Панель действий; `null`, если пользователь отменил выбор или панель уже открыта. */
   static async showActions(options: ShowActionsOptions): Promise<ShowActionsResult | null> {
+    if (!Capacitor.isNativePlatform()) return NativeDialogs.showActionsInBrowser(options)
     const sheet = Capacitor.getPlatform() === 'android' ? NativeSheet : ActionSheet
     const result = await NativeDialogs.exclusive(() => sheet.showActions(options))
     return result && result.index >= 0 ? result : null
+  }
+
+  /**
+   * Панель действий в браузере: у `@capacitor/action-sheet` там нет своей панели (нужен пакет pwa-elements) — выбор
+   * не открылся бы и не вернулся. Поэтому варианты предлагаются по очереди в `confirm`: берётся первый принятый.
+   */
+  private static showActionsInBrowser({ title, options }: ShowActionsOptions): ShowActionsResult | null {
+    const index = options.findIndex((option) => option.style !== ActionSheetButtonStyle.Cancel && window.confirm(title ? `${title}\n\n${option.title}?` : `${option.title}?`))
+    return index >= 0 ? { index, canceled: false } : null
   }
 
   /** Выполняет `show`, если другой диалог не открыт; иначе возвращает `null`. */

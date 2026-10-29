@@ -17,6 +17,24 @@ export function UploadIcon() {
   )
 }
 
+/** Стрелка вверх из коробки (как «Поделиться» iOS): экспорт в файл. */
+export function ExportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 14V3m0 0L8 7m4-4 4 4M8.5 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2.5" />
+    </svg>
+  )
+}
+
+/** Стрелка вниз в коробку: импорт из файла. */
+export function ImportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3v11m0 0-4-4m4 4 4-4M8.5 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2.5" />
+    </svg>
+  )
+}
+
 /** Шестерня: настройки. Залитое тело с «дыркой» (см. ActionButton.css). */
 export function SettingsIcon() {
   return (

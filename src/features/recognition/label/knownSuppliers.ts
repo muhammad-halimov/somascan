@@ -79,3 +79,27 @@ export function normalizeSuppliers(names: readonly string[]): string[] {
 /** Совпадает ли список со списком по умолчанию. */
 export const isDefaultSuppliers = (names: readonly string[]) =>
   names.length === DEFAULT_KNOWN_SUPPLIERS.length && names.every((name, index) => name === DEFAULT_KNOWN_SUPPLIERS[index])
+
+/** Имя файла, в который экспортируется список. */
+export const SUPPLIERS_FILE_NAME = 'somascan-suppliers.json'
+
+/** Список в JSON для обмена между устройствами: `{ "suppliers": [...] }`, по названию в строке. */
+export const suppliersToJson = (names: readonly string[]) => `${JSON.stringify({ suppliers: names }, null, 2)}\n`
+
+/**
+ * Названия из JSON: `{ "suppliers": [...] }`, как в экспорте, или просто массив названий.
+ * Не строки пропускаются, названия чистятся и сводятся без повторов (`normalizeSuppliers`).
+ * @returns `null`, если это не JSON или в нём нет ни одного названия.
+ */
+export function parseSuppliersJson(text: string): string[] | null {
+  let data: unknown
+  try {
+    data = JSON.parse(text.replace(/^﻿/, ''))
+  } catch {
+    return null
+  }
+  const list: unknown = Array.isArray(data) ? data : data !== null && typeof data === 'object' ? (data as { suppliers?: unknown }).suppliers : null
+  if (!Array.isArray(list)) return null
+  const names = normalizeSuppliers(list.filter((item): item is string => typeof item === 'string'))
+  return names.length > 0 ? names : null
+}

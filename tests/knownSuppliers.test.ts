@@ -1,10 +1,10 @@
 /**
  * Известные поставщики: список по умолчанию чистый и по алфавиту, чтение настроек не теряет
- * правок пользователя, правило в промпте появляется только при непустом списке.
+ * правок пользователя, правило в промпте появляется только при непустом списке, экспорт и импорт в JSON.
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { DEFAULT_KNOWN_SUPPLIERS, isDefaultSuppliers, normalizeSuppliers } from '../src/features/recognition/label/knownSuppliers'
+import { DEFAULT_KNOWN_SUPPLIERS, isDefaultSuppliers, normalizeSuppliers, parseSuppliersJson, suppliersToJson } from '../src/features/recognition/label/knownSuppliers'
 import { createDefaultLabelFields, enabledLabelFields } from '../src/features/recognition/label/labelFields'
 import { buildLabelPrompt } from '../src/features/recognition/label/labelPrompt'
 import { providerRegistry } from '../src/features/recognition/providers/ProviderRegistry'
@@ -34,4 +34,24 @@ test('правило о поставщиках — только при непу�
   assert.ok(prompt.includes('Known suppliers'))
   assert.ok(prompt.includes('- ArcelorMittal\n- Sovel'))
   assert.ok(prompt.indexOf('Known suppliers') < prompt.indexOf('"_photo"'))
+})
+
+test('экспорт в JSON читается импортом без потерь', () => {
+  const json = suppliersToJson(DEFAULT_KNOWN_SUPPLIERS)
+  assert.deepEqual(JSON.parse(json), { suppliers: [...DEFAULT_KNOWN_SUPPLIERS] })
+  assert.deepEqual(parseSuppliersJson(json), [...DEFAULT_KNOWN_SUPPLIERS])
+})
+
+test('импорт: массив названий или объект с «suppliers», с BOM; названия чистятся, не строки пропускаются', () => {
+  assert.deepEqual(parseSuppliersJson('["  Sovel ", "Habas", "SOVEL", 42, null]'), ['Habas', 'Sovel'])
+  assert.deepEqual(parseSuppliersJson('\uFEFF{"suppliers": ["Suez   Steel Co"], "version": 1}'), ['Suez Steel Co'])
+})
+
+test('импорт: не JSON, без названий или без списка — null', () => {
+  assert.equal(parseSuppliersJson('Sovel, Habas'), null)
+  assert.equal(parseSuppliersJson('[]'), null)
+  assert.equal(parseSuppliersJson('["", "   ", 7]'), null)
+  assert.equal(parseSuppliersJson('{"names": ["Sovel"]}'), null)
+  assert.equal(parseSuppliersJson('null'), null)
+  assert.equal(parseSuppliersJson('"Sovel"'), null)
 })
