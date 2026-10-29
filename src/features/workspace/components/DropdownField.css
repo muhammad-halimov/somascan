@@ -138,17 +138,7 @@ input.label-field-dropdown-text::placeholder {
   box-shadow: none;
 }
 
-/* ---- Меню: варианты не путаются с текстом карточки ---- */
-
-/* Отдельный блок с рамкой; между вариантами — линии. */
-.label-field-dropdown-menu .disclosure-inner > .list {
-  border: 1px solid color-mix(in srgb, var(--text) 24%, transparent);
-}
-
-:root:not([data-platform='ios']) .label-field-dropdown-menu .disclosure-inner > .list {
-  padding: 0;
-  overflow: hidden;
-}
+/* ---- Меню: между вариантами — линии, чтобы они не сливались с текстом карточки ---- */
 
 :root:not([data-platform='ios']) .label-field-dropdown-menu .disclosure-inner > .list .list-item {
   border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
@@ -160,32 +150,4 @@ input.label-field-dropdown-text::placeholder {
 
 :root[data-platform='ios'] .label-field-dropdown-menu .list-item::after {
   height: 1px;
-}
-
-/* Material — кружок выбора слева (выбранный — с точкой), галочки нет; iOS — галочка справа, без кружка. */
-.label-field-dropdown-radio {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  box-sizing: border-box;
-  place-items: center;
-  border: 2px solid var(--text);
-  border-radius: 50%;
-}
-
-.list-item.is-selected .label-field-dropdown-radio {
-  border-color: var(--accent);
-}
-
-.list-item.is-selected .label-field-dropdown-radio::after {
-  content: '';
-  width: 10px;
-  height: 10px;
-  background: var(--accent);
-  border-radius: 50%;
-}
-
-:root:not([data-platform='ios']) .label-field-dropdown-menu .list-item-trailing,
-:root[data-platform='ios'] .label-field-dropdown-menu .list-item-leading {
-  display: none;
 }
