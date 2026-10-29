@@ -102,6 +102,11 @@
   .scan-workspace.is-text-editing .photo-block {
     width: min(50cqw, calc((100cqh - var(--slide-bar-space)) * 1.08));
   }
+
+  /* С подсказкой «Поверните или переснимите» фото чуть меньше: подсказка и панель листания помещаются под ним. */
+  .photo-block.has-retake-hint {
+    --slide-bar-space: 84px;
+  }
 }
 
 /*

@@ -31,30 +31,30 @@ async function resolveModel(signal: AbortSignal) {
 }
 
 /**
- * Распознаёт бирку на фото `imageUrl` с актуальными настройками (провайдер, ключ, модель, размер фото,
- * поля, известные поставщики — на момент вызова).
+ * Распознаёт бирку на фото `imageUrl`, повёрнутом на `rotation` (как в карточке), с актуальными настройками
+ * (провайдер, ключ, модель, размер фото, поля, известные поставщики — на момент вызова).
  *
  * LM Studio — общий сервер нескольких устройств: распознавание встаёт в очередь `lmStudioGate` — ждёт,
  * пока идёт смена модели (своя или чужая), и отмечает устройство занятым, чтобы смена модели на другом
  * устройстве не оборвала запрос. Модель берётся после ожидания — уже новая, если её только что сменили.
  * @throws {RecognitionError} Нет ключа или модели, сбой провайдера; при отмене — ошибка отмены запроса.
  */
-export async function recognizeLabel(imageUrl: string, signal: AbortSignal) {
+export async function recognizeLabel(imageUrl: string, signal: AbortSignal, rotation = 0) {
   const { general } = settingsStore.getSnapshot()
   const provider = providerRegistry.get(general.provider)
   const access = getProviderAccess(general, provider.id)
   if (!provider.isConfigured(access)) throw new RecognitionError('noApiKey', { provider: provider.title })
-  if (provider.id !== 'lmstudio') return recognizeNow(imageUrl, signal)
+  if (provider.id !== 'lmstudio') return recognizeNow(imageUrl, signal, rotation)
   const release = await lmStudioGate.use(lmStudioServerKey(access.endpoint || provider.defaultEndpoint), signal)
   try {
-    return await recognizeNow(imageUrl, signal)
+    return await recognizeNow(imageUrl, signal, rotation)
   } finally {
     release()
   }
 }
 
-/** Распознаёт сразу, с настройками на этот момент. */
-async function recognizeNow(imageUrl: string, signal: AbortSignal) {
+/** Распознаёт сразу, с настройками на этот момент; `rotation` — поворот фото, заданный в карточке. */
+async function recognizeNow(imageUrl: string, signal: AbortSignal, rotation: number) {
   const { general, advanced } = settingsStore.getSnapshot()
   const provider = providerRegistry.get(general.provider)
   const access = getProviderAccess(general, provider.id)
@@ -65,6 +65,7 @@ async function recognizeNow(imageUrl: string, signal: AbortSignal) {
     model,
     access: { ...access, signal },
     imageUrl,
+    rotation,
     maxImageSide: provider.onDevice ? ON_DEVICE_IMAGE_SIDE : advanced.maxImageSide,
     instructions: advanced.prompt,
     fields: recognizedLabelFields(advanced.labelFields),

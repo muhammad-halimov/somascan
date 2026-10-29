@@ -85,6 +85,8 @@ The Android WebView neither shows nor decodes photos in HEIC/HEIF (the “high e
 
 Along with the fields, the model rates the photo itself (the `_photo` key in the answer: `ok` and problem codes — blurry, glare, dark, the tag is not fully in the frame, etc.), and the app also checks the pixels for obvious blur, darkness and overexposure (`recognition/image/PhotoQuality.ts`). If the photo should be retaken, after recognition a system alert “Poor photo quality” is shown with the reasons and an “OK” button; the recognized fields stay on screen.
 
+If a recognized tag still has empty required fields (or a retake is advised), a one-line hint appears above the paging bar: “Not recognized? Rotate or retake the photo”. “Rotate” on the photo really turns it: the rotation belongs to the tag — it is kept when switching tags, shown in the grid and in the full-screen view — and “Retry” sends the photo for recognition already turned (`workspace/utils/retakeHint.ts`, `InlineImage` `rotation`). “Reset” on the photo brings back the original scale and rotation.
+
 ### Recognition settings (Advanced)
 
 - **Prompt** — instructions for the model (on-device recognition has neither a prompt nor models); edited right in the tab, “Restore default” brings back the built-in one. The list of fields with explanations, the known-suppliers rule, the photo rating and the JSON shape are appended to it automatically (`recognition/label/labelPrompt.ts`).

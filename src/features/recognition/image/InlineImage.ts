@@ -9,6 +9,8 @@ export interface InlineImageOptions {
    * Фото с телефона — 12+ Мп; изображение поменьше загружается быстрее и стоит меньше токенов.
    */
   maxSide: number | null
+  /** Повернуть фото по часовой стрелке (0, 90, 180, 270) — как его повернули в карточке бирки. */
+  rotation?: number
   /**
    * Всегда перерисовывать фото в JPEG, даже небольшое: поворот из EXIF применяется к пикселям.
    * Нужно распознаванию на устройстве — нативный декодер EXIF не читает.
@@ -50,7 +52,8 @@ export class InlineImage {
    * который принимают не все провайдеры (HEIC, GIF, BMP…), перекодируется в JPEG, если платформа его декодирует.
    * @throws {RecognitionError} `imageUnreadable` или `notAnImage`.
    */
-  static async fromUrl(url: string, { maxSide, redraw = false }: InlineImageOptions): Promise<InlineImage> {
+  static async fromUrl(url: string, { maxSide, rotation = 0, redraw = false }: InlineImageOptions): Promise<InlineImage> {
+    const turn = ((Math.round(rotation / 90) * 90) % 360 + 360) % 360
     let blob: Blob
     try {
       const response = await fetch(url)
@@ -73,7 +76,8 @@ export class InlineImage {
     if (!type && !bitmap) throw new RecognitionError('notAnImage')
     try {
       const issues = bitmap ? analyzePhoto(bitmap) : []
-      const prepared = bitmap ? await InlineImage.prepare(blob, redraw ? null : type, bitmap, maxSide) : blob
+      // Повёрнутое фото всегда перерисовывается: поворот — в пикселях, а не в пометке EXIF.
+      const prepared = bitmap ? await InlineImage.prepare(blob, turn || redraw ? null : type, bitmap, maxSide, turn) : blob
       const dataUrl = await InlineImage.readAsDataUrl(prepared)
       const mimeType = prepared === blob ? (type ?? 'image/jpeg') : prepared.type || 'image/jpeg'
       return new InlineImage(mimeType, dataUrl.slice(dataUrl.indexOf(',') + 1), issues)
@@ -87,15 +91,22 @@ export class InlineImage {
    * (`null` — без уменьшения). Исходный blob остаётся, если он уже достаточно мал и его формат принимают
    * все провайдеры (`PROVIDER_IMAGE_TYPES`), а также если перекодировать не удалось.
    * `createImageBitmap` применяет ориентацию EXIF, поэтому повёрнутые фото с телефона остаются ровными.
+   * `rotation` — поворот по часовой стрелке, заданный в карточке бирки.
    */
-  private static async prepare(blob: Blob, type: string | null, bitmap: ImageBitmap, maxSide: number | null): Promise<Blob> {
+  private static async prepare(blob: Blob, type: string | null, bitmap: ImageBitmap, maxSide: number | null, rotation = 0): Promise<Blob> {
     const scale = maxSide === null ? 1 : Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
     if (scale >= 1 && type !== null && PROVIDER_IMAGE_TYPES.has(type)) return blob
 
+    const width = Math.max(1, Math.round(bitmap.width * scale))
+    const height = Math.max(1, Math.round(bitmap.height * scale))
+    const sideways = rotation % 180 !== 0
     const canvas = document.createElement('canvas')
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale))
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale))
-    canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    canvas.width = sideways ? height : width
+    canvas.height = sideways ? width : height
+    const context = canvas.getContext('2d')
+    context?.translate(canvas.width / 2, canvas.height / 2)
+    context?.rotate((rotation * Math.PI) / 180)
+    context?.drawImage(bitmap, -width / 2, -height / 2, width, height)
     const encoded = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY))
     return encoded ?? blob
   }

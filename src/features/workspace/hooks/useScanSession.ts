@@ -43,6 +43,11 @@ export interface ScanItem {
   isLoading: boolean
   /** Фото не открылось. */
   hasError: boolean
+  /**
+   * Поворот фото по часовой стрелке (0, 90, 180, 270): так фото показывается в карточке и сетке и так
+   * уходит на распознавание при «Повторе». Новое фото — без поворота.
+   */
+  rotation: number
   /** Распознавание. */
   status: RecognitionStatus
   /**
@@ -123,7 +128,7 @@ export function useScanSession() {
     const controller = new AbortController()
     controllers.current.set(id, controller)
     try {
-      const { label, photo } = await recognizeLabel(item.photoUrl, controller.signal)
+      const { label, photo } = await recognizeLabel(item.photoUrl, controller.signal, item.rotation)
       if (controller.signal.aborted) return
       patch(id, (current) => ({ status: { kind: 'done', label: { ...label, [PRODUCT_FORM_KEY]: null, ...current.manualValues }, photo } }))
     } catch (error) {
@@ -163,6 +168,7 @@ export function useScanSession() {
     naturalSize: null,
     isLoading: true,
     hasError: false,
+    rotation: 0,
     status: { kind: 'recognizing' },
     manualValues: {},
     selected: true,
@@ -213,6 +219,7 @@ export function useScanSession() {
       naturalSize: null,
       isLoading: false,
       hasError: false,
+      rotation: 0,
       status: { kind: 'done', label: {}, photo: { retake: false, issues: [] } },
       manualValues: {},
       selected: true,
@@ -250,6 +257,11 @@ export function useScanSession() {
     setActiveIndex(index)
     prepare(item)
   }, [commit, create, prepare, stopRecognition])
+
+  /** Поворачивает фото бирки `id` (градусы по часовой стрелке): заново распознаёт «Повтор». */
+  const setRotation = useCallback((id: string, rotation: number) => {
+    patch(id, () => ({ rotation: ((rotation % 360) + 360) % 360 }))
+  }, [patch])
 
   /** Убирает бирку `index`; следующие сдвигаются, открывается та, что встала на её место (или предыдущая). */
   const remove = useCallback((index: number) => {
@@ -360,6 +372,7 @@ export function useScanSession() {
     removeMany,
     toggleSelected,
     select,
+    setRotation,
     retry,
     abort,
     updateField,

@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { isMissingValue, type LabelKey, type LabelRecord } from '@/features/recognition/label/labelFields'
 import { useHistoryLayer } from '@/hooks/useHistoryLayer'
 import { usePresence } from '@/hooks/usePresence'
+import { useSettings } from '@/features/settings/store/useSettings'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { NotesCard } from './components/NotesCard'
 import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
+import { RetakeHint } from './components/RetakeHint'
 import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
 import { useEditMode } from './hooks/useEditMode'
 import { useHeatDuplicates } from './hooks/useHeatDuplicates'
@@ -15,6 +17,7 @@ import { useSendSelected } from './hooks/useSendSelected'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
 import { IDLE, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
+import { needsRetakeHint } from './utils/retakeHint'
 import './ScanWorkspace.css'
 
 /**
@@ -44,8 +47,16 @@ export function ScanWorkspace() {
   const notesCardRef = useRef<HTMLDivElement>(null)
   const photoCardRef = useRef<PhotoCardHandle>(null)
 
+  const { advanced } = useSettings()
   const hasPhoto = item !== null && !item.hasError
-  const transform = usePhotoTransform({ naturalSize: item?.naturalSize ?? null, enabled: hasPhoto && !item.isLoading && view === 'single' })
+  /** Поворот фото — у бирки: он сохраняется между бирками, виден в сетке и уходит на распознавание при «Повторе». */
+  const rotateItem = (rotation: number) => item && session.setRotation(item.id, rotation)
+  const transform = usePhotoTransform({
+    naturalSize: item?.naturalSize ?? null,
+    enabled: hasPhoto && !item.isLoading && view === 'single',
+    rotation: item?.rotation ?? 0,
+    onRotationChange: rotateItem,
+  })
   const editMode = useEditMode()
   const closeViewer = useHistoryLayer(isViewerOpen, () => setIsViewerOpen(false), 'photo')
   const viewer = usePresence(isViewerOpen)
@@ -55,11 +66,11 @@ export function ScanWorkspace() {
     setUsedGrid(true)
   }, 'grid')
 
-  // Другая бирка — исходный масштаб и поворот.
-  const { reset: resetTransform } = transform
+  // Другая бирка — исходный масштаб (поворот у каждой бирки свой).
+  const { resetView } = transform
   useEffect(() => {
-    resetTransform()
-  }, [item?.id, resetTransform])
+    resetView()
+  }, [item?.id, resetView])
 
   // Вход и выход из правки — до отрисовки кадра и без анимации прокрутки:
   // карточка результата сразу оказывается вверху, фото не мелькает.
@@ -241,7 +252,7 @@ export function ScanWorkspace() {
     session.addManual()
   }
 
-  /** «Повтор»: заново отправляет фото открытой бирки на распознавание. */
+  /** «Повтор»: заново отправляет фото открытой бирки на распознавание — с её поворотом. */
   const retry = () => {
     if (!item) return
     editMode.exit()
@@ -285,6 +296,9 @@ export function ScanWorkspace() {
   /** Панель выезжает и уходит плавно: пока она схлопывается, остаётся в DOM. */
   const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
 
+  /** Открытая бирка распознана не полностью (в сетке подсказки нет — там свои значки). */
+  const showRetakeHint = view === 'single' && needsRetakeHint(item, advanced.labelFields)
+
   /** Сколько бирок выбрано для отправки. */
   const selectedCount = session.items.filter((candidate) => candidate.selected).length
 
@@ -296,7 +310,7 @@ export function ScanWorkspace() {
     >
       <input className="photo-input" {...picker.inputProps} />
       {/* Карточка фото и панель листания под ней — один блок. */}
-      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}`}>
+      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}${showRetakeHint ? ' has-retake-hint' : ''}`}>
         <PhotoCard
           handleRef={photoCardRef}
           item={item}
@@ -316,6 +330,8 @@ export function ScanWorkspace() {
           onOpenActive={closeGrid}
           onToggleSelected={session.toggleSelected}
         />
+        {/* Бирка распознана не полностью — подсказка над панелью листания: повернуть и «Повтор» или переснять. */}
+        {showRetakeHint && <RetakeHint />}
         {slideBar.mounted && (
           <SlideBar
             isClosing={slideBar.closing}
@@ -356,7 +372,7 @@ export function ScanWorkspace() {
         Просмотр — в body: рабочая область в горизонтальном положении — контейнер размеров (container-type),
         а он, как и любое сдерживание раскладки, удержал бы fixed-слой в своих границах.
       */}
-      {viewer.mounted && item && createPortal(<PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} isClosing={viewer.closing} onClose={closeViewer} />, document.body)}
+      {viewer.mounted && item && createPortal(<PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} rotation={item.rotation} onRotationChange={rotateItem} isClosing={viewer.closing} onClose={closeViewer} />, document.body)}
     </section>
   )
 }

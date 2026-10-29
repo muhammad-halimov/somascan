@@ -15,6 +15,10 @@ export interface PhotoViewerProps {
   url: string
   /** Натуральный размер фото. */
   naturalSize: Size | null
+  /** Поворот фото бирки (по часовой стрелке): просмотр открывается с ним и меняет его. */
+  rotation: number
+  /** Новый поворот фото бирки. */
+  onRotationChange: (rotation: number) => void
   /** Проигрывается анимация закрытия. */
   isClosing: boolean
   /** Закрыть просмотр. */
@@ -23,12 +27,12 @@ export interface PhotoViewerProps {
 
 /**
  * Просмотр фото на весь экран: щипок, перетаскивание, кнопки масштаба и поворота.
- * Свой масштаб и поворот, независимые от карточки. Закрывается крестиком,
- * клавишей Escape и системным «Назад».
+ * Свой масштаб, независимый от карточки; поворот — общий с биркой (его же получит распознавание).
+ * Закрывается крестиком, клавишей Escape и системным «Назад».
  */
-export function PhotoViewer({ url, naturalSize, isClosing, onClose }: PhotoViewerProps) {
+export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isClosing, onClose }: PhotoViewerProps) {
   const { t } = useTranslation(['workspace', 'common'])
-  const transform = usePhotoTransform({ naturalSize, enabled: true })
+  const transform = usePhotoTransform({ naturalSize, enabled: true, rotation, onRotationChange })
   const { attachFrame, touchHandlers, pointerHandlers } = transform
   useBodyScrollLock(true)
 
