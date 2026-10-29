@@ -18,7 +18,7 @@ Rules:
 5. Dates are ISO "YYYY-MM-DD"; tags write the day first (04/01/2026 → 2026-01-04) unless the year comes first. Times are 24-hour "HH:MM" or "HH:MM:SS".
 6. If the same value is printed twice (for example on a tear-off stub), use the most legible copy and make sure both agree.
 7. Never decode barcodes, QR or DataMatrix codes, and never invent or complete partially hidden values. If a field is absent, unreadable, covered by rust or paint, or you are not sure — use null.
-8. Ignore addresses, websites, certification-body boilerplate and marketing text unless a field asks for them.`
+8. Ignore addresses, websites, certification-body boilerplate and marketing text unless a field asks for them. Exception: the mill's own e-mail address or website may name the producer when its name is not printed (see the producer field).`
 
 /** Подсказка модели о формате значения по виду поля. */
 const KIND_FORMAT: Record<LabelFieldKind, string> = {
@@ -53,7 +53,7 @@ const PHOTO_ASSESSMENT_RULE = `Also judge the photo itself in "${PHOTO_ASSESSMEN
  */
 function knownSuppliersRule(suppliers: readonly string[]): string {
   const list = suppliers.map((name) => `- ${name}`).join('\n')
-  return `Known suppliers (steel mills this warehouse receives from):\n${list}\nUse this list only for fields that name the manufacturer / steel mill. If the printed name is partly unreadable, worn or you are unsure of some letters, and what you can read clearly points to one supplier above (similar spelling, abbreviation, logo text), return that supplier's name as written in the list instead of guessing letters. If the name is clearly legible, copy it as printed even when it differs from the list — a new supplier is possible. Never pick a supplier when nothing on the tag points to it; use null instead.`
+  return `Known suppliers (steel mills this warehouse receives from):\n${list}\nUse this list only for fields that name the manufacturer / steel mill. If the printed name is partly unreadable, worn or you are unsure of some letters, and what you can read clearly points to one supplier above (similar spelling, abbreviation, logo text), return that supplier's name as written in the list instead of guessing letters. If the name is clearly legible, copy it as printed even when it differs from the list — a new supplier is possible. The mill's e-mail address or website also points to a supplier when its domain contains the supplier's name or abbreviation (e.g. "office@oamkft.hu" → OAM). Never pick a supplier when nothing on the tag points to it; use null instead.`
 }
 
 /** JSON-заготовка с полями, равными `null`, в порядке списка, и оценкой фото в конце. */

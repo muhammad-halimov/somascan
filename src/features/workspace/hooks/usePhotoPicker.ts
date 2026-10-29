@@ -5,12 +5,16 @@ import { Capacitor } from '@capacitor/core'
 import { FilePicker } from '@capawesome/capacitor-file-picker'
 import { useTranslation } from 'react-i18next'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
-import { pickedPhotoUrl, type PickedPhoto } from '../utils/pickedPhotoUrl'
+import { pickAndroidPhotos, pickedPhotoUrl, type PickedPhoto } from '../utils/pickedPhotoUrl'
 
 /** Колбэки `usePhotoPicker`. */
 export interface PhotoPickerCallbacks {
-  /** Фото выбраны (по порядку выбора); адреса пригодны для показа (`blob:` или путь WebView). */
-  onPicked: (urls: string[]) => void
+  /**
+   * Фото выбраны (по порядку выбора); адреса пригодны для показа (`blob:` или путь WebView).
+   * `picked` — сколько фото отметили в выборе: больше `urls`, если выбор не ограничивает их число
+   * (файлы, браузер) и лишние отброшены.
+   */
+  onPicked: (urls: string[], picked: number) => void
   /** Сбой камеры или галереи (не вызывается, когда пользователь отменил выбор). */
   onError: () => void
 }
@@ -19,12 +23,11 @@ export interface PhotoPickerCallbacks {
 const ACTION = { take: 0, gallery: 1, files: 2, cancel: 3 } as const
 
 /**
- * Лимит для системного выбора. Плагин FilePicker на Android (и для файлов везде) знает только «одно»
- * (`1`) и «сколько угодно» (`0`): любой другой лимит открывает выбор одного фото. Поэтому для нескольких
- * просим «сколько угодно» и берём первые `limit`; только системный выбор фото iOS (PHPicker) принимает
- * точный лимит.
+ * Лимит для выбора файлов. Плагин FilePicker для файлов знает только «одно» (`1`) и «сколько угодно» (`0`):
+ * для нескольких просим «сколько угодно» и берём первые `limit`. Галерея ограничена точно: на iOS — системный
+ * выбор фото (PHPicker), на Android — свой системный выбор фото (`pickAndroidPhotos`).
  */
-const pickerLimit = (limit: number, exact: boolean) => (limit === 1 ? 1 : exact ? limit : 0)
+const pickerLimit = (limit: number) => (limit === 1 ? 1 : 0)
 
 /** Адреса выбранных фото для WebView, по порядку (HEIC и т. п. на Android — перекодированные в JPEG). */
 const photoUrls = async (files: readonly PickedPhoto[]) =>
@@ -87,31 +90,36 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
     // поэтому там просим любые файлы — откроется файловый менеджер — и проверяем тип сами.
     const types = Capacitor.getPlatform() === 'android' ? undefined : ['image/*']
     // Перекодирование — тоже под загрузкой: фото ещё готовится.
-    const urls = await receive(FilePicker.pickFiles({ types, limit: pickerLimit(limit, false) }).then(({ files }) => {
-      const images = files.slice(0, limit).filter((file) => file.mimeType.startsWith('image/'))
-      return files.length > 0 && images.length === 0 ? null : photoUrls(images)
+    const picked = await receive(FilePicker.pickFiles({ types, limit: pickerLimit(limit) }).then(async ({ files }) => {
+      const images = files.filter((file) => file.mimeType.startsWith('image/'))
+      return files.length > 0 && images.length === 0 ? null : { urls: await photoUrls(images.slice(0, limit)), count: images.length }
     }))
-    if (urls === null) {
+    if (picked === null) {
       onError()
       return
     }
-    if (urls.length > 0) onPicked(urls)
+    if (picked.urls.length > 0) onPicked(picked.urls, picked.count)
   }
 
   /** Снимок с камеры (плагин Camera). */
   const fromCamera = async () => {
     const photo = await receive(Camera.takePhoto({ quality: 90, editable: 'no' }))
-    if (photo?.webPath) onPicked([photo.webPath])
+    if (photo?.webPath) onPicked([photo.webPath], 1)
   }
 
-  /** Фото из галереи — системный выбор фото без перекодирования (плагин FilePicker). */
+  /**
+   * Фото из галереи — системный выбор фото без перекодирования, где больше `limit` (свободных ячеек)
+   * не отметить: на Android — свой (`pickAndroidPhotos`), на iOS — PHPicker плагина FilePicker.
+   */
   const fromGallery = async (limit: number) => {
     // На iOS просим JPEG (skipTranscoding: false): HEIC не принимают часть провайдеров распознавания.
     // На iOS выбранные фото пронумерованы по порядку (ordered) — в этом порядке они встанут в сетку.
-    const exact = Capacitor.getPlatform() === 'ios'
-    const urls = await receive(FilePicker.pickImages({ limit: pickerLimit(limit, exact), skipTranscoding: false, ordered: exact })
-      .then(({ files }) => photoUrls(files.slice(0, limit))))
-    if (urls.length > 0) onPicked(urls)
+    const pending = Capacitor.getPlatform() === 'android'
+      ? pickAndroidPhotos(limit)
+      : FilePicker.pickImages({ limit, skipTranscoding: false, ordered: true })
+    // Без системного выбора фото (старый Android) открывается выбор документов без предела — лишние отбрасываем.
+    const picked = await receive(pending.then(async ({ files }) => ({ urls: await photoUrls(files.slice(0, limit)), count: files.length })))
+    if (picked.urls.length > 0) onPicked(picked.urls, picked.count)
   }
 
   /**
@@ -149,9 +157,9 @@ export function usePhotoPicker({ onPicked, onError }: PhotoPickerCallbacks) {
 
   /** Поле выбора файла: передаём файлы-изображения и сбрасываем поле, чтобы те же файлы можно было выбрать снова. */
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const images = [...(event.currentTarget.files ?? [])].filter((file) => file.type.startsWith('image/')).slice(0, limitRef.current)
+    const images = [...(event.currentTarget.files ?? [])].filter((file) => file.type.startsWith('image/'))
     event.currentTarget.value = ''
-    if (images.length > 0) onPicked(images.map((file) => URL.createObjectURL(file)))
+    if (images.length > 0) onPicked(images.slice(0, limitRef.current).map((file) => URL.createObjectURL(file)), images.length)
   }
 
   return {

@@ -64,7 +64,9 @@
     "confirm": "Resetare"
   },
   "clearAllDialog": {
-    "title": "Resetați toate etichetele ({{count}})?",
+    "sheetTitle": "Etichete pe ecran: {{count}}",
+    "title": "Resetați toate etichetele?",
+    "message": "Fotografiile și datele tuturor etichetelor de pe ecran ({{count}}) vor fi șterse.",
     "confirm": "Resetează tot"
   },
   "removeDialog": {
