@@ -151,3 +151,16 @@ input.label-field-dropdown-text::placeholder {
 :root[data-platform='ios'] .label-field-dropdown-menu .list-item::after {
   height: 1px;
 }
+
+/* Вариант «ничего не выбрано» (форма) — цветом ошибки, как пустое обязательное поле; галочка у него тоже. */
+:root .label-field .label-field-dropdown-menu .disclosure-inner > .list .list-item.is-unset .list-item-primary {
+  color: var(--danger);
+}
+
+.label-field-dropdown-menu .list-item.is-unset .action-check-icon {
+  stroke: var(--danger);
+}
+
+:root .label-field .label-field-dropdown-menu .disclosure-inner > .list .list-item.is-unset .list-item-primary {
+  opacity: .85;
+}
