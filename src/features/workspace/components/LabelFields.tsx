@@ -170,16 +170,19 @@ interface ChoiceFieldProps {
 }
 
 /**
- * Форма поставки: пока не выбрана — «Не выбрана» цветом ошибки (без неё бирку не отправить).
- * В запись попадает румынское слово, подписи вариантов — на языке интерфейса.
+ * Форма поставки: пока не выбрана — «Не выбрана» цветом ошибки (без неё бирку не отправить); в списке
+ * она же — первый, отмеченный вариант. Как только форма выбрана, «Не выбрана» из списка уходит: остаются
+ * пруток и катушка. В запись попадает румынское слово, подписи вариантов — на языке интерфейса.
  */
 function ProductFormField({ value, isEditing, onChange }: ChoiceFieldProps) {
   const { t } = useTranslation('label')
+  const chosen = isProductForm(value)
+  const forms = PRODUCT_FORMS.map((form) => ({ value: form, label: t(`productForm.${form}`) }))
   return (
     <DropdownField
       name={t('productForm.name')}
-      value={isProductForm(value) ? value : ''}
-      options={PRODUCT_FORMS.map((form) => ({ value: form, label: t(`productForm.${form}`) }))}
+      value={chosen ? value : ''}
+      options={chosen ? forms : [{ value: '', label: t('productForm.placeholder'), unset: true }, ...forms]}
       placeholder={t('productForm.placeholder')}
       isEditing={isEditing}
       required

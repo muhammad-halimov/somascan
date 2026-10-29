@@ -14,6 +14,8 @@ export interface DropdownOption {
   value: string
   /** Подпись на языке интерфейса. */
   label: string
+  /** Вариант «ничего не выбрано» (пустое `value`): цветом ошибки, как пустое обязательное поле. */
+  unset?: boolean
 }
 
 /** Своё значение: карандаш превращает текст поля в поле ввода на том же месте. */
@@ -77,7 +79,7 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
   const shown = hasSearch ? options.filter((candidate) => matchesSearch(candidate.label, query)) : options
 
   const option = options.find((candidate) => candidate.value === (selected ?? value))
-  const missing = !option && value.trim() === ''
+  const missing = value.trim() === '' && (!option || option.unset === true)
   const text = option ? option.label : missing ? placeholder : value
 
   /** Сворачивает список; запрос поиска сбрасывается. */
@@ -177,6 +179,7 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
                 <ListItem
                   key={candidate.value}
                   itemRole="radio"
+                  className={candidate.unset ? 'is-unset' : undefined}
                   primary={candidate.label}
                   selected={checked}
                   trailing={checked ? <CheckIcon /> : undefined}
