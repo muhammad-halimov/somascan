@@ -219,6 +219,8 @@
     "suppliersImportedMessage": "Noi: {{added}}. Total în listă: {{total}}.",
     "suppliersImportFailedTitle": "Importul nu a reușit",
     "suppliersImportInvalid": "Fișierul nu conține o listă de furnizori. Este nevoie de un JSON ca la export: {\"suppliers\": [\"…\", \"…\"]} sau doar de o listă de nume.",
+    "suppliersImportNotJson": "Alegeți un fișier .json — o listă salvată cu „Export”.",
+    "suppliersImportTooLarge": "Fișierul este prea mare pentru o listă de furnizori (peste {{size}} MB).",
     "suppliersExportFailedTitle": "Exportul nu a reușit"
   },
   "theme": {

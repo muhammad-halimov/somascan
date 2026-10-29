@@ -219,6 +219,8 @@
     "suppliersImportedMessage": "Нав: {{added}}. Ҳамагӣ дар рӯйхат: {{total}}.",
     "suppliersImportFailedTitle": "Ворид кардан нашуд",
     "suppliersImportInvalid": "Дар файл рӯйхати таъминкунандагон нест. JSON мисли содирот лозим аст: {\"suppliers\": [\"…\", \"…\"]} ё танҳо массиви номҳо.",
+    "suppliersImportNotJson": "Файли .json-ро интихоб кунед — рӯйхате, ки бо «Содирот» нигоҳ дошта шудааст.",
+    "suppliersImportTooLarge": "Файл барои рӯйхати таъминкунандагон хеле калон аст (зиёда аз {{size}} МБ).",
     "suppliersExportFailedTitle": "Содир кардан нашуд"
   },
   "theme": {
