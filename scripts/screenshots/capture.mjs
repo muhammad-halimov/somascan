@@ -1,9 +1,10 @@
 /**
- * Скриншоты приложения для README (`docs/screenshots/<android|ios>/*.webp`): собранное приложение в Chrome
- * без окна, в виде телефона — Android (Material) и iPhone (iOS 26, Liquid Glass), тёмная тема, русский язык.
- * Обе платформы снимаются на экране одного размера, поэтому все кадры одинаковые. Из десяти кадров платформы
- * собирается обзор для README (`overview.<en|ru>.webp`): сетка 5 × 2 с подписями на языке README — одна
- * картинка, которая масштабируется целиком, и кадры в ней всегда одного размера.
+ * Скриншоты приложения для README (`docs/screenshots/<android|ios>/<en|ru>/*.webp`): собранное приложение
+ * в Chrome без окна, в виде телефона — Android (Material) и iPhone (iOS 26, Liquid Glass), тёмная тема,
+ * интерфейс на языке README (английский — для README.md, русский — для README.ru.md). Обе платформы
+ * снимаются на экране одного размера, поэтому все кадры одинаковые. Из десяти кадров платформы собирается
+ * обзор (`overview.<en|ru>.webp`): сетка 5 × 2 с подписями — одна картинка, которая масштабируется целиком,
+ * и кадры в ней всегда одного размера.
  *
  * Распознаёт поддельный LM Studio, который поднимает сам скрипт: первая и третья бирка распознаны целиком,
  * у второй нет веса (видно обязательное поле). Фото — `tag.jpg` рядом. Ключей, паролей и настоящих
@@ -13,7 +14,7 @@
  *   npm run build && node scripts/screenshots/capture.mjs
  */
 import { spawn } from 'node:child_process'
-import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import http from 'node:http'
 import { dirname, join } from 'node:path'
@@ -67,6 +68,31 @@ const SHOTS = [
   { name: '09-settings-drive', en: 'Google Drive', ru: 'Google Drive' },
   { name: '10-settings-advanced', en: '“Advanced”', ru: '«Расширенные»' },
 ]
+
+/** Языки README: интерфейс на скриншотах и подписи обзора. */
+const LANGUAGES = ['en', 'ru']
+
+/**
+ * Надписи интерфейса, по которым скрипт нажимает кнопки и ищет разделы, — из переводов приложения,
+ * чтобы снимать на любом языке.
+ */
+function interfaceText(language) {
+  const read = (namespace) => JSON.parse(readFileSync(join(ROOT, `src/locales/${language}/${namespace}.json`), 'utf8'))
+  const workspace = read('workspace')
+  const settings = read('settings')
+  return {
+    edit: workspace.editing.editCaption,
+    done: workspace.editing.closeCaption,
+    noPhoto: workspace.photo.noPhoto,
+    grid: workspace.grid.open,
+    general: settings.tabs.general,
+    storage: settings.tabs.storage,
+    advanced: settings.tabs.advanced,
+    model: settings.general.model,
+    googleAccount: settings.storage.googleDrive.account,
+    rules: settings.storage.rules,
+  }
+}
 
 /** Ширина кадра в обзоре, px: README показывает обзор шириной ~830 точек — на экранах Retina это ровно ×2. */
 const OVERVIEW_TILE = 300
@@ -129,9 +155,9 @@ const tableSheets = (target) => ({
   names: SHEETS,
 })
 
-const settings = (target) => ({
+const settings = (target, language) => ({
   general: {
-    language: 'ru',
+    language,
     provider: 'lmstudio',
     endpoints: { lmstudio: LMS_HOST },
     models: { lmstudio: MODELS[0].id },
@@ -217,9 +243,10 @@ async function openChrome(port) {
 }
 
 /** Снимает одно устройство. */
-async function capture(platform, port) {
+async function capture(platform, language, port) {
   const device = DEVICES[platform]
-  const dir = join(OUT, platform)
+  const text = interfaceText(language)
+  const dir = join(OUT, platform, language)
   mkdirSync(dir, { recursive: true })
   recognitions = 0
   const { send, evaluate, close } = await openChrome(port)
@@ -228,7 +255,7 @@ async function capture(platform, port) {
     // WebP вместо PNG: в несколько раз легче при том же виде.
     const { result } = await send('Page.captureScreenshot', { format: 'webp', quality: 88 })
     writeFileSync(join(dir, `${name}.webp`), Buffer.from(result.data, 'base64'))
-    console.log(`${platform}/${name}.webp`)
+    console.log(`${platform}/${language}/${name}.webp`)
   }
   /** Нажимает первый элемент `selector`, в тексте которого есть `text`. */
   const click = async (selector, text) => {
@@ -259,7 +286,7 @@ async function capture(platform, port) {
   }
   const seed = async (target) => {
     await evaluate(`(() => {
-      localStorage.setItem('somascan.settings.v1', ${JSON.stringify(JSON.stringify(settings(target)))})
+      localStorage.setItem('somascan.settings.v1', ${JSON.stringify(JSON.stringify(settings(target, language)))})
       localStorage.setItem('somascan.uploads.v2', ${JSON.stringify(JSON.stringify(uploads()))})
       localStorage.setItem('somascan.tableSheets.v1', ${JSON.stringify(JSON.stringify(tableSheets(target)))})
     })()`)
@@ -297,10 +324,10 @@ async function capture(platform, port) {
     await shot('02-result')
 
     // Правка.
-    await click('.action-button', 'Правка')
+    await click('.action-button', text.edit)
     await sleep(1200)
     await shot('03-editing')
-    await click('.action-button', 'Готово')
+    await click('.action-button', text.done)
     await sleep(1200)
 
     // Ещё две бирки с фото и одна без фото — для сетки.
@@ -312,11 +339,11 @@ async function capture(platform, port) {
     await sleep(2500)
     await click('.notes-items .tab', '+')
     await sleep(800)
-    await click('.action-button', 'Без фото')
+    await click('.action-button', text.noPhoto)
     await sleep(1500)
     await shot('04-no-photo')
 
-    await click('.action-button', 'Сетка')
+    await click('.action-button', text.grid)
     await sleep(1800)
     await shot('05-grid')
 
@@ -330,19 +357,19 @@ async function capture(platform, port) {
     // Настройки.
     await evaluate(`document.querySelectorAll('.header-actions .action-button')[1].click()`)
     await sleep(1200)
-    await click('.tab', 'Основные')
+    await click('.tab', text.general)
     await sleep(1200)
     await evaluate(`document.querySelector('.disclosure button, .disclosure [role=button]')?.click()`)
     await sleep(1500)
-    await scrollToSection('Модель')
+    await scrollToSection(text.model)
     await shot('07-settings-model')
-    await click('.tab', 'Хранилище')
+    await click('.tab', text.storage)
     await sleep(1500)
     // Низ группы таблицы: путь, лист и правила записи.
-    await evaluate(`document.querySelector('.list[aria-label="Правила записи"]')?.scrollIntoView({ block: 'end' })`)
+    await evaluate(`document.querySelector('.list[aria-label="${text.rules}"]')?.scrollIntoView({ block: 'end' })`)
     await sleep(600)
     await shot('08-settings-storage')
-    await click('.tab', 'Расширенные')
+    await click('.tab', text.advanced)
     await sleep(1500)
     await shot('10-settings-advanced')
 
@@ -350,9 +377,9 @@ async function capture(platform, port) {
     await load('googleDrive')
     await evaluate(`document.querySelectorAll('.header-actions .action-button')[1].click()`)
     await sleep(1200)
-    await click('.tab', 'Хранилище')
+    await click('.tab', text.storage)
     await sleep(1500)
-    await scrollToSection('Аккаунт Google')
+    await scrollToSection(text.googleAccount)
     await shot('09-settings-drive')
   } finally {
     close()
@@ -366,7 +393,7 @@ async function capture(platform, port) {
 async function overview(platform, language, port) {
   const dir = join(OUT, platform)
   const page = join(TEMP, `overview-${platform}-${language}.html`)
-  const figures = SHOTS.map((shot) => `<figure><img src="${pathToFileURL(join(dir, `${shot.name}.webp`))}" alt=""><figcaption>${shot[language]}</figcaption></figure>`).join('')
+  const figures = SHOTS.map((shot) => `<figure><img src="${pathToFileURL(join(dir, language, `${shot.name}.webp`))}" alt=""><figcaption>${shot[language]}</figcaption></figure>`).join('')
   writeFileSync(page, `<!doctype html><meta charset="utf-8"><style>
     html, body { margin: 0; background: transparent; }
     body { font: 600 22px/1.25 Inter, ui-sans-serif, system-ui, sans-serif; color: #8c959f; }
@@ -408,10 +435,12 @@ try {
       await sleep(250)
     }
   }
-  await capture('android', DEBUG_PORT)
-  await capture('ios', DEBUG_PORT + 1)
+  let port = DEBUG_PORT
   for (const platform of ['android', 'ios']) {
-    for (const language of ['en', 'ru']) await overview(platform, language, DEBUG_PORT + 2)
+    for (const language of LANGUAGES) {
+      await capture(platform, language, port++)
+      await overview(platform, language, port++)
+    }
   }
 } finally {
   preview.kill()
