@@ -100,7 +100,7 @@ Along with the fields, the model rates the photo itself (the `_photo` key in the
 
 ### On-device recognition (ML Kit / Vision)
 
-The default provider, **On device**, needs neither internet nor keys nor a server: the phone reads the tag text itself — Google ML Kit on Android (Text Recognition v2 for Latin script and Barcode Scanning; the models are bundled into the APK, Google Play Services are not needed — `TagOcrPlugin.java`), Apple Vision on iPhone (`VNRecognizeTextRequest` in accurate mode, Latin-script languages, no dictionary correction, and `VNDetectBarcodesRequest` — `TagOcrPlugin.swift`). The engine returns lines of text with their frames, and rules in `recognition/ocr/` assemble the fields from them — no model and no training:
+The default provider, **On-device**, needs neither internet nor keys nor a server: the phone reads the tag text itself — Google ML Kit on Android (Text Recognition v2 for Latin script and Barcode Scanning; the models are bundled into the APK, Google Play Services are not needed — `TagOcrPlugin.java`), Apple Vision on iPhone (`VNRecognizeTextRequest` in accurate mode, Latin-script languages, no dictionary correction, and `VNDetectBarcodesRequest` — `TagOcrPlugin.swift`). The engine returns lines of text with their frames, and rules in `recognition/ocr/` assemble the fields from them — no model and no training:
 
 1. **Captions.** Each field knows how mills caption it in different languages (`fieldRules.ts`): heat — Heat, Heat No, Charge, Șarjă, Adag, Wytop, Colata, Döküm, Плавка…; weight — Weight, Greutate, Tömeg, Waga, Ağırlık…; size — Size, Diameter, Diametru, Átmérő, Przekrój… The comparison ignores case, diacritics, spaces and punctuation (OCR often reads “/” as “l”, and “ChargelAdag” still gives two captions); of overlapping captions the longer one wins (“production date” is not “product”). Custom fields are found by their names in every language.
 2. **Where the value is.** After the caption in the same line (“Heat No: 251216”), otherwise to the right in the same row of the tag, otherwise right below the caption; another caption in between is a boundary. The frames are straightened by the overall tilt of the tag (a photo taken at an angle), and distances are measured in line heights (`pageLayout.ts`).
@@ -117,7 +117,7 @@ The answer has the same shape as a model's (fields plus `_photo`), so everything
 
 | Provider | Where it runs | Note |
 |---|---|---|
-| **On device** (default) | on the phone: ML Kit (Android), Apple Vision (iOS) | no internet, keys or server; fields by rules, experimental |
+| **On-device** (default) | on the phone: ML Kit (Android), Apple Vision (iOS) | no internet, keys or server; fields by rules, experimental |
 | **Gemini** | cloud (Google) | API key required |
 | **Claude** | cloud (Anthropic) | API key required |
 | **OpenAI** | cloud | API key required |

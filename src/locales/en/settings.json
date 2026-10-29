@@ -16,12 +16,12 @@
     "language": "Interface language",
     "recognition": "Recognition",
     "recognitionModes": {
-      "device": "On device",
+      "device": "On-device",
       "model": "AI model"
     },
     "provider": "AI provider",
     "providers": {
-      "device": "On device",
+      "device": "On-device",
       "google": "Google",
       "anthropic": "Anthropic",
       "openai": "OpenAI",
