@@ -62,7 +62,7 @@ export interface DropdownFieldProps {
  * список вариантов (галочка у выбранного), выбор сворачивает его. В просмотре — значение строки с уголком
  * справа, в правке — поле во всю ширину. С `own` в поле есть карандаш: текст становится полем ввода
  * прямо на месте (никуда не сдвигается), уход с поля или повторное нажатие карандаша возвращает выбор.
- * С `searchable` над длинным списком — поле поиска; запрос сбрасывается, когда список сворачивается.
+ * С `searchable` первая строка длинного списка — поиск; запрос сбрасывается, когда список сворачивается.
  */
 export function DropdownField({ name, value, selected, options, placeholder, isEditing, required = false, className = '', onChange, own, searchable = false }: DropdownFieldProps) {
   const menuId = useId()
@@ -168,24 +168,23 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
       </div>
       <div ref={menuRef} id={menuId} className="disclosure-content label-field-dropdown-menu" inert={!isOpen}>
         <div className="disclosure-inner">
-          {hasSearch && <ListSearch value={query} onChange={setQuery} label={name} />}
-          {shown.length === 0 ? <ListSearchEmpty /> : (
-            <List role="radiogroup" label={name}>
-              {shown.map((candidate) => {
-                const checked = candidate.value === option?.value
-                return (
-                  <ListItem
-                    key={candidate.value}
-                    itemRole="radio"
-                    primary={candidate.label}
-                    selected={checked}
-                    trailing={checked ? <CheckIcon /> : undefined}
-                    onClick={() => select(candidate.value)}
-                  />
-                )
-              })}
-            </List>
-          )}
+          <List role="radiogroup" label={name}>
+            {hasSearch && <ListSearch value={query} onChange={setQuery} label={name} />}
+            {shown.length === 0 && <ListSearchEmpty />}
+            {shown.map((candidate) => {
+              const checked = candidate.value === option?.value
+              return (
+                <ListItem
+                  key={candidate.value}
+                  itemRole="radio"
+                  primary={candidate.label}
+                  selected={checked}
+                  trailing={checked ? <CheckIcon /> : undefined}
+                  onClick={() => select(candidate.value)}
+                />
+              )
+            })}
+          </List>
         </div>
       </div>
     </div>

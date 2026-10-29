@@ -53,7 +53,7 @@ const errorText = (error: unknown) => (error instanceof Error ? error.message : 
  *
  * Слева от карандаша — «Экспорт» и «Импорт»: список в файле JSON, чтобы перенести его на другой телефон
  * или раздать коллегам. Импорт добавляет названия к списку или заменяет его.
- * Над длинным списком — поиск по названиям.
+ * Первая строка длинного списка — поиск по названиям.
  */
 export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
   const { t } = useTranslation(['settings', 'common'])
@@ -207,10 +207,10 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
         summary={value.length > 0 ? t('advanced.suppliersSummary', { count: value.length }) : t('advanced.suppliersEmpty')}
         details={value.join(', ') || undefined}
       >
-        {hasSearch && <ListSearch value={query} onChange={setQuery} label={t('advanced.suppliers')} />}
-        {hasSearch && shown.length === 0 && <ListSearchEmpty />}
-        {shown.length > 0 && (
+        {value.length > 0 && (
           <List label={t('advanced.suppliers')} className="label-fields-picker">
+            {hasSearch && <ListSearch value={query} onChange={setQuery} label={t('advanced.suppliers')} />}
+            {shown.length === 0 && <ListSearchEmpty />}
             {shown.map((name) => {
               if (!isEditing) return <ListItem key={name} primary={name} />
               const isSupplierOpen = target?.kind === 'supplier' && target.name === name
