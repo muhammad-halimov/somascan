@@ -274,3 +274,20 @@
     --action-size: 42px;
   }
 }
+
+/* Оранжевый «!» у номера бирки, которая ждёт действий (нет формы, обязательных полей или фото), — как в сетке. */
+.notes-item-attention {
+  display: grid;
+  width: 15px;
+  height: 15px;
+  place-items: center;
+  color: #fff;
+  background: var(--attention);
+  border-radius: 50%;
+}
+
+.tab-badge .notes-item-attention svg {
+  width: 11px;
+  height: 11px;
+  stroke-width: 3.4;
+}

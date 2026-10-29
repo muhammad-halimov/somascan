@@ -95,6 +95,37 @@
   stroke-linejoin: round;
 }
 
+/* Подпись и значок после неё (замок) — в одну строку. */
+.tab-label-line {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Значок после подписи — меньше иконки вкладки, цвета подписи; акцентный — например, открытый замок. */
+.tab-badge {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  translate: 0 -0.5px;
+  transition: color 140ms ease;
+}
+
+.tab-badge svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tab-badge.is-accent {
+  color: var(--accent);
+}
+
 /* Фирменные знаки (Google, Drive, Claude) сохраняют свои цвета. */
 .tab-icon svg.brand-icon {
   stroke: none;
