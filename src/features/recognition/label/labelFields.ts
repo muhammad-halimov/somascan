@@ -68,7 +68,7 @@ export const SHEET_KEY = 'sheet'
  * Пояснения написаны по-английски — на нём модели лучше всего понимают инструкции.
  */
 export const BUILT_IN_FIELDS: readonly BuiltInField[] = [
-  { key: 'producer', kind: 'text', hint: 'Steel mill / manufacturer name, e.g. "ArcelorMittal Kryvyi Rih", "Suez Steel Co", "OAM Ózdi Acélművek Kft.", "SOVEL".' },
+  { key: 'producer', kind: 'text', hint: 'Steel mill / manufacturer name, e.g. "ArcelorMittal Kryvyi Rih", "Suez Steel Co", "OAM Ózdi Acélművek Kft.", "SOVEL". If no name is printed but the mill\'s e-mail address or website is (info@company.com, www.company.com), take the company from the domain ("sales@sovel.gr" → "Sovel"); not from free mail (gmail.com, yahoo.com…) or from the domains of customers and certification bodies.' },
   { key: 'product', kind: 'text', hint: 'Product type as printed, e.g. "Rebar in coil", "Alloy Rebar", "High ductility weldable reinforcing steel".' },
   { key: 'grade', kind: 'code', hint: 'Steel grade / class / quality (Grade, Class, Clasa, Quality, Minőség, Jakość), e.g. "B500C". Do not include standards.' },
   { key: 'standard', kind: 'code', hint: 'Standard(s) the product conforms to, e.g. "ST 009:2011", "EN ISO 15630-1:2019", "DIN 488". Several standards: join with "; ".' },
