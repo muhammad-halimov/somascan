@@ -162,8 +162,6 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
                 <ListItem
                   key={candidate.value}
                   itemRole="radio"
-                  // Кружок выбора (Material) или галочка (iOS) — видно, что это варианты, а не текст.
-                  leading={<span className="label-field-dropdown-radio" aria-hidden="true" />}
                   primary={candidate.label}
                   selected={checked}
                   trailing={checked ? <CheckIcon /> : undefined}
