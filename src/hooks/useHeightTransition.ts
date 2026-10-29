@@ -7,10 +7,10 @@ import { useLayoutEffect, useRef, type RefObject } from 'react'
 const MIN_MS = 320
 const MAX_MS = 560
 const MS_PER_PX = 0.3
-const EASING = 'cubic-bezier(.3, 0, 0, 1)'
+export const HEIGHT_EASING = 'cubic-bezier(.3, 0, 0, 1)'
 
 /** Длительность анимации для изменения высоты на `distance` px. */
-const durationFor = (distance: number) => Math.round(Math.min(MAX_MS, Math.max(MIN_MS, 220 + distance * MS_PER_PX)))
+export const heightDurationFor = (distance: number) => Math.round(Math.min(MAX_MS, Math.max(MIN_MS, 220 + distance * MS_PER_PX)))
 
 /**
  * Плавно раскрывает и сворачивает элемент анимацией высоты (`max-height`).
@@ -58,8 +58,8 @@ export function useHeightTransition(
     element.style.transition = 'none'
     element.style.maxHeight = `${from}px`
     void element.offsetHeight
-    const duration = durationFor(Math.abs(target - from))
-    element.style.transition = `max-height ${duration}ms ${EASING}`
+    const duration = heightDurationFor(Math.abs(target - from))
+    element.style.transition = `max-height ${duration}ms ${HEIGHT_EASING}`
     element.style.maxHeight = `${target}px`
     const timer = window.setTimeout(finish, duration + 40)
     return () => window.clearTimeout(timer)

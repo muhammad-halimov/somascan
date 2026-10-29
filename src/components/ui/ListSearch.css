@@ -1,25 +1,25 @@
 /*
- * Поиск над списком в шторке (настройки) и в выпадающем списке карточки бирки. Сам список и меню не меняются:
- * поле стоит над ними отдельно. Android — заполненная «пилюля» Material 3, iOS — поле поиска UIKit.
+ * Поиск — первая строка списка в шторке (настройки) и в выпадающем списке карточки бирки: та же поверхность
+ * и те же отступы, что у строк. Android — строка меню Material 3 с линией снизу (в фокусе — акцентной, как
+ * у поля), iOS — ячейка сгруппированного списка: лупа, текст, крестик в сером круге, разделитель с отступом.
  */
 
 .list-search {
   position: relative;
   display: flex;
-  min-height: 44px;
+  min-height: 48px;
   align-items: center;
-  gap: 8px;
-  padding: 0 4px 0 14px;
+  gap: 12px;
+  padding: 0 4px 0 16px;
   color: var(--text);
-  background: var(--field-bg);
-  border-radius: 22px;
-  transition: box-shadow 140ms ease, background-color 140ms ease;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--border) 85%, transparent);
+  transition: box-shadow 140ms ease, color 140ms ease;
 }
 
-/* В фокусе — как поле в фокусе: лёгкий акцентный оттенок и кольцо. */
+/* В фокусе — как поле: линия-индикатор акцентная и толще, лупа акцентная. */
 .list-search:focus-within {
-  background: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
-  box-shadow: inset 0 0 0 2px var(--accent);
+  color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .list-search > svg {
@@ -35,7 +35,7 @@
 
 .list-search-input {
   min-width: 0;
-  height: 44px;
+  height: 48px;
   flex: 1 1 auto;
   padding: 0;
   color: var(--text-h);
@@ -63,9 +63,9 @@
 
 .list-search-clear {
   display: grid;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   place-items: center;
   padding: 0;
   color: var(--text);
@@ -74,6 +74,7 @@
   border-radius: 50%;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  animation: backdrop-enter 140ms ease-out both;
 }
 
 .list-search-clear svg {
@@ -89,38 +90,51 @@
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
+/* «Ничего не найдено» — строка того же списка, приглушённая. */
 .list-search-empty {
-  margin: 0;
-  padding: 12px 16px;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  padding: 8px 16px;
   color: var(--text);
   font-size: 14px;
-  text-align: center;
+  animation: backdrop-enter 180ms ease-out both;
 }
 
-/* ---- iOS: поле поиска UIKit — серая заливка, скругление 10, лупа и крестик в круге приглушённого цвета ---- */
+/* ---- iOS: ячейка сгруппированного списка ---- */
 
 :root[data-platform='ios'] .list-search {
-  min-height: 36px;
-  gap: 6px;
-  padding: 0 2px 0 8px;
-  background: var(--ios-segment-track);
-  border-radius: 10px;
+  min-height: 44px;
+  gap: 8px;
+  padding: 0 8px 0 14px;
+  box-shadow: none;
+}
+
+/* Разделитель под строкой поиска — как между ячейками (с отступом слева). */
+:root[data-platform='ios'] .list-search::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 14px;
+  height: .5px;
+  background: var(--border);
 }
 
 :root[data-platform='ios'] .list-search:focus-within {
-  background: var(--ios-segment-track);
+  color: var(--text);
   box-shadow: none;
 }
 
 :root[data-platform='ios'] .list-search > svg {
-  width: 17px;
-  height: 17px;
-  flex-basis: 17px;
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
   stroke-width: 2.2;
 }
 
 :root[data-platform='ios'] .list-search-input {
-  height: 36px;
+  height: 44px;
   font-size: 17px;
 }
 
@@ -130,7 +144,7 @@
   flex-basis: 30px;
 }
 
-/* Крестик iOS — белый знак в сером круге. */
+/* Крестик iOS — знак цвета фона в сером круге, как у UISearchTextField. */
 :root[data-platform='ios'] .list-search-clear svg {
   width: 17px;
   height: 17px;
@@ -139,4 +153,10 @@
   background: color-mix(in srgb, var(--text) 75%, transparent);
   border-radius: 50%;
   stroke-width: 2.6;
+}
+
+:root[data-platform='ios'] .list-search-empty {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 15px;
 }
