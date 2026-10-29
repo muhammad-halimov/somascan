@@ -97,16 +97,21 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
 
   // Заголовок карточки: «Данные с бирки» для результата, иначе нейтральное «Результат».
   const title = status.kind === 'done' ? t('label:title') : t('notes.label')
-  // Номера бирок и (пока их меньше девяти) «+» — пустая ячейка для следующей. У бирки, которая ждёт действий,
-  // рядом с номером — оранжевый «!», как в углу её ячейки в сетке (и та же причина для диктора).
+  // Номера бирок и (пока их меньше девяти) «+» — пустая ячейка для следующей. Рядом с номером — тот же значок,
+  // что в углу ячейки бирки в сетке: зелёная галочка у готовой, оранжевый «!» у ждущей действий (диктору — словами).
   const itemOptions: TabOption<number>[] = Array.from({ length: itemCount }, (_, index) => {
     const state = itemStates[index] ?? 'none'
     const label = String(index + 1)
-    if (!needsAttention(state)) return { value: index, label }
+    const attention = needsAttention(state)
+    if (!attention && state !== 'done') return { value: index, label }
     return {
       value: index,
       label,
-      badge: <span className="notes-item-attention"><ExclamationIcon /></span>,
+      badge: (
+        <span className={`notes-item-mark ${attention ? 'is-attention' : 'is-done'}`}>
+          {attention ? <ExclamationIcon /> : <CheckIcon />}
+        </span>
+      ),
       ariaLabel: `${t('grid.item', { number: index + 1 })}: ${t(`grid.state.${state}`)}`,
     }
   })
