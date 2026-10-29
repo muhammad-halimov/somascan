@@ -12,7 +12,7 @@ An employee photographs a label (rebar, wire rod in coils and so on); the app re
 
 ## Screenshots
 
-Dark theme, Russian interface; recognition by LM Studio. Android — Material 3, iPhone — iOS 26 (Liquid Glass); on iOS 18 and earlier — classic UIKit materials.
+Dark theme, English interface; recognition by LM Studio. Android — Material 3, iPhone — iOS 26 (Liquid Glass); on iOS 18 and earlier — classic UIKit materials.
 
 **Android**
 
@@ -22,10 +22,8 @@ Dark theme, Russian interface; recognition by LM Studio. Android — Material 3,
 
 <img src="docs/screenshots/ios/overview.en.webp" alt="iPhone: main screen, recognized tag, editing, tag without a photo, 3 × 3 grid, “Uploads”, LM Studio model, network drive, Google Drive, “Advanced”">
 
-The screenshots are made by `scripts/screenshots/capture.mjs` (headless Chrome, a fake LM Studio, the photo `scripts/screenshots/tag.jpg`; no keys and no real storage). Both platforms are shot on a screen of the same size (402 × 874 points), so all frames are the same — 804 × 1748 px; above is an overview of each platform (a 5 × 2 grid with captions, `overview.en.webp` / `overview.ru.webp`), and the separate frames are next to it in `docs/screenshots/<android|ios>/`. On Linux, pass the path to Chrome or Chromium in `CHROME`:
-
 ```bash
-npm run build && node scripts/screenshots/capture.mjs
+npm run build && node scripts/screenshots/capture.mjs # Make screenshots
 ```
 
 ## Contents

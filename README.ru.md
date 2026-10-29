@@ -22,10 +22,8 @@
 
 <img src="docs/screenshots/ios/overview.ru.webp" alt="iPhone: главный экран, распознанная бирка, правка, бирка без фото, сетка 3 × 3, «Загрузки», модель LM Studio, сетевой диск, Google Drive, «Расширенные»">
 
-Снимки собирает `scripts/screenshots/capture.mjs` (Chrome без окна, поддельный LM Studio, фото `scripts/screenshots/tag.jpg`; ключей и настоящих хранилищ нет). Обе платформы снимаются на экране одного размера (402 × 874 точки), поэтому все кадры одинаковые — 804 × 1748 px; выше — обзор каждой платформы (сетка 5 × 2 с подписями, `overview.en.webp` / `overview.ru.webp`), отдельные кадры лежат рядом в `docs/screenshots/<android|ios>/`. На Linux путь к Chrome или Chromium передаётся в `CHROME`:
-
 ```bash
-npm run build && node scripts/screenshots/capture.mjs
+npm run build && node scripts/screenshots/capture.mjs # Сделать скриншоты
 ```
 
 ## Оглавление
