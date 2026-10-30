@@ -28,7 +28,8 @@
 
 /*
  * Кнопки правки у заголовка («Изменить» или «Сбросить», «Отмена», «Готово») — иконки с подписью
- * снизу, как в шапке листа настроек. Компактнее обычных: пилюля 48×28, иконка 18.
+ * снизу, как в шапке листа настроек. Компактнее обычных: пилюля 48×22, иконка 18 — вплотную к подписи,
+ * чтобы значок не «парил» над ней.
  */
 .form-section-actions {
   display: flex;
@@ -40,12 +41,13 @@
 
 .form-section-actions .action-button.is-ghost {
   width: 52px;
+  gap: 2px;
 }
 
 .form-section-actions .action-button.is-ghost .action-button-icon {
   width: 48px;
-  height: 28px;
-  border-radius: 14px;
+  height: 22px;
+  border-radius: 11px;
   color: var(--accent);
 }
 
