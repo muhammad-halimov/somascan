@@ -74,9 +74,9 @@
     "smb": {
       "location": "Location",
       "server": "Server",
-      "serverPlaceholder": "fileserver, 10.0.0.5 or 10.0.0.5:445",
+      "serverPlaceholder": "server, 10.0.0.5 or 10.0.0.5:445",
       "share": "Shared folder",
-      "sharePlaceholder": "Warehouse",
+      "sharePlaceholder": "Atelier",
       "filePath": "Table path",
       "filePathPlaceholder": "Probe si Sarje Otel\\Probe otel.xlsx",
       "account": "Account",
