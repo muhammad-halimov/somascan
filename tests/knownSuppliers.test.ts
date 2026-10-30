@@ -23,8 +23,16 @@ test('нормализация убирает пустые, повторы бе�
 
 test('чтение настроек: нет списка — по умолчанию, свой список и пустой сохраняются', () => {
   assert.deepEqual(parseSettings({ advanced: {} }, defaults).advanced.knownSuppliers, [...DEFAULT_KNOWN_SUPPLIERS])
-  assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Sovel', 42, 'Habas', 'sovel'] } }, defaults).advanced.knownSuppliers, ['Habas', 'Sovel'])
+  assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Sovel', 42, 'Habas', 'sovel'], knownSuppliersVersion: 2 } }, defaults).advanced.knownSuppliers, ['Habas', 'Sovel'])
   assert.deepEqual(parseSettings({ advanced: { knownSuppliers: [] } }, defaults).advanced.knownSuppliers, [])
+})
+
+test('SOMACO: в списке по умолчанию; сохранённый список прежней версии его получает, удалённый потом — не возвращается', () => {
+  assert.ok(DEFAULT_KNOWN_SUPPLIERS.includes('SOMACO'))
+  const before = DEFAULT_KNOWN_SUPPLIERS.filter((name) => name !== 'SOMACO')
+  const migrated = parseSettings({ advanced: { knownSuppliers: before } }, defaults).advanced
+  assert.deepEqual([migrated.knownSuppliers, migrated.knownSuppliersVersion], [[...DEFAULT_KNOWN_SUPPLIERS], 2])
+  assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Habas'], knownSuppliersVersion: 2 } }, defaults).advanced.knownSuppliers, ['Habas'])
 })
 
 test('правило о поставщиках — только при непустом списке, перед оценкой фото', () => {
