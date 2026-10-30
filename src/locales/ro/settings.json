@@ -179,6 +179,7 @@
     "refreshAll": "Actualizează tot",
     "updatedAt": "Actualizat {{date}}",
     "notLoaded": "Neîncărcat",
+    "listOffline": "Fără conexiune. Verificați rețeaua.",
     "sourcePreview": "previzualizare",
     "photo": "Fotografie",
     "imageSize": "Dimensiunea fotografiei trimise",

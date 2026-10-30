@@ -95,14 +95,15 @@ export function PromptEditor({ value }: PromptEditorProps) {
         rows={COLLAPSED_LINES}
         onChange={(next) => settingsStore.setPrompt(next)}
       />
-      <span className="form-section-hint">{t('advanced.promptHint')}</span>
-      {!isEditing && (
-        <div className="prompt-editor-actions">
+      {/* Под блоком: подсказка слева, «Показать полностью» — справа напротив неё. */}
+      <div className="prompt-editor-footer">
+        <span className="form-section-hint">{t('advanced.promptHint')}</span>
+        {!isEditing && (
           <Button onClick={() => setIsExpanded((current) => !current)}>
             {isExpanded ? t('advanced.promptCollapse') : t('advanced.promptExpand')}
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </FormSection>
   )
 }

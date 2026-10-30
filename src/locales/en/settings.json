@@ -179,6 +179,7 @@
     "refreshAll": "Refresh all",
     "updatedAt": "Updated {{date}}",
     "notLoaded": "Not loaded",
+    "listOffline": "No connection. Check the network.",
     "sourcePreview": "preview",
     "photo": "Photo",
     "imageSize": "Photo size sent for recognition",

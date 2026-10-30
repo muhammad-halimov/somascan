@@ -3,10 +3,20 @@
  * промпт свёрнут до шести строк; раскрытие и сворачивание анимирует `max-height` (см. PromptEditor.tsx).
  */
 
-/* «Показать полностью» — под полем, по левому краю. */
-.prompt-editor-actions {
+/* Под полем: подсказка слева, «Показать полностью» — справа напротив неё (текст кнопки — вровень с краем поля). */
+.prompt-editor-footer {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-left: -10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.prompt-editor-footer .form-section-hint {
+  min-width: 0;
+}
+
+.prompt-editor-footer .button {
+  flex: 0 0 auto;
+  margin-right: -10px;
 }
