@@ -1,0 +1,22 @@
+{
+ "rotation": 0,
+ "width": 1454,
+ "height": 1932,
+ "lines": [
+  {"text": "COLAKOGLU", "corners": [753, 681, 967, 679, 967, 716, 754, 719], "confidence": 0.79},
+  {"text": "METALURJIAS", "corners": [751, 715, 1014, 719, 1013, 756, 750, 753], "confidence": 0.87},
+  {"text": "AT016-01/593-2025", "corners": [472, 847, 872, 834, 874, 880, 474, 893], "confidence": 0.85},
+  {"text": "CUSTOMER:INTERTRANSCOM IMPEXS.RL.", "corners": [469, 905, 1037, 892, 1038, 930, 470, 942], "confidence": 0.93},
+  {"text": "ORDERNO:C:M6389", "corners": [468, 970, 721, 962, 722, 992, 469, 1001], "confidence": 0.8},
+  {"text": "QUALITY:B500DuctilityClassC acctoAT018", "corners": [465, 1035, 1071, 1025, 1071, 1055, 466, 1065], "confidence": 0.86},
+  {"text": "01/593-2025", "corners": [464, 1069, 624, 1063, 625, 1091, 465, 1097], "confidence": 0.83},
+  {"text": "SZE(mm）:.Q16", "corners": [461, 1126, 668, 1122, 669, 1152, 462, 1156], "confidence": 0.75},
+  {"text": "LENGTH(m)：12.00", "corners": [454, 1183, 691, 1189, 690, 1227, 453, 1221], "confidence": 0.85},
+  {"text": "HEATNO:TZA1324", "corners": [459, 1260, 710, 1262, 710, 1292, 458, 1290], "confidence": 0.92},
+  {"text": "BundleWeight:abt2-2,5mt", "corners": [456, 1326, 816, 1329, 816, 1367, 455, 1363], "confidence": 0.85},
+  {"text": "MIIL'sNAME:ColakcgluR Mietalurji A.S", "corners": [451, 1388, 976, 1383, 977, 1431, 452, 1435], "confidence": 0.83},
+  {"text": "Dilovasi,Kocaeli/Turkey", "corners": [455, 1422, 780, 1432, 779, 1468, 454, 1459], "confidence": 0.87},
+  {"text": "ORIGIN:TURKEY", "corners": [759, 1486, 982, 1469, 984, 1500, 761, 1517], "confidence": 0.9},
+  {"text": "TZA", "corners": [697, 1560, 794, 1555, 796, 1602, 699, 1608], "confidence": 0.74}
+ ]
+}

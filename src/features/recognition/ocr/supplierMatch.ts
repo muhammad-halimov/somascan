@@ -16,6 +16,15 @@ export interface SupplierMatch {
 /** Названия не длиннее стольких букв ищутся только отдельным словом («MDA», но не «…mda…»). */
 const SHORT_NAME = 4
 
+/**
+ * Первые слова названий, которые сами по себе завод не называют (страна, город, «сталеплавильный завод»
+ * на разных языках): по ним одним поставщика не узнать.
+ */
+const GENERIC_FIRST_WORDS = new Set(['acciaierie', 'ferriere', 'hellenic', 'moldova', 'promet', 'stomana', 'power', 'suez', 'alfa', 'diler'])
+
+/** Первое слово названия узнаёт поставщика, если в нём не меньше стольких букв (и оно не общее). */
+const DISTINCTIVE_WORD = 6
+
 /** Сколько ошибок OCR простить названию такой длины. */
 const allowedErrors = (length: number) => (length >= 12 ? 2 : length >= 7 ? 1 : 0)
 
@@ -67,6 +76,13 @@ export function matchSupplier(text: string, suppliers: readonly string[]): Suppl
       exact = folded.includes(key)
       const errors = allowedErrors(key.length)
       near = !exact && errors > 0 && folded.length >= key.length - errors && substringDistance(key, folded) <= errors
+    }
+    // Название целиком не прочлось (вторая строка шапки размыта, «METALURJIAS»), но первое слово — отличительное
+    // («COLAKOGLU»): поставщик узнаётся по нему — как приблизительное совпадение.
+    if (!exact && !near) {
+      const firstWord = foldText(name.split(/\s+/)[0] ?? '')
+      near = name.trim().includes(' ') && firstWord.length >= DISTINCTIVE_WORD && !GENERIC_FIRST_WORDS.has(firstWord)
+        && foldedWords(text).includes(firstWord)
     }
     if (!exact && !near) continue
     const better = !best || (exact && !best.exact) || (exact === best.exact && key.length > best.length)

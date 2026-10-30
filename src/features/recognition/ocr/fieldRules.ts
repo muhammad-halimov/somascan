@@ -9,7 +9,7 @@
 import type { LabelFieldDefinition, LabelFieldKind, LabelKey, LabelValue } from '../label/labelFields'
 import { foldText } from './foldText'
 import {
-  isStrongGrade, isStrongHeat, isStrongSize, isStrongWeight, readCode, readCount, readDate, readGrade, readHeat,
+  isStrongGrade, isStrongHeat, isStrongSize, isStrongWeight, readApproval, readCode, readCount, readDate, readGrade, readHeat,
   readNumberedCode, readSize, readText, readTime, readWeightKg, type ValueReader,
 } from './valueReaders'
 
@@ -42,7 +42,7 @@ interface BuiltInRule {
  */
 const BUILT_IN_RULES: Readonly<Record<LabelKey, BuiltInRule>> = {
   producer: {
-    labels: ['producer', 'manufacturer', 'manufactured by', 'produced by', 'gyarto', 'gyartja', 'producent', 'producator', 'fabricant', 'hersteller', 'uretici', 'производитель', 'виробник'],
+    labels: ['producer', 'manufacturer', 'manufactured by', 'produced by', "mill's name", 'mill name', 'miils name', 'steel mill', 'gyarto', 'gyartja', 'producent', 'producator', 'fabricant', 'hersteller', 'uretici', 'производитель', 'изготовитель', 'виробник'],
     read: readText,
   },
   product: {
@@ -61,14 +61,15 @@ const BUILT_IN_RULES: Readonly<Record<LabelKey, BuiltInRule>> = {
   },
   technical_approval: {
     labels: ['technical approval', 'technical agreement', 'technical doc', 'technical documentation', 'agrement tehnic', 'agrement', 'muszaki dok', 'dokumentacja techniczna', 'aprobare tehnica'],
-    read: readCode,
+    read: readApproval,
   },
   quality_doc: {
     labels: ['certificate', 'quality certificate', 'certificate of quality', 'certificat', 'certificat de calitate', 'certyfikat', 'inspection certificate', 'tanusitvany', 'swiadectwo', 'сертификат', 'сертифікат'],
     read: readNumberedCode,
   },
   size: {
-    labels: ['size', 'diameter', 'diam', 'dimension', 'dimensiune', 'diametru', 'diametro', 'diametre', 'durchmesser', 'atmero', 'przekroj', 'srednica', 'cap', 'nominal size', 'диаметр', 'діаметр', 'размер', 'розмір'],
+    // «sze» — частая ошибка OCR в «SIZE(mm)».
+    labels: ['size', 'sze', 'diameter', 'diam', 'dimension', 'dimensiune', 'diametru', 'diametro', 'diametre', 'durchmesser', 'atmero', 'przekroj', 'srednica', 'cap', 'nominal size', 'диаметр', 'діаметр', 'размер', 'розмір'],
     read: readSize,
     strong: isStrongSize,
   },

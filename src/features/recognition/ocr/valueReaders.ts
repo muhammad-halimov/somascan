@@ -51,10 +51,13 @@ export function fixDigitLookalikes(token: string): string {
 /** Сколько цифр в тексте. */
 const digitCount = (text: string) => text.replace(/\D/g, '').length
 
-/** Код как напечатан (без «No», лишних знаков и пробелов), кириллические двойники — латиницей. */
+/**
+ * Код как напечатан (без «No», лишних знаков и пробелов), кириллические двойники — латиницей.
+ * Двоеточие между буквами — шум OCR («ORDER NO: CM 6389» читается как «C:M6389»).
+ */
 export const readCode: ValueReader = (text) => {
   // Точка после последней цифры — конец фразы на бирке, а не часть кода («Shift No: 3.»).
-  const value = latinize(cleanValue(text)).replace(/(?<=\d)\.$/, '')
+  const value = latinize(cleanValue(text)).replace(/(?<=\d)\.$/, '').replace(/(?<=\p{L}):(?=\p{L})/gu, '')
   return /[\p{L}\p{N}]/u.test(value) && value.length <= 40 ? value : null
 }
 
@@ -93,8 +96,11 @@ export const readHeat: ValueReader = (text) => {
 export const isStrongHeat = (value: LabelValue) =>
   typeof value === 'string' && value.length >= 5 && value.length <= 12 && digitCount(value) >= 4 && !value.includes('-')
 
-/** Размер: пометка (Ø, D — диаметр, R — гладкий пруток), число от 4 до 60, необязательно «mm». */
-const SIZE = /^(?:(Ø|⌀|ø|diam\.?|D|R)\s*)?(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:mm|мм)?(?=$|[\s,;/x×*])/iu
+/**
+ * Размер: пометка (Ø, Ф, Φ, D — диаметр, R — гладкий пруток, Q — пометка Çolakoğlu), число от 4 до 60,
+ * необязательно «mm».
+ */
+const SIZE = /^(?:(Ø|⌀|ø|Ф|Φ|diam\.?|D|R|Q)\s*)?(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:mm|мм)?(?=$|[\s,;/x×*])/iu
 
 /**
  * Размер (номинальный диаметр): «12» в строке «(mm)» → «12 mm», «Ø12», «12mm» → «12 mm», «R20» — как есть.
@@ -105,7 +111,9 @@ export const readSize: ValueReader = (text) => {
   const number = match[2]!
   const size = Number.parseFloat(number.replace(',', '.'))
   if (!(size >= 4 && size <= 60)) return null
-  return match[1]?.toUpperCase() === 'R' ? `R${number}` : `${number} mm`
+  // R (гладкий пруток) и Q — как на бирке; остальные пометки — диаметр в миллиметрах.
+  const mark = match[1]?.toUpperCase()
+  return mark === 'R' || mark === 'Q' ? `${mark}${number}` : `${number} mm`
 }
 
 /** Диаметры арматуры и катанки — уверенный размер. */
@@ -138,10 +146,17 @@ const TONNES_BELOW = 50
  */
 export const readWeightKg: ValueReader = (text, context) => {
   const value = fixDigitLookalikes(cleanValue(text))
-  const match = AMOUNT.exec(value)
-  if (!match) return null
-  const raw = match[0]
-  const unit = weightUnit(value.slice(match.index + raw.length)) ?? weightUnit(context.label)
+  const first = AMOUNT.exec(value)
+  if (!first) return null
+  let raw = first[0]
+  let after = value.slice(first.index + raw.length)
+  // Диапазон («abt 2-2,5 mt») — верхняя граница, как берёт модель.
+  const upper = AMOUNT.exec(after)
+  if (upper && /^\s*[-–]\s*$/.test(after.slice(0, upper.index))) {
+    raw = upper[0]
+    after = after.slice(upper.index + raw.length)
+  }
+  const unit = weightUnit(after) ?? weightUnit(context.label)
   const plain = (number: string) => Number.parseFloat(number.replace(/[\s'’]/g, '').replace(',', '.'))
   let kg: number
   if (unit === 't') {
@@ -205,10 +220,29 @@ export const readCount: ValueReader = (text) => {
 /** Марка стали: «B500C», «BSt 500 S», «A500C», «S235JR». */
 const GRADE = /^(?:[A-Z]{1,4}\s?-?\d{3}[A-Z0-9]{0,4}|[A-Z]{1,4}\s?\d{3}\s?[A-Z]{1,2})$/
 
-/** Марка стали как код (буквы-двойники рядом с цифрами — цифры: «B5OOC» → «B500C»). */
+/** Основа марки в тексте: буквы и три цифры («B500», «BSt 500», «A 500»); буквы класса — после неё. */
+const GRADE_BASE = /(?:^|[^A-Z0-9])(BST|B|A|K)\s?-?(\d{3})/
+
+/**
+ * Марка стали (буквы-двойники рядом с цифрами — цифры: «B5OOC» → «B500C»). Класс пластичности, напечатанный
+ * отдельно, дописывается к основе: «B 500 Ductility Class C» → «B500C». Длинный текст без марки («C acc to AT»,
+ * который достался подписи «Class» внутри строки) — не марка; короткий код без неё («St3sp») — как есть.
+ */
 export const readGrade: ValueReader = (text, context) => {
   const value = readCode(text, context)
-  return typeof value === 'string' ? fixDigitLookalikes(fixDigitLookalikes(value)) : null
+  if (typeof value !== 'string') return null
+  const code = fixDigitLookalikes(fixDigitLookalikes(value))
+  const upper = latinize(code).toUpperCase()
+  const base = GRADE_BASE.exec(upper)
+  if (base) {
+    // Буквы класса сразу за цифрами («B500C», «BSt 500 S»), иначе отдельно напечатанный класс пластичности —
+    // в значении или где-то в строке подписи («QUALITY: B500 Ductility Class C»).
+    const tail = upper.slice(base.index + base[0].length)
+    const ductility = (source: string) => /CLASS\s*([A-C])(?![A-Z])/.exec(latinize(source).toUpperCase())?.[1]
+    const letters = /^\s?([A-Z]{1,2})(?![A-Z])/.exec(tail)?.[1] ?? ductility(upper) ?? ductility(context.label) ?? ''
+    return `${base[1] === 'BST' ? 'BSt' : base[1]}${base[2]}${letters}`
+  }
+  return code.length <= 8 && /\d/.test(code) && !/\s/.test(code) ? code : null
 }
 
 /** Похоже ли значение на марку стали. */
@@ -228,6 +262,27 @@ export function findMarkedSize(text: string): string | null {
   if (!match) return null
   const size = Number.parseFloat(match[1]!.replace(',', '.'))
   return size >= 4 && size <= 60 ? `${match[1]} mm` : null
+}
+
+/** Номер технического одобрения (агремана): «016-01/593-2025», «016-01-584-2025», с «AT» или без. */
+const APPROVAL = /(?:AT\s*)?(?<!\d)\d{3}\s*-\s*\d{2}\s*[-/]\s*\d{3}\s*-\s*\d{4}(?!\d)/iu
+
+/** Техническое одобрение: номер вида «016-01/593-2025» из значения, иначе код с цифрами как напечатан. */
+export const readApproval: ValueReader = (text, context) => {
+  const match = APPROVAL.exec(latinize(text))
+  return match ? normalizeApproval(match[0]) : readNumberedCode(text, context)
+}
+
+/** «AT016-01 / 593-2025» → «AT 016-01/593-2025»: без пробелов внутри номера, «AT» — через пробел. */
+const normalizeApproval = (text: string) => text.replace(/\s+/g, '').replace(/^AT/i, 'AT ')
+
+/**
+ * Техническое одобрение без подписи: номер вида «AT 016-01/593-2025» — сам вид номера его выдаёт
+ * (в шапке бирки Çolakoğlu, «NEW AT 016-01/600-2025» у SOVEL).
+ */
+export function findApproval(text: string): string | null {
+  const match = APPROVAL.exec(latinize(text))
+  return match ? normalizeApproval(match[0]) : null
 }
 
 /** Изделие без подписи: строка с названием проката (арматура, катанка). */

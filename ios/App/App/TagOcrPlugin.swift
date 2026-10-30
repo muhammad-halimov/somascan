@@ -70,6 +70,8 @@ public class TagOcrPlugin: CAPInstancePlugin, CAPBridgedPlugin {
         request.recognitionLevel = .accurate
         // Номера плавок и марки — не слова: «исправление» по словарю их бы портило.
         request.usesLanguageCorrection = false
+        // По умолчанию Vision пропускает текст ниже 1/32 высоты фото, а строки бирки, снятой не вплотную, мельче.
+        request.minimumTextHeight = 1.0 / 80
         if let supported = try? request.supportedRecognitionLanguages() {
             let preferred = languages.filter { supported.contains($0) }
             if !preferred.isEmpty { request.recognitionLanguages = preferred }

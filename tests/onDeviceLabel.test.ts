@@ -14,7 +14,7 @@ import { companyDomains, supplierByDomain } from '../src/features/recognition/oc
 import { bestExtraction, extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrCode, OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
-import { readDate, readHeat, readSize, readTime, readWeightKg } from '../src/features/recognition/ocr/valueReaders'
+import { findApproval, readCode, readDate, readGrade, readHeat, readSize, readTime, readWeightKg } from '../src/features/recognition/ocr/valueReaders'
 
 /** Все поля, читаемые с фото (включены и выключенные по умолчанию). */
 const ALL_FIELDS = createDefaultLabelFields().filter((field) => !field.manual).map((field) => ({ ...field, enabled: true }))
@@ -265,6 +265,57 @@ test('производитель по почте или сайту, когда �
   assert.equal(producer([heat, ['info@abc.ro', 0.1, 0.8]]), 'ABC')
   assert.equal(producer([heat, ['john.doe@gmail.com', 0.1, 0.8]]), null)
   assert.equal(producer([['Producer: Habas', 0.1, 0.1], heat, ['info@sovel.gr', 0.1, 0.8]]), 'Habas')
+})
+
+test('бирка Çolakoğlu: производитель по первому слову, размер Q16, марка из «Class C», вес диапазоном, одобрение в шапке', () => {
+  const { label } = extract(fixture('colakoglu'))
+  const { producer, size, heat, weight_kg, grade, technical_approval, work_order, customer_name, origin_country } = label
+  assert.deepEqual(
+    { producer, size, heat, weight_kg, grade, technical_approval, work_order, customer_name, origin_country },
+    {
+      producer: 'Colakoglu Metalurji',
+      size: 'Q16',
+      heat: 'TZA1324',
+      weight_kg: 2500,
+      grade: 'B500C',
+      technical_approval: 'AT 016-01/593-2025',
+      work_order: 'CM6389',
+      customer_name: 'INTERTRANSCOM IMPEXS.RL.',
+      origin_country: 'TURKEY',
+    },
+  )
+})
+
+test('бирка Suez Steel: подписи слева, значения под ними, вес в тоннах', () => {
+  const { label } = extract(fixture('suez'))
+  const { size, heat, weight_kg, grade, standard, technical_approval, production_date, serial_number } = label
+  assert.deepEqual(
+    { size, heat, weight_kg, grade, standard, technical_approval, production_date, serial_number },
+    { size: 'R20', heat: '2620037', weight_kg: 2000, grade: 'B500C', standard: 'ST009:2011', technical_approval: '016-01-584-2025', production_date: '2026-01-04', serial_number: 'L620037025A2260104' },
+  )
+})
+
+test('правила значений: марка с классом отдельно, диапазон веса, пометка Q, двоеточие в коде, номер одобрения', () => {
+  const context = { label: '' }
+  assert.equal(readGrade('B500DuctilityClassC acctoAT018', context), 'B500C')
+  assert.equal(readGrade('B500 Ductility', { label: 'QUALITY:B500 Ductility Class C acc to AT' }), 'B500C')
+  assert.equal(readGrade('BSt 500 S', context), 'BSt500S')
+  assert.equal(readGrade('C acctoAT018', context), null)
+  assert.equal(readGrade('St3sp', context), 'St3sp')
+  assert.equal(readWeightKg('abt 2-2,5 mt', context), 2500)
+  assert.equal(readWeightKg('2.0 Ton Approx', context), 2000)
+  assert.equal(readSize('.Q16', context), 'Q16')
+  assert.equal(readSize('Ф12', context), '12 mm')
+  assert.equal(readCode('C:M6389', context), 'CM6389')
+  assert.equal(findApproval('NEWAT 016-01/600-2025'), 'AT 016-01/600-2025')
+  assert.equal(findApproval('EN 10080:2005'), null)
+})
+
+test('поставщик по отличительному первому слову названия, но не по общему', () => {
+  const suppliers = DEFAULT_KNOWN_SUPPLIERS
+  assert.deepEqual(matchSupplier('COLAKOGLU', suppliers), { name: 'Colakoglu Metalurji', exact: false })
+  assert.equal(matchSupplier('Made in Moldova', suppliers), null)
+  assert.equal(matchSupplier('Hellenic Republic', suppliers), null)
 })
 
 test('по умолчанию заполняются только включённые поля', () => {

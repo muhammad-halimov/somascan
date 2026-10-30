@@ -19,7 +19,7 @@ import type { OcrCode, OcrPage } from './ocrTypes'
 import { boxHeight, isBelow, isRightOf, layoutPage, sameRow, typicalLineHeight, type PageLine } from './pageLayout'
 import { companyDomains, companyFromDomain, supplierByDomain } from './domainProducer'
 import { findSupplier } from './supplierMatch'
-import { findGrade, findMarkedSize, findProduct } from './valueReaders'
+import { findApproval, findGrade, findMarkedSize, findProduct } from './valueReaders'
 
 /** Что разбирать. */
 export interface ExtractionInput {
@@ -117,12 +117,19 @@ function findHits(folded: FoldedText, rules: readonly FieldRule[]): LabelHit[] {
   return kept.sort((a, b) => a.start - b.start)
 }
 
-/** Подписи строки, сгруппированные по полям, с текстом после каждой группы. */
+/** Между подписями одного поля столько знаков (в сложенном виде) — ещё разделитель: OCR читает «/» как «J» или «l». */
+const SEPARATOR_GAP = 1
+
+/**
+ * Подписи строки, сгруппированные по полям, с текстом после каждой группы. В группу сходятся подписи одного
+ * поля вплотную («Charge/Adag/Wytop», «Technical docJMuszaki dok.»); между двумя подписями одного поля есть
+ * значение — это две группы («QUALITY: B500 Ductility Class C» — «B500» не теряется между «Quality» и «Class»).
+ */
 function groupHits(line: PageLine, hits: readonly LabelHit[]): LabelGroup[] {
   const groups: Array<{ key: LabelKey; start: number; end: number }> = []
   for (const hit of hits) {
     const last = groups.at(-1)
-    if (last && last.key === hit.key) last.end = hit.end
+    if (last && last.key === hit.key && hit.start - last.end <= SEPARATOR_GAP) last.end = hit.end
     else groups.push({ key: hit.key, start: hit.start, end: hit.end })
   }
   return groups.map((group, index) => {
@@ -273,6 +280,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (value === null && field.key === 'product') value = firstOf(findProduct)
     if (value === null && field.key === 'grade') value = firstOf(findGrade)
     if (value === null && field.key === 'size') value = firstOf(findMarkedSize)
+    if (value === null && field.key === 'technical_approval') value = firstOf(findApproval)
     label[field.key] = typeof value === 'string' ? correctByCodes(value, codes) : value
   }
 
