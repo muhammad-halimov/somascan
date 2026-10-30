@@ -118,6 +118,21 @@ export function findOrphanHeat(text: string): string | null {
   return heat !== null && isStrongHeat(heat) ? String(heat) : null
 }
 
+/** Подпись штрихкода Code 39 — номер в звёздочках («*B000713412E*»); OCR часто теряет одну из звёздочек. */
+const CODE39_TEXT = /^\*\s*([^*]+?)\s*\*?$|^([^*]+?)\s*\*$/
+
+/**
+ * Номер под штрихкодом Code 39 («*B000713412E*» → «B000713412E»): одно слово из букв и цифр (можно с точкой,
+ * дефисом, косой чертой), в нём не меньше четырёх цифр. Без звёздочек не берётся — просто число на бирке
+ * может быть чем угодно.
+ */
+export function findCode39Text(text: string): string | null {
+  const match = CODE39_TEXT.exec(text.trim())
+  if (!match) return null
+  const body = fixDigitLookalikes(latinize(match[1] ?? match[2]!).replace(/\s+/g, '').toUpperCase())
+  return /^[A-Z0-9][A-Z0-9./-]{4,18}[A-Z0-9]$/.test(body) && digitCount(body) >= 4 ? body : null
+}
+
 /**
  * Размер: пометка (Ø, Ф, Φ, D — диаметр, R — гладкий пруток, Q — пометка Çolakoğlu), число от 4 до 60,
  * необязательно «mm».

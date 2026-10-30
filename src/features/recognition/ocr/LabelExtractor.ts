@@ -23,7 +23,7 @@ import { companyDomains, companyFromDomain, supplierByDomain } from './domainPro
 import { crossCheckHeat } from './heatCheck'
 import { findSupplier } from './supplierMatch'
 import {
-  findApproval, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findWeightLine,
+  findApproval, findCode39Text, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findWeightLine,
 } from './valueReaders'
 
 /** Что разбирать. */
@@ -190,6 +190,12 @@ export function extractLabel(input: ExtractionInput): Extraction {
  * не должно перевешивать правильное прочтение.
  */
 const TURN_PENALTY = 2
+
+/**
+ * Свой склад: внутренние бирки после резки и гибки («SOMACO», «Santier», «Lista») завода не называют —
+ * производитель на них SOMACO, даже если его нет в списке поставщиков.
+ */
+const HOUSE_SUPPLIER = 'SOMACO'
 
 /** Разбор страницы, координаты строк которой повёрнуты на `turns` четвертей оборота. */
 function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rules: readonly FieldRule[], turns: number): Extraction {
@@ -370,7 +376,16 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     ...topDown,
   ]
   const domains = companyDomains([...topDown, ...codes.map((code) => code.text)])
-  const supplier = suppliers.length > 0 ? findSupplier(supplierTexts, suppliers) ?? supplierByDomain(domains, suppliers) : null
+  const withHouse = suppliers.some((name) => name.toUpperCase() === HOUSE_SUPPLIER) ? suppliers : [...suppliers, HOUSE_SUPPLIER]
+  const supplier = findSupplier(supplierTexts, withHouse) ?? (suppliers.length > 0 ? supplierByDomain(domains, suppliers) : null)
+
+  /**
+   * Плавка внутренней бирки склада — номер под штрихкодом Code 39 («*B000713412E*») или сам штрихкод.
+   * Только когда подписи плавки на бирке нет вовсе: у заводских бирок под штрихкодом бывает другой номер.
+   */
+  const heatCaptioned = labelLines.some(({ groups }) => groups.some((group) => group.key === 'heat'))
+  const code39Texts = [...codes.filter((code) => /code\s*39/i.test(code.format)).map((code) => `*${code.text}*`), ...topDown]
+  const code39Heat = heatCaptioned ? null : code39Texts.map(findCode39Text).find((text) => text !== null) ?? null
 
   /**
    * Плавка, сверенная с её повторами на бирке (серийный номер, код пачки, коды): ржавчина на строке плавки
@@ -394,7 +409,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (value === null && field.key === 'grade') value = firstOf(findGrade)
     if (value === null && field.key === 'size') value = firstOf(findMarkedSize)
     if (value === null && field.key === 'technical_approval') value = firstOf(findApproval)
-    if (value === null && field.key === 'heat') value = firstOf(findOrphanHeat, orphanHeatLines)
+    if (value === null && field.key === 'heat') value = firstOf(findOrphanHeat, orphanHeatLines) ?? code39Heat
     if (value === null && field.key === 'weight_kg') value = firstOf(findWeightLine)
     // Марка без класса пластичности («CALITATE OTEL: B500»), а класс напечатан отдельной строкой
     // («CLASA DUCTILITATE C») — дописывается.

@@ -20,7 +20,7 @@ import { bestExtraction, extractLabel } from '../src/features/recognition/ocr/La
 import type { OcrCode, OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
 import {
-  findApproval, findGrade, findMarkedSize, findOrphanHeat, findWeightLine, readCode, readDate, readGrade, readHeat, readSize, readTime, readWeightKg,
+  findApproval, findCode39Text, findGrade, findMarkedSize, findOrphanHeat, findWeightLine, readCode, readDate, readGrade, readHeat, readSize, readTime, readWeightKg,
 } from '../src/features/recognition/ocr/valueReaders'
 
 /** Все поля, читаемые с фото (включены и выключенные по умолчанию). */
@@ -454,9 +454,26 @@ test('бирки Çolakoğlu, Mescier, Diler, Moldova Steel Works', () => {
   })
 })
 
-test('внутренняя бирка SOMACO: «Kg: 780», марка слита с размером, плавки нет', () => {
-  const { grade, weight_kg, heat } = extract(fixture('somaco')).label
-  assert.deepEqual({ grade, weight_kg, heat }, { grade: 'B500C', weight_kg: 780, heat: null })
+test('внутренняя бирка SOMACO: «Kg: 780», марка слита с размером, плавка — номер под штрихкодом, производитель SOMACO', () => {
+  const { producer, grade, weight_kg, heat } = extract(fixture('somaco')).label
+  assert.deepEqual({ producer, grade, weight_kg, heat }, { producer: 'SOMACO', grade: 'B500C', weight_kg: 780, heat: 'B000713412E' })
+  // SOMACO — производитель, даже когда списка поставщиков нет.
+  assert.equal(extractLabel({ page: fixture('somaco'), codes: [], fields: ALL_FIELDS, suppliers: [] }).label.producer, 'SOMACO')
+})
+
+test('номер под штрихкодом Code 39 — плавка, только когда подписи плавки на бирке нет', () => {
+  assert.equal(findCode39Text('*B000713412E*'), 'B000713412E')
+  assert.equal(findCode39Text('*B0O0713412E'), 'B000713412E')
+  assert.equal(findCode39Text('25R00581/2650*'), '25R00581/2650')
+  assert.equal(findCode39Text('B000713412E'), null, 'без звёздочек — просто текст')
+  assert.equal(findCode39Text('*TIMIS*'), null, 'без цифр')
+  const rows: Row[] = [['Kg: 780', 0.6, 0.3], ['Lista: Tir 4', 0.1, 0.3], ['*B000713412E*', 0.4, 0.8]]
+  assert.equal(extract(page(rows)).label.heat, 'B000713412E')
+  // Штрихкод прочитан сам: его текст без звёздочек.
+  assert.equal(extract(page(rows.slice(0, 2)), ALL_FIELDS, [{ text: 'B000713412E', format: 'code39' }]).label.heat, 'B000713412E')
+  assert.equal(extract(page(rows.slice(0, 2)), ALL_FIELDS, [{ text: 'https://somaco.ro/b/1', format: 'qr' }]).label.heat, null)
+  // Подпись плавки есть, а значение не прочлось: номер под штрихкодом у заводской бирки — другое поле.
+  assert.equal(extract(page([...rows, ['Heat No:', 0.1, 0.5]])).label.heat, null)
 })
 
 test('столбец значений съехал от подписей: значения сдвинуты почти на строку вниз — пары по сдвигу', () => {
