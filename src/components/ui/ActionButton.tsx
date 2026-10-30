@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
+import { useState, type AnimationEvent, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react'
 import './ActionButton.css'
 
 /**
@@ -31,6 +31,8 @@ export interface ActionButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonE
   badgeTone?: 'accent' | 'danger'
   /** Идёт фоновая операция: вместо иконки крутится спиннер (кнопка остаётся нажимаемой). */
   busy?: boolean
+  /** Пока `busy`, крутится сама иконка, а не круглый спиннер (например, стрелки «Обновить»); оборот доводится до конца. */
+  spinIcon?: boolean
   /**
    * Раскладка: `stack` — круг и подпись под ним (по умолчанию); `inline` — узкая «пилюля» высотой
    * `size` с иконкой и подписью в одну строку (тональная кнопка с иконкой Material 3, капсула UIKit) —
@@ -58,8 +60,15 @@ function BadgeAlertGlyph() {
  * Ширина кнопки равна ширине круга (или пилюли у `ghost`), а подпись не может быть
  * шире кнопки: длинный текст обрезается многоточием. Поэтому подписи в переводах короткие.
  */
-export function ActionButton({ icon, caption, label, variant = 'tonal', size, active = false, badge, badgeTone = 'accent', busy = false, layout = 'stack', className = '', style, ...rest }: ActionButtonProps) {
-  const classes = ['action-button', `is-${variant}`, layout === 'inline' && 'is-inline', active && 'is-active', busy && 'is-busy', className].filter(Boolean).join(' ')
+export function ActionButton({ icon, caption, label, variant = 'tonal', size, active = false, badge, badgeTone = 'accent', busy = false, spinIcon = false, layout = 'stack', className = '', style, onAnimationIteration, ...rest }: ActionButtonProps) {
+  // Иконка докручивает начатый оборот и останавливается в исходном положении, а не отскакивает назад.
+  const [spinning, setSpinning] = useState(false)
+  if (busy && spinIcon && !spinning) setSpinning(true)
+  const finishTurn = (event: AnimationEvent<HTMLButtonElement>) => {
+    if (!busy && event.animationName === 'photo-spin') setSpinning(false)
+    onAnimationIteration?.(event)
+  }
+  const classes = ['action-button', `is-${variant}`, layout === 'inline' && 'is-inline', active && 'is-active', busy && 'is-busy', spinning && 'is-spinning', className].filter(Boolean).join(' ')
   const captionNode = <span className="action-button-caption" aria-hidden="true">{caption}</span>
   return (
     <button
@@ -68,11 +77,12 @@ export function ActionButton({ icon, caption, label, variant = 'tonal', size, ac
       aria-label={label ?? caption}
       aria-busy={busy || undefined}
       style={size ? { ...style, '--action-size': `${size}px` } as CSSProperties : style}
+      onAnimationIteration={finishTurn}
       {...rest}
     >
       {/* В «пилюле» подпись внутри подложки: волна нажатия и подсветка — на всю кнопку. */}
       <span className="action-button-icon">
-        {busy ? <span className="action-button-spinner" /> : icon}
+        {busy && !spinIcon ? <span className="action-button-spinner" /> : icon}
         {layout === 'inline' && captionNode}
       </span>
       {/* Счётчик — вне круга иконки: тот обрезает содержимое (волна нажатия на Android). */}
