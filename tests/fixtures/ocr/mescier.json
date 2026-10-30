@@ -1,0 +1,19 @@
+{
+ "rotation": 0,
+ "width": 3000,
+ "height": 4000,
+ "lines": [
+  {"text": "MADEIN", "corners": [401, 690, 870, 685, 871, 759, 402, 764], "confidence": 0.85},
+  {"text": "TURKEY", "corners": [396, 797, 852, 784, 854, 857, 398, 870], "confidence": 0.79},
+  {"text": "MES2516086", "corners": [778, 1500, 1832, 1510, 1830, 1743, 776, 1733], "confidence": 0.82},
+  {"text": "ODUCTROUNDES", "corners": [601, 1885, 1851, 1881, 1851, 2035, 602, 2039], "confidence": 0.8},
+  {"text": "CUALITY", "corners": [368, 2265, 954, 2274, 952, 2439, 365, 2430], "confidence": 0.77},
+  {"text": ":S275JR", "corners": [955, 2277, 1692, 2264, 1694, 2388, 957, 2401], "confidence": 0.77},
+  {"text": "LENGTH", "corners": [350, 2474, 939, 2464, 941, 2600, 353, 2610], "confidence": 0.85},
+  {"text": "1:6.000MM", "corners": [883, 2477, 1743, 2451, 1747, 2581, 887, 2607], "confidence": 0.76},
+  {"text": "PCS.OF BUNDLE:131", "corners": [344, 2688, 1390, 2647, 1396, 2804, 350, 2845], "confidence": 0.88},
+  {"text": "：2501320", "corners": [947, 2860, 1699, 2825, 1706, 2967, 953, 3002], "confidence": 0.72},
+  {"text": "HEAT NO", "corners": [391, 2894, 1009, 2880, 1011, 3001, 394, 3015], "confidence": 0.75},
+  {"text": "CONTACT/LTSM:info@mescier.com", "corners": [383, 3103, 2226, 3043, 2231, 3193, 388, 3253], "confidence": 0.89}
+ ]
+}

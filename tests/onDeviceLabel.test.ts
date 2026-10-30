@@ -3,7 +3,10 @@
  *
  * Фикстуры `fixtures/ocr/*.json` — настоящий текст с рамками, прочитанный OCR с фото бирок: OAM Ózd
  * (`scripts/screenshots/tag.jpg`) ровно и под наклоном 12°; та же бирка, снятая боком, — прочитанная как есть
- * (строки сверху вниз), повёрнутой правильно и вверх ногами; грязная бирка SOVEL. Остальные бирки собраны из строк в тесте.
+ * (строки сверху вниз), повёрнутой правильно и вверх ногами; грязная бирка SOVEL; бирки ArcelorMittal (ровно,
+ * боком, в перспективе), Acciaierie di Sicilia, ICECON (Icdas), Suez Steel (ровно, в ржавчине, съехавший столбец
+ * значений), Çolakoğlu, Mescier, Diler, Moldova Steel Works и внутренняя бирка SOMACO. Остальные бирки собраны
+ * из строк в тесте.
  */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -14,7 +17,9 @@ import { companyDomains, supplierByDomain } from '../src/features/recognition/oc
 import { bestExtraction, extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrCode, OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
-import { findApproval, findOrphanHeat, readCode, readDate, readGrade, readHeat, readSize, readTime, readWeightKg } from '../src/features/recognition/ocr/valueReaders'
+import {
+  findApproval, findGrade, findMarkedSize, findOrphanHeat, findWeightLine, readCode, readDate, readGrade, readHeat, readSize, readTime, readWeightKg,
+} from '../src/features/recognition/ocr/valueReaders'
 
 /** Все поля, читаемые с фото (включены и выключенные по умолчанию). */
 const ALL_FIELDS = createDefaultLabelFields().filter((field) => !field.manual).map((field) => ({ ...field, enabled: true }))
@@ -55,7 +60,9 @@ test('бирка OAM Ózd: обязательные поля и остально
   assert.equal(label.production_date, '2025-02-12')
   assert.equal(label.mark, '8/7')
   assert.equal(label.product, 'Rebar in Coil/Betonacel tekercs')
-  assert.match(String(label.standard), /^HU-Tekercs A-79\/2016; RO-AT016-01\/592-2025; SR-.+; EN-.+$/)
+  // Агреман из списка стандартов («RO-AT016-01/592-2025») — техническое одобрение.
+  assert.match(String(label.standard), /^HU-Tekercs A-79\/2016; SR-.+; EN-.+$/)
+  assert.equal(label.technical_approval, 'AT 016-01/592-2025')
   assert.equal(label.customer_name, null)
   assert.deepEqual(photo, { ok: true, issues: [] })
   assert.ok(score >= 8)
@@ -330,6 +337,176 @@ test('поставщик по отличительному первому сло
   assert.deepEqual(matchSupplier('COLAKOGLU', suppliers), { name: 'Colakoglu Metalurji', exact: false })
   assert.equal(matchSupplier('Made in Moldova', suppliers), null)
   assert.equal(matchSupplier('Hellenic Republic', suppliers), null)
+})
+
+/** Основные поля бирки. */
+const mainFields = (page: OcrPage) => {
+  const { producer, grade, size, heat, batch, weight_kg, technical_approval, standard } = extract(page).label
+  return { producer, grade, size, heat, batch, weight_kg, technical_approval, standard }
+}
+
+test('бирка ArcelorMittal: подпись в две строки (румынская над английской), значение между ними; «3500C» — B500C', () => {
+  assert.deepEqual(mainFields(fixture('arcelor')), {
+    producer: 'ArcelorMittal',
+    grade: 'B500C',
+    size: null,
+    heat: '241182',
+    batch: '4635/29',
+    weight_kg: 2048,
+    technical_approval: 'AT 003-01/195-2024',
+    standard: null,
+  })
+})
+
+test('бирка ArcelorMittal боком: обрезанные логотип и подпись размера, агреман из списка стандартов', () => {
+  const { turns } = extract(fixture('arcelor-sideways'))
+  assert.notEqual(turns, 0)
+  assert.deepEqual(mainFields(fixture('arcelor-sideways')), {
+    producer: 'ArcelorMittal',
+    grade: 'B500C',
+    size: '12 mm',
+    heat: '251216',
+    batch: '4657/30',
+    weight_kg: 2048,
+    technical_approval: 'AT 003-01/195-2024',
+    standard: 'ST009-2011',
+  })
+})
+
+test('бирка ArcelorMittal в перспективе: плавка не достаётся стандарту, вес с «kg» — без подписи', () => {
+  const { producer, size, heat, batch, weight_kg, standard } = mainFields(fixture('arcelor-perspective'))
+  assert.deepEqual({ producer, size, heat, batch, weight_kg, standard }, {
+    producer: 'ArcelorMittal',
+    size: '10 mm',
+    heat: '260619',
+    batch: '4839/24',
+    weight_kg: 2066,
+    standard: 'ST009-2011',
+  })
+})
+
+test('бирка Acciaierie di Sicilia: плавка с точкой, «Ø mm 10,0»', () => {
+  const { label } = extract(fixture('ads-sicilia'))
+  const { producer, size, heat, weight_kg, production_date, grade } = label
+  assert.deepEqual({ producer, size, heat, weight_kg, production_date, grade }, {
+    producer: 'Acciaierie di Sicilia',
+    size: '10 mm',
+    heat: '2688.26',
+    weight_kg: 1450,
+    production_date: '2026-06-12',
+    grade: null,
+  })
+})
+
+test('бирка ICECON (Icdas): румынские подписи, «Ø» прочитан как ноль, класс пластичности отдельной строкой', () => {
+  assert.deepEqual(mainFields(fixture('icecon')), {
+    producer: 'Icdas',
+    grade: 'B500C',
+    size: '14 mm',
+    heat: '2608-3-378-50',
+    batch: '22',
+    weight_kg: 1984,
+    technical_approval: 'AT 016-01/573-2025',
+    standard: null,
+  })
+})
+
+test('бирка Suez Steel в перспективе: столбец значений съехал на строку от подписей — значения находят свои подписи', () => {
+  const { label } = extract(fixture('suez-shifted'))
+  const { production_date, heat, size, grade, standard, weight_kg, bar_count, mark, technical_approval, work_order, destination, serial_number } = label
+  assert.deepEqual({ production_date, heat, size, grade, standard, weight_kg, bar_count, mark, technical_approval, work_order, destination, serial_number }, {
+    production_date: '2026-02-05',
+    heat: '2602N0697',
+    size: 'R20',
+    grade: 'B500C',
+    standard: 'ST009:2011',
+    weight_kg: 2000,
+    bar_count: 67,
+    mark: 'HADIDNA',
+    technical_approval: '016-01-584-2025',
+    work_order: 'RL0146/2025G',
+    destination: 'Romania',
+    serial_number: 'K6N0697032D3260205',
+  })
+})
+
+test('бирка Suez Steel: логотип прочитан с ошибками («Suez Gtee»), лишняя буква в агремане', () => {
+  const { producer, heat, size, technical_approval } = extract(fixture('suez-logo')).label
+  assert.deepEqual({ producer, heat, size, technical_approval }, { producer: 'Suez Steel', heat: '2602N0668', size: 'R8', technical_approval: '016-01-584-2025' })
+})
+
+test('бирки Çolakoğlu, Mescier, Diler, Moldova Steel Works', () => {
+  const { standard: _standard, ...colakoglu } = mainFields(fixture('colakoglu-q10'))
+  assert.deepEqual(colakoglu, {
+    producer: 'Colakoglu Metalurji', grade: 'B500C', size: 'Q10', heat: 'TY21948', batch: null, weight_kg: 2500, technical_approval: 'AT 016-01/593-2025',
+  })
+  const mescier = mainFields(fixture('mescier'))
+  assert.deepEqual({ producer: mescier.producer, grade: mescier.grade, heat: mescier.heat }, { producer: 'Mescier', grade: 'S275JR', heat: '2501320' })
+  const diler = mainFields(fixture('diler'))
+  assert.deepEqual(
+    { producer: diler.producer, grade: diler.grade, size: diler.size, heat: diler.heat, weight_kg: diler.weight_kg },
+    { producer: 'Diler Demir Celik', grade: 'B500C', size: '20 mm', heat: '2505922', weight_kg: 1956.24 },
+  )
+  assert.deepEqual(mainFields(fixture('moldova')), {
+    producer: 'Moldova Steel Works', grade: 'B500C', size: null, heat: '42600058', batch: '41', weight_kg: 2706, technical_approval: 'AT 003-01/200-2024', standard: null,
+  })
+})
+
+test('внутренняя бирка SOMACO: «Kg: 780», марка слита с размером, плавки нет', () => {
+  const { grade, weight_kg, heat } = extract(fixture('somaco')).label
+  assert.deepEqual({ grade, weight_kg, heat }, { grade: 'B500C', weight_kg: 780, heat: null })
+})
+
+test('столбец значений съехал от подписей: значения сдвинуты почти на строку вниз — пары по сдвигу', () => {
+  const labels = ['Heat No:', 'Size:', 'Weight:', 'Grade:', 'Date:', 'Batch:']
+  const values = ['251216', '12 mm', '2048', 'B500C', '12/02/2026', '4657/30']
+  const rows: Row[] = [
+    ...labels.map((text, index): Row => [text, 0.1, 0.1 + index * 0.04, 0.12]),
+    ...values.map((text, index): Row => [text, 0.5, 0.13 + index * 0.04, 0.15]),
+  ]
+  const { heat, size, weight_kg, grade, production_date, batch } = extract(page(rows)).label
+  assert.deepEqual(
+    { heat, size, weight_kg, grade, production_date, batch },
+    { heat: '251216', size: '12 mm', weight_kg: 2048, grade: 'B500C', production_date: '2026-02-12', batch: '4657/30' },
+  )
+})
+
+test('подпись на двух языках в две строки: значение между строками — её', () => {
+  const rows: Row[] = [['GREUTATEA', 0.1, 0.5, 0.15], ['WEIGHT', 0.1, 0.535, 0.1], ['2048', 0.5, 0.517, 0.08], ['Heat: 251216', 0.1, 0.3]]
+  assert.equal(extract(page(rows)).label.weight_kg, 2048)
+})
+
+test('правила значений с настоящих бирок', () => {
+  const context = { label: '' }
+  assert.equal(readHeat('2604 – 3 – 065 – 20', context), '2604-3-065-20')
+  assert.equal(readHeat('2688.26', context), '2688.26')
+  assert.equal(readHeat('：2501320', context), '2501320')
+  assert.equal(readSize('012MM', context), '12 mm')
+  assert.equal(readSize('10,0', context), '10 mm')
+  assert.equal(readSize('、Q16', context), 'Q16')
+  assert.equal(readGrade('3500C', context), 'B500C')
+  assert.equal(readGrade('S 275 JR', context), 'S275JR')
+  assert.equal(readGrade('014MM', context), null)
+  assert.equal(readGrade('40-60', context), null)
+  assert.equal(findGrade('13012B500C'), 'B500C')
+  assert.equal(findGrade(':S275JR'), 'S275JR')
+  assert.equal(findOrphanHeat('13012B500C'), null)
+  assert.equal(findMarkedSize('12mm'), '12 mm')
+  assert.equal(findMarkedSize('13 mm'), null)
+  assert.equal(findWeightLine('2066 kg'), 2066)
+  assert.equal(findWeightLine('2066'), null)
+  assert.equal(findApproval('Technical agreement no. 016i-01-584-2025'), '016-01-584-2025')
+  assert.equal(findApproval('AT003-1/195-2024'), 'AT 003-01/195-2024')
+})
+
+test('поставщик по логотипу с ошибками OCR и по обрезанному названию', () => {
+  const suppliers = DEFAULT_KNOWN_SUPPLIERS
+  assert.deepEqual(matchSupplier('Suez Gtee', suppliers), { name: 'Suez Steel', exact: false })
+  assert.deepEqual(matchSupplier('ArcelorMit', suppliers), { name: 'ArcelorMittal', exact: false })
+  assert.deepEqual(matchSupplier('COLAKOGLUE', suppliers), { name: 'Colakoglu Metalurji', exact: false })
+  assert.deepEqual(matchSupplier('MIIL s NAME: ColakcgluR vietalurj A.S', suppliers), { name: 'Colakoglu Metalurji', exact: false })
+  assert.equal(matchSupplier('Suez Canal', suppliers), null)
+  assert.equal(matchSupplier('Arcer', suppliers), null)
 })
 
 test('по умолчанию заполняются только включённые поля', () => {

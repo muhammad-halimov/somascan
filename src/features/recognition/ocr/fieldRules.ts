@@ -10,7 +10,7 @@ import type { LabelFieldDefinition, LabelFieldKind, LabelKey, LabelValue } from 
 import { foldText } from './foldText'
 import {
   isStrongGrade, isStrongHeat, isStrongSize, isStrongWeight, readApproval, readCode, readCount, readDate, readGrade, readHeat,
-  readNumberedCode, readSize, readText, readTime, readWeightKg, type ValueReader,
+  readNumberedCode, readSize, readStandard, readText, readTime, readWeightKg, type ValueReader,
 } from './valueReaders'
 
 /** Правило одного поля. */
@@ -25,11 +25,17 @@ export interface FieldRule {
   strong?: (value: LabelValue) => boolean
   /** Значений может быть несколько (стандарты): собираются все, через «; ». */
   multi?: boolean
+  /**
+   * Подписи, которые считаются подписью только в начале строки (сложенные): «Kg: 780» — подпись веса,
+   * а «2048 kg» — значение.
+   */
+  leadingLabels?: readonly string[]
 }
 
 /** Подписи и чтение встроенных полей. */
 interface BuiltInRule {
   labels: readonly string[]
+  leadingLabels?: readonly string[]
   read: ValueReader
   strong?: (value: LabelValue) => boolean
   multi?: boolean
@@ -50,13 +56,13 @@ const BUILT_IN_RULES: Readonly<Record<LabelKey, BuiltInRule>> = {
     read: readText,
   },
   grade: {
-    labels: ['grade', 'steel grade', 'class', 'clasa', 'quality', 'minoseg', 'minosites', 'jakosc', 'marca', 'marka', 'gatunek', 'kalite', 'sinif', 'qualita', 'calidad', 'nuance', 'stahlgute', 'марка', 'класс', 'клас'],
+    labels: ['grade', 'steel grade', 'class', 'clasa', 'quality', 'calitate', 'calitatea', 'calitate otel', 'minoseg', 'minosites', 'jakosc', 'marca', 'marka', 'gatunek', 'kalite', 'sinif', 'qualita', 'calidad', 'nuance', 'stahlgute', 'марка', 'класс', 'клас'],
     read: readGrade,
     strong: isStrongGrade,
   },
   standard: {
     labels: ['standard', 'standards', 'szabvany', 'norma', 'norm', 'стандарт', 'normativ'],
-    read: readCode,
+    read: readStandard,
     multi: true,
   },
   technical_approval: {
@@ -68,8 +74,8 @@ const BUILT_IN_RULES: Readonly<Record<LabelKey, BuiltInRule>> = {
     read: readNumberedCode,
   },
   size: {
-    // «sze» — частая ошибка OCR в «SIZE(mm)».
-    labels: ['size', 'sze', 'diameter', 'diam', 'dimension', 'dimensiune', 'diametru', 'diametro', 'diametre', 'durchmesser', 'atmero', 'przekroj', 'srednica', 'cap', 'nominal size', 'диаметр', 'діаметр', 'размер', 'розмір'],
+    // «sze» — частая ошибка OCR в «SIZE(mm)»; «Ø mm» (Acciaierie di Sicilia) OCR читает и как «0 mm».
+    labels: ['size', 'sze', 'ø mm', '0 mm', 'diameter', 'diam', 'dimension', 'dimensiune', 'diametru', 'diametro', 'diametre', 'durchmesser', 'atmero', 'przekroj', 'srednica', 'cap', 'nominal size', 'диаметр', 'діаметр', 'размер', 'розмір'],
     read: readSize,
     strong: isStrongSize,
   },
@@ -79,16 +85,17 @@ const BUILT_IN_RULES: Readonly<Record<LabelKey, BuiltInRule>> = {
     strong: isStrongHeat,
   },
   batch: {
-    labels: ['batch', 'coil no', 'coil nr', 'coil number', 'bundle no', 'bundle nr', 'bundle number', 'bund nr', 'package', 'lot', 'lotto', 'fascio', 'paquete', 'colis', 'partea', 'partida', 'numarul rulului', 'koteg', 'paczka', 'pachet', 'paket', 'demet', 'партия', 'партія', 'пакет'],
+    labels: ['batch', 'coil no', 'coil nr', 'coil number', 'bundle no', 'bundle nr', 'bundle number', 'bund nr', 'package', 'lot', 'lotto', 'fascio', 'paquete', 'colis', 'partea', 'partei', 'partida', 'numarul rulului', 'numarul ruloului', 'numarul lotului', 'lotului', 'koteg', 'paczka', 'pachet', 'paket', 'demet', 'партия', 'партія', 'пакет'],
     read: readNumberedCode,
   },
   weight_kg: {
     labels: ['weight', 'net weight', 'gross weight', 'greutate', 'greutatea', 'tomeg', 'waga', 'masa', 'agirlik', 'gewicht', 'peso', 'poids', 'вес', 'масса', 'вага', 'маса'],
+    leadingLabels: ['kg', 'кг'],
     read: readWeightKg,
     strong: isStrongWeight,
   },
   bar_count: {
-    labels: ['n of bars', 'no of bars', 'number of bars', 'bars', 'pieces', 'pcs', 'bucati', 'darab', 'sztuk', 'adet', 'количество', 'кількість'],
+    labels: ['n of bars', 'no of bars', 'number of bars', 'bars', 'pieces', 'pcs', 'bucati', 'buc', 'darab', 'sztuk', 'adet', 'количество', 'кількість'],
     read: readCount,
   },
   production_date: {
@@ -166,7 +173,12 @@ export function buildFieldRules(fields: readonly LabelFieldDefinition[]): FieldR
   const byKey = new Map(fields.map((field) => [field.key, field]))
   const rules: FieldRule[] = Object.entries(BUILT_IN_RULES).map(([key, rule]) => {
     const field = byKey.get(key)
-    return { key, ...rule, labels: foldLabels([...rule.labels, ...(field ? ownNames(field) : [])]) }
+    return {
+      key,
+      ...rule,
+      labels: foldLabels([...rule.labels, ...(field ? ownNames(field) : [])]),
+      ...(rule.leadingLabels ? { leadingLabels: foldLabels(rule.leadingLabels) } : {}),
+    }
   })
   for (const field of fields) {
     if (field.builtIn || field.manual || field.key in BUILT_IN_RULES) continue

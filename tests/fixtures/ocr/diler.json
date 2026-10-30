@@ -1,0 +1,30 @@
+{
+ "rotation": 0,
+ "width": 3000,
+ "height": 4000,
+ "lines": [
+  {"text": "Production aR", "corners": [1677, 1319, 2131, 1303, 2133, 1363, 1679, 1379], "confidence": 0.85},
+  {"text": "DILER DEMIRCELIK", "corners": [435, 1392, 968, 1383, 969, 1436, 435, 1445], "confidence": 0.86},
+  {"text": "END.Ve TIC.AS.DILOVASI-KOCAELI", "corners": [433, 1460, 1427, 1445, 1427, 1495, 433, 1510], "confidence": 0.88},
+  {"text": "www.dilerhld.com", "corners": [431, 1528, 899, 1518, 900, 1565, 432, 1575], "confidence": 0.86},
+  {"text": "HOT ROLLED DEFORMED STEEL BARS", "corners": [367, 1624, 2127, 1589, 2129, 1676, 369, 1711], "confidence": 0.89},
+  {"text": "QUALITYIGRADE:", "corners": [371, 1739, 1172, 1718, 1175, 1800, 373, 1821], "confidence": 0.89},
+  {"text": "ST009/B500C", "corners": [373, 1849, 1079, 1831, 1081, 1910, 375, 1928], "confidence": 0.84},
+  {"text": "SIZE:20", "corners": [361, 1995, 934, 1957, 944, 2108, 371, 2146], "confidence": 0.81},
+  {"text": "MM", "corners": [1273, 2000, 1480, 1994, 1483, 2092, 1275, 2098], "confidence": 0.58},
+  {"text": "M.", "corners": [987, 2175, 1223, 2175, 1223, 2266, 987, 2266], "confidence": 0.63},
+  {"text": "LENGTH:12", "corners": [389, 2206, 923, 2187, 925, 2261, 392, 2280], "confidence": 0.75},
+  {"text": "THEORETICALWEIGHTOFBUNDLE:1956.240 KG", "corners": [386, 2337, 2191, 2273, 2194, 2342, 389, 2406], "confidence": 0.93},
+  {"text": "HEAT NUM ER:2505922", "corners": [358, 2468, 1761, 2383, 1771, 2549, 368, 2634], "confidence": 0.83},
+  {"text": "PCSIBUNDLES:66", "corners": [402, 2644, 1414, 2611, 1418, 2714, 405, 2747], "confidence": 0.88},
+  {"text": "MILL'S NAME:DILERIRONANC", "corners": [404, 2791, 2115, 2715, 2120, 2825, 409, 2901], "confidence": 0.86},
+  {"text": "STEEL INC.", "corners": [1200, 2891, 1813, 2864, 1817, 2953, 1204, 2980], "confidence": 0.82},
+  {"text": "ORIGIN:TURKEY", "corners": [444, 3000, 1316, 2990, 1317, 3086, 446, 3096], "confidence": 0.88},
+  {"text": "PACKAGE NO:", "corners": [1002, 3123, 1618, 3101, 1620, 3164, 1004, 3186], "confidence": 0.79},
+  {"text": "845M", "corners": [1125, 3201, 1576, 3189, 1579, 3309, 1128, 3321], "confidence": 0.71},
+  {"text": "ID:9957815", "corners": [957, 3367, 1424, 3362, 1424, 3426, 958, 3431], "confidence": 0.87},
+  {"text": "KLM:000300", "corners": [955, 3455, 1479, 3438, 1481, 3501, 957, 3518], "confidence": 0.88},
+  {"text": "Production QR", "corners": [1736, 3512, 2162, 3490, 2165, 3553, 1739, 3575], "confidence": 0.86},
+  {"text": "Producticn oR", "corners": [514, 3540, 938, 3540, 938, 3589, 514, 3589], "confidence": 0.78}
+ ]
+}

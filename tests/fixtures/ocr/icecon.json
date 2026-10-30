@@ -1,0 +1,33 @@
+{
+ "rotation": 0,
+ "width": 3000,
+ "height": 4000,
+ "lines": [
+  {"text": "AD0311364", "corners": [1809, 423, 2272, 398, 2276, 467, 1813, 492], "confidence": 0.86},
+  {"text": "AD0311364", "corners": [737, 471, 1166, 458, 1167, 524, 739, 537], "confidence": 0.81},
+  {"text": "U:A2260051783", "corners": [1838, 1059, 2309, 1041, 2312, 1110, 1841, 1128], "confidence": 0.88},
+  {"text": "U:A2260051783", "corners": [665, 1088, 1108, 1071, 1111, 1138, 668, 1155], "confidence": 0.88},
+  {"text": "sc Intertranscom Impex Srl", "corners": [619, 1159, 1743, 1146, 1745, 1258, 620, 1271], "confidence": 0.86},
+  {"text": "AT016-01/573-2025", "corners": [616, 1299, 1489, 1279, 1491, 1358, 618, 1378], "confidence": 0.84},
+  {"text": "OTEL BETON", "corners": [616, 1401, 1090, 1391, 1092, 1461, 617, 1471], "confidence": 0.86},
+  {"text": "BARE", "corners": [613, 1493, 828, 1493, 828, 1569, 613, 1569], "confidence": 0.8},
+  {"text": "CALITATE OTEL:B500", "corners": [608, 1593, 1417, 1582, 1418, 1654, 609, 1665], "confidence": 0.86},
+  {"text": "CLASA DUCTILITATE C", "corners": [606, 1689, 1476, 1685, 1476, 1757, 607, 1761], "confidence": 0.88},
+  {"text": "LUNGIME:12M", "corners": [604, 1768, 1174, 1766, 1174, 1846, 605, 1848], "confidence": 0.86},
+  {"text": "DIAMETRU :", "corners": [598, 1873, 1398, 1875, 1398, 1961, 597, 1959], "confidence": 0.81},
+  {"text": "014MM", "corners": [1466, 1867, 1916, 1867, 1916, 1955, 1466, 1955], "confidence": 0.73},
+  {"text": "MASA:1.984 Kg", "corners": [591, 1977, 1266, 1991, 1264, 2088, 589, 2074], "confidence": 0.88},
+  {"text": "NUME PRODUCATOR :", "corners": [600, 2121, 1360, 2121, 1360, 2190, 600, 2190], "confidence": 0.85},
+  {"text": "ICDAS CELIK ENERJI TERSANE VE ULASIM A.S", "corners": [594, 2223, 2209, 2221, 2209, 2293, 594, 2295], "confidence": 0.89},
+  {"text": "MADE IN TURKEY", "corners": [593, 2327, 1201, 2327, 1201, 2400, 593, 2400], "confidence": 0.87},
+  {"text": "AN :2026", "corners": [593, 2432, 881, 2429, 882, 2498, 594, 2501], "confidence": 0.78},
+  {"text": "NUMARULSARJEI:2608-3-378-50", "corners": [578, 2518, 2019, 2498, 2020, 2603, 580, 2623], "confidence": 0.9},
+  {"text": "NUMARUL LOTULUI:22", "corners": [573, 2645, 1416, 2634, 1418, 2744, 575, 2755], "confidence": 0.9},
+  {"text": "ICECON", "corners": [665, 2807, 1585, 2811, 1584, 3045, 664, 3041], "confidence": 0.75},
+  {"text": "S.A", "corners": [1483, 2829, 1872, 2829, 1872, 3005, 1483, 3005], "confidence": 0.6},
+  {"text": "ROM-15LOT-3", "corners": [595, 3127, 1699, 3100, 1703, 3267, 599, 3294], "confidence": 0.89},
+  {"text": "IDISQRKOD", "corners": [2038, 3268, 2407, 3252, 2410, 3319, 2040, 3335], "confidence": 0.88},
+  {"text": "AD0311364*", "corners": [674, 3415, 1186, 3407, 1187, 3474, 675, 3482], "confidence": 0.78},
+  {"text": "AD0311364", "corners": [1750, 3430, 2216, 3417, 2218, 3487, 1752, 3500], "confidence": 0.83}
+ ]
+}

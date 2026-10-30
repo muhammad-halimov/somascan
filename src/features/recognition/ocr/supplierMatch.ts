@@ -45,6 +45,29 @@ function substringDistance(needle: string, haystack: string): number {
   return Math.min(...previous)
 }
 
+/** Расстояние Левенштейна: наименьшее число правок (вставка, удаление, замена знака) из `a` в `b`. */
+function editDistance(a: string, b: string): number {
+  let previous: number[] = Array.from({ length: b.length + 1 }, (_, j) => j)
+  for (let i = 1; i <= a.length; i++) {
+    const current: number[] = [i]
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      current.push(Math.min(previous[j]! + 1, current[j - 1]! + 1, previous[j - 1]! + cost))
+    }
+    previous = current
+  }
+  return previous[b.length]!
+}
+
+/**
+ * Название не короче стольких букв узнаётся и по строке, которая целиком — само название (логотип), прочитанное
+ * с ошибками в четверти букв («Suez Gtee») или обрезанное краем фото («ArcelorMit»).
+ */
+const LOGO_NAME = 8
+
+/** Обрезанное название (край фото, боком): начало длиной не меньше такой доли названия («ArcelorMit»). */
+const CUT_NAME_SHARE = 0.7
+
 /** Слова текста в сложенном виде (для коротких названий). */
 function foldedWords(text: string): string[] {
   const folded = foldWithMap(text)
@@ -64,6 +87,7 @@ function foldedWords(text: string): string[] {
 export function matchSupplier(text: string, suppliers: readonly string[]): SupplierMatch | null {
   const folded = foldText(text)
   if (folded.length < 2) return null
+  const words = foldedWords(text)
   let best: (SupplierMatch & { length: number }) | null = null
   for (const name of suppliers) {
     const key = foldText(name)
@@ -71,18 +95,24 @@ export function matchSupplier(text: string, suppliers: readonly string[]): Suppl
     let exact = false
     let near = false
     if (key.length <= SHORT_NAME) {
-      exact = foldedWords(text).includes(key)
+      exact = words.includes(key)
     } else {
       exact = folded.includes(key)
       const errors = allowedErrors(key.length)
       near = !exact && errors > 0 && folded.length >= key.length - errors && substringDistance(key, folded) <= errors
     }
+    // Строка — само название, прочитанное с ошибками («Suez Gtee») или обрезанное краем фото («ArcelorMit»).
+    if (!exact && !near && key.length >= LOGO_NAME) {
+      near = (Math.abs(folded.length - key.length) <= 3 && editDistance(key, folded) <= Math.floor(key.length / 4))
+        || (folded.length >= LOGO_NAME && folded.length >= key.length * CUT_NAME_SHARE && key.startsWith(folded))
+    }
     // Название целиком не прочлось (вторая строка шапки размыта, «METALURJIAS»), но первое слово — отличительное
-    // («COLAKOGLU»): поставщик узнаётся по нему — как приблизительное совпадение.
+    // («COLAKOGLU», также с одной ошибкой OCR: «COLAKOGLUE», «Colakcglu»): поставщик узнаётся по нему —
+    // как приблизительное совпадение.
     if (!exact && !near) {
       const firstWord = foldText(name.split(/\s+/)[0] ?? '')
       near = name.trim().includes(' ') && firstWord.length >= DISTINCTIVE_WORD && !GENERIC_FIRST_WORDS.has(firstWord)
-        && foldedWords(text).includes(firstWord)
+        && words.some((word) => Math.abs(word.length - firstWord.length) <= 1 && editDistance(word, firstWord) <= allowedErrors(firstWord.length))
     }
     if (!exact && !near) continue
     const better = !best || (exact && !best.exact) || (exact === best.exact && key.length > best.length)

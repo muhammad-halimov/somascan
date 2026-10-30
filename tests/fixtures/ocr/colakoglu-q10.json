@@ -1,0 +1,25 @@
+{
+ "rotation": 0,
+ "width": 3000,
+ "height": 4000,
+ "lines": [
+  {"text": "EY0124989", "corners": [699, 402, 1137, 399, 1137, 462, 699, 465], "confidence": 0.89},
+  {"text": "COLAKOGLUR METALURJI A.S", "corners": [1015, 693, 2044, 689, 2045, 784, 1016, 788], "confidence": 0.88},
+  {"text": "AT016-01/593-2025", "corners": [530, 978, 1331, 974, 1332, 1047, 531, 1051], "confidence": 0.9},
+  {"text": "CUSTOMER:INTERTRANSCOMIMPEXS.R.L", "corners": [519, 1100, 1856, 1089, 1856, 1154, 520, 1165], "confidence": 0.93},
+  {"text": "ORDERNO:CM6390", "corners": [515, 1235, 1131, 1234, 1131, 1291, 515, 1292], "confidence": 0.91},
+  {"text": "QUALITY:B500DuctilityClassCacctoAT", "corners": [502, 1358, 1799, 1366, 1799, 1435, 502, 1427], "confidence": 0.89},
+  {"text": "016-01/593-2025", "corners": [502, 1440, 1022, 1437, 1022, 1493, 502, 1496], "confidence": 0.82},
+  {"text": "SIZE(mm):Q10", "corners": [495, 1554, 954, 1558, 953, 1618, 495, 1614], "confidence": 0.73},
+  {"text": "LENGTH(m):12.00", "corners": [485, 1688, 1029, 1688, 1029, 1754, 485, 1754], "confidence": 0.86},
+  {"text": "HEATNO:TY21948", "corners": [478, 1839, 1078, 1842, 1078, 1901, 478, 1898], "confidence": 0.83},
+  {"text": "Bundle Weight:Abt2-2,5mt", "corners": [472, 2005, 1356, 2013, 1355, 2082, 472, 2074], "confidence": 0.86},
+  {"text": "MIL'S NAME:ColakogluR MetalurjiA.S", "corners": [470, 2145, 1702, 2160, 1701, 2229, 469, 2214], "confidence": 0.87},
+  {"text": "Dilovasl,Kocaeli/Turkey", "corners": [468, 2220, 1244, 2234, 1243, 2304, 466, 2290], "confidence": 0.88},
+  {"text": "NROFPIECES:260", "corners": [465, 2346, 1052, 2351, 1052, 2408, 465, 2403], "confidence": 0.86},
+  {"text": "ORIGIN:TURKEY", "corners": [886, 2656, 1436, 2656, 1436, 2715, 886, 2715], "confidence": 0.9},
+  {"text": "TY21948C031", "corners": [489, 2973, 1370, 2975, 1370, 3113, 489, 3111], "confidence": 0.87},
+  {"text": "EY0124989", "corners": [579, 3477, 1066, 3490, 1064, 3560, 577, 3547], "confidence": 0.88},
+  {"text": "EY0124989", "corners": [1787, 3568, 2254, 3559, 2255, 3620, 1788, 3629], "confidence": 0.75}
+ ]
+}

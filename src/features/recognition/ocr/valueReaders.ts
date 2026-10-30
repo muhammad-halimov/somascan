@@ -25,14 +25,14 @@ export const latinize = (text: string) => text.replace(/[АВСЕНКМОРТХ�
 
 /**
  * Убирает вокруг значения разделители и пометку номера: «: 25R00581», «No. 581», «Nr 12», «№ 4657 / 30» —
- * без «No» и знаков. Пробелы внутри сводятся к одному.
+ * без «No» и знаков (и полноширинных «：», «、», которые иногда выдаёт OCR). Пробелы внутри сводятся к одному.
  */
 export function cleanValue(text: string): string {
   return text
     .replace(/\s+/g, ' ')
-    .replace(/^[\s:;.,\-–—/\\|#№*()[\]]+/u, '')
+    .replace(/^[\s:;.,\-–—/\\|#№*()[\]：、，]+/u, '')
     .replace(/^(?:no|nr|n°|nº|num|number)(?=[\s.:#№]|$)[\s.:#№]*/iu, '')
-    .replace(/[\s:;,\-–—/\\|*(]+$/u, '')
+    .replace(/[\s:;,\-–—/\\|*(：、，]+$/u, '')
     .trim()
 }
 
@@ -61,6 +61,12 @@ export const readCode: ValueReader = (text) => {
   return /[\p{L}\p{N}]/u.test(value) && value.length <= 40 ? value : null
 }
 
+/** Стандарт: код, в котором есть буквы («ST009-2011», «EN ISO 15630-1»); голое число («260619») — не стандарт. */
+export const readStandard: ValueReader = (text, context) => {
+  const value = readCode(text, context)
+  return typeof value === 'string' && /\p{L}/u.test(value) ? value : null
+}
+
 /** Код, в котором есть цифры (номер партии, серийный номер, номер договора). */
 export const readNumberedCode: ValueReader = (text, context) => {
   const value = readCode(text, context)
@@ -76,18 +82,22 @@ export const readText: ValueReader = (text) => {
 /** Шаблон номера плавки: одно «слово» из букв, цифр и дефисов, в нём не меньше трёх цифр. */
 const HEAT = /^[A-Z0-9][A-Z0-9-]{3,15}$/
 
+/** Номер плавки с точкой внутри (Acciaierie di Sicilia: «2688.26»). */
+const DOTTED_HEAT = /^\d{3,}\.\d{2,}$/
+
 /**
- * Номер плавки: «251216», «25R00581». Пробел внутри короткого номера убирается («25R 00581»),
- * буквы-двойники рядом с цифрами становятся цифрами.
+ * Номер плавки: «251216», «25R00581», «2604-3-065-20», «2688.26». Пробел внутри короткого номера убирается
+ * («25R 00581»), пробелы вокруг дефисов — тоже («2604 – 3 – 065 – 20»); буквы-двойники рядом с цифрами
+ * становятся цифрами.
  */
 export const readHeat: ValueReader = (text) => {
-  const value = latinize(cleanValue(text)).toUpperCase()
+  const value = latinize(cleanValue(text)).toUpperCase().replace(/\s*[-–—]\s*/g, '-')
   const words = value.split(/[\s/]+/).map((word) => word.replace(/[.,;:]+$/, ''))
   const compact = value.replace(/\s+/g, '')
   const options = words.length <= 2 && compact.length <= 10 ? [compact, ...words] : words
   for (const option of options) {
     const heat = fixDigitLookalikes(option)
-    if (HEAT.test(heat) && digitCount(heat) >= 3) return heat
+    if ((HEAT.test(heat) || DOTTED_HEAT.test(heat)) && digitCount(heat) >= 3) return heat
   }
   return null
 }
@@ -98,11 +108,11 @@ export const isStrongHeat = (value: LabelValue) =>
 
 /**
  * Плавка без подписи: строка целиком — уверенный номер плавки («2620040»), без других слов. Дата, время,
- * короткие числа («3557») и длинные коды (серийный номер) не подходят.
+ * короткие числа («3557»), длинные коды (серийный номер) и слитые с маркой стали «13 Ø12 B500C» не подходят.
  */
 export function findOrphanHeat(text: string): string | null {
   const value = cleanValue(text)
-  if (/\s/.test(value) || /[/:.]/.test(value)) return null
+  if (/\s/.test(value) || /[/:.]/.test(value) || GLUED_GRADE.test(latinize(value).toUpperCase())) return null
   const heat = readHeat(value, { label: '' })
   return heat !== null && isStrongHeat(heat) ? String(heat) : null
 }
@@ -113,13 +123,17 @@ export function findOrphanHeat(text: string): string | null {
  */
 const SIZE = /^(?:(Ø|⌀|ø|Ф|Φ|diam\.?|D|R|Q)\s*)?(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:mm|мм)?(?=$|[\s,;/x×*])/iu
 
+/** «Ø» перед числом с «mm», прочитанный как ноль: «Ø12MM» → «012MM». */
+const ZERO_AS_DIAMETER = /^0(?=\d{1,2}(?:[.,]\d)?\s*(?:mm|мм))/iu
+
 /**
- * Размер (номинальный диаметр): «12» в строке «(mm)» → «12 mm», «Ø12», «12mm» → «12 mm», «R20» — как есть.
+ * Размер (номинальный диаметр): «12» в строке «(mm)» → «12 mm», «Ø12», «12mm», «012MM» (OCR прочёл «Ø» как ноль),
+ * «10,0» → «10 mm», «R20» — как есть.
  */
 export const readSize: ValueReader = (text) => {
-  const match = SIZE.exec(fixDigitLookalikes(cleanValue(text)))
+  const match = SIZE.exec(fixDigitLookalikes(cleanValue(text)).replace(ZERO_AS_DIAMETER, 'Ø'))
   if (!match) return null
-  const number = match[2]!
+  const number = match[2]!.replace(/[.,]0+$/, '')
   const size = Number.parseFloat(number.replace(',', '.'))
   if (!(size >= 4 && size <= 60)) return null
   // R (гладкий пруток) и Q — как на бирке; остальные пометки — диаметр в миллиметрах.
@@ -231,61 +245,125 @@ export const readCount: ValueReader = (text) => {
 /** Марка стали: «B500C», «BSt 500 S», «A500C», «S235JR». */
 const GRADE = /^(?:[A-Z]{1,4}\s?-?\d{3}[A-Z0-9]{0,4}|[A-Z]{1,4}\s?\d{3}\s?[A-Z]{1,2})$/
 
-/** Основа марки в тексте: буквы и три цифры («B500», «BSt 500», «A 500»); буквы класса — после неё. */
-const GRADE_BASE = /(?:^|[^A-Z0-9])(BST|B|A|K)\s?-?(\d{3})/
+/** Основа марки в тексте: буквы и три цифры («B500», «BSt 500», «A 500», «S 275»); буквы класса — после неё. */
+const GRADE_BASE = /(?:^|[^A-Z0-9])(BST|B|A|K|S)\s?-?(\d{3})/
+
+/** «B» марки, прочитанный как «3» или «8»: «3500C» → «B500C». */
+const DIGIT_AS_B = /^[38](?=(?:400|420|450|500|550|600)[A-D]?$)/
+
+/** Марка арматуры в конце слова, слитая с цифрами перед ней: «13Ø12B500C» → «B500C», «…R8B500C». */
+const GLUED_GRADE = /(?:^|\d)((?:B|BST|A|K)[4-6]\d{2}[A-D])$/
 
 /**
- * Марка стали (буквы-двойники рядом с цифрами — цифры: «B5OOC» → «B500C»). Класс пластичности, напечатанный
- * отдельно, дописывается к основе: «B 500 Ductility Class C» → «B500C». Длинный текст без марки («C acc to AT»,
- * который достался подписи «Class» внутри строки) — не марка; короткий код без неё («St3sp») — как есть.
+ * Класс пластичности, напечатанный словами: «Ductility Class C», «CLASA DUCTILITATE C», «DuctilityClassC»
+ * (OCR потерял пробелы; но не марка после слова — «Ductility B500C»), а если `bareClass` — и просто «Class C»
+ * (одна буква A–C после «Class», не начало слова).
+ */
+export function findDuctilityClass(text: string, bareClass = true): string | null {
+  const upper = latinize(text).toUpperCase()
+  return /(?:DUCTILITY|DUCTILITATE)\s*(?:CLASS|CLASA)?\s*:?\s*([A-C])(?!\d)/.exec(upper)?.[1]
+    ?? (bareClass ? /CLASS\s*([A-C])(?![A-Z])/.exec(upper)?.[1] : undefined)
+    ?? null
+}
+
+/** Размер, длина или вес, а не марка: «014MM», «12M», «780KG». */
+const MEASURE = /^\d+(?:[.,]\d+)?\s*(?:MM|CM|M|KG|KGS|T)$/i
+
+/**
+ * Марка стали (буквы-двойники рядом с цифрами — цифры: «B5OOC» → «B500C», «3500C» → «B500C»). Класс
+ * пластичности, напечатанный отдельно, дописывается к основе: «B 500 Ductility Class C» → «B500C». Длинный текст
+ * без марки («C acc to AT», который достался подписи «Class» внутри строки) — не марка; короткий код без неё
+ * («St3sp») — как есть, если это не размер или вес («014MM») и не просто числа («40-60»).
  */
 export const readGrade: ValueReader = (text, context) => {
   const value = readCode(text, context)
   if (typeof value !== 'string') return null
-  const code = fixDigitLookalikes(fixDigitLookalikes(value))
+  const code = fixDigitLookalikes(fixDigitLookalikes(value)).replace(DIGIT_AS_B, 'B')
   const upper = latinize(code).toUpperCase()
   const base = GRADE_BASE.exec(upper)
   if (base) {
-    // Буквы класса сразу за цифрами («B500C», «BSt 500 S»), иначе отдельно напечатанный класс пластичности —
-    // в значении или где-то в строке подписи («QUALITY: B500 Ductility Class C»).
+    // Буквы класса сразу за цифрами («B500C», «BSt 500 S», «S275JR»), иначе отдельно напечатанный класс
+    // пластичности — в значении или где-то в строке подписи («QUALITY: B500 Ductility Class C»).
     const tail = upper.slice(base.index + base[0].length)
-    const ductility = (source: string) => /CLASS\s*([A-C])(?![A-Z])/.exec(latinize(source).toUpperCase())?.[1]
-    const letters = /^\s?([A-Z]{1,2})(?![A-Z])/.exec(tail)?.[1] ?? ductility(upper) ?? ductility(context.label) ?? ''
+    const letters = /^\s?([A-Z]{1,2})(?![A-Z])/.exec(tail)?.[1] ?? findDuctilityClass(upper) ?? findDuctilityClass(context.label) ?? ''
     return `${base[1] === 'BST' ? 'BSt' : base[1]}${base[2]}${letters}`
   }
-  return code.length <= 8 && /\d/.test(code) && !/\s/.test(code) ? code : null
+  return code.length <= 8 && /\d/.test(code) && /\p{L}/u.test(code) && !/\s/.test(code) && !MEASURE.test(code) ? code : null
 }
 
 /** Похоже ли значение на марку стали. */
 export const isStrongGrade = (value: LabelValue) => typeof value === 'string' && GRADE.test(value.toUpperCase())
 
-/** Марка стали где угодно в строке (без подписи): отдельное слово вида «B500C». */
+/** Конструкционная сталь: «S235JR», «S275J0», «S355J2». */
+const STRUCTURAL_GRADE = /^S(?:235|275|355|420|460)(?:JR|J0|J2|K2|N|NL|M|ML)?$/
+
+/**
+ * Марка стали где угодно в строке (без подписи): отдельное слово вида «B500C» или «S275JR», или марка арматуры,
+ * слитая с цифрами перед ней («13Ø12B500C» — OCR потерял пробелы).
+ */
 export function findGrade(text: string): string | null {
-  for (const word of latinize(text).toUpperCase().split(/[\s/,;:()]+/)) {
-    if (/^(?:B|BST|A|K)\d{3}[A-Z]{1,2}$/.test(word)) return word
+  const words = latinize(text).toUpperCase().split(/[\s/,;:()]+/)
+  for (const word of words) {
+    if (/^(?:B|BST|A|K)\d{3}[A-Z]{1,2}$/.test(word) || STRUCTURAL_GRADE.test(word)) return word
+  }
+  for (const word of words) {
+    const glued = GLUED_GRADE.exec(word)
+    if (glued) return glued[1]!
   }
   return null
 }
 
-/** Размер где угодно в строке (без подписи): только с пометкой диаметра — «Ø12», «⌀ 16 mm». */
+/**
+ * Размер где угодно в строке (без подписи): с пометкой диаметра — «Ø12», «⌀ 16 mm», или строка целиком —
+ * типичный диаметр в миллиметрах («12mm», «10 mm», «012MM»): у бирки, снятой боком, подпись «SIZE» бывает
+ * обрезана.
+ */
 export function findMarkedSize(text: string): string | null {
   const match = /(?:^|\s)[Ø⌀ø]\s*(\d{1,2}(?:[.,]\d)?)(?:\s*mm)?(?=$|[\s,;])/iu.exec(text)
-  if (!match) return null
-  const size = Number.parseFloat(match[1]!.replace(',', '.'))
-  return size >= 4 && size <= 60 ? `${match[1]} mm` : null
+  if (match) {
+    const size = Number.parseFloat(match[1]!.replace(',', '.'))
+    return size >= 4 && size <= 60 ? `${match[1]} mm` : null
+  }
+  const plain = cleanValue(text)
+  if (!/^0?\d{1,2}(?:[.,]5)?\s*(?:mm|мм)$/iu.test(plain)) return null
+  const size = readSize(plain, { label: '' })
+  return isStrongSize(size) ? String(size) : null
 }
 
-/** Номер технического одобрения (агремана): «016-01/593-2025», «016-01-584-2025», с «AT» или без. */
-const APPROVAL = /(?:AT\s*)?(?<!\d)\d{3}\s*-\s*\d{2}\s*[-/]\s*\d{3}\s*-\s*\d{4}(?!\d)/iu
+/**
+ * Вес без подписи: строка целиком — вес в килограммах с единицей («2066 kg», «1956.240 KGS») в пределах
+ * веса бунта или пачки.
+ */
+export function findWeightLine(text: string): number | null {
+  const value = cleanValue(text)
+  if (!/^\d[\d .,]*\s*(?:kg|kgs|кг)$/iu.test(value)) return null
+  const kg = readWeightKg(value, { label: '' })
+  return isStrongWeight(kg) ? (kg as number) : null
+}
 
-/** Техническое одобрение: номер вида «016-01/593-2025» из значения, иначе код с цифрами как напечатан. */
+/**
+ * Номер технического одобрения (агремана): «016-01/593-2025», «016-01-584-2025», с «AT» или без
+ * (OCR иногда теряет ноль — «003-1/195-2024» — или вставляет букву перед дефисом — «016i-01-584-2025»).
+ */
+const APPROVAL = /(?:AT\s*)?(?<!\d)\d{3}(?:[a-z](?=\s*-))?\s*-\s*\d{1,2}\s*[-/]\s*\d{3}\s*-\s*\d{4}(?!\d)/iu
+
+/**
+ * Техническое одобрение: номер вида «016-01/593-2025» из значения, иначе код с цифрами как напечатан —
+ * если в нём нет длинных слов (подпись, слитая с номером в мусор OCR: «RCAgremonTechnicN-.01E-01/…»).
+ */
 export const readApproval: ValueReader = (text, context) => {
   const match = APPROVAL.exec(latinize(text))
-  return match ? normalizeApproval(match[0]) : readNumberedCode(text, context)
+  if (match) return normalizeApproval(match[0])
+  const code = readNumberedCode(text, context)
+  return typeof code === 'string' && !/\p{L}{6}/u.test(code) ? code : null
 }
 
-/** «AT016-01 / 593-2025» → «AT 016-01/593-2025»: без пробелов внутри номера, «AT» — через пробел. */
-const normalizeApproval = (text: string) => text.replace(/\s+/g, '').replace(/^AT/i, 'AT ')
+/**
+ * «AT016-01 / 593-2025» → «AT 016-01/593-2025»: без пробелов внутри номера, «AT» — через пробел;
+ * потерянный ноль возвращается («003-1/» → «003-01/»), лишняя буква убирается («016i-» → «016-»).
+ */
+const normalizeApproval = (text: string) => text.replace(/\s+/g, '').replace(/(?<=\d{3})[a-z](?=-)/i, '')
+  .replace(/^AT/i, 'AT ').replace(/(?<=\d{3}-)(\d)(?=[-/])/, '0$1')
 
 /**
  * Техническое одобрение без подписи: номер вида «AT 016-01/593-2025» — сам вид номера его выдаёт
@@ -294,6 +372,18 @@ const normalizeApproval = (text: string) => text.replace(/\s+/g, '').replace(/^A
 export function findApproval(text: string): string | null {
   const match = APPROVAL.exec(latinize(text))
   return match ? normalizeApproval(match[0]) : null
+}
+
+/**
+ * Агреман, который занимает весь текст (кроме приставки страны: «RO-AT 016-01/592-2025»): так он стоит
+ * в списке стандартов, но это техническое одобрение.
+ */
+export function findSoleApproval(text: string): string | null {
+  const latin = latinize(text)
+  const match = APPROVAL.exec(latin)
+  if (!match) return null
+  const rest = latin.slice(0, match.index) + latin.slice(match.index + match[0].length)
+  return /\d/.test(rest) ? null : normalizeApproval(match[0])
 }
 
 /** Изделие без подписи: строка с названием проката (арматура, катанка). */

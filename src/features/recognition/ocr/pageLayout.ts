@@ -123,8 +123,11 @@ export function rowOverlap(a: LineBox, b: LineBox): number {
   return overlap <= 0 ? 0 : overlap / Math.max(1e-6, Math.min(boxHeight(a), boxHeight(b)))
 }
 
+/** Строки перекрываются по вертикали хотя бы на столько (доля меньшей) — на одном уровне. */
+const SAME_ROW = 0.45
+
 /** Строки на одном уровне — одна строка таблицы бирки. */
-export const sameRow = (a: LineBox, b: LineBox) => rowOverlap(a, b) >= 0.45
+export const sameRow = (a: LineBox, b: LineBox) => rowOverlap(a, b) >= SAME_ROW
 
 /** `value` в той же строке, правее подписи `label`. */
 export const isRightOf = (label: LineBox, value: LineBox) =>
@@ -142,4 +145,93 @@ export function isBelow(label: LineBox, value: LineBox, lineHeight: number): boo
     && gap <= height * 1.3
     && value.left < label.right
     && value.right > label.left - height * 0.5
+}
+
+/** Середина рамки по вертикали. */
+const centerY = (box: LineBox) => (box.top + box.bottom) / 2
+
+/**
+ * Сдвиг столбца значений таблицы относительно столбца подписей: значение подписи, стоящей на высоте `y`,
+ * ниже неё на `slope · y + offset`. Бывает у фото под углом в перспективе: правый край бирки дальше от камеры,
+ * и значения к верху таблицы съезжают на полстроки-строку от своих подписей.
+ */
+export interface RowShift {
+  slope: number
+  offset: number
+}
+
+/** Без сдвига: значение — на одном уровне с подписью. */
+export const NO_SHIFT: RowShift = { slope: 0, offset: 0 }
+
+/** Рамка подписи, сдвинутая туда, где по `shift` стоит её значение. */
+export function shiftBox(box: LineBox, shift: RowShift): LineBox {
+  const delta = shift.slope * centerY(box) + shift.offset
+  return delta === 0 ? box : { ...box, top: box.top + delta, bottom: box.bottom + delta }
+}
+
+/** Наибольший наклон сдвига: на всю высоту фото — не больше 15 % (сильнее перспектива не искажает). */
+const MAX_SHIFT_SLOPE = 0.15
+
+/** Больше стольких пар подпись–значение наклонные сдвиги не перебираются (только постоянные). */
+const MAX_SHIFT_PAIRS = 150
+
+/**
+ * Сдвиг столбца значений, при котором подписи лучше всего совпадают по уровню со значениями справа: сумма
+ * перекрытий (`rowOverlap` сдвинутой подписи и её значения, каждая строка значения — одной подписи) наибольшая.
+ * Перебираются сдвиги, которые совмещают середины подписи и строки правее неё в пределах полутора строк:
+ * постоянные (по одной паре) и наклонные (по двум). Сдвиг берётся, только если он лучше таблицы без сдвига
+ * хотя бы на две полностью совпавшие строки, — у ровной бирки ничего не меняется (а без сдвига в съехавшей
+ * таблице подписи задевают краем значения соседних строк, но перекрываются с ними плохо).
+ * @param labels Рамки подписей, значения которых ждут справа.
+ * @param values Рамки строк без подписей.
+ * @param lineHeight Типичная высота строки страницы.
+ */
+export function fitRowShift(labels: readonly LineBox[], values: readonly LineBox[], lineHeight: number): RowShift {
+  const reach = lineHeight * 1.5
+  const pairs = labels.flatMap((label, labelIndex) => values.flatMap((value, valueIndex) => {
+    if (value.left < label.left + (label.right - label.left) * 0.6) return []
+    const delta = centerY(value) - centerY(label)
+    return Math.abs(delta) <= reach ? [{ label, value, labelIndex, valueIndex, y: centerY(label), delta }] : []
+  }))
+  // Насколько подписи совпадают по уровню со своими значениями (каждая строка значения — одной подписи).
+  const matches = (shift: RowShift) => {
+    const fitting = pairs
+      .map((pair) => ({ ...pair, overlap: rowOverlap(shiftBox(pair.label, shift), pair.value) }))
+      .filter((pair) => pair.overlap >= SAME_ROW)
+      .sort((a, b) => b.overlap - a.overlap)
+    const usedLabels = new Set<number>()
+    const usedValues = new Set<number>()
+    let total = 0
+    for (const pair of fitting) {
+      if (usedLabels.has(pair.labelIndex) || usedValues.has(pair.valueIndex)) continue
+      usedLabels.add(pair.labelIndex)
+      usedValues.add(pair.valueIndex)
+      total += Math.min(1, pair.overlap)
+    }
+    return total
+  }
+  const baseline = matches(NO_SHIFT)
+  let best = NO_SHIFT
+  let bestCount = baseline
+  const consider = (shift: RowShift) => {
+    if (Math.abs(shift.slope) > MAX_SHIFT_SLOPE) return
+    const count = matches(shift)
+    if (count > bestCount) {
+      best = shift
+      bestCount = count
+    }
+  }
+  for (const pair of pairs) consider({ slope: 0, offset: pair.delta })
+  if (pairs.length <= MAX_SHIFT_PAIRS) {
+    for (let i = 0; i < pairs.length; i++) {
+      for (let j = i + 1; j < pairs.length; j++) {
+        const a = pairs[i]!
+        const b = pairs[j]!
+        if (a.labelIndex === b.labelIndex || a.valueIndex === b.valueIndex || Math.abs(b.y - a.y) < lineHeight) continue
+        const slope = (b.delta - a.delta) / (b.y - a.y)
+        consider({ slope, offset: a.delta - slope * a.y })
+      }
+    }
+  }
+  return bestCount >= baseline + 2 ? best : NO_SHIFT
 }

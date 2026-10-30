@@ -16,10 +16,14 @@ import type { LabelFieldDefinition, LabelKey, LabelRecord, LabelValue } from '..
 import { findLabel, sourceEnd, foldWithMap, type FoldedText } from './foldText'
 import { buildFieldRules, type FieldRule } from './fieldRules'
 import type { OcrCode, OcrPage } from './ocrTypes'
-import { boxHeight, isBelow, isRightOf, layoutPage, sameRow, typicalLineHeight, type PageLine } from './pageLayout'
+import {
+  boxHeight, fitRowShift, isBelow, isRightOf, layoutPage, sameRow, shiftBox, typicalLineHeight, type LineBox, type PageLine,
+} from './pageLayout'
 import { companyDomains, companyFromDomain, supplierByDomain } from './domainProducer'
 import { findSupplier } from './supplierMatch'
-import { findApproval, findGrade, findMarkedSize, findOrphanHeat, findProduct } from './valueReaders'
+import {
+  findApproval, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findWeightLine,
+} from './valueReaders'
 
 /** Что разбирать. */
 export interface ExtractionInput {
@@ -108,6 +112,9 @@ function findHits(folded: FoldedText, rules: readonly FieldRule[]): LabelHit[] {
     for (const label of rule.labels) {
       for (const match of findLabel(folded, label)) all.push({ key: rule.key, ...match })
     }
+    for (const label of rule.leadingLabels ?? []) {
+      for (const match of findLabel(folded, label)) if (match.start === 0) all.push({ key: rule.key, ...match })
+    }
   }
   all.sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start)
   const kept: LabelHit[] = []
@@ -187,8 +194,39 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
   const isLabelLine = new Set(labelLines.map(({ line }) => line.index))
   const labelBoxes = labelLines.flatMap(({ line }) => (line.box ? [line.box] : []))
 
+  // Подписи, значение которых — справа: одна подпись в строке (или последняя) и после неё в строке пусто.
+  // Подпись на двух языках в две строки («GREUTATEA» над «WEIGHT») — одна подпись: значение стоит между строками.
+  const waitsRight = labelLines.filter(({ line, groups }) => line.box && !inlineText(groups.at(-1)!.rest).text.trim())
+  const soleKey = ({ groups }: LabelLine) => (groups.length === 1 ? groups[0]!.key : null)
+  const stackedBox = (start: LabelLine): LineBox => {
+    let box = start.line.box!
+    for (let grown = true; grown;) {
+      grown = false
+      for (const other of waitsRight) {
+        const otherBox = other.line.box!
+        const inside = otherBox.top >= box.top && otherBox.bottom <= box.bottom
+        const gap = Math.max(otherBox.top - box.bottom, box.top - otherBox.bottom)
+        if (inside || soleKey(other) === null || soleKey(other) !== soleKey(start) || gap > lineHeight * 0.6
+          || Math.abs(otherBox.left - start.line.box!.left) > lineHeight * 2) continue
+        box = { left: Math.min(box.left, otherBox.left), top: Math.min(box.top, otherBox.top), right: Math.max(box.right, otherBox.right), bottom: Math.max(box.bottom, otherBox.bottom) }
+        grown = true
+      }
+    }
+    return box
+  }
+  const anchorBoxes = new Map(waitsRight.map((labelLine) => [labelLine.line.index, stackedBox(labelLine)]))
+  // Столбец значений, съехавший от подписей (фото в перспективе), — подписи ищут значения на сдвинутом уровне.
+  const rowShift = fitRowShift(
+    [...anchorBoxes.values()],
+    lines.flatMap((line) => (line.box && !isLabelLine.has(line.index) ? [line.box] : [])),
+    lineHeight,
+  )
+
   const candidates: Candidate[] = []
-  const propose = (rule: FieldRule, text: string, label: PageLine, baseScore: number, valueLine: PageLine | null) => {
+  const propose = (fieldRule: FieldRule, text: string, label: PageLine, baseScore: number, valueLine: PageLine | null) => {
+    // Агреман в списке стандартов («Standard: AT003-01/200-2024», «RO-AT 016-01/592-2025») — техническое одобрение.
+    const isApproval = fieldRule.key === 'standard' && findSoleApproval(text) !== null
+    const rule = isApproval ? ruleOf.get('technical_approval') ?? fieldRule : fieldRule
     const value = rule.read(text, { label: label.text })
     if (value === null || value === '') return
     const strong = rule.strong?.(value) ? STRONG_BONUS : 0
@@ -206,8 +244,9 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
       const box = line.box
       // Справа в той же строке — значение последней подписи строки; другая подпись между ними — граница.
       if (groupIndex === groups.length - 1) {
+        const rowBox = shiftBox(anchorBoxes.get(line.index) ?? box, rowShift)
         let right = lines
-          .filter((other) => other.box && !isLabelLine.has(other.index) && isRightOf(box, other.box))
+          .filter((other) => other.box && !isLabelLine.has(other.index) && isRightOf(rowBox, other.box))
           .filter((other) => !labelBoxes.some((labelBox) => labelBox !== box && sameRow(box, labelBox)
             && labelBox.left >= box.right - lineHeight * 0.2 && labelBox.left < (other.box!.left + other.box!.right) / 2))
           .sort((a, b) => a.box!.left - b.box!.left)
@@ -251,7 +290,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     return [...items].sort((a, b) => lineTop(a.line) - lineTop(b.line)).map((item) => String(item.value)).join('; ')
   }
   const freeLines = lines.filter((line) => !usedLines.has(line.index) && !isLabelLine.has(line.index))
-  const firstOf = (find: (text: string) => string | null, candidates: readonly PageLine[] = freeLines) => {
+  const firstOf = <T>(find: (text: string) => T | null, candidates: readonly PageLine[] = freeLines): T | null => {
     for (const line of candidates) {
       const value = find(line.text)
       if (value) return value
@@ -267,10 +306,11 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
   const valueColumn = valueLefts.length >= 3 ? valueLefts[Math.floor(valueLefts.length / 2)]! : null
   /**
    * Плавка без подписи (её закрыла ржавчина или OCR прочёл «Heat Number» как «Hea.da»): свободная строка,
-   * которая целиком — уверенный номер плавки и стоит в столбце значений таблицы (если он есть), сверху вниз.
+   * которая целиком — уверенный номер плавки и стоит в столбце значений таблицы, сверху вниз. Без таблицы
+   * (найдено меньше трёх значений) не ищется: номер счёта или штрихкода под ней легко принять за плавку.
    */
-  const orphanHeatLines = [...freeLines]
-    .filter((line) => valueColumn === null || (line.box !== null && Math.abs(line.box.left - valueColumn) <= lineHeight * 2))
+  const orphanHeatLines = valueColumn === null ? [] : [...freeLines]
+    .filter((line) => line.box !== null && Math.abs(line.box.left - valueColumn) <= lineHeight * 2)
     .sort((a, b) => (a.box?.top ?? 0) - (b.box?.top ?? 0))
 
   // Производитель: известный поставщик — сначала в строке у подписи, потом где угодно на бирке,
@@ -296,6 +336,13 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (value === null && field.key === 'size') value = firstOf(findMarkedSize)
     if (value === null && field.key === 'technical_approval') value = firstOf(findApproval)
     if (value === null && field.key === 'heat') value = firstOf(findOrphanHeat, orphanHeatLines)
+    if (value === null && field.key === 'weight_kg') value = firstOf(findWeightLine)
+    // Марка без класса пластичности («CALITATE OTEL: B500»), а класс напечатан отдельной строкой
+    // («CLASA DUCTILITATE C») — дописывается.
+    if (field.key === 'grade' && typeof value === 'string' && /^(?:B|A|K|BSt)\d{3}$/.test(value)) {
+      const ductility = topDown.map((text) => findDuctilityClass(text, false)).find(Boolean)
+      if (ductility) value += ductility
+    }
     label[field.key] = typeof value === 'string' ? correctByCodes(value, codes) : value
   }
 
