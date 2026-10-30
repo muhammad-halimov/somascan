@@ -41,6 +41,7 @@ export class HostServices {
 
   /** Связывает изменения состояния с окном и треем. */
   wire(): void {
+    this.journal.language = () => this.settings.getSnapshot().language
     this.window.hasTray = () => this.tray.exists
     this.window.onVisibilityChange = () => this.tray.refresh()
     this.window.onProblem = (m) => this.journal.event('err', m)

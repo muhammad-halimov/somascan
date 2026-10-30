@@ -55,7 +55,7 @@ export class Workspace {
       ConsumBook.read(options.consum, (raw) => catalog.match(raw)?.project.name ?? null),
     ])
     for (const w of probe.warnings) report.warning(w)
-    report.line(consum.idColumn.describe)
+    report.say('tech.idColumn', consum.idColumn.describe)
     catalog.sheetNames = sarjele.sheets
     // новый проект в Consum (название вписано в готовый слот) подключается сам
     const adopted = catalog.adopt(consum.projects, options.autoProjects)

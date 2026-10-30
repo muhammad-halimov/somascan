@@ -49,7 +49,7 @@ export class SyncEngine {
         return ENGINE_EXIT.ok
       } catch (e) {
         if (!(e instanceof MessageError)) throw e
-        this.out.warn(e.message)
+        this.out.msg('err', e.msg, 'err')
         this.writeJson({ error: e.msg })
         return ENGINE_EXIT.error
       }
@@ -80,7 +80,7 @@ export class SyncEngine {
   private filesGiven(): boolean {
     const { consum, sarjele, probe } = this.options
     if (consum && sarjele && probe) return true
-    this.out.warn('Использование: node sync.mjs "<Consum.xlsx>" "<Sarjele.xlsx>" "<Probe.xlsx>" [--apply]')
+    this.out.msg('err', message('tech.usage'), 'err')
     return false
   }
 
@@ -92,14 +92,15 @@ export class SyncEngine {
   /** Синхронизация: план и (с `--apply`) запись. */
   private async sync(report: RunReport): Promise<number> {
     const { options } = this
-    report.line(`Движок Somasync ${ENGINE_VERSION}`)
+    report.say('tech.engine', { version: ENGINE_VERSION })
     const ws = await Workspace.load(options, report)
     report.overview(ws)
     const planner = new Planner(ws)
     const result = planner.build()
     report.plan(ws, result)
     if (!options.apply) {
-      report.line('\n(dry-run: ничего не записано; для записи добавь --apply)')
+      report.line()
+      report.say('tech.dryRun')
       return ENGINE_EXIT.ok
     }
     const changes = planner.changes(result)
@@ -121,19 +122,20 @@ export class SyncEngine {
     const present = wb.worksheets.map((w) => w.name)
     const missing = [...new Set(options.projects.filter((p) => p.enabled !== false && p.sheet && p.create && !present.includes(p.sheet)).map((p) => p.sheet))]
     if (!missing.length) {
-      report.line('Все листы проектов уже есть в Sarjele.')
+      report.say('tech.sheetsPresent', undefined, 'ok')
       return ENGINE_EXIT.ok
     }
     report.summary.sheets = missing
-    report.line(`Листы, которых нет в Sarjele: ${missing.map((x) => `«${x}»`).join(', ')}`)
+    report.say('tech.sheetsMissing', { sheets: missing.map((x) => `«${x}»`).join(', ') })
     if (!options.apply) {
-      report.line('\n(dry-run: ничего не записано; для создания добавь --apply)')
+      report.line()
+      report.say('tech.dryRunCreate')
       return ENGINE_EXIT.ok
     }
     new Backups(options.backupDays).save([options.sarjele], this.stamp)
     report.summary.backup = this.stamp
-    report.line(`Бэкап: ${this.stamp}   (откат: node sync.mjs --restore ${this.stamp} "${options.sarjele}")`)
-    new SarjeleWriter(wb, { heats: new Map(), journal: new Set() }).createSheets(missing, (name) => report.line(`✔ создан лист «${name}»`))
+    report.say('tech.backup', { stamp: this.stamp, files: `"${options.sarjele}"` }, 'ok')
+    new SarjeleWriter(wb, { heats: new Map(), journal: new Set() }).createSheets(missing, (name) => report.say('tech.sheetCreated', { name }, 'ok'))
     for (const n of await SafeSave.lockedWorkbook(options.sarjele, wb)) report.note(n)
     report.summary.wrote = true
     return ENGINE_EXIT.ok
@@ -144,14 +146,16 @@ export class SyncEngine {
     const { options } = this
     const { stamp, consums } = options.restore!
     if (!stamp) {
-      report.line('Доступные копии (новые сверху):\n  ' + (Backups.stamps(options.sarjele).join('\n  ') || 'нет'))
+      const stamps = Backups.stamps(options.sarjele)
+      report.say('tech.backupsTitle', { list: stamps.length ? '' : message('tech.none') })
+      for (const s of stamps) report.line(`  ${s}`)
       return ENGINE_EXIT.ok
     }
     try {
       const r = Backups.restore(stamp, options.sarjele, options.probe, consums)
       report.summary.restored = { stamp, savedAs: r.savedAs }
       report.summary.wrote = true
-      report.line(`Восстановлено состояние ${stamp}. Текущее перед откатом сохранено как ${r.savedAs}.`)
+      report.say('tech.restored', { stamp, savedAs: r.savedAs }, 'ok')
       return ENGINE_EXIT.ok
     } catch (e) {
       if (!(e instanceof MessageError)) throw e

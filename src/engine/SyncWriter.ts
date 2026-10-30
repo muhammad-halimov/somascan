@@ -15,7 +15,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import ExcelJS from 'exceljs'
-import { formatRu, message, type Message, type MessageCode } from '@/shared/messages'
+import { message, type Message, type MessageCode } from '@/shared/messages'
 import type { SummaryDeferred } from '@/shared/protocol'
 import { CONSUM_SHEET, ConsumBook } from './books/ConsumBook'
 import { patchIds } from './books/ConsumIdPatcher'
@@ -171,7 +171,7 @@ export class SyncWriter {
       const backed = [options.sarjele, options.probe, ...(changes.consum ? [options.consum] : [])]
       new Backups(options.backupDays).save(backed, this.stamp)
       report.summary.backup = this.stamp
-      report.line(`Бэкап: ${this.stamp}   (откат: node sync.mjs --restore ${this.stamp} ${backed.map((f) => `"${f}"`).join(' ')})`)
+      report.say('tech.backup', { stamp: this.stamp, files: backed.map((f) => `"${f}"`).join(' ') }, 'ok')
 
       // 4. запись
       const verify: VerifyInput = {}
@@ -193,7 +193,8 @@ export class SyncWriter {
         out.wrote = true
         verify.sarjele = { used: result.allocator.used, ids: r.placedIds }
         const links = changes.acts.filter((a) => a.res.kind === 'migrate' || a.res.kind === 'new').length
-        report.line(`\n✔ Sarjele обновлён (блоков: ${changes.plan.length}, привязок: ${links})`)
+        report.line()
+        report.say('tech.sarjeleSaved', { blocks: changes.plan.length, links }, 'ok')
       }
       if (changes.probe) {
         const wb = new ExcelJS.Workbook()
@@ -202,7 +203,7 @@ export class SyncWriter {
         await SafeSave.workbook(options.probe, wb)
         out.wrote = true
         verify.probe = { closed: result.toClose, reopened: result.toReopen }
-        report.line(`✔ Probe: закрашено ${result.toClose.size}, открыто обратно ${result.toReopen.size}`)
+        report.say('tech.probeSaved', { closed: result.toClose.size, reopened: result.toReopen.size }, 'ok')
       }
       if (writeConsum) await this.writeConsumIds(consumIds, verify, out)
       for (const w of warnings) report.warning(w)
@@ -210,10 +211,10 @@ export class SyncWriter {
 
       // 5. проверка
       out.problems = await this.verify(verify)
-      if (!out.problems.length) report.line('✔ Проверка после записи: файлы совпадают с расчётом')
+      if (!out.problems.length) report.say('tech.verifyOk', undefined, 'ok')
       else {
-        for (const p of out.problems.slice(0, MAX_PROBLEMS)) report.warn(`! Проверка после записи: ${formatRu(p)}`)
-        if (out.problems.length > MAX_PROBLEMS) report.warn(`! Проверка после записи: и ещё ${out.problems.length - MAX_PROBLEMS}`)
+        for (const p of out.problems.slice(0, MAX_PROBLEMS)) report.caution('tech.verifyProblem', { problem: p })
+        if (out.problems.length > MAX_PROBLEMS) report.caution('tech.verifyMore', { n: out.problems.length - MAX_PROBLEMS })
       }
       return out
     } finally {
@@ -243,7 +244,7 @@ export class SyncWriter {
       out.wrote = true
       const after = fs.statSync(options.consum)
       out.consumAfter = `${after.mtimeMs}:${after.size}`
-      this.report.line(`✔ Consum: записано ID — ${r.written}`)
+      this.report.say('tech.consumIds', { n: r.written }, 'ok')
       if (r.skipped.length) this.warnings.push(message('warn.consumIdsSkipped', { rows: r.skipped.join(', ') }))
       const skipped = new Set(r.skipped)
       verify.consum = { ids: new Map([...consumIds].filter(([row]) => !skipped.has(row))) }

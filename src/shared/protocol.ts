@@ -35,6 +35,12 @@ export const IPC = {
   settings: 'settings',
 } as const
 
+/** Уровень строки технического текста движка: по нему окно и `log.txt` её раскрашивают. */
+export type TechLevel = 'info' | 'ok' | 'warn' | 'err' | 'plan'
+
+/** Начало строки-сообщения в выводе движка: дальше — JSON `{ level, msg }` (см. `host/EngineRunner`). */
+export const TECH_MARK = '@@msg '
+
 /** Коды выхода движка. */
 export const ENGINE_EXIT = {
   ok: 0,
@@ -184,7 +190,10 @@ export type JournalLevel = 'info' | 'ok' | 'warn' | 'err'
 /** Строка технического вывода движка («Подробно»). `plan` — блок плана, `head` — заголовок. */
 export interface TechLine {
   level: JournalLevel | 'plan' | 'head'
-  text: string
+  /** Сообщение движка: окно переводит его на язык интерфейса. */
+  msg?: Message
+  /** Строка без перевода (стек ошибки, метки копий, вывод сторонних библиотек). */
+  text?: string
 }
 
 /** Событие программы: слежение, файлы, ошибки. */

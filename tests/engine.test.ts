@@ -10,9 +10,10 @@ import { ConsumBook } from '../src/engine/books/ConsumBook'
 import { ProbeBook } from '../src/engine/books/ProbeBook'
 import { SarjeleBook } from '../src/engine/books/SarjeleBook'
 import { parseEngineOptions } from '../src/engine/EngineOptions'
-import { MemorySink } from '../src/engine/RunReport'
+import { MemorySink, type TextSink } from '../src/engine/RunReport'
+import { formatIn, type Message } from '../src/shared/messages'
 import { SyncEngine } from '../src/engine/SyncEngine'
-import { ENGINE_EXIT, type RunSummary } from '../src/shared/protocol'
+import { ENGINE_EXIT, type RunSummary, type TechLevel } from '../src/shared/protocol'
 import { makeWorkspace, PROJECT, writeConsum, type Workspace } from './fixtures'
 
 /** Запускает движок с аргументами. */
@@ -32,9 +33,23 @@ test('план без --apply ничего не меняет', async () => {
   assert.equal(r.code, ENGINE_EXIT.ok)
   assert.match(r.text, /■ PROIECT TEST \/ EL-1 \(Buc 2\) — ДОЗАПОЛНИТЬ блок/)
   assert.match(r.text, /■ PROIECT TEST \/ EL-2 \(Buc 4\) — СОЗДАТЬ блок/)
-  assert.match(r.text, /dry-run/)
+  assert.match(r.text, /пробный прогон: ничего не записано/)
   assert.deepEqual(fs.readFileSync(ws.sarjele), before)
   assert.ok(!fs.existsSync(path.join(ws.dir, 'backups')))
+})
+
+test('«Подробно» — кодами сообщений: на английском интерфейсе ни строки по-русски', async () => {
+  const ws = await makeWorkspace()
+  const lines: { level: TechLevel; msg: Message }[] = []
+  const raw: string[] = []
+  const sink: TextSink = { line: (text = '') => void raw.push(text), warn: (text) => void raw.push(text), msg: (level, msg) => void lines.push({ level, msg }) }
+  const options = parseEngineOptions([ws.consum, ws.sarjele, ws.probe], ws.env, new Date(2026, 9, 19))
+  assert.equal(await new SyncEngine(options, sink, new Date(2026, 9, 19)).run(), ENGINE_EXIT.ok)
+  const english = lines.map((l) => formatIn('en', l.msg)).join('\n')
+  assert.match(english, /■ PROIECT TEST \/ EL-2 \(Buc 4\) — CREATE block/)
+  assert.match(english, /trial run: nothing written/)
+  assert.doesNotMatch(english + raw.join('\n'), /[А-Яа-яЁё]/)
+  assert.ok(lines.some((l) => l.level === 'plan'))
 })
 
 test('запись: блоки, ID в Consum, плавки, проверка после записи', async () => {
@@ -74,7 +89,7 @@ test('повторный прогон без изменений Consum ниче�
   const backups = fs.readdirSync(path.join(ws.dir, 'backups')).length
   const r = await run(ws, ['--apply'])
   assert.equal(r.code, ENGINE_EXIT.ok)
-  assert.doesNotMatch(r.text, /Бэкап:/)
+  assert.doesNotMatch(r.text, /Копия:/)
   assert.equal(fs.statSync(ws.sarjele).mtimeMs, before)
   assert.equal(fs.readdirSync(path.join(ws.dir, 'backups')).length, backups)
 })

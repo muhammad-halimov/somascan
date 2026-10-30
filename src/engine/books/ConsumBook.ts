@@ -12,7 +12,7 @@
  */
 import fs from 'node:fs'
 import ExcelJS from 'exceljs'
-import { message, MessageError } from '@/shared/messages'
+import { message, MessageError, type MessageParam } from '@/shared/messages'
 import { cellText, cellValue, columnLetters, decodeRange, solidFill, type MergeRange, type Scalar } from '../Cells'
 import { ELEMENT_ID } from './SarjeleBook'
 
@@ -93,8 +93,8 @@ export interface IdColumn {
   hasHeader: boolean
   look: IdColumnLook
   stale: boolean
-  /** Строка для журнала: где колонка и по какому образцу. */
-  describe: string
+  /** Параметры строки журнала `tech.idColumn`: где колонка и по какому образцу. */
+  describe: Record<string, MessageParam>
 }
 
 /** Цвет шапки «ID sync», если образца нет. */
@@ -279,7 +279,7 @@ export class ConsumBook {
       || oldMerges.length > 0
       || needMerge
       || belowBad
-    const describe = `Consum: колонка ID — ${columnLetters(col)}, образец ${dc ? columnLetters(dc) : '—'}, шапка строки ${top}–${bottom}${below.length ? `, под ней ${below.join(',')} как у образца` : ''}`
+    const describe = { col: columnLetters(col), donor: dc ? columnLetters(dc) : '—', top, bottom, below: below.length ? message('tech.idColumnBelow', { rows: below.join(',') }) : '' }
     return { col, hasHeader: found, look: { fillRows, mergeTop: top, mergeBottom: bottom, below, oldMerges, donor: dc }, stale, describe }
   }
 }

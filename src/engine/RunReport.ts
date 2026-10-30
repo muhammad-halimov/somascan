@@ -1,27 +1,34 @@
 /**
- * Отчёт прогона: технический текст (stdout / stderr, по-русски) и итог для окна (`RunSummary`, коды сообщений).
+ * Отчёт прогона: технический текст и итог для окна (`RunSummary`, коды сообщений).
  *
- * Технический текст — для `log.txt` и «Подробно» в журнале окна; по началу строки главный процесс его раскрашивает
- * (`✔` — готово, `!` — внимание, `■` — блок плана). Итог (`summary`) пишется в `JSON_OUT`: по нему окно строит
- * понятную карточку прогона на языке интерфейса.
+ * Технический текст — для `log.txt` и «Подробно» в журнале окна. Строки — сообщения с кодом и уровнем
+ * (`TECH_MARK` + JSON в stdout): текст подставляет главный процесс на языке интерфейса, по уровню строка
+ * раскрашивается. Без кода выходят только данные (метки копий) и стек ошибки. Итог (`summary`) пишется
+ * в `JSON_OUT`: по нему окно строит понятную карточку прогона.
  */
-import { formatRu, message, type Message } from '@/shared/messages'
-import { emptySummary, type RunSummary } from '@/shared/protocol'
+import { formatRu, message, type Message, type MessageCode, type MessageParam } from '@/shared/messages'
+import { emptySummary, TECH_MARK, type RunSummary, type TechLevel } from '@/shared/protocol'
 import { idActions, isRealLine, type PlanAction, type PlanMode, type PlanResult } from './planning/Planner'
 import type { Workspace } from './Workspace'
 
 /** Куда идёт технический текст. */
 export interface TextSink {
-  /** Обычная строка (stdout). */
+  /** Обычная строка без перевода (stdout): данные, пустая строка. */
   line(text?: string): void
-  /** Предупреждение или ошибка (stderr). */
+  /** Строка без перевода в stderr: стек ошибки. */
   warn(text: string): void
+  /**
+   * Строка-сообщение: текст на языке интерфейса подставит главный процесс.
+   * @param stream Куда строка относится: `err` — предупреждения и ошибки (как stderr).
+   */
+  msg(level: TechLevel, m: Message, stream?: 'out' | 'err'): void
 }
 
 /** Текст в консоль процесса. */
 export const consoleSink: TextSink = {
   line: (text = '') => console.log(text),
   warn: (text) => console.warn(text),
+  msg: (level, m) => console.log(TECH_MARK + JSON.stringify({ level, msg: m })),
 }
 
 /** Текст в память (для проверок). */
@@ -36,20 +43,29 @@ export class MemorySink implements TextSink {
   warn(text: string): void {
     this.warnings.push(text)
   }
+
+  /** Сообщения — по-русски, предупреждения и ошибки — к `warnings`. */
+  msg(_level: TechLevel, m: Message, stream: 'out' | 'err' = 'out'): void {
+    if (stream === 'err') this.warn(formatRu(m))
+    else this.line(formatRu(m))
+  }
 }
 
 /** Подписи режимов блока в техническом тексте. */
-const MODE_LABEL: Record<PlanMode, string> = { update: 'ИЗМЕНИТЬ блок', fill: 'ДОЗАПОЛНИТЬ блок', create: 'СОЗДАТЬ блок' }
+const MODE_LABEL: Record<PlanMode, Message> = { update: message('tech.mode.update'), fill: message('tech.mode.fill'), create: message('tech.mode.create') }
 
 /** Описание действия с ID в техническом тексте. */
-function describeAction(a: PlanAction): string {
+function describeAction(a: PlanAction): Message {
   const r = a.res
-  if (r.kind === 'migrate') return `привязан существующий блок «${r.block.title}»`
-  if (r.kind === 'new') return 'новый блок'
-  if (r.rename) return `переименование → заголовок блока станет «${a.it.name}»`
-  if (r.adopt && !r.backfill) return 'элемент переходит к этому Consum'
-  return 'ID будет записан в Consum'
+  if (r.kind === 'migrate') return message('tech.idAction.migrate', { title: r.block.title })
+  if (r.kind === 'new') return message('tech.idAction.new')
+  if (r.rename) return message('tech.idAction.rename', { name: a.it.name })
+  if (r.adopt && !r.backfill) return message('tech.idAction.adopt')
+  return message('tech.idAction.backfill')
 }
+
+/** Список в кавычках: «A», «B». */
+const quoted = (names: readonly string[]) => names.map((x) => `«${x}»`).join(', ')
 
 /** Действие с ID для итога. */
 function idAction(a: PlanAction): RunSummary['ids'][number]['action'] {
@@ -71,32 +87,37 @@ export class RunReport {
     this.summary = emptySummary(command, applied)
   }
 
-  /** Строка технического текста. */
+  /** Строка без перевода (данные). */
   line(text = ''): void {
     this.out.line(text)
   }
 
-  /** Строка в stderr. */
-  warn(text: string): void {
-    this.out.warn(text)
+  /** Строка технического текста по коду. */
+  say(code: MessageCode, params?: Record<string, MessageParam>, level: TechLevel = 'info'): void {
+    this.out.msg(level, message(code, params))
   }
 
-  /** Предупреждение: `! текст` в stderr и (по умолчанию) в итог. */
+  /** Предупреждение по коду (как stderr), в итог не попадает. */
+  caution(code: MessageCode, params?: Record<string, MessageParam>): void {
+    this.out.msg('warn', message(code, params), 'err')
+  }
+
+  /** Предупреждение: `! текст` (как stderr) и (по умолчанию) в итог. */
   warning(m: Message, toSummary = true): void {
     if (toSummary) this.summary.warnings.push(m)
-    this.out.warn(`! ${formatRu(m)}`)
+    this.out.msg('warn', message('tech.warning', { text: m }), 'err')
   }
 
   /** Заметка: `• текст` и (по умолчанию) в итог. */
   note(m: Message, toSummary = true): void {
     if (toSummary) this.summary.notes.push(m)
-    this.out.line(`• ${formatRu(m)}`)
+    this.out.msg('info', message('tech.note', { text: m }))
   }
 
   /** Ошибка, из-за которой прогон не завершился. */
   fail(m: Message): void {
     this.summary.error = m
-    this.out.warn(formatRu(m))
+    this.out.msg('err', m, 'err')
   }
 
   /** Что прочитано: месяц Consum, сколько плавок, блоков и строк. */
@@ -105,8 +126,9 @@ export class RunReport {
     const closedHeats = [...probe.heats.values()].filter((s) => s.closed).length
     this.summary.period = consum.period.label
     this.summary.counts = { heats: probe.heats.size, closedHeats, blocks: sarjele.blocks.length, rows: items.length }
-    if (consum.period.label) this.line(`Consum: ${consum.period.label}`)
-    this.line(`Probe: плавок ${probe.heats.size} (закрыто ${closedHeats}); Sarjele: блоков ${sarjele.blocks.length}; Consum: строк с расходом ${items.length}\n`)
+    if (consum.period.label) this.say('tech.period', { period: consum.period.label })
+    this.say('tech.overview', { heats: probe.heats.size, closed: closedHeats, blocks: sarjele.blocks.length, rows: items.length })
+    this.line()
   }
 
   /** План: технический текст и итог (блоки, ID, плавки, нехватка, пропуски). */
@@ -150,42 +172,53 @@ export class RunReport {
     for (const heat of result.reopened) s.warnings.push(message('warn.manualReopen', { heat }))
   }
 
-  /** Технический текст плана. Формат строк важен: по их началу главный процесс раскрашивает журнал. */
+  /** Технический текст плана. */
   private printPlan(ws: Workspace, result: PlanResult): void {
     const { items, catalog } = ws
     const { plan, actions, skippedItems, toClose, toReopen, shortages, skippedOld, allocator } = result
     const unmapped = [...new Set(items.filter((i) => i.project && !catalog.get(i.project)).map((i) => i.project))]
-    if (unmapped.length) this.line(`Проекты из Consum, которые не настроены (их строки не обрабатываются): ${unmapped.map((x) => `«${x}»`).join(', ')} — добавьте во вкладке «Связи»\n`)
+    if (unmapped.length) this.say('tech.unmapped', { projects: quoted(unmapped.map(String)) }, 'warn')
     const newSheets = [...new Set([...actions.filter((a) => a.res.kind === 'new' && a.res.newSheet).map((a) => catalog.sheetOf(a.it.project!)), ...catalog.missingSheets()])]
-    if (newSheets.length) this.line(`Будут созданы листы в Sarjele: ${newSheets.map((x) => `«${x}»`).join(', ')}\n`)
+    if (newSheets.length) this.say('tech.newSheets', { sheets: quoted(newSheets.map(String)) })
     const acts = idActions(actions)
     if (acts.length) {
-      this.line('Привязка ID (Consum ↔ Sarjele):')
-      for (const a of acts) this.line(`  ${(a.res.id || '').padEnd(8)} ${a.it.project} / ${a.it.name}  — ${describeAction(a)}`)
       this.line()
+      this.say('tech.idsTitle')
+      for (const a of acts) this.say('tech.idLine', { id: (a.res.id || '').padEnd(8), project: a.it.project ?? '', element: a.it.name, action: describeAction(a) })
     }
     if (skippedItems.length) {
-      this.line('Пропущены (нужно внимание):')
-      for (const x of skippedItems) this.line(`  ${x.project} / ${x.name}: ${formatRu(x.why)}`)
       this.line()
+      this.say('tech.skippedTitle', undefined, 'warn')
+      for (const x of skippedItems) this.say('tech.skippedLine', { project: x.project ?? '', element: x.name, why: x.why })
     }
+    if (plan.length) this.line()
     for (const p of plan) {
-      this.line(`■ ${p.project} / ${p.element} (Buc ${p.buc}) — ${MODE_LABEL[p.mode]}`)
+      this.say('tech.block', { project: p.project ?? '', element: p.element, buc: String(p.buc), mode: MODE_LABEL[p.mode] }, 'plan')
       for (const l of p.lines) {
-        this.line(`    ${String(l.model).padEnd(9)} Ø${String(l.dia).padEnd(3)} ${l.form.padEnd(6)} ${String(l.sarja).padEnd(14)} ${String(l.name).padEnd(16)} ${((p.recon && l.kg > 0 ? '+' : '') + l.kg).padStart(6)} кг   (остаток плавки до: ${l.before})`)
+        this.say('tech.blockLine', {
+          model: String(l.model).padEnd(9),
+          dia: String(l.dia).padEnd(3),
+          form: l.form.padEnd(6),
+          heat: isRealLine(l) ? String(l.sarja).padEnd(14) : message('tech.noStock'),
+          name: String(l.name).padEnd(16),
+          kg: ((p.recon && l.kg > 0 ? '+' : '') + l.kg).padStart(6),
+          before: String(l.before),
+        })
       }
     }
-    this.line(`\nПравило выбора: ${allocator.rule}`)
+    this.line()
+    this.say('tech.rule', { rule: message(`tech.rules.${allocator.rule}`) })
     if (allocator.rule === 'latest' && skippedOld.size) {
-      this.line('Старые незакрытые плавки, которые пропущены как «заброшенные» (проверь, не пора ли их закрасить):')
+      this.say('tech.oldHeatsTitle', undefined, 'warn')
       for (const [k, v] of skippedOld) {
-        if (plan.some((p) => p.lines.some((l) => `${l.dia}|${l.form}` === k))) this.line(`  Ø/форма ${k}: ${v.slice(0, 6).join(', ')}${v.length > 6 ? ' …' : ''}`)
+        if (plan.some((p) => p.lines.some((l) => `${l.dia}|${l.form}` === k))) this.say('tech.oldHeatsLine', { key: k, heats: `${v.slice(0, 6).join(', ')}${v.length > 6 ? ' …' : ''}` })
       }
     }
-    this.line(`\nСнять жёлтый в Probe (скрипт закрасил, остаток снова > 0): ${toReopen.size ? [...toReopen].join(', ') : '—'}`)
-    this.line(`\nЗакрасить жёлтым в Probe (остаток 0): ${toClose.size ? [...toClose].join(', ') : '—'}`)
+    this.say('tech.reopen', { heats: toReopen.size ? [...toReopen].join(', ') : '—' })
+    this.say('tech.close', { heats: toClose.size ? [...toClose].join(', ') : '—' })
     if (shortages.length) {
-      this.line('\n!!! В Probe не хватает стали (эти строки в Sarjele не записаны):')
+      this.line()
+      this.say('tech.shortageTitle', undefined, 'err')
       const byDia = new Map<string, { kg: number; els: string[]; free: number; closedLeft: number }>()
       for (const x of shortages) {
         const k = `Ø${x.dia} ${x.form}`
@@ -195,9 +228,9 @@ export class RunReport {
         byDia.set(k, e)
       }
       for (const [k, e] of byDia) {
-        this.line(`  ${k}: нужно ещё ${e.kg} кг (${[...new Set(e.els)].join(', ')}); свободно в открытых плавках ${e.free} кг${e.closedLeft > 0 ? `, ещё ${e.closedLeft} кг числится в плавках, закрытых жёлтым` : ''}`)
+        this.say('tech.shortageLine', { key: k, kg: e.kg, elements: [...new Set(e.els)].join(', '), free: e.free, closed: e.closedLeft > 0 ? message('tech.shortageClosed', { kg: e.closedLeft }) : '' })
       }
-      this.line('  Что делать: добавьте поставку (плавки) в Probe или снимите жёлтый с плавки, где сталь ещё есть.')
+      this.say('tech.shortageHint')
     }
   }
 }

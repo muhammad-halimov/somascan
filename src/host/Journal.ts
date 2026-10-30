@@ -1,11 +1,13 @@
 /**
  * Журнал программы: события (слежение, файлы, ошибки) и прогоны движка с итогом и техническим выводом.
  *
- * В памяти — последние записи для окна и трея; на диске — `log.txt` (по-русски, построчно, для разбора проблем).
- * Окно получает запись целиком при появлении и при завершении прогона (`subscribe`) и переводит её само.
+ * В памяти — последние записи для окна и трея; на диске — `log.txt` (на языке интерфейса, построчно, для разбора
+ * проблем). Окно получает запись целиком при появлении и при завершении прогона (`subscribe`) и переводит её само:
+ * события и строки движка хранятся кодами сообщений.
  */
 import fs from 'node:fs'
-import { formatRu, runHeadline, type Message } from '@/shared/messages'
+import { formatIn, message, runHeadline, type Message } from '@/shared/messages'
+import type { Language } from '@/shared/settings'
 import type { JournalEntry, JournalEvent, JournalLevel, JournalRun, RunOutcome, RunSummary, RunTrigger, TechLine } from '@/shared/protocol'
 
 /** Сколько записей держать в памяти. */
@@ -25,9 +27,16 @@ export class Journal {
   private readonly file: string
   private readonly listeners = new Set<(entry: JournalEntry) => void>()
   private nextId = 1
+  /** Язык `log.txt` — язык интерфейса (задаётся, когда настройки прочитаны). */
+  language: () => Language = () => 'en'
 
   constructor(file: string) {
     this.file = file
+  }
+
+  /** Текст сообщения для `log.txt`. */
+  private text(m: Message): string {
+    return formatIn(this.language(), m)
   }
 
   /** Уровень строки технического вывода движка (stdout): по её началу. */
@@ -56,22 +65,28 @@ export class Journal {
   /** Событие программы. */
   event(level: JournalLevel, msg: Message): void {
     const entry: JournalEvent = { kind: 'event', id: this.nextId++, t: Date.now(), level, msg }
-    this.write(level, formatRu(msg))
+    this.write(level, this.text(msg))
     this.push(entry)
   }
 
   /** Начало прогона. */
   beginRun(trigger: RunTrigger, file: string | null, apply: boolean): JournalRun {
     const run: JournalRun = { kind: 'run', id: this.nextId++, t: Date.now(), trigger, file, apply, outcome: 'running', finishedAt: null, summary: null, lines: [] }
-    this.write('head', `── ${formatRu(runHeadline(run))}${file ? ` · ${file}` : ''}${apply ? ' · запись' : ' · только план'}`)
+    this.write('head', `── ${this.text(runHeadline(run))}${file ? ` · ${file}` : ''} · ${this.text(message(apply ? 'tech.applyOn' : 'tech.applyOff'))}`)
     this.push(run)
     return run
   }
 
-  /** Строка технического вывода прогона (в окно уходит вместе с итогом). */
+  /** Строка технического вывода прогона без перевода (в окно уходит вместе с итогом). */
   runLine(run: JournalRun, level: TechLine['level'], text: string): void {
     if (run.lines.length < MAX_RUN_LINES) run.lines.push({ level, text })
     this.write(level, text)
+  }
+
+  /** Строка-сообщение движка: в окне переводится на язык интерфейса, в `log.txt` — на текущем языке. */
+  runMessage(run: JournalRun, level: TechLine['level'], msg: Message): void {
+    if (run.lines.length < MAX_RUN_LINES) run.lines.push({ level, msg })
+    this.write(level, this.text(msg))
   }
 
   /** Конец прогона. */
@@ -79,7 +94,7 @@ export class Journal {
     run.outcome = outcome
     run.summary = summary
     run.finishedAt = Date.now()
-    this.write(outcome === 'failed' ? 'err' : outcome === 'deferred' ? 'warn' : 'ok', formatRu(runHeadline(run)) + (summary?.error ? `: ${formatRu(summary.error)}` : ''))
+    this.write(outcome === 'failed' ? 'err' : outcome === 'deferred' ? 'warn' : 'ok', this.text(runHeadline(run)) + (summary?.error ? `: ${this.text(summary.error)}` : ''))
     this.notify(run)
   }
 

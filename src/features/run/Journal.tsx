@@ -43,7 +43,7 @@ export function Journal() {
   const copy = () => {
     const text = entries.map((e) => {
       const head = `${time(e.t)} ${e.kind === 'event' ? format(e.msg) : `${format(runHeadline(e))}${e.file ? ` · ${e.file}` : ''}`}`
-      return e.kind === 'run' && e.lines.length ? [head, ...e.lines.map((l) => `    ${l.text}`)].join('\n') : head
+      return e.kind === 'run' && e.lines.length ? [head, ...e.lines.map((l) => `    ${l.msg ? format(l.msg) : l.text}`)].join('\n') : head
     })
     void navigator.clipboard.writeText(text.join('\n'))
   }
@@ -148,7 +148,7 @@ function RunCard({ run }: { run: JournalRun }) {
             <div className="run-tech">
               {run.lines.map((l, i) => (
                 <div key={i} className={`tech-line is-${l.level}`}>
-                  {l.text}
+                  {l.msg ? format(l.msg) : l.text}
                 </div>
               ))}
             </div>

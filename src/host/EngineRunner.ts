@@ -1,13 +1,14 @@
 /**
  * Запуск движка дочерним процессом: тот же бинарь Electron в режиме Node (`ELECTRON_RUN_AS_NODE`).
  *
- * Настройки передаются окружением (см. `engine/EngineOptions`), технический вывод идёт в прогон журнала.
+ * Настройки передаются окружением (см. `engine/EngineOptions`), технический вывод идёт в прогон журнала:
+ * строки-сообщения движка (`TECH_MARK` + JSON) — кодом, их переводит окно; прочие строки — как есть.
  * Одновременно работает не больше одного прогона записи — за этим следит `SyncService`.
  */
 import { spawn, type ChildProcess } from 'node:child_process'
 import path from 'node:path'
-import { message } from '@/shared/messages'
-import type { JournalRun } from '@/shared/protocol'
+import { message, type Message } from '@/shared/messages'
+import { TECH_MARK, type JournalRun, type TechLevel } from '@/shared/protocol'
 import type { AppPaths } from './AppPaths'
 import { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
@@ -72,7 +73,17 @@ export class EngineRunner {
       let err = ''
       const buffers = { out: '', err: '' }
       const emit = (line: string, isErr: boolean) => {
-        if (run && line.trim()) this.journal.runLine(run, isErr ? Journal.classifyStderr(line) : Journal.classify(line), line.replace(/\s+$/, ''))
+        if (!run || !line.trim()) return
+        if (line.startsWith(TECH_MARK)) {
+          try {
+            const { level, msg } = JSON.parse(line.slice(TECH_MARK.length)) as { level: TechLevel; msg: Message }
+            this.journal.runMessage(run, level, msg)
+            return
+          } catch {
+            // не разобралось — строкой как есть
+          }
+        }
+        this.journal.runLine(run, isErr ? Journal.classifyStderr(line) : Journal.classify(line), line.replace(/\s+$/, ''))
       }
       const feed = (chunk: Buffer, isErr: boolean) => {
         const text = chunk.toString()
