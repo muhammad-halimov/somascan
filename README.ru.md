@@ -72,9 +72,12 @@ npm run build && node scripts/screenshots/capture.mjs # Сделать скри�
 ## Как это работает
 
 ```
-Фото этикетки ──► OCR / распознавание (на устройстве: ML Kit | Vision; Gemini | Claude | OpenAI | LM Studio)
+Фото этикетки ──► распознавание — одним из двух способов:
+                  ├─ ИИ-модель: Gemini | Claude | OpenAI | LM Studio
+                  └─ на устройстве: ML Kit (Android) / Vision (iOS)
+                     читает текст без сети, значения — по правилам полей
               ──► структурированные поля ──► строка в .xlsx
-              ──► хранилище: сетевой диск Windows | Google Drive
+              ──► хранилище: сетевой диск | Google Drive
 ```
 
 ### Форматы фото

@@ -72,9 +72,12 @@ npm run build && node scripts/screenshots/capture.mjs # Make screenshots
 ## How it works
 
 ```
-Label photo ──► OCR / recognition (on device: ML Kit | Vision; Gemini | Claude | OpenAI | LM Studio)
+Label photo ──► recognition, one of two ways:
+                ├─ AI model: Gemini | Claude | OpenAI | LM Studio
+                └─ on device: ML Kit (Android) / Vision (iOS) reads
+                   the text offline, field rules pick the values
             ──► structured fields ──► row in .xlsx
-            ──► storage: Windows network drive | Google Drive
+            ──► storage: network drive | Google Drive
 ```
 
 ### Photo formats
