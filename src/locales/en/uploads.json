@@ -19,11 +19,11 @@
   },
   "emptyQueue": {
     "title": "The queue is empty",
-    "description": "Sent tags appear here and are written to the table"
+    "description": "Sent tags appear here"
   },
   "emptyDone": {
     "title": "Nothing written yet",
-    "description": "Written tags appear here: sheet, row and number"
+    "description": "Written tags appear here"
   },
   "status": {
     "queued": "Queued",

@@ -7,7 +7,7 @@
   align-items: flex-start;
   gap: 10px;
   margin: 0;
-  padding: 12px 14px;
+  padding: 9px 12px;
   color: var(--text-h);
   background: color-mix(in srgb, var(--accent) 9%, var(--bg));
   border-radius: 12px;
@@ -15,11 +15,11 @@
   line-height: 1.45;
 }
 
+/* Значок высотой в строку текста и по её середине: вровень с первой строкой при любых метриках шрифта. */
 .notice svg {
   width: 18px;
-  height: 18px;
+  height: 1.45em;
   flex: 0 0 18px;
-  margin-top: 1px;
   fill: none;
   stroke: var(--accent);
   stroke-width: 2;

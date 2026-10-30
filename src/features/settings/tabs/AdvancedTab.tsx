@@ -35,7 +35,8 @@ export function AdvancedTab() {
   const { general, advanced } = useSettings()
   const catalog = useStore(modelCatalog)
   const isRefreshing = Object.values(catalog.loading).some(Boolean)
-  const dateFormat = useMemo(() => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }), [i18n.language])
+  // День и месяц без года: строка состояния списка — в одну строку (списки обновляются раз в месяц).
+  const dateFormat = useMemo(() => new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }), [i18n.language])
 
   /**
    * Текст, который движок прочитал с последней распознанной бирки (строки с рамками во всех поворотах, коды

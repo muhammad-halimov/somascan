@@ -24,9 +24,10 @@
   margin: 0;
   overflow: hidden;
   color: var(--text-h);
-  font-size: 20px;
+  /* Крупнее значков с подписями справа: заголовок окна главнее кнопок. */
+  font-size: 26px;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

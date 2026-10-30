@@ -47,7 +47,7 @@ export function SmbStorageForm() {
         </Field>
       </FormSection>
 
-      <FormSection title={t('storage.smb.location')} icon={<FolderIcon />} hint={`${t('storage.smb.filePathHint')} ${t('storage.table.lockHint')} ${t('storage.sheet.hint')}`}>
+      <FormSection title={t('storage.smb.location')} icon={<FolderIcon />} hint={t('storage.smb.filePathHint')}>
         <Field label={t('storage.smb.server')}>
           <TextInput inputMode="url" placeholder={t('storage.smb.serverPlaceholder')} value={smb.host} onChange={(host) => settingsStore.updateSmb({ host })} />
         </Field>

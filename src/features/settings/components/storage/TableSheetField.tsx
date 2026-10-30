@@ -8,8 +8,7 @@ import { useSettings } from '../../store/useSettings'
 
 /**
  * Лист журнала, куда пишутся бирки: лист текущего года (по умолчанию) или лист таблицы. Листы — из последней
- * проверки таблицы (`TableCheckStore`); выбранный, но не найденный в таблице — с пометкой. Пояснение
- * (`storage.sheet.hint`) — в общей подсказке группы таблицы.
+ * проверки таблицы (`TableCheckStore`); выбранный, но не найденный в таблице — с пометкой.
  */
 export function TableSheetField() {
   const { t } = useTranslation('settings')
