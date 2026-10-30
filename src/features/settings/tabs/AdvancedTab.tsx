@@ -104,7 +104,7 @@ export function AdvancedTab() {
           </div>
         )}
       >
-        <List>
+        <List className="provider-list">
           {/* У распознавания на устройстве списка моделей нет. */}
           {providerRegistry.all().filter((provider) => !provider.onDevice).map(({ id }) => {
             const entry = catalog.entries[id]

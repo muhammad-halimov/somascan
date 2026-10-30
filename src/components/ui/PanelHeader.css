@@ -37,3 +37,21 @@
   flex: 0 0 auto;
   align-items: center;
 }
+
+/*
+ * Значки вплотную к подписям, как в шапке приложения: «пилюля» по высоте значка (56×24), без зазора,
+ * подпись сразу под ней — подсветка нажатия её не накрывает.
+ */
+.panel-header-actions .action-button.is-ghost {
+  gap: 0;
+}
+
+.panel-header-actions .action-button.is-ghost .action-button-icon {
+  height: 24px;
+  border-radius: 12px;
+}
+
+.panel-header-actions .action-button-caption {
+  margin-top: 1px;
+  line-height: 11px;
+}
