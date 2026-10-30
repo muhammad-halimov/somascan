@@ -337,19 +337,27 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
   const valueColumn = valueLefts.length >= 3 ? valueLefts[Math.floor(valueLefts.length / 2)]! : null
   const tableTop = Math.min(...valueBoxes.map((box) => box.top)) - lineHeight
   const tableBottom = Math.max(...valueBoxes.map((box) => box.bottom)) + lineHeight
-  /** Слева на той же высоте есть текст — остатки подписи строки таблицы («Hea.da», «HE»). */
+  /**
+   * Слева на той же высоте есть строка — остатки подписи строки таблицы («Hea.da», «HE»). Высокая надпись
+   * сбоку бирки (вертикальная «ARCELORMITTAL KRYVYI RIH…») задевает по высоте все строки — это не подпись.
+   */
   const hasCaptionLeft = (box: LineBox) => lines.some((other) => other.box && other.box !== box
+    && other.box.right - other.box.left >= boxHeight(other.box) && boxHeight(other.box) <= lineHeight * 2.5
     && other.box.right <= box.left + lineHeight * 0.5 && sameRow(box, other.box))
+  const insideTable = (box: LineBox) => box.top >= tableTop && box.bottom <= tableBottom
   /**
    * Плавка без подписи (её закрыла ржавчина или OCR прочёл «Heat Number» как «Hea.da»): свободная строка,
-   * которая целиком — уверенный номер плавки и стоит в столбце значений строкой таблицы — внутри найденных
-   * значений или с остатками подписи слева, — сверху вниз. Номер над таблицей без подписи (под DataMatrix)
-   * — другое поле, хоть и похож на плавку. Без таблицы (найдено меньше трёх значений) не ищется.
+   * которая целиком — уверенный номер плавки и стоит в столбце значений строкой таблицы: сначала внутри
+   * найденных значений, потом с остатками подписи слева; сверху вниз. Номер над таблицей без подписи
+   * (под DataMatrix) — другое поле, хоть и похож на плавку. Без таблицы (найдено меньше трёх значений) не ищется.
    */
-  const orphanHeatLines = valueColumn === null ? [] : [...freeLines]
-    .filter((line) => line.box !== null && Math.abs(line.box.left - valueColumn) <= lineHeight * 2
-      && ((line.box.top >= tableTop && line.box.bottom <= tableBottom) || hasCaptionLeft(line.box)))
-    .sort((a, b) => (a.box?.top ?? 0) - (b.box?.top ?? 0))
+  const inValueColumn = valueColumn === null ? [] : freeLines
+    .filter((line) => line.box !== null && Math.abs(line.box.left - valueColumn) <= lineHeight * 2)
+    .sort((a, b) => a.box!.top - b.box!.top)
+  const orphanHeatLines = [
+    ...inValueColumn.filter((line) => insideTable(line.box!)),
+    ...inValueColumn.filter((line) => !insideTable(line.box!) && hasCaptionLeft(line.box!)),
+  ]
 
   // Производитель: известный поставщик — сначала в строке у подписи, потом где угодно на бирке,
   // потом по почте или сайту завода; нет и его — своё название из домена (когда подписи с названием нет).

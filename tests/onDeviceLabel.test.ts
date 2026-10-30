@@ -556,15 +556,20 @@ test('сверка плавки: повтор подтверждает, пута
 })
 
 test('плавка без подписи: номер над таблицей (под DataMatrix) — другое поле, плавка — в строке таблицы', () => {
-  const rows: Row[] = [
-    ['260429395804', 0.45, 0.1, 0.25],
-    ['DESTINATION', 0.1, 0.2], ['Romania', 0.45, 0.2, 0.15],
-    ['SIZE', 0.1, 0.25], ['12 mm', 0.45, 0.25, 0.12],
-    ['CLASS/GRADE', 0.1, 0.3], ['B500C', 0.45, 0.3, 0.12],
-    ['241182', 0.45, 0.35, 0.12],
-    ['WEIGHT', 0.1, 0.4], ['2048 kg', 0.45, 0.4, 0.15],
+  // Строки — [текст, левый, верхний, правый, нижний край]; слева — вертикальная надпись во всю высоту бирки.
+  const boxes: Array<[string, number, number, number, number]> = [
+    ['ARCELORMITTAL KRYVYI RIH, MADE IN UKRAINE', 0.03, 0.05, 0.06, 0.6],
+    ['260429395804', 0.45, 0.1, 0.7, 0.13],
+    ['DESTINATION', 0.1, 0.2, 0.3, 0.23], ['Romania', 0.45, 0.2, 0.6, 0.23],
+    ['SIZE', 0.1, 0.25, 0.2, 0.28], ['12 mm', 0.45, 0.25, 0.57, 0.28],
+    ['CLASS/GRADE', 0.1, 0.3, 0.3, 0.33], ['B500C', 0.45, 0.3, 0.57, 0.33],
+    ['241182', 0.45, 0.35, 0.57, 0.38],
+    ['WEIGHT', 0.1, 0.4, 0.22, 0.43], ['2048 kg', 0.45, 0.4, 0.6, 0.43],
   ]
-  assert.equal(extract(page(rows)).label.heat, '241182')
+  const lines = boxes.map(([text, left, top, right, bottom]) => ({
+    text, corners: [left, top, right, top, right, bottom, left, bottom].map((value) => Math.round(value * 1000)), confidence: 0.9,
+  }))
+  assert.equal(extract({ rotation: 0, width: 1000, height: 1000, lines }).label.heat, '241182')
 })
 
 test('правила значений с настоящих бирок', () => {
