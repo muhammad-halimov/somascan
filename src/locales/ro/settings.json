@@ -20,7 +20,7 @@
       "model": "Modele AI"
     },
     "recognitionUnlock": "Blocat — atingeți pentru a debloca",
-    "recognitionLockHint": "Precizie mai mică. AI: dublu tap.",
+    "recognitionLockHint": "Modelele AI sunt mai precise — atingeți lacătul.",
     "provider": "Furnizor AI",
     "providers": {
       "device": "Pe dispozitiv",

@@ -20,7 +20,7 @@
       "model": "AI models"
     },
     "recognitionUnlock": "Locked — tap to unlock",
-    "recognitionLockHint": "Lower accuracy. AI models: tap twice.",
+    "recognitionLockHint": "AI models are more accurate — tap to unlock.",
     "provider": "AI provider",
     "providers": {
       "device": "On-device",

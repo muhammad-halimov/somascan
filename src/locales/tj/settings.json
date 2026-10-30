@@ -20,7 +20,7 @@
       "model": "Моделҳои AI"
     },
     "recognitionUnlock": "Баста — барои кушодан пахш кунед",
-    "recognitionLockHint": "Дақиқӣ пасттар. AI: ду бор пахш.",
+    "recognitionLockHint": "Моделҳои AI дақиқтаранд — қулфро пахш кунед.",
     "provider": "Провайдери AI",
     "providers": {
       "device": "Дар дастгоҳ",

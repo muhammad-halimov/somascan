@@ -20,7 +20,7 @@
       "model": "ИИ-модели"
     },
     "recognitionUnlock": "Закрыто — нажмите, чтобы открыть",
-    "recognitionLockHint": "Точность ниже. ИИ: нажмите дважды.",
+    "recognitionLockHint": "ИИ-модели точнее. Откройте замок нажатием.",
     "provider": "ИИ-провайдер",
     "providers": {
       "device": "На устройстве",
