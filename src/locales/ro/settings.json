@@ -20,7 +20,7 @@
       "model": "Modele AI"
     },
     "recognitionUnlock": "Blocat — atingeți pentru a debloca",
-    "recognitionLockHint": "„Modele AI” este blocat ca să nu fie pornit din greșeală: atingeți-l pentru a deschide lacătul, apoi încă o dată pentru a-l alege.",
+    "recognitionLockHint": "Pe dispozitiv precizia poate fi mai mică. Modelele AI sunt blocate: prima atingere deblochează, a doua alege.",
     "provider": "Furnizor AI",
     "providers": {
       "device": "Pe dispozitiv",
@@ -33,8 +33,7 @@
       "title": "Recunoaștere pe dispozitiv",
       "text": "Telefonul citește singur eticheta — {{engine}}, fără internet, chei sau server: fotografiile nu pleacă nicăieri. Câmpurile se găsesc după inscripțiile de pe etichetă (Heat, Charge, Șarjă, Weight, Greutate, Diameter…) și după forma valorilor; producătorul se compară cu lista furnizorilor cunoscuți.",
       "offline": "Funcționează fără internet",
-      "unavailable": "Doar în aplicația pentru Android și iOS",
-      "notice": "Funcție experimentală: etichetele cu inscripții neobișnuite sunt citite mai slab decât de un model AI. Completați ce lipsește în modul de editare."
+      "unavailable": "Doar în aplicația pentru Android și iOS"
     },
     "model": "Model",
     "refresh": "Actualizează",

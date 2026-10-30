@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { SmartphoneIcon } from '@/components/icons/Icons'
 import { FormSection } from '@/components/ui/FormSection'
-import { Notice } from '@/components/ui/Notice'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { TagOcr } from '@/features/recognition/ocr/TagOcr'
 import type { RecognitionProvider } from '@/features/recognition/providers/RecognitionProvider'
@@ -14,8 +13,8 @@ export interface OnDeviceSectionProps {
 }
 
 /**
- * Распознавание на устройстве вместо ключа и модели: чем читается бирка, что без интернета,
- * и что это пробная функция (в браузере — что она недоступна).
+ * Распознавание на устройстве вместо ключа и модели: чем читается бирка и что без интернета
+ * (в браузере — что оно недоступно). Что точность ниже, чем у модели, сказано под вкладками «Распознавание».
  */
 export function OnDeviceSection({ provider }: OnDeviceSectionProps) {
   const { t } = useTranslation('settings')
@@ -29,7 +28,6 @@ export function OnDeviceSection({ provider }: OnDeviceSectionProps) {
           ? <StatusBadge tone="success">{t('general.onDevice.offline')}</StatusBadge>
           : <StatusBadge tone="neutral">{t('general.onDevice.unavailable')}</StatusBadge>}
       </div>
-      <Notice>{t('general.onDevice.notice')}</Notice>
     </FormSection>
   )
 }

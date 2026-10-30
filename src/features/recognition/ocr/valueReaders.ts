@@ -128,17 +128,25 @@ const SIZE = /^(?:(Ø|⌀|ø|Ф|Φ|diam\.?|D|R|Q)\s*)?(\d{1,2}(?:[.,]\d{1,2})?)\
 const ZERO_AS_DIAMETER = /^0(?=\d{1,2}(?:[.,]\d)?\s*(?:mm|мм))/iu
 
 /**
+ * Пометка перед числом, прочитанная мусором (1–3 знака без цифр): «№ 20», перечёркнутый царапиной, OCR читает
+ * как «Al° 20», «Nº20». Значение — только пометка и число.
+ */
+const DAMAGED_MARK = /^[^\d\s]{1,3}\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:mm|мм)?$/iu
+
+/**
  * Размер (номинальный диаметр): «12» в строке «(mm)» → «12 mm», «Ø12», «12mm», «012MM» (OCR прочёл «Ø» как ноль),
- * «10,0» → «10 mm», «R20» — как есть.
+ * «10,0» → «10 mm», «R20» — как есть, «Al° 20» (пометка номера испорчена) → «20 mm».
  */
 export const readSize: ValueReader = (text) => {
-  const match = SIZE.exec(fixDigitLookalikes(cleanValue(text)).replace(ZERO_AS_DIAMETER, 'Ø'))
-  if (!match) return null
-  const number = match[2]!.replace(/[.,]0+$/, '')
+  const value = fixDigitLookalikes(cleanValue(text)).replace(ZERO_AS_DIAMETER, 'Ø')
+  const match = SIZE.exec(value)
+  const raw = match?.[2] ?? DAMAGED_MARK.exec(value)?.[1]
+  if (!raw) return null
+  const number = raw.replace(/[.,]0+$/, '')
   const size = Number.parseFloat(number.replace(',', '.'))
   if (!(size >= 4 && size <= 60)) return null
   // R (гладкий пруток) и Q — как на бирке; остальные пометки — диаметр в миллиметрах.
-  const mark = match[1]?.toUpperCase()
+  const mark = match?.[1]?.toUpperCase()
   return mark === 'R' || mark === 'Q' ? `${mark}${number}` : `${number} mm`
 }
 

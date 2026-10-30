@@ -20,7 +20,7 @@
       "model": "AI models"
     },
     "recognitionUnlock": "Locked — tap to unlock",
-    "recognitionLockHint": "“AI models” is locked so it is not switched on by accident: tap it to open the lock, then once more to choose it.",
+    "recognitionLockHint": "On-device accuracy may be lower. AI models are locked: the first tap unlocks, the second chooses.",
     "provider": "AI provider",
     "providers": {
       "device": "On-device",
@@ -33,8 +33,7 @@
       "title": "On-device recognition",
       "text": "The phone reads the tag itself with {{engine}} — no internet, keys or server: photos never leave the device. Fields are found by the captions printed on the tag (Heat, Charge, Șarjă, Weight, Greutate, Diameter…) and by the look of the values; the producer is matched against the known suppliers.",
       "offline": "Works offline",
-      "unavailable": "Only in the Android and iOS app",
-      "notice": "Experimental: tags with unusual captions are read worse than by an AI model. Fill in anything missing in edit mode."
+      "unavailable": "Only in the Android and iOS app"
     },
     "model": "Model",
     "refresh": "Refresh",

@@ -20,6 +20,7 @@ import {
   boxHeight, fitRowShift, isBelow, isRightOf, layoutPage, sameRow, shiftBox, typicalLineHeight, type LineBox, type PageLine,
 } from './pageLayout'
 import { companyDomains, companyFromDomain, supplierByDomain } from './domainProducer'
+import { crossCheckHeat } from './heatCheck'
 import { findSupplier } from './supplierMatch'
 import {
   findApproval, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findWeightLine,
@@ -86,6 +87,8 @@ interface Candidate {
   score: number
   /** Строка значения (одна строка — одному полю); `null` — значение в строке подписи. */
   line: number | null
+  /** Строка, из которой прочитано значение (строка значения или подписи). */
+  source: number
 }
 
 /** Насколько сильнее кандидат, похожий на значение поля как две капли воды. */
@@ -200,16 +203,25 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     .map((text, index) => ({ index: lines.length + index, text, folded: foldWithMap(text), confidence: null, box: null }))
 
   const labelLines: LabelLine[] = []
-  for (const line of [...lines, ...codeLines]) {
+  const allLines = [...lines, ...codeLines]
+  for (const line of allLines) {
     const hits = findHits(line.folded, rules)
     if (hits.length > 0) labelLines.push({ line, groups: groupHits(line, hits) })
   }
   const isLabelLine = new Set(labelLines.map(({ line }) => line.index))
   const labelBoxes = labelLines.flatMap(({ line }) => (line.box ? [line.box] : []))
 
-  // Подписи, значение которых — справа: одна подпись в строке (или последняя) и после неё в строке пусто.
+  // Подписи, значение которых — справа: одна подпись в строке (или последняя) и после неё в строке нет значения.
   // Подпись на двух языках в две строки («GREUTATEA» над «WEIGHT») — одна подпись: значение стоит между строками.
-  const waitsRight = labelLines.filter(({ line, groups }) => line.box && !inlineText(groups.at(-1)!.rest).text.trim())
+  // На трёх языках средняя строка бывает нечитаемой (кириллица у латинского OCR: «Heat №», «Nnaeka Ne»,
+  // «Șarja №») — через одну строку без подписи в том же столбце подписи тоже сходятся. Столбец подписей
+  // выровнен по левому или по правому краю (у Moldova Steel Works подписи прижаты к столбцу значений).
+  const waitsRight = labelLines.filter(({ line, groups }) => {
+    const last = groups.at(-1)!
+    const inline = inlineText(last.rest).text
+    // В строке после подписи пусто или не значение («Masa neta,kg» — продолжение подписи, «Heat №» — пометка номера).
+    return line.box !== null && (!inline.trim() || ruleOf.get(last.key)!.read(inline, { label: line.text }) === null)
+  })
   const soleKey = ({ groups }: LabelLine) => (groups.length === 1 ? groups[0]!.key : null)
   const stackedBox = (start: LabelLine): LineBox => {
     let box = start.line.box!
@@ -219,8 +231,13 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
         const otherBox = other.line.box!
         const inside = otherBox.top >= box.top && otherBox.bottom <= box.bottom
         const gap = Math.max(otherBox.top - box.bottom, box.top - otherBox.bottom)
-        if (inside || soleKey(other) === null || soleKey(other) !== soleKey(start) || gap > lineHeight * 0.6
-          || Math.abs(otherBox.left - start.line.box!.left) > lineHeight * 2) continue
+        const gapTop = Math.min(otherBox.bottom, box.bottom)
+        const gapBottom = Math.max(otherBox.top, box.top)
+        const bridged = gap <= lineHeight * 1.8 && lines.some((between) => between.box && !isLabelLine.has(between.index)
+          && between.box.top >= gapTop - lineHeight * 0.3 && between.box.bottom <= gapBottom + lineHeight * 0.3
+          && between.box.left < box.right && between.box.right > box.left)
+        if (inside || soleKey(other) === null || soleKey(other) !== soleKey(start) || (gap > lineHeight * 0.6 && !bridged)
+          || (Math.abs(otherBox.left - start.line.box!.left) > lineHeight * 2 && Math.abs(otherBox.right - start.line.box!.right) > lineHeight * 2)) continue
         box = { left: Math.min(box.left, otherBox.left), top: Math.min(box.top, otherBox.top), right: Math.max(box.right, otherBox.right), bottom: Math.max(box.bottom, otherBox.bottom) }
         grown = true
       }
@@ -244,7 +261,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (value === null || value === '') return
     const strong = rule.strong?.(value) ? STRONG_BONUS : 0
     const source = valueLine ?? label
-    candidates.push({ key: rule.key, value, score: (baseScore + strong) * confidenceFactor(source), line: valueLine?.index ?? null })
+    candidates.push({ key: rule.key, value, score: (baseScore + strong) * confidenceFactor(source), line: valueLine?.index ?? null, source: source.index })
   }
 
   for (const { line, groups } of labelLines) {
@@ -283,7 +300,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
 
   // Самые сильные кандидаты — первыми; строка значения достаётся одному полю (поля со многими значениями
   // собирают все свои строки).
-  const values = new Map<LabelKey, Array<{ value: LabelValue; line: number | null }>>()
+  const values = new Map<LabelKey, Array<{ value: LabelValue; line: number | null; source: number }>>()
   const usedLines = new Set<number>()
   for (const candidate of [...candidates].sort((a, b) => b.score - a.score)) {
     const multi = ruleOf.get(candidate.key)?.multi ?? false
@@ -291,7 +308,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (taken && !multi) continue
     if (candidate.line !== null && usedLines.has(candidate.line)) continue
     if (taken?.some((item) => item.value === candidate.value)) continue
-    values.set(candidate.key, [...(taken ?? []), { value: candidate.value, line: candidate.line }])
+    values.set(candidate.key, [...(taken ?? []), { value: candidate.value, line: candidate.line, source: candidate.source }])
     if (candidate.line !== null) usedLines.add(candidate.line)
   }
 
@@ -339,6 +356,19 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
   const domains = companyDomains([...topDown, ...codes.map((code) => code.text)])
   const supplier = suppliers.length > 0 ? findSupplier(supplierTexts, suppliers) ?? supplierByDomain(domains, suppliers) : null
 
+  /**
+   * Плавка, сверенная с её повторами на бирке (серийный номер, код пачки, коды): ржавчина на строке плавки
+   * портит цифры, а повтор в чистом месте их подтверждает или исправляет (`heatCheck.ts`).
+   */
+  const checkHeat = (heat: string) => {
+    const source = values.get('heat')?.[0]?.source
+    const heatLine = source === undefined ? null : allLines[source] ?? null
+    return crossCheckHeat(heat, heatLine?.confidence ?? null, [
+      ...lines.filter((line) => line !== heatLine).map((line) => ({ text: line.text, confidence: line.confidence, exact: false })),
+      ...codes.map((code) => ({ text: code.text, confidence: null, exact: true })),
+    ])
+  }
+
   const label: LabelRecord = {}
   for (const field of fields) {
     let value = found(field.key)
@@ -356,6 +386,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
       const ductility = topDown.map((text) => findDuctilityClass(text, false)).find(Boolean)
       if (ductility) value += ductility
     }
+    if (field.key === 'heat' && typeof value === 'string') value = checkHeat(value)
     label[field.key] = typeof value === 'string' ? correctByCodes(value, codes) : value
   }
 

@@ -15,6 +15,7 @@ import { test } from 'node:test'
 import { DEFAULT_KNOWN_SUPPLIERS } from '../src/features/recognition/label/knownSuppliers'
 import { createDefaultLabelFields, enabledLabelFields, recognizedLabelFields, type LabelFieldDefinition } from '../src/features/recognition/label/labelFields'
 import { companyDomains, supplierByDomain } from '../src/features/recognition/ocr/domainProducer'
+import { crossCheckHeat } from '../src/features/recognition/ocr/heatCheck'
 import { bestExtraction, extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrCode, OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
@@ -511,6 +512,49 @@ test('бирка Moldova Steel Works, как её читает ML Kit: подп�
   )
 })
 
+test('подписи на трёх языках, средняя нечитаема: значение между крайними строками — их; испорченный «№» перед размером', () => {
+  const blocks: Array<[string, string, string, string]> = [
+    ['Heat Ne', 'Nnaeka Ne', 'Sarja Ne', '42600058'],
+    ['Size,mm', 'Pa3Mep,MM', 'Diametrul,mm', 'Al° 20'],
+    ['Net weight,kg', 'Macca HeTTo,kr', 'Masa neta,kg', '2706'],
+  ]
+  const boxes: Array<[string, number, number, number, number]> = []
+  blocks.forEach(([first, second, third, value], index) => {
+    const y = 0.3 + index * 0.085
+    boxes.push([first, 0.34 - first.length * 0.011, y, 0.34, y + 0.02])
+    boxes.push([second, 0.34 - second.length * 0.011, y + 0.026, 0.34, y + 0.046])
+    boxes.push([third, 0.34 - third.length * 0.011, y + 0.052, 0.34, y + 0.072])
+    // Крупное значение — по середине ячейки: ни с первой, ни с третьей строкой подписи вровень не стоит.
+    boxes.push([value, 0.36, y + 0.012, 0.36 + value.length * 0.022, y + 0.058])
+  })
+  const lines = boxes.map(([text, left, top, right, bottom]) => ({
+    text, corners: [left, top, right, top, right, bottom, left, bottom].map((value) => Math.round(value * 1000)), confidence: 0.9,
+  }))
+  const { heat, size, weight_kg } = extract({ rotation: 0, width: 1000, height: 1000, lines }).label
+  assert.deepEqual({ heat, size, weight_kg }, { heat: '42600058', size: '20 mm', weight_kg: 2706 })
+})
+
+test('плавка в ржавчине сверяется с серийным номером: «2602N0888» (ML Kit) → «2602N0668», как в «L6N0668021B2260204»', () => {
+  const page = fixture('suez-logo')
+  const rusty = { ...page, lines: page.lines.map((line) => (line.text === '2602N0668' ? { ...line, text: '2602N0888', confidence: 0.62 } : line)) }
+  assert.equal(extract(rusty).label.heat, '2602N0668')
+  assert.equal(extract(page).label.heat, '2602N0668')
+})
+
+test('сверка плавки: повтор подтверждает, путаемые цифры исправляются из кода или более уверенного текста', () => {
+  const serial = { text: 'Serial: L6N0668021B2260204', confidence: 0.9, exact: false }
+  assert.equal(crossCheckHeat('2602N0888', 0.62, [serial]), '2602N0668')
+  // Строка плавки прочитана увереннее серийного номера — плавка как есть.
+  assert.equal(crossCheckHeat('2602N0888', 0.95, [serial]), '2602N0888')
+  // Повтор как есть подтверждает плавку, даже если другой повтор прочитан иначе.
+  assert.equal(crossCheckHeat('2602N0668', 0.5, [{ ...serial, text: 'K6N0688032D3260205', confidence: 0.99 }, { ...serial, confidence: 0.3 }]), '2602N0668')
+  // Код читается без ошибок: ему веришь и без уверенности.
+  assert.equal(crossCheckHeat('2620031', null, [{ text: 'L620037025A2260104R20B500C', confidence: null, exact: true }]), '2620037')
+  // 1 и 6 OCR не путает; несвязанные номера ничего не меняют.
+  assert.equal(crossCheckHeat('2602N0118', 0.5, [serial]), '2602N0118')
+  assert.equal(crossCheckHeat('251216', 0.5, [{ text: 'B002714082 9Q-202419Q0620', confidence: 0.9, exact: false }]), '251216')
+})
+
 test('правила значений с настоящих бирок', () => {
   const context = { label: '' }
   assert.equal(readHeat('2604 – 3 – 065 – 20', context), '2604-3-065-20')
@@ -518,6 +562,9 @@ test('правила значений с настоящих бирок', () => {
   assert.equal(readHeat('：2501320', context), '2501320')
   assert.equal(readHeat('Ne 42600058', context), '42600058')
   assert.equal(readSize('Ne 20', context), '20 mm')
+  assert.equal(readSize('Al° 20', context), '20 mm')
+  assert.equal(readSize('Nº20', context), '20 mm')
+  assert.equal(readSize('abc 200', context), null)
   assert.equal(readSize('012MM', context), '12 mm')
   assert.equal(readSize('10,0', context), '10 mm')
   assert.equal(readSize('、Q16', context), 'Q16')

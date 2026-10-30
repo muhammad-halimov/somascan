@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GlobeIcon, LinkIcon, LockIcon, LockOpenIcon, ScanTextIcon, SmartphoneIcon, SparklesIcon } from '@/components/icons/Icons'
 import { FormSection } from '@/components/ui/FormSection'
+import { Notice } from '@/components/ui/Notice'
 import { Tabs } from '@/components/ui/Tabs'
 import { TextInput } from '@/components/ui/TextInput'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
@@ -40,7 +41,7 @@ export function GeneralTab() {
         <LanguagePicker value={general.language} onChange={(language) => settingsStore.setLanguage(language)} label={t('general.language')} />
       </FormSection>
 
-      <FormSection title={t('general.recognition')} icon={<ScanTextIcon />} hint={mode === 'device' ? t('general.recognitionLockHint') : undefined}>
+      <FormSection title={t('general.recognition')} icon={<ScanTextIcon />}>
         <Tabs<RecognitionMode>
           label={t('general.recognition')}
           value={mode}
@@ -60,6 +61,7 @@ export function GeneralTab() {
             else settingsStore.setProvider(next === 'device' ? ON_DEVICE_PROVIDER : general.modelProvider)
           }}
         />
+        {mode === 'device' && <Notice>{t('general.recognitionLockHint')}</Notice>}
       </FormSection>
 
       {/* ИИ-провайдеры — только для распознавания моделью (у телефона своя секция ниже). */}
