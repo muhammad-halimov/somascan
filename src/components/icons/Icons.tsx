@@ -162,8 +162,8 @@ export function RefreshIcon() {
   return (
     <svg className="refresh-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path className="refresh-icon-loop" d={REFRESH_LOOP} pathLength={100} strokeDasharray="32 18" strokeDashoffset={32} />
-      <path className="refresh-icon-arrow" d="M-4-4 0 0-4 4" transform="translate(17 6)" />
-      <path className="refresh-icon-arrow is-second" d="M-4-4 0 0-4 4" transform="translate(7 18) rotate(180)" />
+      <path className="refresh-icon-arrow" d="M-3.5-3.5 0 0-3.5 3.5" transform="translate(17 6)" />
+      <path className="refresh-icon-arrow is-second" d="M-3.5-3.5 0 0-3.5 3.5" transform="translate(7 18) rotate(180)" />
     </svg>
   )
 }
