@@ -240,7 +240,7 @@ npm start            # build and run from the project folder
 
 Windows: unzip into any folder and run `Somasync\Somasync.exe`. No installation needed. A Windows build can be made on Linux or a Mac too (`npm run dist:win`).
 
-Mac: quit Somasync (Cmd+Q) and run `Установить.command` (“Install”). It copies the app to Applications, removes the quarantine flag and signs it locally. Changes in the project reach the installed app only this way.
+Mac: unzip, quit Somasync (Cmd+Q) and run `install-macos.command` next to `Somasync.app` (the first time: right-click → Open). It copies the app to Applications, removes the quarantine flag and signs it locally. Changes in the project reach the installed app only this way.
 
 ## Tests
 
