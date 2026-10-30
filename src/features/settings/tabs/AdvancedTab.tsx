@@ -102,7 +102,8 @@ export function AdvancedTab() {
             const status = isLoading
               ? t('general.refreshing')
               : error
-                ? errorText(error)
+                // Нет связи — коротко, в одну строку (адрес сервера — в сообщении распознавания).
+                ? error.code === 'network' ? t('advanced.listOffline') : errorText(error)
                 : entry
                   ? [t('advanced.updatedAt', { date: dateFormat.format(entry.fetchedAt) }), entry.source === 'directory' && t('advanced.sourcePreview')]
                     .filter(Boolean)

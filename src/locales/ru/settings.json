@@ -193,6 +193,7 @@
     "refreshAll": "Обновить все",
     "updatedAt": "Обновлён {{date}}",
     "notLoaded": "Не загружен",
+    "listOffline": "Нет связи. Проверьте сеть.",
     "sourcePreview": "предпросмотр",
     "photo": "Фото",
     "imageSize": "Размер фото для распознавания",
