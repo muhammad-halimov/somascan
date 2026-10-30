@@ -88,9 +88,9 @@
     "smb": {
       "location": "Расположение",
       "server": "Сервер",
-      "serverPlaceholder": "fileserver, 10.0.0.5 или 10.0.0.5:445",
+      "serverPlaceholder": "server, 10.0.0.5 или 10.0.0.5:445",
       "share": "Общая папка",
-      "sharePlaceholder": "Warehouse",
+      "sharePlaceholder": "Atelier",
       "filePath": "Путь к таблице",
       "filePathPlaceholder": "Probe si Sarje Otel\\Probe otel.xlsx",
       "account": "Учётная запись",

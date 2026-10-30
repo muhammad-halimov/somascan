@@ -40,7 +40,7 @@ export type StorageTarget = (typeof STORAGE_TARGETS)[number]
 
 /** Сетевой диск Windows (SMB). */
 export interface SmbSettings {
-  /** Имя сервера или IP-адрес, например `fileserver` или `10.0.0.5`. */
+  /** Имя сервера или IP-адрес, например `server` или `10.0.0.5`. */
   host: string
   /** Имя общего ресурса, например `Warehouse`. */
   share: string
