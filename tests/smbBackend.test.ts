@@ -67,6 +67,20 @@ test('дописывание в существующую таблицу с ко�
   assert.equal(smb.nodes.has(LOCK), false, 'блокировка снята')
 })
 
+test('срок хранения копий из настроек: через 10 дней при 30 днях копия остаётся, при 7 — удаляется', async () => {
+  const day = 24 * 60 * 60 * 1000
+  const backups = (smb: FakeSmb) => [...smb.nodes.keys()].filter((key) => key.startsWith('Probe si Sarje Otel/backups/'))
+  for (const [backupDays, kept] of [[30, 2], [7, 1]] as const) {
+    const smb = new FakeSmb()
+    smb.put(TABLE, template)
+    const { backend, writer } = setup(smb)
+    await writer.write(record(1), backend, undefined, undefined, { backupDays })
+    smb.now += 10 * day
+    await writer.write(record(2), backend, undefined, undefined, { backupDays })
+    assert.equal(backups(smb).length, kept, `${backupDays} дн.`)
+  }
+})
+
 test('чужая свежая блокировка — busy; брошенная (старше 5 минут) — снимается', async () => {
   const smb = new FakeSmb()
   smb.put(TABLE, template)

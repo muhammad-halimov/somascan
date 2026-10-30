@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, RefreshIcon } from '@/components/icons/Icons'
+import { CalendarIcon, ClockIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, RefreshIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
@@ -11,6 +11,7 @@ import { modelCatalog } from '@/features/recognition/catalog/ModelCatalog'
 import { MODEL_AGE_LIMITS } from '@/features/recognition/catalog/ModelFilter'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import { useErrorText } from '@/features/recognition/useErrorText'
+import { BACKUP_RETENTION_OPTIONS } from '@/features/uploads/xlsx/BackupPolicy'
 import { getProviderAccess } from '../store/providerAccess'
 import { settingsStore } from '../store/SettingsStore'
 import { IMAGE_SIZE_LIMITS } from '../store/settingsSchema'
@@ -23,13 +24,13 @@ import './AdvancedTab.css'
 
 /**
  * Вкладка «Расширенные»: сначала то, что определяет распознавание, — промпт, поля бирки и известные поставщики;
- * затем фильтр возраста моделей, состояние списков моделей с обновлением,
+ * затем срок хранения резервных копий таблицы, фильтр возраста моделей, состояние списков моделей с обновлением,
  * размер фото для распознавания и версия приложения.
  */
 export function AdvancedTab() {
   const { t, i18n } = useTranslation('settings')
   const errorText = useErrorText()
-  const { advanced } = useSettings()
+  const { storage, advanced } = useSettings()
   const catalog = useStore(modelCatalog)
   const isRefreshing = Object.values(catalog.loading).some(Boolean)
   // День и месяц без года: строка состояния списка — в одну строку (списки обновляются раз в месяц).
@@ -45,6 +46,17 @@ export function AdvancedTab() {
       <LabelFieldsPicker value={advanced.labelFields} />
 
       <KnownSuppliersPicker value={advanced.knownSuppliers} />
+
+      {/* Срок хранения копий таблицы — настройка записи (лежит в хранилище, её получает движок записи). */}
+      <FormSection title={t('advanced.backups')} icon={<ClockIcon />} hint={t('advanced.backupsHint')}>
+        <span className="form-section-hint">{t('advanced.backupsKeep')}</span>
+        <Tabs
+          label={t('advanced.backupsKeep')}
+          value={storage.backupDays}
+          options={BACKUP_RETENTION_OPTIONS.map((days) => ({ value: days, label: t('advanced.backupDays', { count: days }), icon: <CalendarIcon /> }))}
+          onChange={(backupDays) => settingsStore.setBackupDays(backupDays)}
+        />
+      </FormSection>
 
       <FormSection title={t('advanced.models')} icon={<LayersIcon />}>
         <span className="form-section-hint">{t('advanced.maxAge')}</span>

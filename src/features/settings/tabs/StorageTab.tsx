@@ -3,7 +3,6 @@ import { DatabaseIcon, GoogleDriveLogo, WindowsLogo } from '@/components/icons/I
 import { FormSection } from '@/components/ui/FormSection'
 import { Notice } from '@/components/ui/Notice'
 import { Tabs } from '@/components/ui/Tabs'
-import { BACKUP_RETENTION_DAYS } from '@/features/uploads/xlsx/BackupPolicy'
 import { GoogleDriveStorageForm } from '../components/storage/GoogleDriveStorageForm'
 import { SmbStorageForm } from '../components/storage/SmbStorageForm'
 import { settingsStore } from '../store/SettingsStore'
@@ -45,7 +44,7 @@ export function StorageTab() {
       </div>
 
       {/* Как и куда пишутся бирки — пояснение в конце, под «Проверить подключение». */}
-      <Notice>{t('storage.intro')} {t('storage.backups', { days: BACKUP_RETENTION_DAYS })}</Notice>
+      <Notice>{t('storage.intro')} {t('storage.backups', { days: storage.backupDays })}</Notice>
     </>
   )
 }

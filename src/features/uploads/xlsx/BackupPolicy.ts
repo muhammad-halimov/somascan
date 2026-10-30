@@ -3,7 +3,7 @@
  *
  * Перед каждой записью прежний файл переименовывается в копию в папке `backups` рядом с таблицей
  * (переименование — одна атомарная операция на сервере, без повторной передачи файла).
- * Копии старше недели удаляются после очередной успешной записи. Удаляются только файлы,
+ * Копии старше выбранного срока (по умолчанию неделя) удаляются после очередной успешной записи. Удаляются только файлы,
  * имена которых соответствуют нашему шаблону: чужие файлы в папке не трогаются.
  */
 import type { SmbEntry } from '../smb/SmbShare'
@@ -11,11 +11,17 @@ import type { SmbEntry } from '../smb/SmbShare'
 /** Имя папки резервных копий рядом с таблицей. */
 export const BACKUP_FOLDER = 'backups'
 
+/** Сроки хранения копий на выбор («Расширенные» → «Резервные копии»), в днях. */
+export const BACKUP_RETENTION_OPTIONS = [7, 30, 90, 365] as const
+
+/** Срок хранения копий. */
+export type BackupRetentionDays = (typeof BACKUP_RETENTION_OPTIONS)[number]
+
 /**
- * Сколько дней хранится копия.
- * РИСК: старше недели копий нет — для долгой истории журнала нужна резервная копия самого сервера или Drive.
+ * Сколько дней хранится копия по умолчанию.
+ * РИСК: копий старше выбранного срока нет — для долгой истории журнала нужна резервная копия самого сервера или Drive.
  */
-export const BACKUP_RETENTION_DAYS = 7
+export const BACKUP_RETENTION_DAYS: BackupRetentionDays = 7
 
 /** Миллисекунд в сутках. */
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -42,7 +48,7 @@ export class BackupPolicy {
    * @param extension Расширение таблицы, с точкой.
    * @param retentionDays Срок хранения копий в днях.
    */
-  constructor(stem: string, extension: string, retentionDays = BACKUP_RETENTION_DAYS) {
+  constructor(stem: string, extension: string, retentionDays: number = BACKUP_RETENTION_DAYS) {
     this.stem = stem
     this.extension = extension
     this.retentionMs = retentionDays * DAY_MS

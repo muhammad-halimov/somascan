@@ -28,3 +28,12 @@ test('удаляются только наши копии старше неде�
   ]
   assert.deepEqual(policy.expired(entries, now).map((item) => item.name), [entries[0]!.name])
 })
+
+test('срок хранения на выбор: при 30 днях копия недельной давности остаётся, полуторамесячная — удаляется', () => {
+  const policy = new BackupPolicy('labels', '.xlsx', 30)
+  const now = new Date(2026, 9, 7, 12, 0, 0).getTime()
+  const day = 24 * 60 * 60 * 1000
+  const entry = (name: string) => ({ name, isDirectory: false, size: 1, modifiedAt: 0 })
+  const entries = [entry(policy.backupName(new Date(now - 8 * day))), entry(policy.backupName(new Date(now - 45 * day)))]
+  assert.deepEqual(policy.expired(entries, now).map((item) => item.name), [entries[1]!.name])
+})

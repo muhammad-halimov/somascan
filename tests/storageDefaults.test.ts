@@ -35,3 +35,9 @@ test('лист журнала: по умолчанию пусто (лист те
   assert.equal(defaults.storage.uniqueHeat, true, 'каждая плавка — один раз — по умолчанию')
   assert.equal(parseSettings({ storage: { uniqueHeat: false } }, defaults).storage.uniqueHeat, false)
 })
+
+test('срок хранения резервных копий: по умолчанию 7 дней, на выбор 7 / 30 / 90 / 365', () => {
+  assert.equal(defaults.storage.backupDays, 7)
+  assert.equal(parseSettings({ storage: { backupDays: 90 } }, defaults).storage.backupDays, 90)
+  assert.equal(parseSettings({ storage: { backupDays: 14 } }, defaults).storage.backupDays, 7)
+})

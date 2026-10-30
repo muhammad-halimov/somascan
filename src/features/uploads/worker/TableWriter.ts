@@ -45,6 +45,12 @@ const STEP = { locked: 0.1, read: 0.35, prepared: 0.55, replaced: 0.8, verified:
 /** Доли записи после шагов по порядку — по ним движок ведёт плавный ход между шагами. */
 export const WRITE_STEPS: readonly number[] = Object.values(STEP)
 
+/** Как записывать: лист и правила записи (`AppendOptions`), срок хранения резервных копий. */
+export interface WriteOptions extends AppendOptions {
+  /** Сколько дней хранить копии таблицы; по умолчанию `BACKUP_RETENTION_DAYS`. */
+  backupDays?: number
+}
+
 /** Пишет бирки в журнал через `TableBackend`. */
 export class TableWriter {
   /** Идентификатор устройства — владелец блокировки (в движке он приходит с настройками, поэтому — функция). */
@@ -64,10 +70,10 @@ export class TableWriter {
   /**
    * Дописывает запись в журнал.
    * @param onStep Ход записи: доля пройденного (0…1) после каждого шага.
-   * @param options Лист и правила записи из настроек хранилища на момент записи (`AppendOptions`).
+   * @param options Лист и правила записи из настроек хранилища на момент записи (`AppendOptions`) и срок хранения копий.
    * @throws {UploadError} Любой сбой; по коду `UploadWorker` решает, повторять ли попытку.
    */
-  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void, options: AppendOptions = {}): Promise<TableWriteResult> {
+  async write(record: UploadRecord, backend: TableBackend, signal?: AbortSignal, onStep?: (fraction: number) => void, options: WriteOptions = {}): Promise<TableWriteResult> {
     const step = (fraction: number) => onStep?.(fraction)
     /** Останавливает запись, если её отменили: до замены файла журнал не тронут. */
     const checkCancelled = () => {
@@ -92,7 +98,7 @@ export class TableWriter {
       await TableWriter.checkIntact(before, bytes, planned)
       step(STEP.prepared)
       checkCancelled()
-      const policy = new BackupPolicy(backend.stem, backend.extension)
+      const policy = new BackupPolicy(backend.stem, backend.extension, options.backupDays)
       await backend.replace(bytes, policy.backupName(new Date(writtenAt)))
       step(STEP.replaced)
       await TableWriter.verify(await backend.readBack(), record, planned)

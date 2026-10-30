@@ -10,7 +10,9 @@
 
 .form-section-header {
   display: flex;
-  align-items: center;
+  /* Заголовок «на земле»: на одной линии с подписями кнопок справа, а не по середине их высоты. */
+  align-items: flex-end;
+  align-items: last baseline;
   justify-content: space-between;
   gap: 8px;
 }
