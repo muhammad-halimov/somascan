@@ -101,6 +101,15 @@ export interface StorageSettings {
  */
 export const LABEL_FIELDS_VERSION = 3
 
+/**
+ * Версия списка поставщиков по умолчанию. 2 — добавлен SOMACO. Сохранённый список прежней версии
+ * при чтении получает добавленные названия; удалённые потом пользователем — не возвращаются.
+ */
+export const KNOWN_SUPPLIERS_VERSION = 2
+
+/** Названия, добавленные в список по умолчанию в каждой версии. */
+const ADDED_SUPPLIERS: Readonly<Record<number, readonly string[]>> = { 2: ['SOMACO'] }
+
 /** Допустимые ограничения размера фото (по длинной стороне, px); `null` — отправлять оригинал фото. */
 export const IMAGE_SIZE_LIMITS = [1024, 1600, 2048, null] as const
 
@@ -117,6 +126,8 @@ export interface AdvancedSettings {
   labelFieldsVersion: number
   /** Известные поставщики (по алфавиту, без повторов): подсказка модели для плохо читаемых названий заводов. */
   knownSuppliers: string[]
+  /** Версия списка поставщиков по умолчанию, с которой сохранён список (см. `KNOWN_SUPPLIERS_VERSION`). */
+  knownSuppliersVersion: number
   /** Скрывать модели старше указанного числа месяцев; `null` — показывать все. */
   modelMaxAgeMonths: ModelAgeLimit
   /** Уменьшать фото до этого размера перед отправкой. */
@@ -162,6 +173,7 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       labelFields: createDefaultLabelFields(),
       labelFieldsVersion: LABEL_FIELDS_VERSION,
       knownSuppliers: [...DEFAULT_KNOWN_SUPPLIERS],
+      knownSuppliersVersion: KNOWN_SUPPLIERS_VERSION,
       modelMaxAgeMonths: DEFAULT_MODEL_AGE_LIMIT,
       maxImageSide: 2048,
     },
@@ -254,6 +266,15 @@ function readKnownSuppliers(source: unknown, fallback: string[]): string[] {
   return normalizeSuppliers(source.filter(isString))
 }
 
+/**
+ * Дописывает в список прежней версии названия, добавленные в список по умолчанию после неё.
+ * Пустой список — пользователь сам отказался от подсказки модели — остаётся пустым.
+ */
+function migrateKnownSuppliers(suppliers: string[], version: number): string[] {
+  const added = Object.entries(ADDED_SUPPLIERS).filter(([since]) => Number(since) > version).flatMap(([, names]) => names)
+  return added.length === 0 || suppliers.length === 0 ? suppliers : normalizeSuppliers([...suppliers, ...added])
+}
+
 /** Поля, включённые по умолчанию в версии 2. */
 const VERSION_2_DEFAULT_KEYS = ['producer', 'grade', 'size', 'heat', 'weight_kg']
 
@@ -306,7 +327,11 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
         readField(advanced, 'labelFieldsVersion', (value): value is number => typeof value === 'number', 1),
       ),
       labelFieldsVersion: LABEL_FIELDS_VERSION,
-      knownSuppliers: readKnownSuppliers(isRecord(advanced) ? advanced.knownSuppliers : undefined, defaults.advanced.knownSuppliers),
+      knownSuppliers: migrateKnownSuppliers(
+        readKnownSuppliers(isRecord(advanced) ? advanced.knownSuppliers : undefined, defaults.advanced.knownSuppliers),
+        readField(advanced, 'knownSuppliersVersion', (value): value is number => typeof value === 'number', 1),
+      ),
+      knownSuppliersVersion: KNOWN_SUPPLIERS_VERSION,
       modelMaxAgeMonths: readField(advanced, 'modelMaxAgeMonths', isOneOf(MODEL_AGE_LIMITS), defaults.advanced.modelMaxAgeMonths),
       maxImageSide: readField(advanced, 'maxImageSide', isOneOf(IMAGE_SIZE_LIMITS), defaults.advanced.maxImageSide),
     },
