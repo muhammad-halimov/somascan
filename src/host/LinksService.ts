@@ -85,11 +85,12 @@ export class LinksService {
   /** Читает файлы и возвращает проекты, листы, элементы и их привязки (результаты всех Consum сливаются). */
   async scan(): Promise<ScanData> {
     const empty: ScanData = { files: [], elements: [], projects: [], sheets: [], orphans: [], registry: 0, links: {} }
-    const bad = this.sync.pathsProblem()
-    if (bad) return { ...empty, error: bad }
     if (this.scanning) return { ...empty, error: message('scan.busy') }
     this.scanning = true
     try {
+      // у Google Drive — сначала свежие таблицы
+      const bad = await this.sync.readyToRead()
+      if (bad) return { ...empty, error: bad }
       const f = this.settings.files()
       const merged: ScanData = { ...empty }
       const seen = new Map<string, ScanProject>()

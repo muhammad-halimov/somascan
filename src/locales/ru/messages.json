@@ -212,5 +212,29 @@
     "applyOn": "запись",
     "applyOff": "только план",
     "noStock": "— НЕТ ОСТАТКА —"
+  },
+  "drive": {
+    "badFolder": "Папка Google Drive не распознана: {{folder}} — вставьте ссылку на папку или её ID",
+    "notXlsx": "{{file}} в Google Drive — не таблица .xlsx (документ Google Таблиц не подходит)",
+    "busy": "{{file}} сейчас пишет другое устройство ({{owner}}) — прогон повторится",
+    "verifyFailed": "{{file}}: выгруженное в Google Drive не совпало с записанным",
+    "folderNotFound": "Папка Google Drive не найдена: {{folder}}",
+    "notConfigured": "Google Drive не настроен: положите файл клиента OAuth {{file}} в папку данных программы",
+    "authRequired": "Доступ к Google Drive отозван или устарел — войдите в Google снова на вкладке «Хранилище»",
+    "network": "Нет связи с Google Drive: {{error}}",
+    "error": "Ошибка Google Drive: {{error}}",
+    "accessDenied": "Нет доступа к таблицам в Google Drive: {{error}}",
+    "rateLimited": "Google Drive просит подождать: {{error}}",
+    "signedOut": "Вход в Google не выполнен — войдите на вкладке «Хранилище»",
+    "pageDone": "Вход выполнен. Вернитесь в Somasync — это окно можно закрыть.",
+    "pageFailed": "Вход не выполнен. Вернитесь в Somasync и попробуйте снова.",
+    "accountUnknown": "аккаунт Google",
+    "signedIn": "Вход в Google выполнен: {{account}}",
+    "signInFailed": "Не удалось войти через Google: {{error}}",
+    "signedOutEvent": "Выход из Google: {{account}}",
+    "notFound": "В папке Google Drive нет таблиц: {{files}}",
+    "uploaded": "Выгружено в Google Drive: {{files}}",
+    "conflict": "{{file}} изменили в Google Drive во время прогона — записанное не выгружено, следующий прогон пересчитает",
+    "uploadFailed": "Не удалось выгрузить в Google Drive: {{error}}"
   }
 }

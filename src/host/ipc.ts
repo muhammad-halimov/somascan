@@ -19,7 +19,7 @@ export function applyTheme(theme: string): void {
 
 /** Регистрирует обработчики. */
 export function registerIpc(h: HostServices): void {
-  const { settings, journal, sync, watcher, links, storage, window, paths } = h
+  const { settings, journal, sync, watcher, links, storage, window, paths, drive } = h
 
   ipcMain.handle(IPC.init, (): InitData => ({
     settings: settings.publicSettings(),
@@ -88,6 +88,9 @@ export function registerIpc(h: HostServices): void {
   })
 
   ipcMain.handle(IPC.smbPassword, () => settings.smbPassword())
+
+  ipcMain.handle(IPC.driveSignIn, () => drive.signIn())
+  ipcMain.handle(IPC.driveSignOut, () => drive.signOut())
 
   ipcMain.handle(IPC.clearJournal, () => journal.clear())
 

@@ -5,6 +5,10 @@
  * Каждый прогон — запись журнала: движок пишет итог в JSON (`JSON_OUT`), технический вывод идёт в «Подробно».
  * Код выхода 3 — запись отложена (файл открыт в редакторе): Consum попадает в `pending`,
  * и `ConsumWatcher` повторит прогон, когда файлы закроют.
+ *
+ * Таблицы в Google Drive (`remote`): перед прогоном они скачиваются в локальную копию (с записью — под
+ * блокировкой), движок работает с копией, после прогона с записью изменённое выгружается. Таблицу пишет
+ * другое устройство или нет связи — Consum попадает в `pending`, прогон повторится при следующей проверке.
  */
 import fs from 'node:fs'
 import os from 'node:os'
@@ -23,6 +27,18 @@ const MAX_STAMPS = 40
 /** Начальное состояние. */
 const IDLE: RunState = { status: 'idle', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [] }
 
+/** Таблицы в удалённом хранилище (Google Drive, см. `drive/DriveService`). */
+export interface RemoteStorage {
+  /** Место хранения — удалённое. */
+  active(): boolean
+  /** Перед прогоном: скачать (с записью — заблокировать). @returns Причина, по которой прогон невозможен. */
+  prepare(apply: boolean): Promise<{ msg: Message; retry: boolean } | null>
+  /** После прогона с записью: выгрузить изменённое. */
+  finish(apply: boolean): Promise<void>
+  /** Снять блокировки. */
+  release(): Promise<void>
+}
+
 /** Параметры прогона синхронизации. */
 export interface SyncRequest {
   apply: boolean
@@ -40,6 +56,8 @@ export class SyncService extends Store<RunState> {
   private readonly settings: SettingsStore
   private readonly journal: Journal
   private readonly runner: EngineRunner
+  /** Удалённое хранилище таблиц (задаёт `HostServices`). */
+  remote: RemoteStorage | null = null
 
   constructor(settings: SettingsStore, journal: Journal, runner: EngineRunner) {
     super(IDLE)
@@ -71,9 +89,23 @@ export class SyncService extends Store<RunState> {
     return file ? Backups.stamps(file, MAX_STAMPS) : []
   }
 
+  /**
+   * Готовы ли файлы к чтению (вкладка «Связи», начало слежения): у Google Drive — скачивает свежие таблицы.
+   * @returns Причина, по которой читать нельзя, или `null`.
+   */
+  async readyToRead(): Promise<Message | null> {
+    const remote = this.remote?.active() && !this.getSnapshot().busy ? this.remote : null
+    if (remote) {
+      const problem = await remote.prepare(false)
+      await remote.release()
+      if (problem) return problem.msg
+    }
+    return this.pathsProblem()
+  }
+
   /** Один прогон синхронизации по каждому Consum. */
   async syncOnce({ apply, migrate = false, trigger, only }: SyncRequest): Promise<ActionResult> {
-    return this.exclusive(trigger, async () => {
+    return this.exclusive(trigger, apply, only ?? this.settings.consumFiles(), async () => {
       const s = this.settings.files()
       const pending = new Set(this.getSnapshot().pending)
       let ok = true
@@ -93,7 +125,7 @@ export class SyncService extends Store<RunState> {
 
   /** Создаёт недостающие листы проектов в Sarjele. */
   createSheets(): Promise<ActionResult> {
-    return this.exclusive('createSheets', async () => {
+    return this.exclusive('createSheets', true, [], async () => {
       const s = this.settings.files()
       const { code } = await this.engine('createSheets', null, true, ['--create-sheets', '--apply', this.settings.consumFiles()[0]!, s.sarjele, s.probe])
       return code === ENGINE_EXIT.ok
@@ -102,19 +134,25 @@ export class SyncService extends Store<RunState> {
 
   /** Откатывает файлы к бэкапу. */
   restore(stamp: string): Promise<ActionResult> {
-    return this.exclusive('restore', async () => {
+    return this.exclusive('restore', true, [], async () => {
       const s = this.settings.files()
       const { code } = await this.engine('restore', null, true, ['--restore', stamp, s.sarjele, s.probe, ...this.settings.consumFiles()])
       return code === ENGINE_EXIT.ok
     })
   }
 
-  /** Выполняет `fn` как единственный прогон. */
-  private async exclusive(trigger: RunTrigger, fn: () => Promise<boolean>): Promise<ActionResult> {
-    const bad = this.pathsProblem()
-    if (bad) {
-      this.journal.event('err', bad)
-      return { ok: false, error: bad }
+  /**
+   * Выполняет `fn` как единственный прогон; у Google Drive — между скачиванием и выгрузкой.
+   * @param consums Consum прогона: если таблицы сейчас недоступны на время (блокировка, связь), они ждут повтора.
+   */
+  private async exclusive(trigger: RunTrigger, apply: boolean, consums: readonly string[], fn: () => Promise<boolean>): Promise<ActionResult> {
+    const remote = this.remote?.active() ? this.remote : null
+    if (!remote) {
+      const bad = this.pathsProblem()
+      if (bad) {
+        this.journal.event('err', bad)
+        return { ok: false, error: bad }
+      }
     }
     const busy = this.getSnapshot().busy
     if (busy) {
@@ -124,8 +162,20 @@ export class SyncService extends Store<RunState> {
     }
     this.patch({ busy: trigger })
     try {
-      return { ok: await fn() }
+      if (remote) {
+        const problem = await remote.prepare(apply)
+        const bad = problem?.msg ?? this.pathsProblem()
+        if (bad) {
+          this.journal.event(problem?.retry ? 'warn' : 'err', bad)
+          if (problem?.retry && consums.length) this.patch({ pending: [...new Set([...this.getSnapshot().pending, ...consums])] })
+          return { ok: false, error: bad }
+        }
+      }
+      const ok = await fn()
+      if (remote) await remote.finish(apply)
+      return { ok }
     } finally {
+      if (remote) await remote.release()
       this.patch({ busy: null })
     }
   }

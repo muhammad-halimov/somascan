@@ -5,9 +5,10 @@
  * Окно получает копию с маской вместо пароля (`publicSettings`); изменения из окна приходят патчем (`apply`).
  * Флаг `running` (воля пользователя «слежение включено») меняют только «Старт» и «Стоп».
  *
- * Пароль сетевого диска на диске — только зашифрованным системным хранилищем (Keychain / DPAPI через
- * `safeStorage`). Если шифрование недоступно, пароль хранится в base64 с пометкой `raw:` (это не защита).
- * РИСК: без системного шифрования (`raw:`) пароль читается любым, у кого есть доступ к `state.json`.
+ * Пароль сетевого диска и ключ доступа к Google Drive на диске — только зашифрованными системным хранилищем
+ * (Keychain / DPAPI через `safeStorage`). Если шифрование недоступно, они хранятся в base64 с пометкой `raw:`
+ * (это не защита). Ключ Google в окно не отдаётся вовсе, а почту аккаунта и ключ меняет только вход и выход.
+ * РИСК: без системного шифрования (`raw:`) пароль и ключ читаются любым, у кого есть доступ к `state.json`.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -24,6 +25,8 @@ export class SettingsStore extends Store<AppSettings> {
   private readonly onError: (error: string) => void
   /** Идёт чтение с диска — сохранять нечего. */
   private loading = false
+  /** Имена таблиц Google Drive → пути их локальной копии (задаёт `HostServices`, см. `DriveMirror`). */
+  resolveDrive: (folder: string, names: FileSet) => FileSet = (_folder, names) => names
 
   /**
    * @param file `state.json`.
@@ -56,15 +59,16 @@ export class SettingsStore extends Store<AppSettings> {
     return formatIn(this.getSnapshot().language, m)
   }
 
-  /** Настройки для окна: пароль заменён маской. */
+  /** Настройки для окна: пароль заменён маской, ключа Google нет. */
   publicSettings(): AppSettings {
     const s = this.getSnapshot()
-    return { ...s, smb: { ...s.smb, password: s.smb.password ? PASSWORD_MASK : '' } }
+    return { ...s, smb: { ...s.smb, password: s.smb.password ? PASSWORD_MASK : '' }, googleDrive: { ...s.googleDrive, token: '' } }
   }
 
-  /** Файлы текущего места хранения (этот компьютер или сетевой диск). */
+  /** Файлы текущего места хранения; у Google Drive — пути локальной копии таблиц. */
   files(): FileSet {
-    return activeFiles(this.getSnapshot())
+    const s = this.getSnapshot()
+    return s.target === 'googleDrive' ? this.resolveDrive(s.googleDrive.folder, activeFiles(s)) : activeFiles(s)
   }
 
   /** Файлы Consum текущего места хранения (без пустых строк). */
@@ -74,14 +78,17 @@ export class SettingsStore extends Store<AppSettings> {
 
   /** Расшифрованный пароль сетевого диска (не удалось — пусто: ключ сменился, пароль придётся ввести заново). */
   smbPassword(): string {
-    const stored = this.getSnapshot().smb.password
-    try {
-      if (stored.startsWith('enc:')) return safeStorage.decryptString(Buffer.from(stored.slice(4), 'base64'))
-      if (stored.startsWith('raw:')) return Buffer.from(stored.slice(4), 'base64').toString()
-    } catch {
-      // ключ системного хранилища сменился
-    }
-    return ''
+    return SettingsStore.decrypt(this.getSnapshot().smb.password)
+  }
+
+  /** Расшифрованный ключ доступа к Google Drive (refresh-токен); пусто — нужен вход. */
+  driveToken(): string {
+    return SettingsStore.decrypt(this.getSnapshot().googleDrive.token)
+  }
+
+  /** Вход или выход Google: почта аккаунта и ключ доступа (пустые — выход). */
+  setDriveAccount(account: string, token: string): void {
+    this.update({ googleDrive: { account, token: SettingsStore.encrypt(token) } })
   }
 
   /**
@@ -90,6 +97,8 @@ export class SettingsStore extends Store<AppSettings> {
    */
   apply(patch: SettingsPatch): Array<keyof AppSettings> {
     const { running: _running, ...safe } = patch
+    // аккаунт и ключ Google меняют только вход и выход, из окна — только папка
+    if (safe.googleDrive) safe.googleDrive = 'folder' in safe.googleDrive ? { folder: safe.googleDrive.folder } : {}
     if (safe.smb && 'password' in safe.smb) {
       const p = safe.smb.password ?? ''
       safe.smb = { ...safe.smb, password: p === PASSWORD_MASK ? this.getSnapshot().smb.password : SettingsStore.encrypt(p) }
@@ -115,7 +124,18 @@ export class SettingsStore extends Store<AppSettings> {
     }
   }
 
-  /** Шифрует пароль для `state.json`. */
+  /** Расшифровывает пароль или ключ из `state.json` (не удалось — пусто: ключ системного хранилища сменился). */
+  private static decrypt(stored: string): string {
+    try {
+      if (stored.startsWith('enc:')) return safeStorage.decryptString(Buffer.from(stored.slice(4), 'base64'))
+      if (stored.startsWith('raw:')) return Buffer.from(stored.slice(4), 'base64').toString()
+    } catch {
+      // ключ системного хранилища сменился
+    }
+    return ''
+  }
+
+  /** Шифрует пароль или ключ для `state.json`. */
   private static encrypt(plain: string): string {
     if (!plain) return ''
     return safeStorage.isEncryptionAvailable() ? 'enc:' + safeStorage.encryptString(plain).toString('base64') : 'raw:' + Buffer.from(plain).toString('base64')

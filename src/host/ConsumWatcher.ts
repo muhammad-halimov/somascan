@@ -5,6 +5,9 @@
  * Отложенная запись (`pending`: файл был открыт в редакторе) повторяется, когда замки редакторов исчезнут.
  * «Слежение включено» хранится в настройках (`running`): после перезапуска программа продолжает с того же места.
  *
+ * Consum в Google Drive: перед каждой проверкой изменившийся на Drive Consum скачивается в локальную копию
+ * (`remote.refreshConsums`), и проверка видит изменение копии.
+ *
  * РИСК: на медленном сетевом диске `settleSec` может не хватить — движок прочтёт недописанный Consum.
  * Прогон запускают только изменения Consum: правки Sarjele или Probe сами прогон не запускают.
  */
@@ -16,6 +19,13 @@ import type { ActionResult } from '@/shared/protocol'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 import type { SyncService } from './SyncService'
+
+/** Слежение за Consum в удалённом хранилище (Google Drive). */
+export interface RemoteConsums {
+  active(): boolean
+  /** Скачивает Consum, изменившиеся на удалённом хранилище. */
+  refreshConsums(): Promise<void>
+}
 
 /** Пауза. */
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -40,6 +50,8 @@ export class ConsumWatcher {
   private watching = false
   /** Последний снимок: файл → «время:размер». */
   private lastSnap: Record<string, string | null> = {}
+  /** Consum в удалённом хранилище (задаёт `HostServices`). */
+  remote: RemoteConsums | null = null
 
   constructor(settings: SettingsStore, journal: Journal, sync: SyncService) {
     this.settings = settings
@@ -60,7 +72,7 @@ export class ConsumWatcher {
   /** Включает слежение. */
   async start(): Promise<ActionResult> {
     if (this.watching) return { ok: true }
-    const bad = this.sync.pathsProblem()
+    const bad = await this.sync.readyToRead()
     if (bad) {
       this.journal.event('err', bad)
       this.settings.update({ running: false })
@@ -118,6 +130,8 @@ export class ConsumWatcher {
   private async tick(): Promise<void> {
     if (!this.watching) return
     this.sync.patch({ lastCheckAt: Date.now() })
+    if (this.remote?.active() && !this.sync.getSnapshot().busy) await this.remote.refreshConsums()
+    if (!this.watching) return this.finishStop()
     const cur = this.snapAll()
     const changed: string[] = []
     for (const [f, v] of Object.entries(cur)) {

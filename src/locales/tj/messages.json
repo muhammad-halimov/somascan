@@ -212,5 +212,29 @@
     "applyOn": "сабт",
     "applyOff": "танҳо нақша",
     "noStock": "— БОҚИМОНДА НЕСТ —"
+  },
+  "drive": {
+    "badFolder": "Ҷузвдони Google Drive шинохта нашуд: {{folder}} — пайванд ё ID-и ҷузвдонро гузоред",
+    "notXlsx": "{{file}} дар Google Drive ҷадвали .xlsx нест (ҳуҷҷати Google Sheets мувофиқ нест)",
+    "busy": "{{file}}-ро ҳоло дастгоҳи дигар менависад ({{owner}}) — иҷро такрор мешавад",
+    "verifyFailed": "{{file}}: он чи ба Google Drive бор шуд, бо сабтшуда мувофиқ нест",
+    "folderNotFound": "Ҷузвдони Google Drive ёфт нашуд: {{folder}}",
+    "notConfigured": "Google Drive танзим нашудааст: файли мизоҷи OAuth {{file}}-ро ба ҷузвдони маълумоти барнома гузоред",
+    "authRequired": "Дастрасӣ ба Google Drive бекор шуд ё кӯҳна шуд — дар бахши «Нигоҳдорӣ» боз ба Google ворид шавед",
+    "network": "Пайвастшавӣ бо Google Drive нест: {{error}}",
+    "error": "Хатои Google Drive: {{error}}",
+    "accessDenied": "Ба ҷадвалҳо дар Google Drive дастрасӣ нест: {{error}}",
+    "rateLimited": "Google Drive интизор шуданро мепурсад: {{error}}",
+    "signedOut": "Ба Google ворид нашудаед — дар бахши «Нигоҳдорӣ» ворид шавед",
+    "pageDone": "Ворид шудед. Ба Somasync баргардед — ин равзанаро пӯшидан мумкин.",
+    "pageFailed": "Ворид шудан нашуд. Ба Somasync баргардед ва боз кӯшиш кунед.",
+    "accountUnknown": "ҳисоби Google",
+    "signedIn": "Ба Google ворид шудед: {{account}}",
+    "signInFailed": "Бо Google ворид шудан нашуд: {{error}}",
+    "signedOutEvent": "Аз Google баромадед: {{account}}",
+    "notFound": "Дар ҷузвдони Google Drive ҷадвалҳо нестанд: {{files}}",
+    "uploaded": "Ба Google Drive бор шуд: {{files}}",
+    "conflict": "{{file}} ҳангоми иҷро дар Google Drive тағйир ёфт — натиҷа бор нашуд, иҷрои навбатӣ аз нав ҳисоб мекунад",
+    "uploadFailed": "Ба Google Drive бор кардан нашуд: {{error}}"
   }
 }

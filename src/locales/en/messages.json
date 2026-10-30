@@ -212,5 +212,29 @@
     "applyOn": "write",
     "applyOff": "plan only",
     "noStock": "— NO STOCK —"
+  },
+  "drive": {
+    "badFolder": "The Google Drive folder is not recognised: {{folder}} — paste a folder link or its ID",
+    "notXlsx": "{{file}} in Google Drive is not an .xlsx table (a Google Sheets document will not do)",
+    "busy": "{{file}} is being written by another device ({{owner}}) — the run will be retried",
+    "verifyFailed": "{{file}}: what was uploaded to Google Drive does not match what was written",
+    "folderNotFound": "Google Drive folder not found: {{folder}}",
+    "notConfigured": "Google Drive is not set up: put the OAuth client file {{file}} into the app data folder",
+    "authRequired": "Access to Google Drive was revoked or has expired — sign in to Google again on the Storage tab",
+    "network": "No connection to Google Drive: {{error}}",
+    "error": "Google Drive error: {{error}}",
+    "accessDenied": "No access to the tables in Google Drive: {{error}}",
+    "rateLimited": "Google Drive asks to wait: {{error}}",
+    "signedOut": "Not signed in to Google — sign in on the Storage tab",
+    "pageDone": "Signed in. Go back to Somasync — you can close this window.",
+    "pageFailed": "Sign-in failed. Go back to Somasync and try again.",
+    "accountUnknown": "Google account",
+    "signedIn": "Signed in to Google: {{account}}",
+    "signInFailed": "Couldn’t sign in with Google: {{error}}",
+    "signedOutEvent": "Signed out of Google: {{account}}",
+    "notFound": "Tables missing in the Google Drive folder: {{files}}",
+    "uploaded": "Uploaded to Google Drive: {{files}}",
+    "conflict": "{{file}} was changed in Google Drive during the run — the result was not uploaded, the next run will recalculate",
+    "uploadFailed": "Couldn’t upload to Google Drive: {{error}}"
   }
 }

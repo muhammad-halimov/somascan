@@ -212,5 +212,29 @@
     "applyOn": "scriere",
     "applyOff": "doar plan",
     "noStock": "— FĂRĂ REST —"
+  },
+  "drive": {
+    "badFolder": "Folderul Google Drive nu este recunoscut: {{folder}} — lipiți linkul folderului sau ID-ul lui",
+    "notXlsx": "{{file}} din Google Drive nu este un tabel .xlsx (un document Google Sheets nu merge)",
+    "busy": "{{file}} este scris acum de alt dispozitiv ({{owner}}) — rularea se va repeta",
+    "verifyFailed": "{{file}}: ce s-a încărcat în Google Drive nu corespunde cu ce s-a scris",
+    "folderNotFound": "Folderul Google Drive nu a fost găsit: {{folder}}",
+    "notConfigured": "Google Drive nu este configurat: puneți fișierul clientului OAuth {{file}} în folderul de date al aplicației",
+    "authRequired": "Accesul la Google Drive a fost revocat sau a expirat — conectați-vă din nou la Google în fila „Stocare”",
+    "network": "Nu există conexiune cu Google Drive: {{error}}",
+    "error": "Eroare Google Drive: {{error}}",
+    "accessDenied": "Nu există acces la tabelele din Google Drive: {{error}}",
+    "rateLimited": "Google Drive cere să așteptați: {{error}}",
+    "signedOut": "Nu sunteți conectat la Google — conectați-vă în fila „Stocare”",
+    "pageDone": "Conectat. Reveniți în Somasync — puteți închide această fereastră.",
+    "pageFailed": "Conectarea a eșuat. Reveniți în Somasync și încercați din nou.",
+    "accountUnknown": "cont Google",
+    "signedIn": "Conectat la Google: {{account}}",
+    "signInFailed": "Conectarea cu Google a eșuat: {{error}}",
+    "signedOutEvent": "Deconectat de la Google: {{account}}",
+    "notFound": "Lipsesc tabelele din folderul Google Drive: {{files}}",
+    "uploaded": "Încărcat în Google Drive: {{files}}",
+    "conflict": "{{file}} a fost modificat în Google Drive în timpul rulării — rezultatul nu a fost încărcat, următoarea rulare va recalcula",
+    "uploadFailed": "Încărcarea în Google Drive a eșuat: {{error}}"
   }
 }

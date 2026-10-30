@@ -22,9 +22,9 @@ A desktop app (macOS and Windows) for Somaco (Holcim, Romania) that keeps track 
 
 To recognise an element reliably from month to month, the app gives it an ID (`NI-0004`) — in a hidden column of Consum and next to the block in Sarjele.
 
-**Data safety.** A trial mode that writes nothing. A backup before every write and restore from the Advanced tab. A file open in an editor is left alone — the write is postponed. Writes go through a temporary file and are checked afterwards. Everything runs locally: files are never sent anywhere (Sarjele is confidential).
+**Data safety.** A trial mode that writes nothing. A backup before every write and restore from the Advanced tab. A file open in an editor is left alone — the write is postponed. Writes go through a temporary file and are checked afterwards. Everything runs on this computer: files go nowhere except your own Google Drive, and only when it is the chosen storage location (Sarjele is confidential).
 
-**Technology.** Electron 44, React 19, TypeScript, Vite 8, ExcelJS, i18next. Files on this computer or on a Windows network drive (SMB). Interface languages: English (default), Romanian, Tajik, Russian.
+**Technology.** Electron 44, React 19, TypeScript, Vite 8, ExcelJS, i18next. Files on this computer, on a Windows network share (SMB) or in Google Drive (Drive API). Interface languages: English (default), Romanian, Tajik, Russian.
 
 ## Screenshots
 
@@ -66,7 +66,11 @@ Consum (Decont Lunar) ──► engine ──► Sarjele (element blocks, ID reg
 4. Plan. What is left of a heat = delivered according to Probe minus written off in Sarjele. It is stored nowhere and recalculated on every run. Consumption is split over heats of the right Ø and form.
 5. Write: backup, Sarjele, Probe, IDs into Consum, then a check.
 
-This computer and the network drive each have their own file paths: switching the storage location on the Storage tab switches the set of files too.
+This computer, the network share and Google Drive each have their own files: switching the storage location on the Storage tab switches the set of files too.
+
+**Google Drive.** On the Storage tab: “Sign in with Google” opens the Google sign-in page in the system browser (OAuth for desktop apps: the answer comes back to `http://127.0.0.1:<port>`, PKCE); the account e-mail is shown, “Sign out” revokes access. Then the folder (a link or its ID, empty — “My Drive”) and the names of the tables in it. The engine works with files, so before every run the tables are downloaded into a local copy (`<app data>/drive/<folder id>/`, only the ones that changed — by the Drive version and the MD5 of the copy), and after a run with writing what the engine changed is uploaded back: the previous version is copied on the server into the `backups` folder next to the tables (kept as many days as the local copies), the new revision is atomic and its MD5 is checked. If a table was changed in Drive during the run (Excel online, another device), it is not overwritten: the next run downloads the new version and recalculates. For the duration of a run with writing the tables are locked with the same lock files as in the mobile app (`<table>.lock`, owner label, an abandoned one is removed after 5 minutes), so the phone and the computer do not overwrite Probe for each other; a busy table postpones the run to the next check. Watching: before every check a Consum that changed in Drive is downloaded, and the change of the copy starts a run. The access key (refresh token) is stored encrypted, like the network share password, and never reaches the window. `drive/` in `host/`: `GoogleOAuth`, `DriveClient`, `DriveMirror`, `DriveService`.
+
+**Setting up Google Drive.** In Google Cloud (the same project as the mobile app is fine) enable the Google Drive API and create an OAuth client of the “Desktop app” type. Either download its JSON and put it into the app data folder as `google-oauth.json` (`%APPDATA%\Somasync\` on Windows, `~/Library/Application Support/Somasync/` on Mac), or build the app with it: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`. Without a client, “Sign in with Google” says that Google Drive is not set up.
 
 Settings, the log (`log.txt`) and `links.json` live in the app data folder: `~/Library/Application Support/Somasync/` on Mac, `%APPDATA%\Somasync\` on Windows. The log file can be opened from the tray icon.
 
@@ -102,7 +106,7 @@ Runs and migration (Advanced → Actions)
 
 Watching
 - Only saving Consum starts a run. Edits in Sarjele or Probe do not start a run by themselves.
-- On a slow network drive the pause after a change may be too short; increase it then.
+- On a slow network share the pause after a change may be too short; increase it then.
 - If a file disappears (deleted, network down), the journal says “unavailable”, and “available again” when it is back.
 - The app does not treat its own ID write into Consum as a change: there is no extra run after a write.
 
@@ -199,19 +203,20 @@ src/
   app/                    App (tabs, macOS title bar, theme), state (bridge to the main process and stores), i18n
   features/               tabs
     run/                  Home: RunScreen (status, Start/Stop, mode), Journal (journal, run cards)
-    storage/              Storage: location, network drive, files with checks, Probe sheet
+    storage/              Storage: destination, network share (account, location), Google account, tables with checks, sheet
     links/                Links: LinksScreen, ProjectsTable (project → sheet, lock), ElementsSection (element → block)
-    settings/             Advanced: timer, rules, actions, system, language
+    settings/             Advanced: timer, rules, backups, actions, system, language, about
   components/             shared UI: icons/ (icons, flags), ui/ (Button, Inputs, Layout, List, Tabs)
   locales/<language>/     texts: common, run, storage, links, settings, messages (engine and app messages)
   shared/                 shared by window, main process and engine: protocol, settings, messages, names, Store
   host/                   Electron main process (one class per file)
     HostServices          services and how they are wired
-    SettingsStore         settings (state.json), network drive password
+    SettingsStore         settings (state.json), network share password, Google key
     Journal               events and runs, log.txt
     SyncService           engine runs and their state; ConsumWatcher — watching; EngineRunner — starting the engine
     LinksService          Links tab: reading links, links.json
-    StorageService        Storage tab: file checks, connecting the network drive
+    StorageService        Storage tab: file checks, connecting the network share
+    drive/                Google Drive: GoogleOAuth (sign-in), DriveClient (Drive API), DriveMirror (local copy, locks, upload), DriveService
     MainWindow, TrayMenu, ipc, preload, main
   engine/                 engine (dist-engine/sync.mjs), no Electron or React
     SyncEngine            commands: sync, scan, create-sheets, restore
@@ -247,12 +252,13 @@ Rules
 | Lock file of a crashed editor | `engine/FileGuard.ts` | writes are postponed until the lock is deleted |
 | Age of an abandoned lock is judged by the clock | `engine/FileGuard.ts` | if clocks differ by more than 10 minutes, an error is possible |
 | Pause after a Consum change | `host/ConsumWatcher.ts` | on a slow network the engine may read a half-written file |
-| Network drive password without system encryption | `host/SettingsStore.ts` | stored in `state.json` unencrypted |
+| Network share password and Google key without system encryption | `host/SettingsStore.ts` | stored in `state.json` unencrypted |
+| A Google Drive table changed during a run | `host/drive/DriveMirror.ts` | not uploaded (a warning in the journal), the next run recalculates from the new version |
 
 ## Decisions
 
 - No SQLite. The data lives in the files themselves: manual edits are taken into account and there is no second source of truth.
-- Everything runs locally. Sarjele is a confidential file.
+- Everything runs on this computer; Google Drive is only the user's own storage of the tables. Sarjele is a confidential file.
 
 ## License
 

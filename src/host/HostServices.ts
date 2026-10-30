@@ -8,12 +8,15 @@
  *   EngineRunner   запуск движка
  *   LinksService   вкладка «Связи»: чтение связей, ручные привязки (`links.json`)
  *   StorageService вкладка «Хранилище»: проверка файлов, сетевой диск
+ *   DriveService   Google Drive: вход, скачивание таблиц перед прогоном и выгрузка после
  *   MainWindow, TrayMenu
  */
+import { shell } from 'electron'
 import { IPC } from '@/shared/protocol'
 import { message } from '@/shared/messages'
 import { AppPaths } from './AppPaths'
 import { ConsumWatcher } from './ConsumWatcher'
+import { DriveService } from './drive/DriveService'
 import { EngineRunner } from './EngineRunner'
 import { Journal } from './Journal'
 import { LinksService } from './LinksService'
@@ -32,7 +35,8 @@ export class HostServices {
   readonly sync = new SyncService(this.settings, this.journal, this.runner)
   readonly watcher = new ConsumWatcher(this.settings, this.journal, this.sync)
   readonly links = new LinksService(this.paths.linksFile, this.settings, this.runner, this.sync, this.journal)
-  readonly storage = new StorageService(this.settings)
+  readonly drive = new DriveService(this.paths, this.settings, this.journal, (url) => void shell.openExternal(url))
+  readonly storage = new StorageService(this.settings, this.drive)
   readonly window = new MainWindow(this.paths, this.settings)
   readonly tray = new TrayMenu(this.paths, this.settings, this.sync, this.journal, this.window, {
     start: () => void this.watcher.start(),
@@ -42,6 +46,9 @@ export class HostServices {
   /** Связывает изменения состояния с окном и треем. */
   wire(): void {
     this.journal.language = () => this.settings.getSnapshot().language
+    this.settings.resolveDrive = (folder, names) => this.drive.mirror.resolve(folder, names)
+    this.sync.remote = this.drive
+    this.watcher.remote = this.drive
     this.window.hasTray = () => this.tray.exists
     this.window.onVisibilityChange = () => this.tray.refresh()
     this.window.onProblem = (m) => this.journal.event('err', m)

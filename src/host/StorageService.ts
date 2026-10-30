@@ -1,5 +1,6 @@
 /**
- * Вкладка «Хранилище»: проверка файлов и подключение сетевого диска Windows (SMB).
+ * Вкладка «Хранилище»: проверка файлов и подключение сетевого диска Windows (SMB). Таблицы в Google Drive
+ * проверяет `DriveService` (есть ли в папке), листы — эта же проверка по скачанной копии.
  *
  * Проверка: есть ли файл, какие в нём листы, нужные ли. Листы читаются из `xl/workbook.xml` без разбора всей
  * книги — быстро даже для большого файла на сетевом диске.
@@ -15,6 +16,7 @@ import { EditorLock } from '@/engine/FileGuard'
 import { message } from '@/shared/messages'
 import type { ActionResult, CheckResult } from '@/shared/protocol'
 import { activeFiles, type FileKind, type SmbSettings } from '@/shared/settings'
+import type { DriveService } from './drive/DriveService'
 import type { SettingsStore } from './SettingsStore'
 
 /** Сколько ждать подключения диска, мс. */
@@ -26,9 +28,11 @@ const lastLine = (text: string) => text.split(/\r?\n/).map((l) => l.trim()).filt
 /** Проверка файлов и сетевой диск. */
 export class StorageService {
   private readonly settings: SettingsStore
+  private readonly drive: DriveService
 
-  constructor(settings: SettingsStore) {
+  constructor(settings: SettingsStore, drive: DriveService) {
     this.settings = settings
+    this.drive = drive
   }
 
   /** Сетевой путь общей папки в Windows: `\\сервер\папка`. */
@@ -47,10 +51,17 @@ export class StorageService {
       .map((t) => (t.match(/name="([^"]*)"/)?.[1] ?? '').replace(/&amp;/g, '&').replace(/&apos;/g, "'").replace(/&quot;/g, '"'))
   }
 
-  /** Проверяет файл вида `kind` (по умолчанию — путь из настроек). */
-  async check(kind: FileKind, fileArg?: string): Promise<CheckResult> {
+  /** Проверяет файл вида `kind` (по умолчанию — путь из настроек; у Google Drive — имя в папке). */
+  check(kind: FileKind, fileArg?: string): Promise<CheckResult> {
     const settings = this.settings.getSnapshot()
     const file = fileArg ?? (kind === 'consum' ? '' : activeFiles(settings)[kind])
+    if (this.drive.active()) return this.drive.check(kind, file, (k, local) => this.checkFile(k, local))
+    return this.checkFile(kind, file)
+  }
+
+  /** Проверяет файл на этом компьютере (или на подключённом диске): есть ли, какие листы, нужные ли. */
+  async checkFile(kind: FileKind, file: string): Promise<CheckResult> {
+    const settings = this.settings.getSnapshot()
     if (!file) return { ok: false, msg: message('check.noPath') }
     if (!fs.existsSync(file)) return { ok: false, msg: message('check.notFound') }
     try {
