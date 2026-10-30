@@ -71,9 +71,10 @@ npm run build && node scripts/screenshots/capture.mjs # Сделать скри�
 ## Как это работает
 
 ```
-Фото этикетки ──► OCR / распознавание (Gemini | Claude | OpenAI | LM Studio)
+Фото этикетки ──► распознавание ИИ-моделью
+                  (Gemini | Claude | OpenAI | LM Studio)
               ──► структурированные поля ──► строка в .xlsx
-              ──► хранилище: сетевой диск Windows | Google Drive
+              ──► хранилище: сетевой диск | Google Drive
 ```
 
 ### Форматы фото
