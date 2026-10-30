@@ -31,7 +31,10 @@ export interface ActionButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonE
   badgeTone?: 'accent' | 'danger'
   /** Идёт фоновая операция: вместо иконки крутится спиннер (кнопка остаётся нажимаемой). */
   busy?: boolean
-  /** Пока `busy`, крутится сама иконка, а не круглый спиннер (например, стрелки «Обновить»); оборот доводится до конца. */
+  /**
+   * Пока `busy`, вместо круглого спиннера движется сама иконка (её анимация — в CSS под `.is-spinning`,
+   * например стрелки «Обновить» бегут по петле); начатый цикл доводится до конца.
+   */
   spinIcon?: boolean
   /**
    * Раскладка: `stack` — круг и подпись под ним (по умолчанию); `inline` — узкая «пилюля» высотой
@@ -61,11 +64,11 @@ function BadgeAlertGlyph() {
  * шире кнопки: длинный текст обрезается многоточием. Поэтому подписи в переводах короткие.
  */
 export function ActionButton({ icon, caption, label, variant = 'tonal', size, active = false, badge, badgeTone = 'accent', busy = false, spinIcon = false, layout = 'stack', className = '', style, onAnimationIteration, ...rest }: ActionButtonProps) {
-  // Иконка докручивает начатый оборот и останавливается в исходном положении, а не отскакивает назад.
+  // Иконка доводит начатый цикл и останавливается в исходном положении, а не отскакивает назад.
   const [spinning, setSpinning] = useState(false)
   if (busy && spinIcon && !spinning) setSpinning(true)
   const finishTurn = (event: AnimationEvent<HTMLButtonElement>) => {
-    if (!busy && event.animationName === 'photo-spin') setSpinning(false)
+    if (!busy && spinning) setSpinning(false)
     onAnimationIteration?.(event)
   }
   const classes = ['action-button', `is-${variant}`, layout === 'inline' && 'is-inline', active && 'is-active', busy && 'is-busy', spinning && 'is-spinning', className].filter(Boolean).join(' ')

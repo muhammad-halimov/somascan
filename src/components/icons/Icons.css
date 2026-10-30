@@ -28,3 +28,78 @@
 :root:not([data-platform='ios']) .back-icon-ios {
   display: none;
 }
+
+/*
+ * «Обновить» (RefreshIcon) у крутящейся кнопки (ActionButton со spinIcon): штрихи и наконечники бегут
+ * по петле по часовой. Цикл — полпетли: каждая стрелка встаёт на место другой, поэтому повтор
+ * и остановка в конце цикла незаметны. Кадры наконечников — точки петли (на дугах через 15°),
+ * проценты — по пройденной длине, чтобы скорость была ровной.
+ */
+/* На боковых сторонах петли наконечник выходит за рамку 24×24 на единицу — не обрезать. */
+.refresh-icon {
+  overflow: visible;
+}
+
+.is-spinning .refresh-icon-loop {
+  animation: refresh-loop 1s linear infinite;
+}
+
+.is-spinning .refresh-icon-arrow {
+  animation: refresh-arrow-first 1s linear infinite;
+}
+
+.is-spinning .refresh-icon-arrow.is-second {
+  animation-name: refresh-arrow-second;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-spinning :is(.refresh-icon-loop, .refresh-icon-arrow) {
+    animation-duration: 2s;
+  }
+}
+
+@keyframes refresh-loop {
+  from {
+    stroke-dashoffset: 32;
+  }
+
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@keyframes refresh-arrow-first {
+  0% { transform: translate(17px, 6px) rotate(0deg); }
+  3.942% { transform: translate(18.035px, 6.136px) rotate(15deg); }
+  7.884% { transform: translate(19px, 6.536px) rotate(30deg); }
+  11.825% { transform: translate(19.828px, 7.172px) rotate(45deg); }
+  15.767% { transform: translate(20.464px, 8px) rotate(60deg); }
+  19.709% { transform: translate(20.864px, 8.965px) rotate(75deg); }
+  23.651% { transform: translate(21px, 10px) rotate(90deg); }
+  38.708% { transform: translate(21px, 14px) rotate(90deg); }
+  42.649% { transform: translate(20.864px, 15.035px) rotate(105deg); }
+  46.591% { transform: translate(20.464px, 16px) rotate(120deg); }
+  50.533% { transform: translate(19.828px, 16.828px) rotate(135deg); }
+  54.475% { transform: translate(19px, 17.464px) rotate(150deg); }
+  58.417% { transform: translate(18.035px, 17.864px) rotate(165deg); }
+  62.358% { transform: translate(17px, 18px) rotate(180deg); }
+  100% { transform: translate(7px, 18px) rotate(180deg); }
+}
+
+@keyframes refresh-arrow-second {
+  0% { transform: translate(7px, 18px) rotate(180deg); }
+  3.942% { transform: translate(5.965px, 17.864px) rotate(195deg); }
+  7.884% { transform: translate(5px, 17.464px) rotate(210deg); }
+  11.825% { transform: translate(4.172px, 16.828px) rotate(225deg); }
+  15.767% { transform: translate(3.536px, 16px) rotate(240deg); }
+  19.709% { transform: translate(3.136px, 15.035px) rotate(255deg); }
+  23.651% { transform: translate(3px, 14px) rotate(270deg); }
+  38.708% { transform: translate(3px, 10px) rotate(270deg); }
+  42.649% { transform: translate(3.136px, 8.965px) rotate(285deg); }
+  46.591% { transform: translate(3.536px, 8px) rotate(300deg); }
+  50.533% { transform: translate(4.172px, 7.172px) rotate(315deg); }
+  54.475% { transform: translate(5px, 6.536px) rotate(330deg); }
+  58.417% { transform: translate(5.965px, 6.136px) rotate(345deg); }
+  62.358% { transform: translate(7px, 6px) rotate(360deg); }
+  100% { transform: translate(17px, 6px) rotate(360deg); }
+}

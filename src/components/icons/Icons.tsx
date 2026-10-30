@@ -151,14 +151,19 @@ export function EmptyInboxIcon() {
   )
 }
 
-/** Две стрелки по квадратному кругу: обновить список. */
+/** Петля «Обновить»: скруглённый прямоугольник по часовой, начало — у острия верхней стрелки. */
+const REFRESH_LOOP = 'M17 6a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-4a4 4 0 0 1 4-4Z'
+
+/**
+ * Две стрелки по квадратной петле: обновить список. У крутящейся кнопки (spinIcon) стрелки бегут
+ * по петле (см. Icons.css); длины штрихов — в долях петли (pathLength 100).
+ */
 export function RefreshIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m17 2 4 4-4 4" />
-      <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
-      <path d="m7 22-4-4 4-4" />
-      <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+    <svg className="refresh-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path className="refresh-icon-loop" d={REFRESH_LOOP} pathLength={100} strokeDasharray="32 18" strokeDashoffset={32} />
+      <path className="refresh-icon-arrow" d="M-4-4 0 0-4 4" transform="translate(17 6)" />
+      <path className="refresh-icon-arrow is-second" d="M-4-4 0 0-4 4" transform="translate(7 18) rotate(180)" />
     </svg>
   )
 }

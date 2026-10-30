@@ -258,19 +258,13 @@
   animation: photo-spin 750ms linear infinite;
 }
 
-/* Или крутится сама иконка (spinIcon). */
-.action-button.is-spinning .action-button-icon svg {
-  animation: photo-spin 900ms linear infinite;
-}
-
 /* Пока крутится спиннер, кнопка не приглушается, даже если сейчас недоступна: процесс должен быть виден. */
 .action-button.is-busy:disabled {
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .action-button-spinner,
-  .action-button.is-spinning .action-button-icon svg {
+  .action-button-spinner {
     animation-duration: 2s;
   }
 }
