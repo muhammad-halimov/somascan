@@ -85,7 +85,6 @@ export function PromptEditor({ value }: PromptEditorProps) {
           )}
         </div>
       )}
-      hint={t('advanced.promptHint')}
     >
       <TextArea
         ref={areaRef}
@@ -96,6 +95,7 @@ export function PromptEditor({ value }: PromptEditorProps) {
         rows={COLLAPSED_LINES}
         onChange={(next) => settingsStore.setPrompt(next)}
       />
+      <span className="form-section-hint">{t('advanced.promptHint')}</span>
       {!isEditing && (
         <div className="prompt-editor-actions">
           <Button onClick={() => setIsExpanded((current) => !current)}>

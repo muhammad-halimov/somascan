@@ -32,7 +32,8 @@ export function AdvancedTab() {
   const { advanced } = useSettings()
   const catalog = useStore(modelCatalog)
   const isRefreshing = Object.values(catalog.loading).some(Boolean)
-  const dateFormat = useMemo(() => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }), [i18n.language])
+  // День и месяц без года: строка состояния списка — в одну строку (списки обновляются раз в месяц).
+  const dateFormat = useMemo(() => new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }), [i18n.language])
 
   /** Заново загружает списки всех провайдеров с текущими ключами. */
   const refreshAll = () => void modelCatalog.syncAll((id) => getProviderAccess(settingsStore.getSnapshot().general, id), { force: true })

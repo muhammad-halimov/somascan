@@ -26,12 +26,12 @@
     "refreshing": "Se actualizează…",
     "modelsNote": "Modele cu viziune din ultimele {{count}} luni.",
     "modelsNoteAll": "Toate modelele cu viziune.",
-    "modelsPreview": "Catalogul models.dev. Introduceți o cheie API pentru a alege un model.",
-    "modelsEmpty": "Nu există modele disponibile. Verificați cheia sau serverul și actualizați lista.",
+    "modelsPreview": "Introduceți o cheie API pentru a alege.",
+    "modelsEmpty": "Niciun model — verificați cheia sau serverul.",
     "modelsLoadError": "Nu s-au putut încărca modelele",
     "localModel": "Model local",
     "serverUrl": "Adresa serverului",
-    "serverHint": "De ex. 192.168.1.14 — http:// și portul 1234 se adaugă automat.",
+    "serverHint": "De ex. 192.168.1.14, portul se adaugă.",
     "apiKey": "Cheie API",
     "apiKeyPlaceholder": "Introduceți cheia API",
     "apiKeyOptional": "Opțional",
@@ -47,12 +47,12 @@
     "modelPrice": "${{input}} / ${{output}} per 1M tokenuri",
     "modelKnowledge": "cunoștințe până la {{date}}",
     "fit": {
-      "balanced": "Rapid, ieftin, citește sigur etichetele.",
-      "default": "O alegere implicită bună.",
-      "precise": "Pentru etichete dificile: mai precis, dar mai lent și mai scump.",
-      "economy": "Cel mai rapid și ieftin — pentru etichete curate.",
-      "local": "În rețeaua fabricii, fotografiile nu ajung pe internet.",
-      "preview": "Versiune preliminară: comportamentul se poate schimba."
+      "balanced": "Rapid, ieftin, sigur.",
+      "default": "Alegere implicită.",
+      "precise": "Mai precis, mai lent și mai scump.",
+      "economy": "Cel mai rapid și ieftin.",
+      "local": "În rețeaua fabricii, fără internet.",
+      "preview": "Versiune preliminară."
     },
     "modelState": {
       "loaded": "Încărcat în memorie",
@@ -70,7 +70,7 @@
       "smb": "Partajare rețea",
       "googleDrive": "Google Drive"
     },
-    "intro": "Etichetele se adaugă în registru (.xlsx) pe rând, în fundal.",
+    "intro": "Scriere în fundal.",
     "smb": {
       "location": "Locație",
       "server": "Server",
@@ -110,9 +110,9 @@
       "signOutMessage": "Accesul aplicației la Google Drive al contului {{account}} va fi revocat. Încărcările din coadă vor aștepta o nouă conectare.",
       "signInFailed": "Conectarea cu Google a eșuat",
       "accountUnknown": "cont Google",
-      "locationHint": "Folder: link sau ID, gol — „Drive-ul meu”. Tabelul trebuie să existe deja."
+      "locationHint": "Folder: link sau ID, gol — „Drive-ul meu”."
     },
-    "backups": "Înainte de salvare se face o copie în „backups”, păstrată {{days}} zile.",
+    "backups": "Copii: {{days}} zile.",
     "check": {
       "label": "Verificați dacă tabelul există",
       "unchecked": "Existența tabelului nu a fost verificată",
@@ -127,23 +127,21 @@
     },
     "table": {
       "lock": "Blocați calea tabelului",
-      "unlock": "Deblocați calea tabelului pentru editare",
-      "lockHint": "Deblocați pentru a schimba calea."
+      "unlock": "Deblocați calea tabelului pentru editare"
     },
     "sheet": {
       "label": "Foaie",
       "auto": "Foaia anului curent ({{year}})",
-      "unknown": "{{sheet}} — nu există în tabel",
-      "hint": "Foaia anului se creează automat."
+      "unknown": "{{sheet}} — nu există în tabel"
     },
     "strict": {
       "label": "Structură strictă a tabelului",
-      "hint": "Doar într-o foaie cu toate coloanele registrului, în ordine."
+      "hint": "Toate coloanele registrului, în ordine."
     },
     "rules": "Reguli de scriere",
     "uniqueHeat": {
       "label": "Fiecare șarjă o singură dată",
-      "hint": "Nu se scrie o șarjă care e deja în registru sau pe ecran. Dezactivați pentru mai mulți colaci din aceeași șarjă.",
+      "hint": "Repetările nu se scriu.",
       "lock": "Blocați regula „Fiecare șarjă o singură dată”",
       "unlock": "Deblocați regula „Fiecare șarjă o singură dată” pentru a o modifica"
     }
@@ -155,11 +153,11 @@
     "promptReset": "Revino la implicit",
     "promptExpand": "Arată tot",
     "promptCollapse": "Restrânge",
-    "promptHint": "Instrucțiuni pentru model; JSON-ul cu câmpuri se adaugă automat.",
+    "promptHint": "JSON-ul cu câmpuri se adaugă automat.",
     "fields": "Câmpuri",
     "fieldsAll": "Toate",
     "fieldsHint": "Modelul citește doar câmpurile bifate.",
-    "fieldsEditHint": "Atingeți un câmp pentru a-l redenumi sau descrie. Câmpurile proprii au nevoie de un nume în engleză.",
+    "fieldsEditHint": "Atingeți un câmp pentru a-l modifica.",
     "fieldCustom": "Câmp propriu",
     "fieldAdd": "Adaugă câmp",
     "fieldSave": "Salvează",
@@ -186,8 +184,8 @@
     "imageSize": "Dimensiunea fotografiei trimise",
     "imageSizeOriginal": "Original",
     "imageSizePx": "{{size}} px",
-    "imageSizeHint": "Mai mic — mai rapid și mai ieftin; textul se citește de la 1600 px.",
-    "imageSizeAnthropic": "Pentru Claude — cel mult 2048 px (limită 5 MB).",
+    "imageSizeHint": "Mai mic — mai rapid; citibil de la 1600 px.",
+    "imageSizeAnthropic": "Pentru Claude — până la 2048 px.",
     "about": "Despre aplicație",
     "version": "Versiunea {{version}}",
     "editCaption": "Editează",
@@ -196,8 +194,8 @@
     "cancelCaption": "Anulare",
     "fieldsSummary": "Selectate: {{count}} din {{total}}",
     "suppliers": "Furnizori cunoscuți",
-    "suppliersHint": "Când numele fabricii se citește greu, modelul îl ia din această listă. Lista poate fi exportată și importată.",
-    "suppliersEditHint": "Atingeți un furnizor pentru a-l modifica sau șterge. Scrieți numele ca pe etichete.",
+    "suppliersHint": "Numele greu de citit se iau de aici.",
+    "suppliersEditHint": "Atingeți un furnizor pentru a-l modifica.",
     "suppliersSummary": "Furnizori: {{count}}",
     "suppliersEmpty": "Lista este goală — modelul citește numele fără indicii",
     "supplierAdd": "Adăugați furnizor",

@@ -82,7 +82,7 @@ export function GoogleDriveStorageForm() {
         )}
       </FormSection>
 
-      <FormSection title={t('storage.googleDrive.location')} icon={<TableIcon />} hint={`${t('storage.googleDrive.locationHint')} ${t('storage.table.lockHint')} ${t('storage.sheet.hint')}`}>
+      <FormSection title={t('storage.googleDrive.location')} icon={<TableIcon />} hint={t('storage.googleDrive.locationHint')}>
         <Field label={t('storage.googleDrive.folder')}>
           <ActionTextInput
             inputMode="url"
