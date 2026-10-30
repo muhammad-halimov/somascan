@@ -5,6 +5,7 @@ import { BUILT_IN_FIELDS, createDefaultLabelFields, isEnabledByDefault, type Lab
 import { LANGUAGES } from '@/i18n/languages'
 import type { ProviderRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import { isModelProviderId, isProviderId, PROVIDER_IDS, type ModelProviderId, type ProviderId } from '@/features/recognition/types'
+import { BACKUP_RETENTION_DAYS, BACKUP_RETENTION_OPTIONS, type BackupRetentionDays } from '@/features/uploads/xlsx/BackupPolicy'
 import { THEME_PREFERENCES, type ThemePreference } from '@/lib/theme/theme'
 import { isOneOf, isRecord, isString, readField } from '@/lib/validation/guards'
 
@@ -87,6 +88,11 @@ export interface StorageSettings {
    * не отправляется и не записывается. Выключено — повторы плавок разрешены (несколько бунтов одной плавки).
    */
   uniqueHeat: boolean
+  /**
+   * Сколько дней хранить резервные копии таблицы в папке `backups` (выбор — в «Расширенных»). Лежит в хранилище:
+   * его получает движок записи вместе с остальными настройками записи.
+   */
+  backupDays: BackupRetentionDays
 }
 
 /**
@@ -152,6 +158,7 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       sheet: '',
       strictLayout: true,
       uniqueHeat: true,
+      backupDays: BACKUP_RETENTION_DAYS,
     },
     advanced: {
       prompt: '',
@@ -296,6 +303,7 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
       sheet: readField(storage, 'sheet', isString, defaults.storage.sheet).trim(),
       strictLayout: readField(storage, 'strictLayout', (value): value is boolean => typeof value === 'boolean', defaults.storage.strictLayout),
       uniqueHeat: readField(storage, 'uniqueHeat', (value): value is boolean => typeof value === 'boolean', defaults.storage.uniqueHeat),
+      backupDays: readField(storage, 'backupDays', isOneOf(BACKUP_RETENTION_OPTIONS), defaults.storage.backupDays),
     },
     advanced: {
       prompt: readField(advanced, 'prompt', isString, defaults.advanced.prompt),

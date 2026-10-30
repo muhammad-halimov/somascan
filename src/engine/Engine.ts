@@ -12,6 +12,7 @@ import { RetryPolicy } from '@/features/uploads/worker/RetryPolicy'
 import type { TableBackendDeps } from '@/features/uploads/worker/tableBackends'
 import { TableWriter, WRITE_STEPS } from '@/features/uploads/worker/TableWriter'
 import { UploadWorker, type StorageSource } from '@/features/uploads/worker/UploadWorker'
+import { BACKUP_RETENTION_DAYS } from '@/features/uploads/xlsx/BackupPolicy'
 import type { KeyValueStore } from '@/lib/storage/KeyValueStore'
 import { StoredValue } from '@/lib/storage/StoredValue'
 import { isRecord, isString } from '@/lib/validation/guards'
@@ -34,6 +35,7 @@ const UNCONFIGURED: EngineConfig = {
     sheet: '',
     strictLayout: true,
     uniqueHeat: true,
+    backupDays: BACKUP_RETENTION_DAYS,
   },
   deviceId: '',
 }

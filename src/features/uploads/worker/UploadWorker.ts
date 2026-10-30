@@ -26,6 +26,7 @@ import { isTransientUploadError, toUploadError } from '../UploadError'
 import type { RetryPolicy } from './RetryPolicy'
 import { backendFor, type TableBackendDeps } from './tableBackends'
 import type { TableWriter } from './TableWriter'
+import { BACKUP_RETENTION_DAYS } from '../xlsx/BackupPolicy'
 
 /** Пауза после последнего изменения настроек хранилища: пока пользователь печатает, не подключаемся. */
 const SETTINGS_DEBOUNCE_MS = 1500
@@ -239,7 +240,12 @@ export class UploadWorker {
       const result = await this.writer.write(job, backend, controller.signal, (fraction) => {
         this.step = fraction
         this.onActivity()
-      }, { sheet: storage.sheet ?? '', strict: storage.strictLayout ?? true, uniqueHeat: storage.uniqueHeat ?? true })
+      }, {
+        sheet: storage.sheet ?? '',
+        strict: storage.strictLayout ?? true,
+        uniqueHeat: storage.uniqueHeat ?? true,
+        backupDays: storage.backupDays ?? BACKUP_RETENTION_DAYS,
+      })
       // Отмена пришла, когда файл уже заменялся: бирка в журнале — запись завершена.
       this.store.markCompleted(job.id, result.rowNumber, result.sheet, result.item ?? undefined)
     } catch (error) {

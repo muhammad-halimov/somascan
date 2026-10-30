@@ -10,6 +10,8 @@
   justify-content: space-between;
   gap: 8px;
   min-height: 36px;
+  /* Ближе к полю: кнопка-текст выше своей строки, иначе строка отходит от поля дальше, чем нужно. */
+  margin-top: -8px;
 }
 
 .prompt-editor-footer .form-section-hint {

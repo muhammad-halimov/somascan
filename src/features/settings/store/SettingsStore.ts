@@ -8,6 +8,7 @@ import { isModelProviderId, type ProviderId } from '@/features/recognition/types
 import { cleanSupplierName, DEFAULT_KNOWN_SUPPLIERS, normalizeSuppliers, supplierKey } from '@/features/recognition/label/knownSuppliers'
 import { createDefaultLabelFields, createLabelKey, isEnabledByDefault, type LabelFieldDefinition, type LabelKey } from '@/features/recognition/label/labelFields'
 import { DEFAULT_LABEL_INSTRUCTIONS } from '@/features/recognition/label/labelPrompt'
+import type { BackupRetentionDays } from '@/features/uploads/xlsx/BackupPolicy'
 import { clearLegacySettings, readLegacySettings } from './legacySettings'
 import {
   createDefaultSettings,
@@ -111,6 +112,11 @@ export class SettingsStore extends Store<AppSettings> {
   /** Включает или выключает правило «каждая плавка — один раз». */
   setUniqueHeat(uniqueHeat: boolean) {
     this.setState((state) => ({ ...state, storage: { ...state.storage, uniqueHeat } }))
+  }
+
+  /** Сколько дней хранить резервные копии таблицы. */
+  setBackupDays(backupDays: BackupRetentionDays) {
+    this.setState((state) => ({ ...state, storage: { ...state.storage, backupDays } }))
   }
 
   /** Обновляет часть полей SMB. */
