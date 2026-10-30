@@ -48,7 +48,7 @@ export function heatCell(value: LabelValue | undefined): TableCell {
   return /^[1-9]\d{0,14}$/.test(text) ? Number(text) : text
 }
 
-/** Диаметр: «10 mm», «Ø12», «R20» → число миллиметров; что-то другое — как прочитано. */
+/** Диаметр: «10 mm», «Ø12», «R20», «Q16» → число миллиметров (первое число значения); без цифр — как прочитано. */
 export function diameterCell(value: LabelValue | undefined): TableCell {
   if (typeof value === 'number') return Number.isFinite(value) ? value : null
   const text = textOf(value)
