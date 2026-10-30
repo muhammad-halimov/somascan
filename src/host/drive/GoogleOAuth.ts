@@ -112,6 +112,8 @@ async function tokenRequest(params: Record<string, string>, fetcher: typeof fetc
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams(params).toString(),
+      // зависший сервер токенов не держит цикл слежения
+      signal: AbortSignal.timeout(60_000),
     })
   } catch (error) {
     throw new OAuthError('network', error instanceof Error ? error.message : String(error))

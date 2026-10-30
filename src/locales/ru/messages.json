@@ -8,7 +8,8 @@
     "migratePlan": "Демонстрационная миграция",
     "migrateWrite": "Фактическая миграция",
     "createSheets": "Создание листов",
-    "restore": "Откат из копии"
+    "restore": "Откат из копии",
+    "bridge": "Бирки с телефонов"
   },
   "run": {
     "running": "{{trigger}} · выполняется",
@@ -111,7 +112,8 @@
     "usage": "Не заданы файлы Consum, Sarjele и Probe",
     "other": "{{error}}",
     "linksBroken": "links.json не читается: {{error}}. Исправьте файл («Расширенные» → «Ручные привязки») или удалите его — пока он испорчен, прогоны не выполняются",
-    "linksNotObject": "links.json должен быть объектом { \"ПРОЕКТ|элемент\": \"заголовок блока\" } — пока файл не исправлен, прогоны не выполняются"
+    "linksNotObject": "links.json должен быть объектом { \"ПРОЕКТ|элемент\": \"заголовок блока\" } — пока файл не исправлен, прогоны не выполняются",
+    "bridgeUsage": "Не заданы копия Probe и Probe"
   },
   "check": {
     "noPath": "Путь не указан",
@@ -211,7 +213,12 @@
     "usage": "Использование: node sync.mjs \"<Consum.xlsx>\" \"<Sarjele.xlsx>\" \"<Probe.xlsx>\" [--apply]",
     "applyOn": "запись",
     "applyOff": "только план",
-    "noStock": "— НЕТ ОСТАТКА —"
+    "noStock": "— НЕТ ОСТАТКА —",
+    "bridgeRead": "Записей с телефонов в копии: {{records}}, новых для Probe: {{fresh}}",
+    "bridgeLine": "  ■ плавка {{heat}} → лист {{sheet}}, строка {{row}}",
+    "bridgeSkipped": "  ! {{element}}: {{why}}",
+    "bridgeNothing": "Новых бирок с телефонов нет",
+    "bridgeSaved": "Перенесено в Probe: {{n}}"
   },
   "drive": {
     "badFolder": "Папка Google Drive не распознана: {{folder}} — вставьте ссылку на папку или её ID",
@@ -236,5 +243,19 @@
     "uploaded": "Выгружено в Google Drive: {{files}}",
     "conflict": "{{file}} изменили в Google Drive во время прогона — записанное не выгружено, следующий прогон пересчитает",
     "uploadFailed": "Не удалось выгрузить в Google Drive: {{error}}"
+  },
+  "lab": {
+    "corrupt": "Таблица не открывается: {{detail}}",
+    "sheetNotFound": "в Probe нет листа «{{detail}}»",
+    "unknownLayout": "на листе «{{detail}}» не найдена шапка журнала (Nr. Crt., Sarja, Producator…)",
+    "layoutMismatch": "строение листа «{{detail}}» не совпадает с журналом",
+    "duplicateHeat": "плавка уже есть в Probe: {{detail}}"
+  },
+  "bridge": {
+    "noEntry": "запись {{record}} сделана прежней версией приложения — бирки в ней нет, внесите её вручную",
+    "probeChanged": "«{{file}}» сохранили во время переноса — перенос повторится",
+    "integrity": "Проверка перед записью Probe не прошла (ячейка {{cell}}) — Probe не изменён",
+    "created": "Копия {{file}} создана в Google Drive — телефоны пишут бирки в неё",
+    "failed": "Телефоны (Google Drive): {{error}}"
   }
 }

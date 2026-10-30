@@ -146,6 +146,11 @@ export interface AppSettings {
   startMinimized: boolean
   /** Не писать в файлы, открытые в Excel / ONLYOFFICE / LibreOffice (запись откладывается). */
   guardOpenFiles: boolean
+  /**
+   * Мост с телефонами: телефоны пишут бирки в копию Probe в Google Drive (папка и имя файла — как у места хранения
+   * Google Drive), программа переносит их в Probe (`host/PhoneBridge`). Только когда таблицы не в Google Drive.
+   */
+  bridge: boolean
 }
 
 /** Значения по умолчанию. */
@@ -174,6 +179,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   trayMinimize: true,
   startMinimized: false,
   guardOpenFiles: true,
+  bridge: false,
 }
 
 /** Проект с пустыми полями по умолчанию. */
@@ -254,6 +260,7 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
     trayMinimize: readBoolean(src, 'trayMinimize', defaults.trayMinimize),
     startMinimized: readBoolean(src, 'startMinimized', defaults.startMinimized),
     guardOpenFiles: readBoolean(src, 'guardOpenFiles', defaults.guardOpenFiles),
+    bridge: readBoolean(src, 'bridge', defaults.bridge),
   }
 }
 

@@ -8,7 +8,8 @@
     "migratePlan": "Trial migration",
     "migrateWrite": "Actual migration",
     "createSheets": "Creating sheets",
-    "restore": "Restore from backup"
+    "restore": "Restore from backup",
+    "bridge": "Tags from phones"
   },
   "run": {
     "running": "{{trigger}} · running",
@@ -111,7 +112,8 @@
     "usage": "The Consum, Sarjele and Probe files are not set",
     "other": "{{error}}",
     "linksBroken": "links.json cannot be read: {{error}}. Fix the file (Advanced → Manual links) or delete it — runs are stopped while it is broken",
-    "linksNotObject": "links.json must be an object { \"PROJECT|element\": \"block title\" } — runs are stopped until the file is fixed"
+    "linksNotObject": "links.json must be an object { \"PROJECT|element\": \"block title\" } — runs are stopped until the file is fixed",
+    "bridgeUsage": "The Probe copy and Probe are not set"
   },
   "check": {
     "noPath": "No path set",
@@ -211,7 +213,12 @@
     "usage": "Usage: node sync.mjs \"<Consum.xlsx>\" \"<Sarjele.xlsx>\" \"<Probe.xlsx>\" [--apply]",
     "applyOn": "write",
     "applyOff": "plan only",
-    "noStock": "— NO STOCK —"
+    "noStock": "— NO STOCK —",
+    "bridgeRead": "Records from phones in the copy: {{records}}, new for Probe: {{fresh}}",
+    "bridgeLine": "  ■ heat {{heat}} → sheet {{sheet}}, row {{row}}",
+    "bridgeSkipped": "  ! {{element}}: {{why}}",
+    "bridgeNothing": "No new tags from phones",
+    "bridgeSaved": "Transferred to Probe: {{n}}"
   },
   "drive": {
     "badFolder": "The Google Drive folder is not recognised: {{folder}} — paste a folder link or its ID",
@@ -236,5 +243,19 @@
     "uploaded": "Uploaded to Google Drive: {{files}}",
     "conflict": "{{file}} was changed in Google Drive during the run — the result was not uploaded, the next run will recalculate",
     "uploadFailed": "Couldn’t upload to Google Drive: {{error}}"
+  },
+  "lab": {
+    "corrupt": "The table does not open: {{detail}}",
+    "sheetNotFound": "sheet “{{detail}}” not found in Probe",
+    "unknownLayout": "no log header (Nr. Crt., Sarja, Producator…) found on sheet “{{detail}}”",
+    "layoutMismatch": "the layout of sheet “{{detail}}” does not match the log",
+    "duplicateHeat": "the heat is already in Probe: {{detail}}"
+  },
+  "bridge": {
+    "noEntry": "record {{record}} was made by an older app version — it has no tag data, enter it by hand",
+    "probeChanged": "“{{file}}” was saved during the transfer — the transfer will be retried",
+    "integrity": "The check before writing Probe failed (cell {{cell}}) — Probe was not changed",
+    "created": "Copy {{file}} created in Google Drive — phones write tags into it",
+    "failed": "Phones (Google Drive): {{error}}"
   }
 }

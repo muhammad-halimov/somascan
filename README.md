@@ -6,7 +6,7 @@
 
 A desktop app (Windows and macOS) for **Somaco (Holcim), Romania** — accounting of reinforcing steel by heat.
 
-The app watches the monthly Consum report; when an operator saves it, the app splits each element's consumption over heats, writes the element blocks into Sarjele and fills used-up heats yellow in Probe — work that used to be done by hand. The tables are kept on this computer, on a Windows network drive or in Google Drive.
+The app watches the monthly Consum report; when an operator saves it, the app splits each element's consumption over heats, writes the element blocks into Sarjele and fills used-up heats yellow in Probe — work that used to be done by hand. The tables are kept on this computer, on a Windows network drive or in Google Drive. Tags that phones without access to the company network write into a copy of Probe in Google Drive are moved into Probe by the app itself.
 
 **Stack:** Electron 44 · React 19 · TypeScript · Vite 8 · ExcelJS · i18next.
 
@@ -14,7 +14,7 @@ The app watches the monthly Consum report; when an operator saves it, the app sp
 
 Dark theme, English interface; demo data — the projects, elements and heats are made up.
 
-<img src="docs/screenshots/overview.en.webp" alt="Home with the journal, network drive, Google Drive, Links, “Advanced”">
+<img src="docs/screenshots/overview.en.webp" alt="Home with the journal, network drive, Phones, Google Drive, Links, “Advanced”">
 
 ```bash
 npm run build && node scripts/screenshots/capture.mjs # Make screenshots
@@ -32,6 +32,7 @@ npm run build && node scripts/screenshots/capture.mjs # Make screenshots
 - [Table storage](#table-storage)
   - [This computer and the network drive](#this-computer-and-the-network-drive)
   - [Google Drive](#google-drive)
+  - [Phones: tags via Google Drive](#phones-tags-via-google-drive)
   - [Google Cloud setup (once)](#google-cloud-setup-once)
 - [In practice](#in-practice)
 - [Manual links: links.json](#manual-links-linksjson)
@@ -111,6 +112,17 @@ The engine works with files, so the Drive tables live in a local copy (`<app dat
 - **Upload and version conflict.** After a run with writing, what the engine changed is uploaded: the previous version is copied on the server into the `backups` folder next to the tables (kept as many days as the local copies), the new revision is atomic and its MD5 is checked. If a table was changed in Drive during the run (Excel online, another device), it is not overwritten — the next run downloads the new version and recalculates.
 - **Watching.** Before every check a Consum that changed in Drive is downloaded, and the change of the copy starts a run.
 
+### Phones: tags via Google Drive
+
+When the tables are on this computer or a network drive and the phones cannot reach the company network, the mobile app writes tags into a **copy of Probe in Google Drive**, and the app moves them into Probe. Turned on in “Storage → Phones” (the section is there when “Save to” is not Google Drive): the Google account and folder are those of the Google Drive storage, the copy's name is its Probe name. On the phones — Google Drive storage with the same folder and the same name. The code is `host/PhoneBridge.ts` and the engine command `--bridge` (`engine/ProbeBridge.ts`).
+
+- **When.** While watching with writing to files is on: in every watching check, but not more often than once in 30 s. Drive sends no file-change notifications without a public address, so the app compares the copy's MD5 (the content; a change of sharing does not count) — two short requests.
+- **The phones changed the copy.** Under the lock `Probe otel.xlsx.lock` — the same one the phones set — the copy is downloaded and the engine appends to Probe the tags it does not have yet: by the hidden sheet `somascan-journal`, where the phone keeps the record number and the tag itself. The row is the one the phone would have written (`engine/lab/LabelWorkbook.ts` is taken from the mobile app): the sheet the phone wrote to (a new year's sheet is created), “Nr. Crt.” in Probe's order, arrival date — the write time on the phone. Then Probe is uploaded in place of the copy, and the phones see the fresh log. The app's journal shows a “Tags from phones” card.
+- **Only Probe changed** (an edit in Excel, filling heats) — Probe is uploaded in place of the copy without a run. No copy — it is created from Probe.
+- **Not moved.** The heat is already in Probe (each heat once), the sheet is not in Probe, a record of an older app version without the tag — the tag is skipped with the reason in the card; after Probe is uploaded it is gone from the copy.
+- **Probe is open in Excel.** The transfer waits and the copy is not replaced — otherwise the tags from phones would be lost. Under the section — “Tags from phones are waiting: close Probe”; once the file is closed they move by themselves.
+- **Safety.** Before Probe is replaced — a copy in `backups`, then the new workbook is checked before writing (all earlier values in place, moved tags in their rows); the copy's previous version in Drive goes to `backups` next to it. The synced state (copy MD5 and Probe's change time) is kept in `bridge.json`: no extra run after a restart.
+
 ### Google Cloud setup (once)
 
 1. In [Google Cloud Console](https://console.cloud.google.com/) enable **Google Drive API** (the project of the mobile app is fine).
@@ -118,7 +130,7 @@ The engine works with files, so the Drive tables live in a local copy (`<app dat
 3. Either download the client's JSON and put it into the app data folder as `google-oauth.json` (`%APPDATA%\Somasync\` on Windows, `~/Library/Application Support/Somasync/` on Mac), or build the app with it: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`. Without a client, “Sign in with Google” says that Google Drive is not set up.
 4. While the consent screen is in “Testing” mode, only accounts from its Test users list can sign in — add the warehouse accounts there.
 
-Testing without network or an account: `npm test` runs the local copy through a fake Drive (`tests/drive.test.ts`): download of changed tables only, locks, upload with a copy of the previous version, version conflict, cleanup; and the sign-in through `127.0.0.1` with a fake token server.
+Testing without network or an account: `npm test` runs the local copy through a fake Drive (`tests/drive.test.ts`): download of changed tables only, locks, upload with a copy of the previous version, version conflict, cleanup; and the sign-in through `127.0.0.1` with a fake token server. The phone bridge is tested there too, with the real engine (`tests/phoneBridge.test.ts`, `tests/bridge.test.ts`).
 
 ---
 
@@ -244,7 +256,7 @@ Mac: unzip, quit Somasync (Cmd+Q) and run `install-macos.command` next to `Somas
 
 ## Tests
 
-`npm test` — tests on small synthetic workbooks (`tests/fixtures.ts`): plan, write, repeated run, open file, restore, locks, backups, heat allocation, settings, links.json, translations. The plant's real files are not in the project.
+`npm test` — tests on small synthetic workbooks (`tests/fixtures.ts`, the mobile app's empty sample log `tests/fixtures/Probe otel.xlsx`): plan, write, repeated run, open file, restore, locks, backups, heat allocation, settings, links.json, translations, the phone bridge. The plant's real files are not in the project.
 
 Before releasing a new engine version, run the old and new versions on copies of the real files and compare the journal and the result.
 
@@ -258,7 +270,7 @@ src/
   app/                    App (tabs, macOS title bar, theme), state (bridge to the main process and stores), i18n
   features/               tabs
     run/                  Home: RunScreen (status, Start/Stop, mode), Journal (journal, run cards)
-    storage/              Storage: destination, network share (account, location), Google account, tables with checks, sheet
+    storage/              Storage: destination, network share (account, location), Google account, tables with checks, sheet, phones
     links/                Links: LinksScreen, ProjectsTable (project → sheet, lock), ElementsSection (element → block)
     settings/             Advanced: timer, rules, backups, actions, system, language, about
   components/             shared UI: icons/ (icons, flags), ui/ (Button, Inputs, Layout, List, Tabs)
@@ -272,9 +284,12 @@ src/
     LinksService          Links tab: reading links, links.json
     StorageService        Storage tab: file checks, connecting the network share
     drive/                Google Drive: GoogleOAuth (sign-in), DriveClient (Drive API), DriveMirror (local copy, locks, upload), DriveService
+    PhoneBridge           phone bridge: tags from the Probe copy in Google Drive go into Probe, Probe goes in place of the copy
     MainWindow, TrayMenu, ipc, preload, main
   engine/                 engine (dist-engine/sync.mjs), no Electron or React
-    SyncEngine            commands: sync, scan, create-sheets, restore
+    SyncEngine            commands: sync, scan, create-sheets, restore, bridge
+    ProbeBridge           bridge: tags from phones from the Probe copy into Probe
+    lab/                  LabelWorkbook and its parts — writing a tag into the sample log the way the mobile app does
     Workspace             loaded files, projects, element-to-block links, data for the Links tab
     planning/             ProjectCatalog, ElementLinker (+ Ownership, LinksFile), HeatAllocator, Planner (plan and what to rewrite)
     books/                ConsumBook, ConsumIdPatcher, SarjeleBook, SarjeleWriter, ProbeBook — reading and writing the files
@@ -314,6 +329,9 @@ Things that work but may break or let you down under certain conditions. In the 
 | Pause after a Consum change | `host/ConsumWatcher.ts` | on a slow network the engine may read a half-written file |
 | Network share password and Google key without system encryption | `host/SettingsStore.ts` | stored in `state.json` unencrypted |
 | A Google Drive table changed during a run | `host/drive/DriveMirror.ts` | not uploaded (a warning in the journal), the next run recalculates from the new version |
+| Probe is open in Excel all day | `host/PhoneBridge.ts` | tags from phones wait in the copy until the file is closed (a reminder under “Phones”) |
+| A tag's year sheet comes from the phone's clock | `engine/lab/LabelWorkbook.ts` | with a wrong date on the phone the tag goes to the wrong sheet |
+| Writing a tag repeats the mobile app | `engine/lab/` | change together with `features/uploads/xlsx/` in main |
 
 ## License
 

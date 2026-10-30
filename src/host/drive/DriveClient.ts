@@ -65,6 +65,12 @@ export function driveError(status: number, body: unknown): DriveError {
   return new DriveError('io', detail)
 }
 
+/**
+ * Предел одного запроса, мс: зависший запрос не держит цикл слежения (Consum в Drive, мост с телефонами) дольше —
+ * он кончается ошибкой связи, и следующая проверка пробует снова.
+ */
+export const REQUEST_TIMEOUT_MS = 120_000
+
 /** Клиент Drive с токеном доступа. */
 export class DriveClient {
   private readonly token: string
@@ -194,7 +200,11 @@ export class DriveClient {
   private async send(url: string, init: RequestInit = {}): Promise<Response> {
     let response: Response
     try {
-      response = await this.fetcher(url, { ...init, headers: { ...(init.headers as Record<string, string> | undefined), Authorization: `Bearer ${this.token}` } })
+      response = await this.fetcher(url, {
+        ...init,
+        headers: { ...(init.headers as Record<string, string> | undefined), Authorization: `Bearer ${this.token}` },
+        signal: init.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      })
     } catch (error) {
       throw new DriveError('network', error instanceof Error ? error.message : String(error))
     }

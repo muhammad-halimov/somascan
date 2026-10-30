@@ -54,5 +54,14 @@
     "label": "Sheet",
     "auto": "Current year sheet ({{year}})",
     "missing": "{{sheet}} — not in the table"
+  },
+  "phones": {
+    "title": "Phones",
+    "enable": "Tags from phones via Google Drive",
+    "enableHint": "For phones without access to the company network",
+    "copy": "Probe copy in Google Drive",
+    "hint": "Phones write tags into the copy; the app moves them to Probe while watching with writing on.",
+    "waiting": "Tags from phones are waiting: close Probe",
+    "synced": "Copy synced at {{time}}"
   }
 }

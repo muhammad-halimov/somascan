@@ -3,6 +3,7 @@
  *
  *   sync.mjs [--apply] [--migrate] [--scan] [--create-sheets] <Consum.xlsx> <Sarjele.xlsx> <Probe.xlsx>
  *   sync.mjs --restore [метка] <Sarjele.xlsx> <Probe.xlsx> [Consum.xlsx…]
+ *   sync.mjs --bridge [--apply] <копия Probe.xlsx> <Probe.xlsx>   (бирки с телефонов, см. `ProbeBridge`)
  *
  * Окружение задаёт главный процесс (`host/EngineRunner`):
  *   PROJECTS_CFG   проекты программы (JSON: name, aliases, sheet, prefix, enabled, create)
@@ -31,7 +32,7 @@ export interface EngineProject {
 }
 
 /** Что делает прогон. */
-export type EngineCommand = 'sync' | 'scan' | 'create-sheets' | 'restore'
+export type EngineCommand = 'sync' | 'scan' | 'create-sheets' | 'restore' | 'bridge'
 
 /** Параметры прогона. */
 export interface EngineOptions {
@@ -45,6 +46,8 @@ export interface EngineOptions {
   probe: string
   /** Для отката: метка и Consum. */
   restore: { stamp: string | null; consums: string[] } | null
+  /** Для моста с телефонами: скачанная копия Probe с Google Drive. */
+  copy: string
   projects: EngineProject[]
   autoProjects: boolean
   /** Имена активных Consum или `null` (не задано). */
@@ -61,7 +64,7 @@ export interface EngineOptions {
 }
 
 /** Флаги, которые не являются путями. */
-const FLAGS = new Set(['--apply', '--migrate', '--create-sheets', '--scan'])
+const FLAGS = new Set(['--apply', '--migrate', '--create-sheets', '--scan', '--bridge'])
 
 /** Разбирает проекты из PROJECTS_CFG. */
 function parseProjects(raw: string | undefined): EngineProject[] {
@@ -115,11 +118,15 @@ export function parseEngineOptions(argv: readonly string[], env: NodeJS.ProcessE
     const pos = argv.filter((a) => !a.startsWith('--'))
     const stamp = /^(\d{4}-|before-restore)/.test(pos[0] ?? '') ? pos.shift()! : null
     const [sarjele = '', probe = '', ...consums] = pos
-    return { ...base, command: 'restore', consum: '', sarjele, probe, restore: { stamp, consums } }
+    return { ...base, command: 'restore', consum: '', sarjele, probe, restore: { stamp, consums }, copy: '' }
+  }
+  if (argv.includes('--bridge')) {
+    const [copy = '', probe = ''] = argv.filter((a) => !FLAGS.has(a))
+    return { ...base, command: 'bridge', consum: '', sarjele: '', probe, restore: null, copy }
   }
   const [consum = '', sarjele = '', probe = ''] = argv.filter((a) => !FLAGS.has(a))
   const command: EngineCommand = argv.includes('--create-sheets') ? 'create-sheets' : argv.includes('--scan') ? 'scan' : 'sync'
-  return { ...base, command, consum, sarjele, probe, restore: null }
+  return { ...base, command, consum, sarjele, probe, restore: null, copy: '' }
 }
 
 /** Имя Consum-файла — источник для реестра ID. */

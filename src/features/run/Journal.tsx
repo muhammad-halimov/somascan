@@ -2,8 +2,8 @@
  * Журнал на главной: события программы одной строкой и карточки прогонов.
  *
  * Карточка прогона — что запустило, по какому Consum, итог (записано / только план / изменений нет / отложено /
- * ошибка) и по разделам: блоки Sarjele, ID, закраска плавок в Probe, нехватка стали, что требует внимания,
- * проверка после записи, бэкап. «Подробно» — технический вывод движка (он же в `log.txt`).
+ * ошибка) и по разделам: бирки с телефонов, перенесённые в Probe, блоки Sarjele, ID, закраска плавок в Probe,
+ * нехватка стали, что требует внимания, проверка после записи, бэкап. «Подробно» — технический вывод движка (он же в `log.txt`).
  */
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -191,19 +191,27 @@ function RunBody({ run, s }: { run: JournalRun; s: RunSummary }) {
       </span>
     </>
   ))
+  const bridged = (s.bridged ?? []).map((b) => (
+    <>
+      <b>{b.heat || b.record}</b>
+      {b.producer && <span className="run-dim"> · {b.producer}</span>} — {t('journal.bridgedRow', { sheet: b.sheet, row: b.row })}
+      {b.item !== null && <>, {t('journal.bridgedItem', { item: b.item })}</>}
+    </>
+  ))
   const skipped = s.skipped.map((x) => (
     <>
       <b>{x.element}</b>
       {x.project && <span className="run-dim"> · {x.project}</span>} — {format(x.reason)}
     </>
   ))
-  const nothing = !s.error && !s.blocks.length && !s.ids.length && !s.closed.length && !s.reopened.length && !s.skipped.length && !s.shortages.length && !s.restored && !s.sheets.length && !s.deferred.length
+  const nothing = !s.error && !s.blocks.length && !s.ids.length && !s.closed.length && !s.reopened.length && !s.skipped.length && !s.shortages.length && !s.restored && !s.sheets.length && !s.deferred.length && !bridged.length
   return (
     <div className="run-body">
       {s.error && <Line tone="err">{format(s.error)}</Line>}
       {s.restored && <Line tone="ok">{t('journal.restored', { time: dateTime(stampTime(s.restored.stamp)) })}</Line>}
       {s.deferred.length > 0 && <Line tone="warn">{t('journal.deferred', { list: list(s.deferred.map((d) => d.file)) })}</Line>}
-      {nothing && run.outcome !== 'running' && <Line>{s.command === 'sync' ? t('journal.nothing') : t('journal.nothingSheets')}</Line>}
+      {nothing && run.outcome !== 'running' && <Line>{s.command === 'bridge' ? t('journal.nothingBridge') : s.command === 'sync' ? t('journal.nothing') : t('journal.nothingSheets')}</Line>}
+      <Section title={done ? t('journal.bridgedDone', { n: bridged.length }) : t('journal.bridgedPlan', { n: bridged.length })} items={bridged} />
       <Section title={done ? t('journal.blocksDone', { n: blocks.length }) : t('journal.blocksPlan', { n: blocks.length })} items={blocks} />
       <Section title={t('journal.ids')} items={ids} />
       <Section title={done ? t('journal.closedDone') : t('journal.closedPlan')} items={s.closed.length ? [list(s.closed)] : []} />

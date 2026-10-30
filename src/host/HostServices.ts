@@ -9,6 +9,7 @@
  *   LinksService   вкладка «Связи»: чтение связей, ручные привязки (`links.json`)
  *   StorageService вкладка «Хранилище»: проверка файлов, сетевой диск
  *   DriveService   Google Drive: вход, скачивание таблиц перед прогоном и выгрузка после
+ *   PhoneBridge    мост с телефонами: бирки из копии Probe в Google Drive — в Probe, Probe — на место копии
  *   MainWindow, TrayMenu
  */
 import { shell } from 'electron'
@@ -21,6 +22,7 @@ import { EngineRunner } from './EngineRunner'
 import { Journal } from './Journal'
 import { LinksService } from './LinksService'
 import { MainWindow } from './MainWindow'
+import { PhoneBridge } from './PhoneBridge'
 import { SettingsStore } from './SettingsStore'
 import { StorageService } from './StorageService'
 import { SyncService } from './SyncService'
@@ -37,6 +39,7 @@ export class HostServices {
   readonly links = new LinksService(this.paths.linksFile, this.settings, this.runner, this.sync, this.journal)
   readonly drive = new DriveService(this.paths, this.settings, this.journal, (url) => void shell.openExternal(url))
   readonly storage = new StorageService(this.settings, this.drive)
+  readonly bridge = new PhoneBridge(this.paths, this.settings, this.journal, this.sync, this.drive)
   readonly window = new MainWindow(this.paths, this.settings)
   readonly tray = new TrayMenu(this.paths, this.settings, this.sync, this.journal, this.window, {
     start: () => void this.watcher.start(),
@@ -49,6 +52,7 @@ export class HostServices {
     this.settings.resolveDrive = (folder, names) => this.drive.mirror.resolve(folder, names)
     this.sync.remote = this.drive
     this.watcher.remote = this.drive
+    this.watcher.bridge = this.bridge
     this.window.hasTray = () => this.tray.exists
     this.window.onVisibilityChange = () => this.tray.refresh()
     this.window.onProblem = (m) => this.journal.event('err', m)

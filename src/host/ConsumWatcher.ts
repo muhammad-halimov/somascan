@@ -8,6 +8,9 @@
  * Consum в Google Drive: перед каждой проверкой изменившийся на Drive Consum скачивается в локальную копию
  * (`remote.refreshConsums`), и проверка видит изменение копии.
  *
+ * В конце каждой проверки — мост с телефонами (`bridge`, см. `PhoneBridge`): в том же цикле, чтобы его прогон
+ * не совпал с прогоном по Consum.
+ *
  * РИСК: на медленном сетевом диске `settleSec` может не хватить — движок прочтёт недописанный Consum.
  * Прогон запускают только изменения Consum: правки Sarjele или Probe сами прогон не запускают.
  */
@@ -25,6 +28,11 @@ export interface RemoteConsums {
   active(): boolean
   /** Скачивает Consum, изменившиеся на удалённом хранилище. */
   refreshConsums(): Promise<void>
+}
+
+/** Мост с телефонами: своя проверка в цикле слежения. */
+export interface BridgeTick {
+  tick(): Promise<void>
 }
 
 /** Пауза. */
@@ -52,6 +60,8 @@ export class ConsumWatcher {
   private lastSnap: Record<string, string | null> = {}
   /** Consum в удалённом хранилище (задаёт `HostServices`). */
   remote: RemoteConsums | null = null
+  /** Мост с телефонами (задаёт `HostServices`). */
+  bridge: BridgeTick | null = null
 
   constructor(settings: SettingsStore, journal: Journal, sync: SyncService) {
     this.settings = settings
@@ -159,6 +169,7 @@ export class ConsumWatcher {
     if (this.watching && pending.length && write() && this.editorsClosed(pending)) {
       await this.sync.syncOnce({ apply: true, trigger: 'retry', only: pending })
     }
+    if (this.watching && this.bridge) await this.bridge.tick()
     if (this.watching) this.scheduleNext()
     else this.finishStop()
   }

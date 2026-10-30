@@ -1,18 +1,20 @@
 /**
  * Вкладка «Хранилище» — как «Хранилище» мобильного приложения: куда сохранять (этот компьютер, сетевой диск,
  * Google Drive), у сетевого диска — учётная запись и расположение, у Google Drive — аккаунт, затем таблицы
- * с проверкой и лист Probe, пояснение — в конце. У каждого места хранения свои файлы.
+ * с проверкой и лист Probe; когда таблицы не в Google Drive — «Телефоны» (бирки с телефонов через копию Probe
+ * в Google Drive), пояснение — в конце. У каждого места хранения свои файлы.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, LogoutIcon, PlugIcon, TableIcon, TrashIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
+import { DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, LogoutIcon, PhoneIcon, PlugIcon, TableIcon, TrashIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
 import { Button } from '@/components/ui/Button'
 import { ActionTextInput, SecretInput, SelectInput, TextInput } from '@/components/ui/Inputs'
 import { Field, FieldRow, FormSection, Notice, StatusBadge } from '@/components/ui/Layout'
+import { List, ListItem, Switch } from '@/components/ui/List'
 import { Tabs } from '@/components/ui/Tabs'
-import { useMessages } from '@/app/i18n'
-import { api, appInfoStore, settingsStore, useSettings, useStore } from '@/app/state'
-import type { CheckResult } from '@/shared/protocol'
+import { useLocale, useMessages } from '@/app/i18n'
+import { api, appInfoStore, runStore, settingsStore, useSettings, useStore } from '@/app/state'
+import type { BridgeState, CheckResult } from '@/shared/protocol'
 import { activeFiles, PASSWORD_MASK, TARGETS, type AppSettings, type FileKind, type FileSet, type GoogleDriveSettings, type SmbSettings, type StorageTarget } from '@/shared/settings'
 import './storage.css'
 
@@ -101,6 +103,7 @@ export function StorageScreen() {
         {settings.target === 'smb' && <SmbSection smb={settings.smb} />}
         {drive && <DriveAccountSection drive={settings.googleDrive} />}
         <FilesSection settings={settings} rows={rows} checks={checks} recheck={(r) => void run(r)} windows={platform === 'win32'} />
+        {!drive && <PhonesSection settings={settings} />}
       </div>
 
       {/* Как и куда пишутся таблицы — пояснение в конце, как в мобильном приложении. */}
@@ -173,6 +176,30 @@ function SmbSection({ smb }: { smb: SmbSettings }) {
  */
 function DriveAccountSection({ drive }: { drive: GoogleDriveSettings }) {
   const { t } = useTranslation('storage')
+  const signOut = useDriveSignOut(drive)
+  return (
+    <FormSection
+      title={t('googleDrive.account')}
+      icon={<GoogleLogo />}
+      action={drive.account ? <Button variant="text" icon={<LogoutIcon />} aria-label={t('googleDrive.signOutLabel')} onClick={() => void signOut()}>{t('googleDrive.signOut')}</Button> : undefined}
+    >
+      <DriveAccount drive={drive} />
+    </FormSection>
+  )
+}
+
+/** Выход из Google с подтверждением. */
+function useDriveSignOut(drive: GoogleDriveSettings) {
+  const { t } = useTranslation('storage')
+  return async () => {
+    const ok = await api.confirm({ title: t('googleDrive.signOutTitle'), message: t('googleDrive.signOutMessage', { account: drive.account }), ok: t('googleDrive.signOut') })
+    if (ok) await api.driveSignOut()
+  }
+}
+
+/** Вошедший аккаунт или «Войти через Google». */
+function DriveAccount({ drive }: { drive: GoogleDriveSettings }) {
+  const { t } = useTranslation('storage')
   const format = useMessages()
   const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -183,27 +210,84 @@ function DriveAccountSection({ drive }: { drive: GoogleDriveSettings }) {
     setSigningIn(false)
     if (!r.ok && r.error) setError(format(r.error))
   }
-  const signOut = async () => {
-    const ok = await api.confirm({ title: t('googleDrive.signOutTitle'), message: t('googleDrive.signOutMessage', { account: drive.account }), ok: t('googleDrive.signOut') })
-    if (ok) await api.driveSignOut()
-  }
+  return drive.account ? (
+    <div className="storage-account">
+      <StatusBadge tone="success">{t('googleDrive.signedIn', { account: drive.account })}</StatusBadge>
+    </div>
+  ) : (
+    <>
+      <Button variant="google" icon={<GoogleLogo />} busy={signingIn} onClick={() => void signIn()}>
+        {signingIn ? t('googleDrive.signingIn') : t('googleDrive.signIn')}
+      </Button>
+      {error && <div className="storage-check" role="status"><StatusBadge tone="danger">{error}</StatusBadge></div>}
+    </>
+  )
+}
 
+/** Состояние моста строкой: что мешает, ждут ли бирки, когда копия сверена. */
+function BridgeStatus({ bridge }: { bridge: BridgeState }) {
+  const { t } = useTranslation('storage')
+  const format = useMessages()
+  const { time } = useLocale()
+  if (bridge.problem) return <StatusBadge tone="danger">{format(bridge.problem)}</StatusBadge>
+  if (bridge.waiting) return <StatusBadge tone="attention">{t('phones.waiting')}</StatusBadge>
+  if (bridge.syncedAt) return <StatusBadge tone="success">{t('phones.synced', { time: time(bridge.syncedAt) })}</StatusBadge>
+  return null
+}
+
+/**
+ * Телефоны без доступа к сети компании: мобильное приложение пишет бирки в копию Probe в Google Drive, программа
+ * переносит их в Probe и выкладывает Probe на место копии (`host/PhoneBridge`). Аккаунт и папка — общие с местом
+ * хранения Google Drive, имя копии — его имя Probe.
+ */
+function PhonesSection({ settings }: { settings: AppSettings }) {
+  const { t } = useTranslation('storage')
+  const run = useStore(runStore)
+  const drive = settings.googleDrive
+  const signOut = useDriveSignOut(drive)
+  const copyName = settings.files.googleDrive.probe
+  const folderLocked = settings.locked.folder
   return (
     <FormSection
-      title={t('googleDrive.account')}
-      icon={<GoogleLogo />}
-      action={drive.account ? <Button variant="text" icon={<LogoutIcon />} aria-label={t('googleDrive.signOutLabel')} onClick={() => void signOut()}>{t('googleDrive.signOut')}</Button> : undefined}
+      title={t('phones.title')}
+      icon={<PhoneIcon />}
+      action={settings.bridge && drive.account ? <Button variant="text" icon={<LogoutIcon />} aria-label={t('googleDrive.signOutLabel')} onClick={() => void signOut()}>{t('googleDrive.signOut')}</Button> : undefined}
+      hint={settings.bridge ? t('phones.hint') : undefined}
     >
-      {drive.account ? (
-        <div className="storage-account">
-          <StatusBadge tone="success">{t('googleDrive.signedIn', { account: drive.account })}</StatusBadge>
-        </div>
-      ) : (
+      <List label={t('phones.title')}>
+        <ListItem
+          itemRole="checkbox"
+          leading={<GoogleDriveLogo />}
+          primary={t('phones.enable')}
+          secondary={t('phones.enableHint')}
+          selected={settings.bridge}
+          trailing={<Switch on={settings.bridge} />}
+          onClick={() => settingsStore.update({ bridge: !settings.bridge })}
+        />
+      </List>
+      {settings.bridge && (
         <>
-          <Button variant="google" icon={<GoogleLogo />} busy={signingIn} onClick={() => void signIn()}>
-            {signingIn ? t('googleDrive.signingIn') : t('googleDrive.signIn')}
-          </Button>
-          {error && <div className="storage-check" role="status"><StatusBadge tone="danger">{error}</StatusBadge></div>}
+          <DriveAccount drive={drive} />
+          <Field label={t('googleDrive.folder')}>
+            <ActionTextInput
+              placeholder={t('googleDrive.folderPlaceholder')}
+              value={drive.folder}
+              onChange={(folder) => settingsStore.update({ googleDrive: { folder: folder.trim() } })}
+              locked={folderLocked}
+              action={[{
+                icon: folderLocked ? <LockIcon /> : <LockOpenIcon />,
+                label: folderLocked ? t('files.unlock') : t('files.lock'),
+                tone: folderLocked ? undefined : ('accent' as const),
+                onClick: () => settingsStore.update({ locked: { folder: !folderLocked } }),
+              }]}
+            />
+          </Field>
+          <Field label={t('phones.copy')}>
+            <TextInput placeholder={FILE_NAMES.probe} value={copyName} onChange={(probe) => settingsStore.update({ files: { googleDrive: { ...settings.files.googleDrive, probe: probe.trim() } } })} />
+          </Field>
+          <div className="storage-check" role="status">
+            <BridgeStatus bridge={run.bridge} />
+          </div>
         </>
       )}
     </FormSection>

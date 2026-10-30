@@ -8,7 +8,8 @@
     "migratePlan": "Migrare de test",
     "migrateWrite": "Migrare reală",
     "createSheets": "Crearea foilor",
-    "restore": "Restaurare din backup"
+    "restore": "Restaurare din backup",
+    "bridge": "Etichete de pe telefoane"
   },
   "run": {
     "running": "{{trigger}} · în curs",
@@ -111,7 +112,8 @@
     "usage": "Fișierele Consum, Sarjele și Probe nu sunt setate",
     "other": "{{error}}",
     "linksBroken": "links.json nu poate fi citit: {{error}}. Corectați fișierul (Avansate → Legături manuale) sau ștergeți-l — cât timp este stricat, rulările sunt oprite",
-    "linksNotObject": "links.json trebuie să fie un obiect { \"PROIECT|element\": \"titlul blocului\" } — rulările sunt oprite până la corectarea fișierului"
+    "linksNotObject": "links.json trebuie să fie un obiect { \"PROIECT|element\": \"titlul blocului\" } — rulările sunt oprite până la corectarea fișierului",
+    "bridgeUsage": "Nu sunt setate copia Probe și Probe"
   },
   "check": {
     "noPath": "Calea nu este setată",
@@ -211,7 +213,12 @@
     "usage": "Utilizare: node sync.mjs \"<Consum.xlsx>\" \"<Sarjele.xlsx>\" \"<Probe.xlsx>\" [--apply]",
     "applyOn": "scriere",
     "applyOff": "doar plan",
-    "noStock": "— FĂRĂ REST —"
+    "noStock": "— FĂRĂ REST —",
+    "bridgeRead": "Înregistrări de pe telefoane în copie: {{records}}, noi pentru Probe: {{fresh}}",
+    "bridgeLine": "  ■ șarja {{heat}} → foaia {{sheet}}, rândul {{row}}",
+    "bridgeSkipped": "  ! {{element}}: {{why}}",
+    "bridgeNothing": "Nicio etichetă nouă de pe telefoane",
+    "bridgeSaved": "Transferate în Probe: {{n}}"
   },
   "drive": {
     "badFolder": "Folderul Google Drive nu este recunoscut: {{folder}} — lipiți linkul folderului sau ID-ul lui",
@@ -236,5 +243,19 @@
     "uploaded": "Încărcat în Google Drive: {{files}}",
     "conflict": "{{file}} a fost modificat în Google Drive în timpul rulării — rezultatul nu a fost încărcat, următoarea rulare va recalcula",
     "uploadFailed": "Încărcarea în Google Drive a eșuat: {{error}}"
+  },
+  "lab": {
+    "corrupt": "Tabelul nu se deschide: {{detail}}",
+    "sheetNotFound": "foaia „{{detail}}” nu a fost găsită în Probe",
+    "unknownLayout": "pe foaia „{{detail}}” nu s-a găsit antetul jurnalului (Nr. Crt., Sarja, Producator…)",
+    "layoutMismatch": "structura foii „{{detail}}” nu corespunde jurnalului",
+    "duplicateHeat": "șarja există deja în Probe: {{detail}}"
+  },
+  "bridge": {
+    "noEntry": "înregistrarea {{record}} a fost făcută de o versiune mai veche a aplicației — nu conține eticheta, introduceți-o manual",
+    "probeChanged": "„{{file}}” a fost salvat în timpul transferului — transferul se va repeta",
+    "integrity": "Verificarea înainte de scrierea în Probe nu a trecut (celula {{cell}}) — Probe nu a fost modificat",
+    "created": "Copia {{file}} a fost creată în Google Drive — telefoanele scriu etichetele în ea",
+    "failed": "Telefoane (Google Drive): {{error}}"
   }
 }

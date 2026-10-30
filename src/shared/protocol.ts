@@ -52,7 +52,17 @@ export const ENGINE_EXIT = {
 // ── Прогоны ─────────────────────────────────────────────────────────────────
 
 /** Что запустило прогон (подпись в журнале и в трее: `messages.trigger.*`). */
-export type RunTrigger = 'first' | 'changed' | 'retry' | 'plan' | 'write' | 'migratePlan' | 'migrateWrite' | 'createSheets' | 'restore'
+export type RunTrigger = 'first' | 'changed' | 'retry' | 'plan' | 'write' | 'migratePlan' | 'migrateWrite' | 'createSheets' | 'restore' | 'bridge'
+
+/** Мост с телефонами (`host/PhoneBridge`): сверка копии Probe в Google Drive с Probe. */
+export interface BridgeState {
+  /** Когда копия последний раз сверена с Probe, или `null`. */
+  syncedAt: number | null
+  /** Бирки с телефонов ждут переноса: Probe открыт в редакторе. */
+  waiting: boolean
+  /** Что мешает (вход в Google, папка, связь) или `null`. */
+  problem: Message | null
+}
 
 /** Состояние слежения и прогонов. */
 export interface RunState {
@@ -64,6 +74,7 @@ export interface RunState {
   lastRunAt: number | null
   /** Consum, запись в которые отложена (файлы открыты в редакторе): повторится при следующей проверке. */
   pending: string[]
+  bridge: BridgeState
 }
 
 /** Блок Sarjele в итоге прогона. */
@@ -115,9 +126,22 @@ export interface SummaryDeferred {
   lockFile: string | null
 }
 
+/** Бирка с телефона, перенесённая из копии Probe в Google Drive в Probe. */
+export interface SummaryBridged {
+  /** Номер записи телефона (`SCN-…`). */
+  record: string
+  heat: string
+  producer: string
+  /** Куда записана в Probe. */
+  sheet: string
+  row: number
+  /** «Nr. Crt.» записанной строки или `null`. */
+  item: number | null
+}
+
 /** Итог одного прогона движка (`JSON_OUT`): из него окно строит карточку журнала. */
 export interface RunSummary {
-  command: 'sync' | 'create-sheets' | 'restore'
+  command: 'sync' | 'create-sheets' | 'restore' | 'bridge'
   /** Запуск с записью (`--apply`). */
   applied: boolean
   /** Файлы изменены. */
@@ -153,6 +177,8 @@ export interface RunSummary {
   error: Message | null
   /** «время:размер» Consum после записи ID программой: слежение не принимает свою запись за изменение. */
   consumAfter: string | null
+  /** Мост с телефонами: перенесённые в Probe бирки (не перенесённые — в `skipped`). */
+  bridged: SummaryBridged[]
 }
 
 /** Пустой итог. */
@@ -180,6 +206,7 @@ export const emptySummary = (command: RunSummary['command'], applied: boolean): 
   restored: null,
   error: null,
   consumAfter: null,
+  bridged: [],
 })
 
 // ── Журнал ──────────────────────────────────────────────────────────────────
@@ -235,7 +262,7 @@ export function runOutcome(summary: RunSummary | null, code: number): RunOutcome
   if (summary.wrote) return 'wrote'
   if (summary.command === 'restore') return summary.restored ? 'wrote' : 'nothing'
   if (summary.applied) return 'nothing'
-  return summary.blocks.length || summary.ids.length || summary.closed.length || summary.reopened.length || summary.sheets.length ? 'planned' : 'nothing'
+  return summary.blocks.length || summary.ids.length || summary.closed.length || summary.reopened.length || summary.sheets.length || summary.bridged?.length ? 'planned' : 'nothing'
 }
 
 // ── Хранилище и «Связи» ─────────────────────────────────────────────────────

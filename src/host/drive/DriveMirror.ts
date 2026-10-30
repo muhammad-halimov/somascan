@@ -220,6 +220,40 @@ export class DriveMirror {
     return result
   }
 
+  /**
+   * Выкладывает файл этого компьютера на место таблицы `name` (мост с телефонами: Probe → копия на Drive);
+   * таблицы нет — создаёт. Заменяется только версия, известная копии (скачанная или выложенная этой программой),
+   * прежняя — в `backups`. Блокировку ставит вызывающий.
+   * @returns MD5 таблицы на Drive после выкладки.
+   * @throws {MessageError} `drive.conflict` — таблицу изменили после скачивания (сначала её нужно перенести).
+   */
+  async publish(folder: string, name: string, source: string, stamp: string, backupDays: number): Promise<string> {
+    const drive = await this.connect()
+    const folderId = await this.requireFolder(drive, folder)
+    const dir = this.dir(folder)
+    fs.mkdirSync(dir, { recursive: true })
+    const meta = this.readMeta(dir)
+    const bytes = fs.readFileSync(source)
+    const md5 = md5Of(bytes)
+    const [file] = await drive.find(folderId, name)
+    let saved: DriveFile
+    if (!file) saved = await drive.create(folderId, name, bytes, XLSX_MIME)
+    else {
+      const known = meta[name]
+      if (!known || known.id !== file.id || known.version !== file.version) throw new MessageError(message('drive.conflict', { file: name }))
+      if (file.md5Checksum === md5) return md5
+      const backupsId = await this.backupFolder(drive, folderId)
+      await drive.copy(file.id, backupsId, `${stamp}_${name}`)
+      saved = await drive.update(file.id, bytes, XLSX_MIME)
+      await this.pruneBackups(drive, backupsId, backupDays)
+    }
+    if (saved.md5Checksum && saved.md5Checksum !== md5) throw new MessageError(message('drive.verifyFailed', { file: name }))
+    fs.writeFileSync(path.join(dir, name), bytes)
+    meta[name] = { id: saved.id, version: saved.version ?? '', md5 }
+    this.writeMeta(dir, meta)
+    return md5
+  }
+
   /** «Версия:размер» таблицы на Drive (для слежения за Consum) или `null`, если её нет. */
   async remoteStamp(folder: string, name: string): Promise<string | null> {
     const drive = await this.connect()

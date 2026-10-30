@@ -8,7 +8,8 @@
     "migratePlan": "Миграцияи санҷишӣ",
     "migrateWrite": "Миграцияи воқеӣ",
     "createSheets": "Сохтани варақҳо",
-    "restore": "Барқарорсозӣ аз нусхаи эҳтиётӣ"
+    "restore": "Барқарорсозӣ аз нусхаи эҳтиётӣ",
+    "bridge": "Барчаспҳо аз телефонҳо"
   },
   "run": {
     "running": "{{trigger}} · иҷро мешавад",
@@ -111,7 +112,8 @@
     "usage": "Файлҳои Consum, Sarjele ва Probe муайян нашудаанд",
     "other": "{{error}}",
     "linksBroken": "links.json хонда намешавад: {{error}}. Файлро ислоҳ кунед (Иловагӣ → Пайвандҳои дастӣ) ё нест кунед — то ислоҳ шуданаш иҷроҳо қатъ мешаванд",
-    "linksNotObject": "links.json бояд объект бошад { \"ЛОИҲА|элемент\": \"сарлавҳаи блок\" } — то ислоҳи файл иҷроҳо қатъ мешаванд"
+    "linksNotObject": "links.json бояд объект бошад { \"ЛОИҲА|элемент\": \"сарлавҳаи блок\" } — то ислоҳи файл иҷроҳо қатъ мешаванд",
+    "bridgeUsage": "Нусхаи Probe ва Probe муайян нашудаанд"
   },
   "check": {
     "noPath": "Роҳ нишон дода нашудааст",
@@ -211,7 +213,12 @@
     "usage": "Истифода: node sync.mjs \"<Consum.xlsx>\" \"<Sarjele.xlsx>\" \"<Probe.xlsx>\" [--apply]",
     "applyOn": "сабт",
     "applyOff": "танҳо нақша",
-    "noStock": "— БОҚИМОНДА НЕСТ —"
+    "noStock": "— БОҚИМОНДА НЕСТ —",
+    "bridgeRead": "Сабтҳо аз телефонҳо дар нусха: {{records}}, навҳо барои Probe: {{fresh}}",
+    "bridgeLine": "  ■ гудохти {{heat}} → варақи {{sheet}}, сатри {{row}}",
+    "bridgeSkipped": "  ! {{element}}: {{why}}",
+    "bridgeNothing": "Барчаспҳои нав аз телефонҳо нестанд",
+    "bridgeSaved": "Ба Probe интиқол ёфт: {{n}}"
   },
   "drive": {
     "badFolder": "Ҷузвдони Google Drive шинохта нашуд: {{folder}} — пайванд ё ID-и ҷузвдонро гузоред",
@@ -236,5 +243,19 @@
     "uploaded": "Ба Google Drive бор шуд: {{files}}",
     "conflict": "{{file}} ҳангоми иҷро дар Google Drive тағйир ёфт — натиҷа бор нашуд, иҷрои навбатӣ аз нав ҳисоб мекунад",
     "uploadFailed": "Ба Google Drive бор кардан нашуд: {{error}}"
+  },
+  "lab": {
+    "corrupt": "Ҷадвал кушода намешавад: {{detail}}",
+    "sheetNotFound": "варақи «{{detail}}» дар Probe ёфт нашуд",
+    "unknownLayout": "дар варақи «{{detail}}» сарлавҳаи журнал (Nr. Crt., Sarja, Producator…) ёфт нашуд",
+    "layoutMismatch": "сохтори варақи «{{detail}}» ба журнал мувофиқ нест",
+    "duplicateHeat": "гудохт аллакай дар Probe ҳаст: {{detail}}"
+  },
+  "bridge": {
+    "noEntry": "сабти {{record}}-ро версияи пешинаи барнома кардааст — дар он барчасп нест, онро дастӣ ворид кунед",
+    "probeChanged": "«{{file}}» ҳангоми интиқол захира шуд — интиқол такрор мешавад",
+    "integrity": "Санҷиш пеш аз сабти Probe нагузашт (катаки {{cell}}) — Probe тағйир наёфт",
+    "created": "Нусхаи {{file}} дар Google Drive сохта шуд — телефонҳо барчаспҳоро ба он менависанд",
+    "failed": "Телефонҳо (Google Drive): {{error}}"
   }
 }

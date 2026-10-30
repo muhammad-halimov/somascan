@@ -80,6 +80,11 @@
     "verified": "Verificare după scriere: fișierele corespund calculului",
     "deferred": "Scriere amânată: {{list}} este deschis. Se reia singură după închidere.",
     "backup": "Backup: {{time}}",
-    "restored": "Fișierele au fost readuse la starea din {{time}}"
+    "restored": "Fișierele au fost readuse la starea din {{time}}",
+    "bridgedDone": "Transferate în Probe de pe telefoane: {{n}}",
+    "bridgedPlan": "Vor fi transferate în Probe: {{n}}",
+    "bridgedRow": "foaia {{sheet}}, rândul {{row}}",
+    "bridgedItem": "elem. {{item}}",
+    "nothingBridge": "Nicio etichetă nouă de pe telefoane."
   }
 }

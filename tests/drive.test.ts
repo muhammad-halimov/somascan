@@ -9,52 +9,12 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
-import { FOLDER_MIME, XLSX_MIME, type DriveClient, type DriveFile } from '../src/host/drive/DriveClient'
+import { FOLDER_MIME, XLSX_MIME, type DriveClient } from '../src/host/drive/DriveClient'
 import { DRIVE_ROOT, DriveMirror, LOCK_STALE_MS, parseDriveFolder } from '../src/host/drive/DriveMirror'
 import { authUrl, parseClient, pkcePair, signIn } from '../src/host/drive/GoogleOAuth'
 import { MessageError } from '../src/shared/messages'
 import { DEFAULT_SETTINGS, parseSettings } from '../src/shared/settings'
-
-const FOLDER = '1AbCdEfGhIjKlMnOpQ'
-
-/** Поддельный Drive в памяти: папки, файлы с версиями, время создания. */
-class FakeDrive {
-  readonly files = new Map<string, DriveFile & { parent: string; bytes: Uint8Array }>()
-  downloads = 0
-  now = Date.UTC(2026, 9, 30, 10)
-  private nextId = 1
-
-  constructor() {
-    this.put(FOLDER, DRIVE_ROOT, 'Tables', new Uint8Array(), FOLDER_MIME)
-  }
-
-  put(id: string, parent: string, name: string, bytes: Uint8Array, mimeType = XLSX_MIME, appProperties?: Record<string, string>, createdAt = this.now) {
-    const md5Checksum = mimeType === FOLDER_MIME ? undefined : crypto.createHash('md5').update(bytes).digest('hex')
-    const file = { id, parent, name, bytes, mimeType, md5Checksum, size: String(bytes.length), version: '1', createdTime: new Date(createdAt).toISOString(), modifiedTime: new Date(this.now).toISOString(), appProperties }
-    this.files.set(id, file)
-    return file
-  }
-
-  /** Меняет файл, как другое устройство: новая версия. */
-  edit(id: string, bytes: Uint8Array) {
-    const file = this.files.get(id)!
-    Object.assign(file, { bytes, md5Checksum: crypto.createHash('md5').update(bytes).digest('hex'), version: String(Number(file.version) + 1) })
-  }
-
-  byName(name: string, parent = FOLDER) {
-    return [...this.files.values()].filter((file) => file.parent === parent && file.name === name)
-  }
-
-  async get(id: string) { return this.files.get(id) ?? null }
-  async find(parent: string, name: string, mimeType?: string) { return this.byName(name, parent).filter((file) => !mimeType || file.mimeType === mimeType) }
-  async children(parent: string) { return [...this.files.values()].filter((file) => file.parent === parent) }
-  async download(id: string) { this.downloads++; return this.files.get(id)!.bytes }
-  async create(parent: string, name: string, bytes: Uint8Array, mimeType: string, appProperties?: Record<string, string>) { return this.put(`n${this.nextId++}`, parent, name, bytes, mimeType, appProperties) }
-  async update(id: string, bytes: Uint8Array) { this.edit(id, bytes); return this.files.get(id)! }
-  async copy(id: string, parent: string, name: string) { return this.put(`c${this.nextId++}`, parent, name, this.files.get(id)!.bytes) }
-  async createFolder(parent: string, name: string) { return this.put(`f${this.nextId++}`, parent, name, new Uint8Array(), FOLDER_MIME) }
-  async remove(id: string) { this.files.delete(id) }
-}
+import { FakeDrive, FOLDER } from './fakeDrive'
 
 /** Копия таблиц на поддельном Drive во временной папке. */
 function setup(owner = 'somasync:pc') {
@@ -204,4 +164,27 @@ test('блокировка как у мобильного: чужая свежа
 test('нет папки — понятная ошибка', async () => {
   const { mirror } = setup()
   await assert.rejects(mirror.pull('1ZzZzZzZzZzZzZzZz', ['Probe.xlsx']), (e: MessageError) => e.msg.code === 'drive.folderNotFound')
+})
+
+test('мост: выкладка файла на место таблицы — нет её — создаётся; есть — с копией прежней, только сверенная версия', async () => {
+  const { drive, mirror } = setup()
+  const source = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'somasync-src-')), 'Probe.xlsx')
+  fs.writeFileSync(source, 'P-local')
+  const created = await mirror.publish(FOLDER, 'Copy.xlsx', source, 'st1', 30)
+  const [copy] = drive.byName('Copy.xlsx')
+  assert.equal(Buffer.from(copy!.bytes).toString(), 'P-local')
+  assert.equal(created, copy!.md5Checksum)
+  // те же байты — не выгружается
+  assert.equal(await mirror.publish(FOLDER, 'Copy.xlsx', source, 'st2', 30), created)
+  assert.equal(drive.byName('backups').length, 0)
+  // новая версия — прежняя в backups
+  fs.writeFileSync(source, 'P-local-2')
+  await mirror.publish(FOLDER, 'Copy.xlsx', source, 'st3', 30)
+  assert.equal(Buffer.from(drive.byName('Copy.xlsx')[0]!.bytes).toString(), 'P-local-2')
+  assert.equal(Buffer.from(drive.byName('st3_Copy.xlsx', drive.byName('backups')[0]!.id)[0]!.bytes).toString(), 'P-local')
+  // телефон дописал копию после сверки — не затирается
+  drive.edit(copy!.id, Buffer.from('P-phone'))
+  fs.writeFileSync(source, 'P-local-3')
+  await assert.rejects(mirror.publish(FOLDER, 'Copy.xlsx', source, 'st4', 30), (e: unknown) => e instanceof MessageError && e.msg.code === 'drive.conflict')
+  assert.equal(Buffer.from(drive.byName('Copy.xlsx')[0]!.bytes).toString(), 'P-phone')
 })

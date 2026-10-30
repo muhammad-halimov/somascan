@@ -2,7 +2,7 @@
  * Скриншоты окна для README (`docs/screenshots/<en|ru>/*.webp`) — как в мобильном приложении: собранное окно
  * (`dist/`) в Chrome без окна, тёмная тема, интерфейс на языке README (английский — для README.md, русский —
  * для README.ru.md). Главного процесса нет: `window.api` подменяется демо-данными (проекты, элементы и плавки
- * выдуманы), поэтому ни файлов, ни паролей, ни аккаунтов не нужно. Из пяти кадров собирается обзор
+ * выдуманы), поэтому ни файлов, ни паролей, ни аккаунтов не нужно. Из шести кадров собирается обзор
  * (`overview.<en|ru>.webp`): кадры в ряд с подписями — одна картинка, которая масштабируется целиком.
  *
  * Запуск (macOS, нужен Google Chrome; другой путь, например Chromium на Linux, — переменная `CHROME`):
@@ -28,10 +28,11 @@ const WINDOW = { width: 560, height: 1060 }
 const OVERVIEW_TILE = 300
 const LANGUAGES = ['en', 'ru']
 
-/** Кадры: вкладка, место хранения и подпись в обзоре. */
+/** Кадры: вкладка, место хранения, прокрутка к концу вкладки и подпись в обзоре. */
 const SHOTS = [
   { name: 'run', tab: 0, target: 'smb', en: 'Home', ru: 'Главная' },
   { name: 'storage', tab: 1, target: 'smb', en: 'Network drive', ru: 'Сетевой диск' },
+  { name: 'phones', tab: 1, target: 'smb', end: true, en: 'Phones', ru: 'Телефоны' },
   { name: 'drive', tab: 1, target: 'googleDrive', en: 'Google Drive', ru: 'Google Drive' },
   { name: 'links', tab: 2, target: 'smb', en: 'Links', ru: 'Связи' },
   { name: 'advanced', tab: 3, target: 'smb', en: '“Advanced”', ru: '«Расширенные»' },
@@ -62,13 +63,16 @@ function settings(language, target) {
     googleDrive: { account: 'user@example.com', folder: '', token: '' },
     projects: PROJECTS.map((name) => ({ name, aliases: [], sheet: name, prefix: '', create: true, enabled: true, locked: true })),
     intervalSec: 10, settleSec: 3, backupDays: 30, rule: 'latest',
-    openAtLogin: true, autoProjects: true, trayMinimize: true, startMinimized: false, guardOpenFiles: true,
+    openAtLogin: true, autoProjects: true, trayMinimize: true, startMinimized: false, guardOpenFiles: true, bridge: true,
   }
 }
 
 const msg = (code, params) => (params ? { code, params } : { code })
 
-/** Журнал: начало слежения и первый прогон с записью. */
+/** Бирка с телефона, перенесённая в Probe. */
+const bridged = (n, heat, producer, row) => ({ record: `SCN-261030-000${n}`, heat, producer, sheet: '2026', row, item: row - 6 })
+
+/** Журнал: начало слежения, первый прогон с записью и бирки с телефонов. */
 const JOURNAL = [
   { kind: 'event', id: 1, t: AT, level: 'info', msg: msg('event.watchWrite', { seconds: 10 }) },
   {
@@ -93,7 +97,20 @@ const JOURNAL = [
       shortages: [{ dia: 16, form: 'Bara', kg: 300, elements: ['GRINDA 3'], free: 0, closedLeft: 0 }],
       skipped: ['ST_100', 'ST_110'].map((element) => ({ project: 'PETRA DATE', element, reason: msg('skip.sharedBlock', { title: 'ST_100.110' }) })),
       unconfigured: [], sheets: ['LACUL VERDE'], oldHeats: [], notes: [], warnings: [], deferred: [],
-      backup: '2026-10-30T07-10-06-000Z', verified: true, problems: [], restored: null, error: null, consumAfter: null,
+      backup: '2026-10-30T07-10-06-000Z', verified: true, problems: [], restored: null, error: null, consumAfter: null, bridged: [],
+    },
+  },
+  {
+    kind: 'run', id: 3, t: AT + 1_260_000, trigger: 'bridge', file: 'Probe otel.xlsx', apply: true, outcome: 'wrote', finishedAt: AT + 1_263_000,
+    lines: [
+      { level: 'info', msg: msg('tech.bridgeRead', { records: 51, fresh: 2 }) },
+      { level: 'ok', msg: msg('tech.bridgeSaved', { n: 2 }) },
+    ],
+    summary: {
+      command: 'bridge', applied: true, wrote: true, period: '', counts: { heats: 0, closedHeats: 0, blocks: 0, rows: 0 },
+      blocks: [], ids: [], closed: [], reopened: [], shortages: [], skipped: [], unconfigured: [], sheets: [], oldHeats: [], notes: [], warnings: [], deferred: [],
+      backup: '2026-10-30T07-31-06-000Z', verified: true, problems: [], restored: null, error: null, consumAfter: null,
+      bridged: [bridged(1, '250171', 'SOMACO', 49), bridged(2, '25R00206', 'Sovel', 50)],
     },
   },
 ]
@@ -138,7 +155,7 @@ function stub(language, target) {
     const noop = () => () => {}
     const sheets = ['2025', '2026']
     window.api = {
-      init: async () => ({ settings: data.settings, run: { status: 'watching', busy: null, nextCheckAt: Date.now() + 7400, lastCheckAt: Date.now(), lastRunAt: ${AT}, pending: [] }, journal: data.journal, version: '1.0.0', year: 2026, platform: 'win32' }),
+      init: async () => ({ settings: data.settings, run: { status: 'watching', busy: null, nextCheckAt: Date.now() + 7400, lastCheckAt: Date.now(), lastRunAt: ${AT}, pending: [], bridge: { syncedAt: ${AT} + 1263000, waiting: false, problem: null } }, journal: data.journal, version: '1.0.0', year: 2026, platform: 'win32' }),
       setSettings: async (patch) => Object.assign(data.settings, patch),
       start: async () => ({ ok: true }), stop: async () => {}, pick: async () => null,
       check: async (kind) => ({ ok: true, msg: { code: 'check.ok', params: { n: kind === 'probe' ? 2 : 3, date: ${AT} } }, sheets: kind === 'probe' ? sheets : ['PETRA DATE', 'NORD INFRA', 'LACUL VERDE'] }),
@@ -229,10 +246,17 @@ async function capture(language, port) {
       for (const shot of SHOTS.filter((s) => s.target === target)) {
         await evaluate(`document.querySelectorAll('[role="tab"]')[${shot.tab}].click()`)
         await sleep(900)
+        // кадр конца вкладки (раздел «Телефоны» в «Хранилище»)
+        if (shot.end) {
+          await evaluate(`document.querySelector('.storage-stack > :last-child').scrollIntoView({ block: 'end' })`)
+          await sleep(400)
+        }
         // WebP вместо PNG: в несколько раз легче при том же виде.
         const { result } = await send('Page.captureScreenshot', { format: 'webp', quality: 88 })
         writeFileSync(join(dir, `${shot.name}.webp`), Buffer.from(result.data, 'base64'))
         console.log(`${language}/${shot.name}.webp`)
+        // следующий кадр — снова с начала вкладки
+        if (shot.end) await evaluate(`scrollTo(0, 0); for (const el of document.querySelectorAll('*')) if (el.scrollTop) el.scrollTop = 0`)
       }
     } finally {
       close()

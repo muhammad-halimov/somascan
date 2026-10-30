@@ -80,6 +80,11 @@
     "verified": "Check after writing: files match the calculation",
     "deferred": "Write postponed: {{list}} is open. It will retry by itself once closed.",
     "backup": "Backup: {{time}}",
-    "restored": "Files restored to {{time}}"
+    "restored": "Files restored to {{time}}",
+    "bridgedDone": "Transferred to Probe from phones: {{n}}",
+    "bridgedPlan": "Will be transferred to Probe: {{n}}",
+    "bridgedRow": "sheet {{sheet}}, row {{row}}",
+    "bridgedItem": "item {{item}}",
+    "nothingBridge": "No new tags from phones."
   }
 }

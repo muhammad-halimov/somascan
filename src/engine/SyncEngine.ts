@@ -5,6 +5,7 @@
  *   scan           связи элементов с блоками для вкладки «Связи» → JSON_OUT
  *   create-sheets  создать недостающие листы проектов в Sarjele
  *   restore        откатить файлы к бэкапу
+ *   bridge         перенести бирки с телефонов из копии Probe в Google Drive в Probe (`ProbeBridge`)
  *
  * Итог прогона (`RunSummary`) пишется в JSON_OUT и при ошибке. Код выхода: 0 — готово, 1 — ошибка,
  * 3 — запись отложена (файл открыт в редакторе или занят другим прогоном).
@@ -17,6 +18,7 @@ import { SarjeleWriter } from './books/SarjeleWriter'
 import type { EngineOptions } from './EngineOptions'
 import { Backups } from './FileGuard'
 import { hasChanges, Planner } from './planning/Planner'
+import { ProbeBridge } from './ProbeBridge'
 import { consoleSink, RunReport, type TextSink } from './RunReport'
 import { SafeSave, SyncWriter } from './SyncWriter'
 import { Workspace } from './Workspace'
@@ -54,10 +56,11 @@ export class SyncEngine {
         return ENGINE_EXIT.error
       }
     }
-    const command: RunSummary['command'] = options.command === 'restore' ? 'restore' : options.command === 'create-sheets' ? 'create-sheets' : 'sync'
+    const command: RunSummary['command'] = options.command === 'restore' || options.command === 'create-sheets' || options.command === 'bridge' ? options.command : 'sync'
     const report = new RunReport(this.out, command, options.apply)
     try {
       if (command === 'restore') return this.restore(report)
+      if (command === 'bridge') return await this.bridge(report)
       if (!this.filesGiven()) {
         report.summary.error = message('error.usage')
         return ENGINE_EXIT.error
@@ -112,6 +115,17 @@ export class SyncEngine {
     report.summary.problems = outcome.problems ?? []
     report.summary.verified = outcome.problems ? outcome.problems.length === 0 : null
     return outcome.deferred.length ? ENGINE_EXIT.deferred : ENGINE_EXIT.ok
+  }
+
+  /** Бирки с телефонов из копии Probe в Probe (`--bridge [--apply] <копия> <Probe>`). */
+  private async bridge(report: RunReport): Promise<number> {
+    const { options } = this
+    if (!options.copy || !options.probe) {
+      report.summary.error = message('error.bridgeUsage')
+      return ENGINE_EXIT.error
+    }
+    report.say('tech.engine', { version: ENGINE_VERSION })
+    return new ProbeBridge(options, report, this.stamp).run()
   }
 
   /** Создаёт недостающие листы проектов (`--create-sheets [--apply]`). */

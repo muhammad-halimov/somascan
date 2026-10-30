@@ -25,7 +25,7 @@ import type { SettingsStore } from './SettingsStore'
 const MAX_STAMPS = 40
 
 /** Начальное состояние. */
-const IDLE: RunState = { status: 'idle', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [] }
+const IDLE: RunState = { status: 'idle', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [], bridge: { syncedAt: null, waiting: false, problem: null } }
 
 /** Таблицы в удалённом хранилище (Google Drive, см. `drive/DriveService`). */
 export interface RemoteStorage {
@@ -139,6 +139,21 @@ export class SyncService extends Store<RunState> {
       const { code } = await this.engine('restore', null, true, ['--restore', stamp, s.sarjele, s.probe, ...this.settings.consumFiles()])
       return code === ENGINE_EXIT.ok
     })
+  }
+
+  /**
+   * Мост с телефонами (`PhoneBridge`): `fn` выполняется как единственный прогон, `engine` внутри запускает движок
+   * (прогон журнала «Бирки с телефонов»).
+   * @returns Итог `fn` или `null`, если идёт другой прогон.
+   */
+  async bridge<T>(fn: (engine: (file: string, args: string[]) => Promise<{ code: number; summary: RunSummary | null }>) => Promise<T>): Promise<T | null> {
+    if (this.getSnapshot().busy) return null
+    this.patch({ busy: 'bridge' })
+    try {
+      return await fn((file, args) => this.engine('bridge', file, true, args))
+    } finally {
+      this.patch({ busy: null })
+    }
   }
 
   /**
