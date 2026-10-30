@@ -92,10 +92,10 @@ If a recognized tag still has empty required fields (or a retake is advised), a 
 - **Prompt** — instructions for the model (on-device recognition has neither a prompt nor models); edited right in the tab, “Restore default” brings back the built-in one. The list of fields with explanations, the known-suppliers rule, the photo rating and the JSON shape are appended to it automatically (`recognition/label/labelPrompt.ts`).
 - **Fields** — which fields are read from the photo: built-in ones (four are on by default — producer, size, heat number, weight; the others, such as steel grade and quality document, are optional) and custom ones (a name in each language and an explanation for the model). The “Sheet” field does not come from the photo: it picks the log sheet for the tag (see “Settings” under “Writing to a network drive”).
 - **Known suppliers** — see below.
-- **Models** — show models no older than 3 / 6 / 12 months, or all; **model lists** — the update date for each provider and “Refresh all”.
+- **Models** — show models no older than 3 / 6 / 12 months, or all; **model lists** — the update date for each provider and “Refresh” (refreshes all lists).
 - **Photo** — the size (by the long side) to shrink the shot to before sending: 1024 / 1600 / 2048 px (default) or the original; Claude accepts photos up to 5 MB, so for it — no more than 2048.
 - **“Reset”** in the settings header restores the default settings, except API keys and storage settings.
-- **The settings window** is as tall as its content (no taller than 680 px and the screen): a short tab leaves no empty space at the bottom. The top of the window stays in place, and on a tab change the bottom moves smoothly to the new height (`SettingsSheet`). The “i” notices come at the end of their section: under the photo size choice, under “Test connection” in “Storage”.
+- **The settings window** is as tall as its content (no taller than 680 px and the screen): a short tab leaves no empty space at the bottom. The top of the window stays in place, and on a tab change the bottom moves smoothly to the new height (`SettingsSheet`). The “i” notices come at the end of their section: under the photo size choice, under “Test connection” in “Storage”. Descriptions and notes are short, one or two sentences. Buttons in section headers are an icon with a caption under it (“Edit”, “Export”, “Refresh”); in “Storage” the network share shows the account first, then the location.
 - **About** — the app version (now 1.0.0); there is one version for everything: `package.json` (put in by `vite.config.ts`), `versionName` on Android, `MARKETING_VERSION` on iOS.
 
 ### Known suppliers
@@ -552,7 +552,7 @@ python3 -m venv .venv && .venv/bin/pip install pillow   # once
 .venv/bin/python scripts/generate-app-icon.py            # sources, all sizes and theme variants
 ```
 
-The favicon and the header logo — `src/assets/favicon.ico`.
+The favicon and the header logo — `src/assets/favicon.ico`. Service logos are official SVGs right in `components/icons/Icons.tsx`, in brand colors: Google and Google Drive, the Claude mark (claude.ai) for Anthropic, the OpenAI mark (single-color — black in the light theme, white in the dark one), the LM Studio icon (files.lmstudio.ai; the app icon colors), Windows for the network share.
 ## Structure
 
 ```
@@ -591,7 +591,7 @@ src/
     theme/                   theme: system / light / dark, bridge to the native theme (NativeTheme)
     validation/              type guards for external data
   styles/                  global styles: tokens (colors, dark theme), base, animations, platform-ios (materials and glass), native (touch feedback)
-  assets/                  provider logos, favicon
+  assets/                  favicon
 tests/                     node:test checks (npm test): log, backups, SMB and Drive on fake servers (fakeSmb, fakeDrive), queue engine (engineHarness), settings, recognition; fixtures/ — empty log “Probe otel.xlsx”
 scripts/                   lab-table (empty log made from the real one), smb-test-server (Samba in Docker), screenshots (screenshots for the README), generate-app-icon.py (icon and splash screen)
 guides/                    NATIVE_FEEL_PLAN.md — plan for a “native” feel of the interface

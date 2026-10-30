@@ -23,15 +23,6 @@
   flex: 0 0 18px;
 }
 
-/* Растровые логотипы (LM Studio) вписываются в квадрат иконки со скруглением, как значок приложения. */
-.brand-image {
-  display: block;
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  border-radius: 5px;
-}
-
 /* «Назад» (BackIcon): уголок на iOS, стрелка Material на остальных платформах. */
 :root[data-platform='ios'] .back-icon-material,
 :root:not([data-platform='ios']) .back-icon-ios {

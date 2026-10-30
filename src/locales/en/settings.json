@@ -20,7 +20,7 @@
       "model": "AI models"
     },
     "recognitionUnlock": "Locked — tap to unlock",
-    "recognitionLockHint": "On-device accuracy may be lower. AI models are locked: the first tap unlocks, the second chooses.",
+    "recognitionLockHint": "On-device accuracy may be lower. AI models are locked — tap twice.",
     "provider": "AI provider",
     "providers": {
       "device": "On-device",
@@ -31,21 +31,21 @@
     },
     "onDevice": {
       "title": "On-device recognition",
-      "text": "The phone reads the tag itself with {{engine}} — no internet, keys or server: photos never leave the device. Fields are found by the captions printed on the tag (Heat, Charge, Șarjă, Weight, Greutate, Diameter…) and by the look of the values; the producer is matched against the known suppliers.",
+      "text": "The phone reads the tag itself ({{engine}}) — no internet or keys, photos stay on the device.",
       "offline": "Works offline",
       "unavailable": "Only in the Android and iOS app"
     },
     "model": "Model",
     "refresh": "Refresh",
     "refreshing": "Refreshing…",
-    "modelsNote": "Vision models released in the last {{count}} months. Lists refresh monthly.",
-    "modelsNoteAll": "All vision models. Lists refresh monthly.",
-    "modelsPreview": "Preview from the public models.dev directory. Enter an API key to choose a model.",
+    "modelsNote": "Vision models from the last {{count}} months.",
+    "modelsNoteAll": "All vision models.",
+    "modelsPreview": "models.dev directory. Enter an API key to choose a model.",
     "modelsEmpty": "No models available. Check the key or server and refresh the list.",
     "modelsLoadError": "Couldn't load models",
     "localModel": "Local model",
     "serverUrl": "Server URL",
-    "serverHint": "Local OpenAI-compatible LM Studio server, e.g. 192.168.1.14 — http:// and port 1234 are added automatically.",
+    "serverHint": "E.g. 192.168.1.14 — http:// and port 1234 are added automatically.",
     "apiKey": "API key",
     "apiKeyPlaceholder": "Enter API key",
     "apiKeyOptional": "Optional",
@@ -61,11 +61,11 @@
     "modelPrice": "${{input}} / ${{output}} per 1M tokens",
     "modelKnowledge": "knowledge to {{date}}",
     "fit": {
-      "balanced": "Good for tags: fast and inexpensive, reads printed text reliably.",
+      "balanced": "Fast, inexpensive, reads tags reliably.",
       "default": "A solid default.",
-      "precise": "For difficult tags — rusty, crumpled, shot at an angle or with glare: more accurate, but slower and pricier.",
-      "economy": "Fastest and cheapest: enough for clean, well-shot tags, makes more mistakes on difficult ones.",
-      "local": "Runs inside the plant network, photos never leave it. Accuracy depends on model size and quantization.",
+      "precise": "For difficult tags: more accurate, but slower and pricier.",
+      "economy": "Fastest and cheapest — for clean tags.",
+      "local": "Inside the plant network, photos stay offline.",
       "preview": "Preview version: behaviour may change."
     },
     "modelState": {
@@ -84,7 +84,7 @@
       "smb": "Network share",
       "googleDrive": "Google Drive"
     },
-    "intro": "Tags are appended to the log (.xlsx) one at a time, in the background.",
+    "intro": "Tags are added to the log (.xlsx) one by one, in the background.",
     "smb": {
       "location": "Location",
       "server": "Server",
@@ -101,7 +101,7 @@
       "showPassword": "Show password",
       "hidePassword": "Hide password",
       "test": "Test connection",
-      "filePathHint": "The table must already be in the shared folder.",
+      "filePathHint": "The table must already exist.",
       "testing": "Connecting…",
       "testOkTitle": "Connected",
       "testOkExisting": "The table was found: {{size}} KB, last modified {{date}}.",
@@ -124,9 +124,9 @@
       "signOutMessage": "The app’s access to Google Drive of {{account}} will be revoked. Queued uploads will wait for a new sign-in.",
       "signInFailed": "Couldn’t sign in with Google",
       "accountUnknown": "Google account",
-      "locationHint": "Folder — link or ID, empty — “My Drive”. The table must already be in the folder."
+      "locationHint": "Folder: link or ID, empty — “My Drive”. The table must already exist."
     },
-    "backups": "Before each save a backup goes to “backups”; backups older than {{days}} days are deleted.",
+    "backups": "Before each save a copy goes to “backups” for {{days}} days.",
     "check": {
       "label": "Check that the table exists",
       "unchecked": "Table not checked yet",
@@ -142,22 +142,22 @@
     "table": {
       "lock": "Lock the table path",
       "unlock": "Unlock the table path to edit it",
-      "lockHint": "Open the lock to change the path."
+      "lockHint": "Unlock to edit the path."
     },
     "sheet": {
       "label": "Sheet",
       "auto": "Current year sheet ({{year}})",
       "unknown": "{{sheet}} — not in the table",
-      "hint": "The year sheet is created automatically, others appear after the table check."
+      "hint": "The year sheet is created automatically."
     },
     "strict": {
       "label": "Strict table structure",
-      "hint": "Write only to a sheet with all journal columns in order: Nr. Crt., Cantitatea, Data trimitere la incercat, Data intrare, Sarja, Producator, Bobina, Bara, Doc. de calitate."
+      "hint": "Only to a sheet with all log columns in order."
     },
     "rules": "Write rules",
     "uniqueHeat": {
       "label": "Each heat number once",
-      "hint": "Do not write a heat number that is already in the journal, in “Uploads” or on another tag on screen. Turn off if several coils of one heat arrive.",
+      "hint": "Skip a heat already in the log or on screen. Turn off for several coils of one heat.",
       "lock": "Lock the “Each heat number once” rule",
       "unlock": "Unlock the “Each heat number once” rule to change it"
     }
@@ -169,11 +169,11 @@
     "promptReset": "Restore default",
     "promptExpand": "Show all",
     "promptCollapse": "Collapse",
-    "promptHint": "Instructions for the model. A JSON template with the selected fields is appended automatically.",
+    "promptHint": "Instructions for the model; the fields JSON is added automatically.",
     "fields": "Fields",
     "fieldsAll": "All",
-    "fieldsHint": "The model reads only the checked fields from the photo.",
-    "fieldsEditHint": "Tap a field to rename it in each language or describe it for the model. English is required for your own fields.",
+    "fieldsHint": "The model reads only the checked fields.",
+    "fieldsEditHint": "Tap a field to rename or describe it. Your own fields need an English name.",
     "fieldCustom": "Custom field",
     "fieldAdd": "Add field",
     "fieldSave": "Save",
@@ -195,16 +195,16 @@
     "refreshAll": "Refresh all",
     "updatedAt": "Updated {{date}}",
     "notLoaded": "Not loaded",
-    "sourcePreview": "directory preview",
+    "sourcePreview": "preview",
     "photo": "Photo",
     "imageSize": "Photo size sent for recognition",
     "imageSizeOriginal": "Original",
     "imageSizePx": "{{size}} px",
-    "imageSizeHint": "Smaller photos upload faster and cost less. Tag text stays readable from 1600 px.",
-    "imageSizeAnthropic": "Claude accepts photos up to 5 MB — use 2048 px or less for it.",
+    "imageSizeHint": "Smaller is faster and cheaper; text stays readable from 1600 px.",
+    "imageSizeAnthropic": "For Claude — 2048 px or less (5 MB limit).",
     "ocrReading": "Recognized text",
     "ocrReadingShare": "Share",
-    "ocrReadingHint": "If a tag is recognized wrong: “Retry” on it, then “Share” — the file with the read text helps fix recognition.",
+    "ocrReadingHint": "Tag recognized wrong? “Retry” on it, then “Share” — the file helps fix it.",
     "ocrReadingEmpty": "Recognize a tag on the device first.",
     "about": "About",
     "version": "Version {{version}}",
@@ -214,8 +214,8 @@
     "cancelCaption": "Cancel",
     "fieldsSummary": "Selected: {{count}} of {{total}}",
     "suppliers": "Known suppliers",
-    "suppliersHint": "When the mill name on a tag is hard to read, recognition checks this list and picks the matching supplier instead of guessing letters. A clearly printed name is copied as is. The list can be exported to JSON and imported on another device.",
-    "suppliersEditHint": "Tap a supplier to rename or delete it. Write names the way they appear on tags.",
+    "suppliersHint": "A hard-to-read mill name is taken from this list. The list can be exported and imported.",
+    "suppliersEditHint": "Tap a supplier to edit or delete it. Write names as on the tags.",
     "suppliersSummary": "Suppliers: {{count}}",
     "suppliersEmpty": "List is empty — the model reads names without hints",
     "supplierAdd": "Add supplier",

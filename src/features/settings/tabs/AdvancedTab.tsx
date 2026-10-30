@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CalendarIcon, ExportIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, RefreshIcon, ScanTextIcon } from '@/components/icons/Icons'
-import { Button } from '@/components/ui/Button'
+import { ActionButton } from '@/components/ui/ActionButton'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
 import { Notice } from '@/components/ui/Notice'
@@ -85,7 +85,11 @@ export function AdvancedTab() {
       <FormSection
         title={t('advanced.lists')}
         icon={<ListIcon />}
-        action={<Button icon={<RefreshIcon />} busy={isRefreshing} onClick={refreshAll}>{t('advanced.refreshAll')}</Button>}
+        action={(
+          <div className="form-section-actions">
+            <ActionButton variant="ghost" icon={<RefreshIcon />} caption={t('general.refresh')} label={t('advanced.refreshAll')} busy={isRefreshing} onClick={refreshAll} />
+          </div>
+        )}
       >
         <List>
           {/* У распознавания на устройстве списка моделей нет. */}
@@ -136,7 +140,11 @@ export function AdvancedTab() {
         <FormSection
           title={t('advanced.ocrReading')}
           icon={<ScanTextIcon />}
-          action={<Button icon={<ExportIcon />} onClick={() => void shareOcrReading()}>{t('advanced.ocrReadingShare')}</Button>}
+          action={(
+            <div className="form-section-actions">
+              <ActionButton variant="ghost" icon={<ExportIcon />} caption={t('advanced.ocrReadingShare')} label={t('advanced.ocrReading')} onClick={() => void shareOcrReading()} />
+            </div>
+          )}
         >
           <span className="form-section-hint">{t('advanced.ocrReadingHint')}</span>
         </FormSection>

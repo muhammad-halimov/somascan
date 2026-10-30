@@ -22,11 +22,11 @@
   },
   "emptyQueue": {
     "title": "Coada este goală",
-    "description": "Etichetele trimise cu „Înainte” apar aici și se scriu în tabel pe rând"
+    "description": "Etichetele trimise apar aici și se scriu în tabel"
   },
   "emptyDone": {
     "title": "Nimic scris încă",
-    "description": "Aici apar etichetele deja scrise în tabel: foaia, rândul și numărul elementului"
+    "description": "Aici apar etichetele scrise: foaia, rândul și numărul"
   },
   "status": {
     "queued": "În așteptare",
