@@ -31,7 +31,7 @@ import type { SettingsStore } from './SettingsStore'
 import type { SyncService } from './SyncService'
 
 /** Как часто сверять копию, мс. */
-export const POLL_MS = 30_000
+export const POLL_MS = 10_000
 
 /** Имя копии, если в настройках Google Drive оно пустое. */
 const DEFAULT_NAME = 'Probe otel.xlsx'
