@@ -531,7 +531,7 @@ python3 -m venv .venv && .venv/bin/pip install pillow   # один раз
 .venv/bin/python scripts/generate-app-icon.py            # исходники, все размеры и варианты для тем
 ```
 
-Фавикон и логотип в шапке — `src/assets/favicon.ico`.
+Фавикон и логотип в шапке — `src/assets/favicon.ico`. Логотипы сервисов — официальные SVG прямо в `components/icons/Icons.tsx`, в фирменных цветах: Google и Google Drive, знак Claude (claude.ai) у Anthropic, знак OpenAI (одноцветный — чёрный в светлой теме, белый в тёмной), значок LM Studio (files.lmstudio.ai; цвета значка приложения), Windows у сетевого диска.
 
 ## Структура
 
@@ -571,7 +571,7 @@ src/
     theme/                   тема: системная / светлая / тёмная, мост к нативной теме (NativeTheme)
     validation/              type guards для данных извне
   styles/                  глобальные стили: токены (цвета, тёмная тема), база, анимации, platform-ios (материалы и стекло), native (отклик на касания)
-  assets/                  логотипы провайдеров, favicon
+  assets/                  favicon
 tests/                     проверки node:test (npm test): журнал, копии, SMB и Drive на поддельных серверах (fakeSmb, fakeDrive), движок очереди (engineHarness), настройки, распознавание; fixtures/ — пустой журнал «Probe otel.xlsx»
 scripts/                   lab-table (пустой журнал из настоящего), smb-test-server (Samba в Docker), screenshots (снимки для README), generate-app-icon.py (иконка и сплэш)
 guides/                    NATIVE_FEEL_PLAN.md — план «нативного» ощущения интерфейса

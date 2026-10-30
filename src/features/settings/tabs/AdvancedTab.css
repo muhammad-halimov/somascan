@@ -27,10 +27,7 @@
 }
 
 .provider-logo svg.brand-icon {
+  /* Одноцветные знаки (OpenAI) — цветом заголовка: чёрные в светлой теме, белые в тёмной. */
+  color: var(--text-h);
   stroke: none;
-}
-
-.provider-logo .brand-image {
-  width: 24px;
-  height: 24px;
 }

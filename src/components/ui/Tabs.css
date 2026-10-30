@@ -126,8 +126,9 @@
   color: var(--accent);
 }
 
-/* Фирменные знаки (Google, Drive, Claude) сохраняют свои цвета. */
+/* Фирменные знаки (Google, Drive, Claude, LM Studio) сохраняют свои цвета; одноцветный OpenAI — цвета заголовка. */
 .tab-icon svg.brand-icon {
+  color: var(--text-h);
   stroke: none;
 }
 

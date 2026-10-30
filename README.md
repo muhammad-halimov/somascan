@@ -531,7 +531,7 @@ python3 -m venv .venv && .venv/bin/pip install pillow   # once
 .venv/bin/python scripts/generate-app-icon.py            # sources, all sizes and theme variants
 ```
 
-The favicon and the header logo — `src/assets/favicon.ico`.
+The favicon and the header logo — `src/assets/favicon.ico`. Service logos are official SVGs right in `components/icons/Icons.tsx`, in brand colors: Google and Google Drive, the Claude mark (claude.ai) for Anthropic, the OpenAI mark (single-color — black in the light theme, white in the dark one), the LM Studio icon (files.lmstudio.ai; the app icon colors), Windows for the network share.
 ## Structure
 
 ```
@@ -570,7 +570,7 @@ src/
     theme/                   theme: system / light / dark, bridge to the native theme (NativeTheme)
     validation/              type guards for external data
   styles/                  global styles: tokens (colors, dark theme), base, animations, platform-ios (materials and glass), native (touch feedback)
-  assets/                  provider logos, favicon
+  assets/                  favicon
 tests/                     node:test checks (npm test): log, backups, SMB and Drive on fake servers (fakeSmb, fakeDrive), queue engine (engineHarness), settings, recognition; fixtures/ — empty log “Probe otel.xlsx”
 scripts/                   lab-table (empty log made from the real one), smb-test-server (Samba in Docker), screenshots (screenshots for the README), generate-app-icon.py (icon and splash screen)
 guides/                    NATIVE_FEEL_PLAN.md — plan for a “native” feel of the interface
