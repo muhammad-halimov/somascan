@@ -234,6 +234,8 @@
     "about": "About",
     "version": "Version {{version}}",
     "editCaption": "Edit",
+    "expandCaption": "Expand",
+    "collapseCaption": "Collapse",
     "doneCaption": "Done",
     "resetCaption": "Reset",
     "cancelCaption": "Cancel",

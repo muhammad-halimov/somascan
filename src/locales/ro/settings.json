@@ -234,6 +234,8 @@
     "about": "Despre aplicație",
     "version": "Versiunea {{version}}",
     "editCaption": "Editează",
+    "expandCaption": "Extinde",
+    "collapseCaption": "Restrânge",
     "doneCaption": "Gata",
     "resetCaption": "Resetare",
     "cancelCaption": "Anulare",

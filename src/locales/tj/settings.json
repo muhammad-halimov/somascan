@@ -234,6 +234,8 @@
     "about": "Дар бораи барнома",
     "version": "Версияи {{version}}",
     "editCaption": "Тағйир",
+    "expandCaption": "Кушодан",
+    "collapseCaption": "Пӯшидан",
     "doneCaption": "Тайёр",
     "resetCaption": "Аз нав",
     "cancelCaption": "Бекор",

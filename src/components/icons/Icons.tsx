@@ -622,6 +622,24 @@ export function ChevronDownIcon() {
   )
 }
 
+/** Уголки врозь: раскрыть свёрнутый текст. */
+export function ExpandIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m7 15 5 5 5-5M7 9l5-5 5 5" />
+    </svg>
+  )
+}
+
+/** Уголки навстречу: свернуть раскрытый текст. */
+export function CollapseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m7 20 5-5 5 5M7 4l5 5 5-5" />
+    </svg>
+  )
+}
+
 /** Два уголка вверх и вниз: значок всплывающего меню выбора iOS (chevron.up.chevron.down). */
 export function ChevronUpDownIcon() {
   return (

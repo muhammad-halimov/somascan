@@ -1,14 +1,12 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CheckIcon, CloseIcon, PencilIcon, ResetIcon, SparklesIcon } from '@/components/icons/Icons'
+import { CheckIcon, CloseIcon, CollapseIcon, ExpandIcon, PencilIcon, ResetIcon, SparklesIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
-import { Button } from '@/components/ui/Button'
 import { FormSection } from '@/components/ui/FormSection'
 import { TextArea } from '@/components/ui/TextArea'
 import { DEFAULT_LABEL_INSTRUCTIONS } from '@/features/recognition/label/labelPrompt'
 import { useHeightTransition } from '@/hooks/useHeightTransition'
 import { settingsStore } from '../store/SettingsStore'
-import './PromptEditor.css'
 
 /** Сколько строк видно у свёрнутого промпта. */
 const COLLAPSED_LINES = 6
@@ -34,7 +32,7 @@ function collapsedHeight(area: HTMLElement, fullHeight: number) {
 
 /**
  * Промпт — инструкция, которая отправляется модели вместе с фото. По умолчанию только для чтения
- * и свёрнут до нескольких строк. Карандаш включает правку (без автофокуса: клавиатура появляется,
+ * и свёрнут до нескольких строк; слева от карандаша — «Раскрыть» / «Свернуть». Карандаш включает правку (без автофокуса: клавиатура появляется,
  * только когда пользователь сам коснётся текста); рядом — «Вернуть по умолчанию» и «Отмена»
  * (возврат к тексту на момент начала правки). Изменения сохраняются сразу.
  * JSON со списком выбранных полей добавляется к инструкции автоматически (см. `buildLabelPrompt`).
@@ -84,10 +82,20 @@ export function PromptEditor({ value, unavailable }: PromptEditorProps) {
               <ActionButton variant="ghost" icon={<CheckIcon />} caption={t('advanced.doneCaption')} label={t('advanced.promptDone')} active onClick={finishEditing} />
             </>
           ) : (
-            <ActionButton variant="ghost" icon={<PencilIcon />} caption={t('advanced.editCaption')} label={t('advanced.promptEdit')} onClick={startEditing} />
+            <>
+              <ActionButton
+                variant="ghost"
+                icon={isExpanded ? <CollapseIcon /> : <ExpandIcon />}
+                caption={isExpanded ? t('advanced.collapseCaption') : t('advanced.expandCaption')}
+                label={isExpanded ? t('advanced.promptCollapse') : t('advanced.promptExpand')}
+                onClick={() => setIsExpanded((current) => !current)}
+              />
+              <ActionButton variant="ghost" icon={<PencilIcon />} caption={t('advanced.editCaption')} label={t('advanced.promptEdit')} onClick={startEditing} />
+            </>
           )}
         </div>
       )}
+      hint={t('advanced.promptHint')}
     >
       <TextArea
         ref={areaRef}
@@ -98,15 +106,6 @@ export function PromptEditor({ value, unavailable }: PromptEditorProps) {
         rows={COLLAPSED_LINES}
         onChange={(next) => settingsStore.setPrompt(next)}
       />
-      {/* Под блоком: подсказка слева, «Показать полностью» — справа напротив неё. */}
-      <div className="prompt-editor-footer">
-        <span className="form-section-hint">{t('advanced.promptHint')}</span>
-        {!isEditing && (
-          <Button onClick={() => setIsExpanded((current) => !current)}>
-            {isExpanded ? t('advanced.promptCollapse') : t('advanced.promptExpand')}
-          </Button>
-        )}
-      </div>
     </FormSection>
   )
 }

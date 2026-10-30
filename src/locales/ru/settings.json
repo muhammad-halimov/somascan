@@ -234,6 +234,8 @@
     "about": "О приложении",
     "version": "Версия {{version}}",
     "editCaption": "Изменить",
+    "expandCaption": "Раскрыть",
+    "collapseCaption": "Свернуть",
     "doneCaption": "Готово",
     "resetCaption": "Сброс",
     "cancelCaption": "Отмена",
