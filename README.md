@@ -323,6 +323,7 @@ The same pipeline as for the network drive (`TableWriter`): queue, lock, backup,
 - **Version conflict.** If the table was changed between reading and writing (Excel online, another phone), the write does not overwrite other people's rows but is retried with the new data.
 - **Verification.** The MD5 computed by Drive after the upload is compared with the bytes sent; then the table is read again, and the written row is checked cell by cell.
 - **Backups** are made on the server (`files.copy`) into the `backups` folder and deleted after the chosen period (7 days by default).
+- **Phones without access to the company network.** If the log is on a network drive and the phones cannot reach the company network, the phones write into a copy of `Probe otel.xlsx` in Google Drive (Google Drive storage), and the desktop app Somasync (branch `desktop`, “Storage → Phones”) moves the new tags from the copy into the log on the network drive as the same row and uploads the log back in place of the copy — under the same `<table>.lock` lock. While the log is open in Excel, the tags wait in the copy.
 
 ### Google Cloud setup (once)
 
