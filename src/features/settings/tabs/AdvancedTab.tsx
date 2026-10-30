@@ -116,7 +116,7 @@ export function AdvancedTab() {
         </List>
       </FormSection>
 
-      <FormSection title={t('advanced.photo')} icon={<ImageIcon />} hint={t('advanced.imageSizeHint')}>
+      <FormSection title={t('advanced.photo')} icon={<ImageIcon />}>
         <span className="form-section-hint">{t('advanced.imageSize')}</span>
         <Tabs
           label={t('advanced.imageSize')}
@@ -128,6 +128,7 @@ export function AdvancedTab() {
           }))}
           onChange={(maxImageSide) => settingsStore.updateAdvanced({ maxImageSide })}
         />
+        <span className="form-section-hint">{t('advanced.imageSizeHint')}</span>
         <Notice>{t('advanced.imageSizeAnthropic')}</Notice>
       </FormSection>
 

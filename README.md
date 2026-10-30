@@ -95,6 +95,8 @@ If a recognized tag still has empty required fields (or a retake is advised), a 
 - **Models** — show models no older than 3 / 6 / 12 months, or all; **model lists** — the update date for each provider and “Refresh all”.
 - **Photo** — the size (by the long side) to shrink the shot to before sending: 1024 / 1600 / 2048 px (default) or the original; Claude accepts photos up to 5 MB, so for it — no more than 2048.
 - **“Reset”** in the settings header restores the default settings, except API keys and storage settings.
+- **The settings window** is as tall as its content (no taller than 680 px and the screen): a short tab leaves no empty space at the bottom. The top of the window stays in place, and on a tab change the bottom moves smoothly to the new height (`SettingsSheet`). The “i” notices come at the end of their section: under the photo size choice, under “Test connection” in “Storage”.
+- **About** — the app version (now 1.0.0); there is one version for everything: `package.json` (put in by `vite.config.ts`), `versionName` on Android, `MARKETING_VERSION` on iOS.
 
 ### Known suppliers
 

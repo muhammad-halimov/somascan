@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
@@ -7,6 +7,7 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { PanelHeader } from '@/components/ui/PanelHeader'
 import { Tabs } from '@/components/ui/Tabs'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { HEIGHT_EASING, heightDurationFor } from '@/hooks/useHeightTransition'
 import { useResolvedTheme } from '@/hooks/useTheme'
 import { modelCatalog } from '@/features/recognition/catalog/ModelCatalog'
 import { settingsStore } from './store/SettingsStore'
@@ -70,8 +71,45 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
   }, [tab, panelTab])
   useBodyScrollLock(true)
 
-  /** Переключает вкладку; новая панель монтируется заново и начинается сверху. */
-  const selectTab = (next: SettingsTab) => setTab(next)
+  const modalRef = useRef<HTMLElement>(null)
+  /** Высота окна в момент выбора вкладки: от неё плавно едет низ окна к высоте новой вкладки. */
+  const heightBeforeRef = useRef<number | null>(null)
+  useLayoutEffect(() => {
+    const modal = modalRef.current
+    const from = heightBeforeRef.current
+    heightBeforeRef.current = null
+    if (!modal || from === null) return
+    modal.style.transition = ''
+    modal.style.height = ''
+    const to = modal.getBoundingClientRect().height
+    if (Math.abs(to - from) < 1 || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    modal.style.transition = 'none'
+    modal.style.height = `${from}px`
+    void modal.offsetHeight
+    const duration = heightDurationFor(Math.abs(to - from))
+    modal.style.transition = `height ${duration}ms ${HEIGHT_EASING}`
+    modal.style.height = `${to}px`
+    // Дальше высота снова по содержимому (раскрытые списки, смена провайдера).
+    const finish = () => {
+      modal.style.transition = ''
+      modal.style.height = ''
+    }
+    const onEnd = (event: TransitionEvent) => {
+      if (event.target === modal && event.propertyName === 'height') finish()
+    }
+    modal.addEventListener('transitionend', onEnd)
+    const timer = window.setTimeout(finish, duration + 50)
+    return () => {
+      modal.removeEventListener('transitionend', onEnd)
+      window.clearTimeout(timer)
+    }
+  }, [panelTab])
+
+  /** Переключает вкладку; новая панель монтируется заново и начинается сверху, низ окна едет к её высоте. */
+  const selectTab = (next: SettingsTab) => {
+    if (next !== tab) heightBeforeRef.current = modalRef.current?.getBoundingClientRect().height ?? null
+    setTab(next)
+  }
 
   /** После подтверждения возвращает настройки по умолчанию и сбрасывает кэш моделей. */
   const resetSettings = async () => {
@@ -90,6 +128,7 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
     // Закрываем только при нажатии именно на подложку, а не на что-то внутри окна.
     <div className={`settings-backdrop${isClosing ? ' is-closing' : ''}`} onClick={(event) => event.target === event.currentTarget && onClose()}>
       <section
+        ref={modalRef}
         className={`settings-modal${isClosing ? ' is-closing' : ''}`}
         role="dialog"
         aria-modal="true"

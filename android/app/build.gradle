@@ -20,7 +20,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // Нативные библиотеки (ML Kit, ~15 МБ на архитектуру) — только для телефонов (arm) и эмулятора x86_64:
         // 32-битного x86 среди телефонов нет.

@@ -26,8 +26,6 @@ export function StorageTab() {
 
   return (
     <>
-      <Notice>{t('storage.intro')} {t('storage.backups', { days: BACKUP_RETENTION_DAYS })}</Notice>
-
       <FormSection title={t('storage.target')} icon={<DatabaseIcon />}>
         <Tabs
           label={t('storage.target')}
@@ -45,6 +43,9 @@ export function StorageTab() {
       <div key={storage.target} className="settings-stack anim-enter">
         {storage.target === 'smb' ? <SmbStorageForm /> : <GoogleDriveStorageForm />}
       </div>
+
+      {/* Как и куда пишутся бирки — пояснение в конце, под «Проверить подключение». */}
+      <Notice>{t('storage.intro')} {t('storage.backups', { days: BACKUP_RETENTION_DAYS })}</Notice>
     </>
   )
 }

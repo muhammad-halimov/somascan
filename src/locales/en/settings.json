@@ -84,7 +84,7 @@
       "smb": "Network share",
       "googleDrive": "Google Drive"
     },
-    "intro": "Tags sent with “Next” are appended as rows to the steel sample log (.xlsx) — on the network share or in Google Drive: one at a time, in the background, into the chosen sheet (by default — the current year’s), with a check after each save.",
+    "intro": "Tags are appended to the log (.xlsx) one at a time, in the background.",
     "smb": {
       "location": "Location",
       "server": "Server",
@@ -126,7 +126,7 @@
       "accountUnknown": "Google account",
       "locationHint": "Folder — link or ID, empty — “My Drive”. The table must already be in the folder."
     },
-    "backups": "Before every save a backup is created in the “backups” folder next to the table; backups older than {{days}} days are deleted.",
+    "backups": "Before each save a backup goes to “backups”; backups older than {{days}} days are deleted.",
     "check": {
       "label": "Check that the table exists",
       "unchecked": "Table not checked yet",
@@ -201,10 +201,10 @@
     "imageSizeOriginal": "Original",
     "imageSizePx": "{{size}} px",
     "imageSizeHint": "Smaller photos upload faster and cost less. Tag text stays readable from 1600 px.",
-    "imageSizeAnthropic": "Claude (Anthropic) accepts photos up to 5 MB. With “Original” a camera shot may be rejected — keep 2048 px or less for Claude.",
+    "imageSizeAnthropic": "Claude accepts photos up to 5 MB — use 2048 px or less for it.",
     "ocrReading": "Recognized text",
     "ocrReadingShare": "Share",
-    "ocrReadingHint": "What the phone read from the last recognized tag — lines of text with their place in the photo — as a JSON file. If a tag is recognized wrong, tap “Retry” on it, then send this file to the developer: it shows why the rules went wrong.",
+    "ocrReadingHint": "If a tag is recognized wrong: “Retry” on it, then “Share” — the file with the read text helps fix recognition.",
     "ocrReadingEmpty": "Recognize a tag on the device first.",
     "about": "About",
     "version": "Version {{version}}",
