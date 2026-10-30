@@ -4,53 +4,47 @@
 
 🇬🇧 English · 🇷🇴 Română · 🇹🇯 Тоҷикӣ · 🇷🇺 Русский
 
-A desktop app (macOS and Windows) for Somaco (Holcim, Romania) that keeps track of reinforcing steel by heat. It carries consumption over from the monthly Consum report into the Sarjele and Probe spreadsheets — work that used to be done by hand.
+A desktop app (Windows and macOS) for **Somaco (Holcim), Romania** — accounting of reinforcing steel by heat.
 
-**Domain.** At the Somaco plant, reinforcing steel goes into the elements (beams, walls, columns…) of construction projects. Steel arrives in heats: each has its own number, diameter (Ø), form — bar (Bara) or coil (Bobina) — and weight. Records are kept in three Excel files:
+The app watches the monthly Consum report; when an operator saves it, the app splits each element's consumption over heats, writes the element blocks into Sarjele and fills used-up heats yellow in Probe — work that used to be done by hand. The tables are kept on this computer, on a Windows network drive or in Google Drive.
 
-| File | Contents |
-|---|---|
-| **Consum** (sheet “Decont Lunar”) | consumption for the month: projects, their elements and kg of steel per material code. Filled in by the operators |
-| **Sarjele din elemente** | one sheet per project; one block per element: which heats and how many kg of steel it was made from |
-| **Probe otel** | delivery log: which heats arrived and how much; a used-up heat is filled yellow |
-
-**What the app does.** It watches Consum. When an operator saves the file, the app:
-1. calculates what is left of each heat: delivered according to Probe minus written off in Sarjele;
-2. splits each element's consumption over heats of the right Ø and form;
-3. adds or corrects element blocks in Sarjele and fills used-up heats yellow in Probe;
-4. shows in the journal what was written, where steel is short and which elements need attention.
-
-To recognise an element reliably from month to month, the app gives it an ID (`NI-0004`) — in a hidden column of Consum and next to the block in Sarjele.
-
-**Data safety.** A trial mode that writes nothing. A backup before every write and restore from the Advanced tab. A file open in an editor is left alone — the write is postponed. Writes go through a temporary file and are checked afterwards. Everything runs on this computer: files go nowhere except your own Google Drive, and only when it is the chosen storage location (Sarjele is confidential).
-
-**Technology.** Electron 44, React 19, TypeScript, Vite 8, ExcelJS, i18next. Files on this computer, on a Windows network share (SMB) or in Google Drive (Drive API). Interface languages: English (default), Romanian, Tajik, Russian.
+**Stack:** Electron 44 · React 19 · TypeScript · Vite 8 · ExcelJS · i18next.
 
 ## Screenshots
 
-<table>
-  <tr>
-    <td align="center" valign="top"><img src="docs/screenshots/en/run.png" width="180" alt="Home"><br><sub><b>Home</b><br>watching, write mode, run journal</sub></td>
-    <td align="center" valign="top"><img src="docs/screenshots/en/storage.png" width="180" alt="Storage"><br><sub><b>Storage</b><br>where Consum, Sarjele and Probe are</sub></td>
-    <td align="center" valign="top"><img src="docs/screenshots/en/links.png" width="180" alt="Links"><br><sub><b>Links</b><br>projects → sheets, elements → blocks</sub></td>
-    <td align="center" valign="top"><img src="docs/screenshots/en/advanced.png" width="180" alt="Advanced"><br><sub><b>Advanced</b><br>timer, rules, backups, actions</sub></td>
-  </tr>
-</table>
+Dark theme, English interface; demo data — the projects, elements and heats are made up.
 
-<sub>Demo data: the projects, elements and heats are made up. Click a picture to open it full size.</sub>
+<img src="docs/screenshots/overview.en.webp" alt="Home with the journal, network drive, Google Drive, Links, “Advanced”">
+
+```bash
+npm run build && node scripts/screenshots/capture.mjs # Make screenshots
+```
 
 ## Contents
 
+- [Screenshots](#screenshots)
 - [How it works](#how-it-works)
-- [Build and install](#build-and-install)
+  - [Files](#files)
+  - [A run step by step](#a-run-step-by-step)
+  - [Journal](#journal)
+  - [Open files](#open-files)
+  - [Data safety](#data-safety)
+- [Table storage](#table-storage)
+  - [This computer and the network drive](#this-computer-and-the-network-drive)
+  - [Google Drive](#google-drive)
+  - [Google Cloud setup (once)](#google-cloud-setup-once)
 - [In practice](#in-practice)
 - [Manual links: links.json](#manual-links-linksjson)
+- [Quick start](#quick-start)
+- [Building for Windows and macOS](#building-for-windows-and-macos)
 - [Tests](#tests)
 - [Structure](#structure)
+  - [Conventions](#conventions)
 - [Known risks](#known-risks)
-- [Decisions](#decisions)
 - [License](#license)
 - [AI disclosure](#ai-disclosure)
+
+---
 
 ## How it works
 
@@ -58,40 +52,75 @@ To recognise an element reliably from month to month, the app gives it an ID (`N
 Consum (Decont Lunar) ──► engine ──► Sarjele (element blocks, ID registry)
         ▲                        └─► Probe (yellow heats, sync-journal)
         └── element IDs (hidden column “ID sync”)
+storage: this computer | network drive | Google Drive
 ```
+
+### Files
+
+At the Somaco plant, reinforcing steel goes into the elements (beams, walls, columns…) of construction projects. Steel arrives in heats: each has its own number, diameter (Ø), form — bar (Bara) or coil (Bobina) — and weight. Records are kept in three Excel files:
+
+| File | Contents |
+|---|---|
+| **Consum** (sheet “Decont Lunar”) | consumption for the month: projects, their elements and kg of steel per material code. Filled in by the operators |
+| **Sarjele din elemente** | one sheet per project; one block per element: which heats and how many kg of steel it was made from |
+| **Probe otel** | delivery log: which heats arrived and how much; a used-up heat is filled yellow |
+
+To recognise an element reliably from month to month, the app gives it an ID (`NI-0004`) — in a hidden column of Consum and next to the block in Sarjele.
+
+### A run step by step
 
 1. Watching. Every few seconds the app compares the modification time and size of Consum. If the file changed, it waits a moment and starts the engine.
 2. Reading. The engine (a separate process) reads Probe (how much arrived per heat), Sarjele (how much is already written off) and Consum (elements, consumption per code, IDs, month).
 3. Links. Each Consum element looks for its Sarjele block: by ID, by the registry, by a manual link, by a similar name. If none is found, a new block with a new ID is created.
 4. Plan. What is left of a heat = delivered according to Probe minus written off in Sarjele. It is stored nowhere and recalculated on every run. Consumption is split over heats of the right Ø and form.
-5. Write: backup, Sarjele, Probe, IDs into Consum, then a check.
+5. Write: copy, Sarjele, Probe, IDs into Consum, then a check.
 
-This computer, the network share and Google Drive each have their own files: switching the storage location on the Storage tab switches the set of files too.
+### Journal
 
-**Google Drive.** On the Storage tab: “Sign in with Google” opens the Google sign-in page in the system browser (OAuth for desktop apps: the answer comes back to `http://127.0.0.1:<port>`, PKCE); the account e-mail is shown, “Sign out” revokes access. Then the folder (a link or its ID, empty — “My Drive”) and the names of the tables in it. The engine works with files, so before every run the tables are downloaded into a local copy (`<app data>/drive/<folder id>/`, only the ones that changed — by the Drive version and the MD5 of the copy), and after a run with writing what the engine changed is uploaded back: the previous version is copied on the server into the `backups` folder next to the tables (kept as many days as the local copies), the new revision is atomic and its MD5 is checked. If a table was changed in Drive during the run (Excel online, another device), it is not overwritten: the next run downloads the new version and recalculates. For the duration of a run with writing the tables are locked with the same lock files as in the mobile app (`<table>.lock`, owner label, an abandoned one is removed after 5 minutes), so the phone and the computer do not overwrite Probe for each other; a busy table postpones the run to the next check. Watching: before every check a Consum that changed in Drive is downloaded, and the change of the copy starts a run. The access key (refresh token) is stored encrypted, like the network share password, and never reaches the window. `drive/` in `host/`: `GoogleOAuth`, `DriveClient`, `DriveMirror`, `DriveService`.
-
-**Setting up Google Drive.** In Google Cloud (the same project as the mobile app is fine) enable the Google Drive API and create an OAuth client of the “Desktop app” type. Either download its JSON and put it into the app data folder as `google-oauth.json` (`%APPDATA%\Somasync\` on Windows, `~/Library/Application Support/Somasync/` on Mac), or build the app with it: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`. Without a client, “Sign in with Google” says that Google Drive is not set up.
+On the Home tab app events take one line: watching started, file unavailable, error. Each engine run is a card: what started it (Consum changed, retry of a postponed write, an action from the Advanced tab), which Consum, which mode, and the outcome — Written, Plan only, No changes, Postponed, Error. Inside, by section: Sarjele blocks (new / filled in / corrected, kg and heats), element IDs, heats filled yellow or cleared in Probe, steel shortages, elements that need attention (with the reason), the check after writing and the backup. “Details” is the engine's technical output in the interface language: the engine prints its lines as message codes (`TECH_MARK` + JSON), the window translates them and re-translates them when the language changes; `log.txt` gets the same text in the interface language of the moment (for troubleshooting).
 
 Settings, the log (`log.txt`) and `links.json` live in the app data folder: `~/Library/Application Support/Somasync/` on Mac, `%APPDATA%\Somasync\` on Windows. The log file can be opened from the tray icon.
 
-**Journal** (Home tab). App events take one line: watching started, file unavailable, error. Each engine run is a card: what started it (Consum changed, retry of a postponed write, an action from the Advanced tab), which Consum, which mode, and the outcome — Written, Plan only, No changes, Postponed, Error. Inside, by section: Sarjele blocks (new / filled in / corrected, kg and heats), element IDs, heats filled yellow or cleared in Probe, steel shortages, elements that need attention (with the reason), the check after writing and the backup. “Details” is the engine's technical output in the interface language: the engine prints its lines as message codes (`TECH_MARK` + JSON), the window translates them and re-translates them when the language changes; `log.txt` gets the same text in the interface language of the moment (for troubleshooting).
+### Open files
 
-**Open files.** If Sarjele or Probe is open in an editor, the app does not write to it: the editor would keep showing the old version and saving from it would overwrite what was written. The write is postponed and retried automatically once the file is closed. If only Consum is open, Sarjele and Probe are written and the IDs in Consum wait until it is closed. Turned off in Advanced → “Do not write to open files”.
+If Sarjele or Probe is open in an editor, the app does not write to it: the editor would keep showing the old version and saving from it would overwrite what was written. The write is postponed and retried automatically once the file is closed. If only Consum is open, Sarjele and Probe are written and the IDs in Consum wait until it is closed. Turned off in Advanced → “Do not write to open files”.
 
-## Build and install
+### Data safety
 
-```bash
-npm install          # first time and after package.json changes
-npm start            # build and run from the project folder
-npm run dist         # Mac (Apple Silicon): release/
-npm run dist:x64     # Mac (Intel)
-npm run dist:win     # Windows x64: release/Somasync-<version>-win-x64.zip
-npm test             # tests
-```
+A trial mode that writes nothing. A copy before every write and restore from the Advanced tab. A file open in an editor is left alone — the write is postponed. Writes go through a temporary file and are checked afterwards. Everything runs on this computer: files go nowhere except your own Google Drive, and only when it is the chosen storage location (Sarjele is confidential). Interface languages: English (default), Romanian, Tajik, Russian.
 
-Mac: quit Somasync (Cmd+Q) and run `Установить.command` (“Install”). It copies the app to Applications, removes the quarantine flag and signs it locally. Changes in the project reach the installed app only this way.
+---
 
-Windows: unzip into any folder and run `Somasync\Somasync.exe`. No installation needed.
+## Table storage
+
+The tables must already exist — the app does not create them. This computer, the network drive and Google Drive each have their own files: switching the destination on the Storage tab switches the set of files too. Every table field is locked against accidental edits; the check icon at its end shows whether the file is there and which sheets it has. The Probe “Sheet”: by default the current year's sheet; while the new year's sheet is still empty, the previous year is read too.
+
+### This computer and the network drive
+
+- **This computer** — paths to the tables, picked with the folder icon.
+- **Network drive** (SMB share) — first the account (domain, user, password), then the location (server, shared folder). “Test connection” connects the share with system tools: Windows — `net use \\server\share` (the paths are `\\server\share\…`), macOS — `mount volume smb://…` (the share appears in `/Volumes`). Then the tables are picked with the folder icon. The password is stored encrypted (Keychain / DPAPI) and reaches the window only when the eye icon is clicked.
+
+### Google Drive
+
+The engine works with files, so the Drive tables live in a local copy (`<app data>/drive/<folder id>/`): the engine reads and writes the copy, and what it changed goes back to Drive. The code is in `host/drive/`: `GoogleOAuth`, `DriveClient`, `DriveMirror`, `DriveService`.
+
+- **Sign-in.** “Storage → Google Drive → Sign in with Google” opens the Google sign-in page in the system browser (OAuth for desktop apps: the answer comes back to `http://127.0.0.1:<port>`, PKCE). The account e-mail is shown; “Sign out” revokes access. The access key (refresh token) is stored encrypted, like the network drive password, and never reaches the window.
+- **Folder and tables.** A link to the folder from the Drive address bar or its ID (empty — the root of “My Drive”), and the names of the tables in it.
+- **Download.** Before every run only the tables that changed are downloaded — by the Drive version and the MD5 of the copy.
+- **Lock.** For the duration of a run with writing the tables are locked with the same `<table>.lock` files as in the mobile app (owner label; an abandoned lock is removed after 5 minutes), so the phone and the computer do not overwrite Probe for each other. A busy table or no connection postpones the run to the next check.
+- **Upload and version conflict.** After a run with writing, what the engine changed is uploaded: the previous version is copied on the server into the `backups` folder next to the tables (kept as many days as the local copies), the new revision is atomic and its MD5 is checked. If a table was changed in Drive during the run (Excel online, another device), it is not overwritten — the next run downloads the new version and recalculates.
+- **Watching.** Before every check a Consum that changed in Drive is downloaded, and the change of the copy starts a run.
+
+### Google Cloud setup (once)
+
+1. In [Google Cloud Console](https://console.cloud.google.com/) enable **Google Drive API** (the project of the mobile app is fine).
+2. Create an OAuth client of the **Desktop app** type. Scope — `https://www.googleapis.com/auth/drive`: the app needs access to an already existing folder.
+3. Either download the client's JSON and put it into the app data folder as `google-oauth.json` (`%APPDATA%\Somasync\` on Windows, `~/Library/Application Support/Somasync/` on Mac), or build the app with it: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`. Without a client, “Sign in with Google” says that Google Drive is not set up.
+4. While the consent screen is in “Testing” mode, only accounts from its Test users list can sign in — add the warehouse accounts there.
+
+Testing without network or an account: `npm test` runs the local copy through a fake Drive (`tests/drive.test.ts`): download of changed tables only, locks, upload with a copy of the previous version, version conflict, cleanup; and the sign-in through `127.0.0.1` with a fake token server.
+
+---
 
 ## In practice
 
@@ -134,7 +163,7 @@ Links
 
 Heats
 - The rule “From the last one used” starts from the heat that was written last. Older open heats are listed in the journal — check them and fill them yellow by hand if needed.
-- Not enough steel — the plan shows a “НЕТ ОСТАТКА” (no stock) line, which is not written to Sarjele.
+- Not enough steel — the plan shows a “— NO STOCK —” line, which is not written to Sarjele.
 - If there are no free rows under a block, the element is skipped.
 - Yellow is removed only from heats the app filled itself (hidden `sync-journal` sheet in Probe).
 
@@ -144,7 +173,7 @@ Writing and backups
 - In Consum only the “ID sync” column changes; formulas and formatting are left alone.
 
 Service data
-- In Consum the “ID sync” column is hidden. Its letter is in the journal (`Consum: колонка ID — …`).
+- In Consum the “ID sync” column is hidden. Its letter is in the journal’s “Details” (`Consum: ID column — …`).
 - In Sarjele the “Model ID” column (codes and block ID) is hidden. If the column is shared with other blocks, it is not hidden; its text is made invisible instead (format `;;;`).
 - All IDs are on the hidden `sync-registry` sheet in Sarjele (right-click a sheet tab → Unhide).
 
@@ -189,11 +218,37 @@ To remove a link, delete the line or choose “Automatic” on the Links tab. Th
 - a block can be linked to only one element: a second line with the same block is skipped as a “shared block”;
 - a BOM at the start of the file (Windows Notepad) and an empty file are accepted.
 
+---
+
+## Quick start
+
+```bash
+npm install          # first time and after package.json changes
+npm start            # build and run from the project folder
+```
+
+| Command | What it does |
+|---|---|
+| `npm start` | build and run the app from the project folder |
+| `npm run build` | `tsc -b` + window (`dist/`) + engine (`dist-engine/`) + main process (`dist-host/`) |
+| `npm test` | all checks (`node:test` + `tsx`) |
+| `npm run dist` | Mac (Apple Silicon): `release/` |
+| `npm run dist:x64` | Mac (Intel) |
+| `npm run dist:win` | Windows x64: `release/Somasync-<version>-win-x64.zip` |
+
+## Building for Windows and macOS
+
+Windows: unzip into any folder and run `Somasync\Somasync.exe`. No installation needed. A Windows build can be made on Linux or a Mac too (`npm run dist:win`).
+
+Mac: quit Somasync (Cmd+Q) and run `Установить.command` (“Install”). It copies the app to Applications, removes the quarantine flag and signs it locally. Changes in the project reach the installed app only this way.
+
 ## Tests
 
 `npm test` — tests on small synthetic workbooks (`tests/fixtures.ts`): plan, write, repeated run, open file, restore, locks, backups, heat allocation, settings, links.json, translations. The plant's real files are not in the project.
 
 Before releasing a new engine version, run the old and new versions on copies of the real files and compare the journal and the result.
+
+---
 
 ## Structure
 
@@ -228,18 +283,23 @@ src/
     FileGuard             FileLock, EditorLock, Backups
     Cells                 ExcelJS cells and addresses
 tests/                    tests
-scripts/                  generate-app-icon.py — icons from the Somaco logo
+scripts/                  generate-app-icon.py — icons from the Somaco logo; screenshots/capture.mjs — README screenshots
 assets/, build/           tray icons, app icon
-docs/screenshots/         README screenshots (demo data), en/ and ru/
+docs/screenshots/         README screenshots (demo data): overview.<en|ru>.webp, frames in en/ and ru/
 ```
 
-Rules
+### Conventions
+
 - The engine talks to the app only through arguments, environment variables, the exit code (0 — done, 1 — error, 3 — write postponed) and a JSON file (`JSON_OUT`: the run summary or data for the Links tab).
-- Human-readable texts from the engine and the main process are passed as codes (`Message`: code + parameters); the window translates them. A new text is a key in all four `locales/<language>/`; tests compare the keys and parameters across languages.
+- Human-readable texts from the engine and the main process are passed as codes (`Message`: code + parameters); the window translates them, `log.txt` and “Details” are in the interface language. A new text is a key in all four `locales/<language>/`; tests compare the keys and parameters across languages.
 - The window talks to the main process only through `window.api`.
 - Imports via `@/` (= `src/`). Code comments are in Russian. Risky places are marked `РИСК:` (“risk”).
+- No SQLite. The data lives in the files themselves: manual edits are taken into account and there is no second source of truth.
+- Everything runs on this computer; Google Drive is only the user's own storage of the tables. Sarjele is a confidential file.
 
 ## Known risks
+
+Things that work but may break or let you down under certain conditions. In the code each such place is marked `РИСК:`.
 
 | What | Where | Consequence |
 |---|---|---|
@@ -255,15 +315,10 @@ Rules
 | Network share password and Google key without system encryption | `host/SettingsStore.ts` | stored in `state.json` unencrypted |
 | A Google Drive table changed during a run | `host/drive/DriveMirror.ts` | not uploaded (a warning in the journal), the next run recalculates from the new version |
 
-## Decisions
-
-- No SQLite. The data lives in the files themselves: manual edits are taken into account and there is no second source of truth.
-- Everything runs on this computer; Google Drive is only the user's own storage of the tables. Sarjele is a confidential file.
-
 ## License
 
 [Apache License 2.0](LICENSE) © 2026 Muhammad Halimov. The code may be used, modified and distributed, including for commercial purposes, provided that the authorship and license notice is kept (the [NOTICE](NOTICE) file) and modified files are marked. The names and logos of Somaco and Holcim are trademarks of their owners: the license does not cover them. Third-party libraries are under their own licenses (Electron, React, ExcelJS, i18next — MIT; JSZip — MIT or GPL-3.0, used under MIT).
 
 ## AI disclosure
 
-The author is responsible for the code, design decisions and maintenance. AI was used in the development of this app.
+The author is responsible for the code, design decisions and maintenance. AI tools were involved in the development of this app.
