@@ -161,11 +161,11 @@
     },
     "firestore": {
       "title": "Firebase Firestore",
-      "label": "Anunțați Somasync după scriere",
-      "hint": "Eticheta ajunge imediat în jurnalul de pe partajarea de rețea",
+      "label": "Notificare Somasync",
+      "hint": "Transfer în jurnal fără așteptare.",
       "projectId": "ID-ul proiectului Firebase",
       "apiKey": "Cheie Web API",
-      "sectionHint": "Fără aceasta Somasync găsește eticheta la verificarea copiei — în cel mult 15 s.",
+      "sectionHint": "Fără notificare — verificare la 15 s.",
       "lock": "Blocați setările Firestore",
       "unlock": "Deblocați setările Firestore pentru modificare"
     }

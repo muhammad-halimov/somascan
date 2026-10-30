@@ -161,11 +161,11 @@
     },
     "firestore": {
       "title": "Firebase Firestore",
-      "label": "Сообщать Somasync о записи",
-      "hint": "Бирка сразу попадёт в журнал на сетевом диске",
+      "label": "Уведомление Somasync",
+      "hint": "Перенос в журнал без ожидания.",
       "projectId": "ID проекта Firebase",
       "apiKey": "Ключ Web API",
-      "sectionHint": "Без этого Somasync найдёт бирку при проверке копии — до 15 с.",
+      "sectionHint": "Без уведомления — проверка раз в 15 с.",
       "lock": "Закрыть настройки Firestore",
       "unlock": "Открыть настройки Firestore для изменения"
     }

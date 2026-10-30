@@ -161,11 +161,11 @@
     },
     "firestore": {
       "title": "Firebase Firestore",
-      "label": "Пас аз сабт ба Somasync хабар додан",
-      "hint": "Барчасп фавран ба журнали диски шабакавӣ мерасад",
+      "label": "Огоҳии Somasync",
+      "hint": "Интиқол ба журнал бе интизорӣ.",
       "projectId": "ID-и лоиҳаи Firebase",
       "apiKey": "Калиди Web API",
-      "sectionHint": "Бе ин Somasync барчаспро ҳангоми санҷиши нусха меёбад — то 15 с.",
+      "sectionHint": "Бе огоҳӣ — санҷиш ҳар 15 с.",
       "lock": "Танзимоти Firestore-ро бастан",
       "unlock": "Танзимоти Firestore-ро барои тағйир кушодан"
     }

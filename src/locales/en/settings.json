@@ -161,11 +161,11 @@
     },
     "firestore": {
       "title": "Firebase Firestore",
-      "label": "Notify Somasync after writing",
-      "hint": "The tag reaches the log on the network share at once",
+      "label": "Somasync notification",
+      "hint": "Transfer to the log without waiting.",
       "projectId": "Firebase project ID",
       "apiKey": "Web API key",
-      "sectionHint": "Without it Somasync finds the tag when it checks the copy — within 15 s.",
+      "sectionHint": "Without it — a check every 15 s.",
       "lock": "Lock the Firestore settings",
       "unlock": "Unlock the Firestore settings for editing"
     }
