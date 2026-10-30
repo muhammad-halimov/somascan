@@ -29,8 +29,8 @@
     "fileBack": "{{file}} este din nou disponibil",
     "busy": "Deja în curs: {{what}}. Așteptați să se termine.",
     "missingFiles": "Fișiere negăsite: {{files}}. Setați căile în fila „Stocare”.",
-    "smbMounted": "Unitate de rețea conectată: {{mount}}",
-    "smbFailed": "Unitatea de rețea nu a putut fi conectată: {{error}}",
+    "smbMounted": "Partajare rețea conectată: {{mount}}",
+    "smbFailed": "Partajarea de rețea nu a putut fi conectată: {{error}}",
     "settingsNotSaved": "Setările nu au putut fi salvate: {{error}}",
     "error": "Eroare: {{error}}",
     "processGone": "Procesul auxiliar {{type}} s-a încheiat: {{reason}} (cod {{code}})",
@@ -125,7 +125,7 @@
   },
   "smb": {
     "noHost": "Introduceți serverul și folderul partajat",
-    "unsupported": "Conectați unitatea de rețea din sistem și alegeți fișierele de pe ea"
+    "unsupported": "Conectați partajarea de rețea din sistem și alegeți fișierele de pe ea"
   },
   "scan": {
     "busy": "Citirea este deja în curs",

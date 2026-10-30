@@ -1,43 +1,58 @@
 {
-  "intro": "The spreadsheets must already exist: the app does not create them. Before every write a copy is saved next to the file in the backups folder (kept {{days}} days); restore it on the Advanced tab.",
+  "intro": "Written when Consum changes. Backups: {{days}}d.",
   "target": {
-    "title": "Storage location",
+    "title": "Destination",
     "local": "This computer",
-    "smb": "Network drive (SMB)"
+    "smb": "Network share",
+    "googleDrive": "Google Drive"
   },
   "smb": {
-    "title": "Network drive",
-    "hint": "After connecting, choose the files below with the folder icon.",
+    "account": "Account",
+    "location": "Location",
+    "hint": "After connecting, pick the tables below with the folder icon.",
     "host": "Server",
-    "hostPlaceholder": "192.168.1.10 or server.local",
+    "hostPlaceholder": "server, 10.0.0.5 or 10.0.0.5:445",
     "share": "Shared folder",
+    "sharePlaceholder": "Atelier",
     "domain": "Domain",
+    "domainPlaceholder": "Optional",
     "username": "User",
     "password": "Password",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "mount": "Connect drive",
+    "mount": "Test connection",
     "mounting": "Connecting…"
   },
+  "googleDrive": {
+    "account": "Google account",
+    "signIn": "Sign in with Google",
+    "signingIn": "Signing in in the browser…",
+    "signedIn": "Signed in: {{account}}",
+    "signOut": "Sign out",
+    "signOutLabel": "Sign out of Google",
+    "signOutTitle": "Sign out of Google?",
+    "signOutMessage": "The app’s access to Google Drive of {{account}} will be revoked. Watching will wait for a new sign-in.",
+    "folder": "Folder",
+    "folderPlaceholder": "Folder link or ID",
+    "hint": "Folder: link or ID, empty — “My Drive”."
+  },
   "files": {
-    "title": "Files",
-    "hint": "Paths are locked against accidental edits.",
+    "title": "Tables",
+    "hint": "The tables must already exist.",
     "consum": "Consum (steel consumption)",
     "consumN": "Consum #{{n}} (steel consumption)",
     "sarjele": "Sarjele din elemente",
     "probe": "Probe otel (sample log)",
-    "unlock": "Unlock path",
-    "lock": "Lock path",
+    "unlock": "Unlock the table path to edit it",
+    "lock": "Lock the table path",
     "pick": "Choose file",
     "remove": "Remove this Consum",
-    "check": "Check file",
+    "check": "Check the table",
     "checking": "Checking…"
   },
   "probeSheet": {
-    "title": "Probe sheet",
-    "hint": "The app reads one year's sheet. By default the current one; while the new year's sheet is still empty, the previous year is read too.",
-    "label": "Sample log sheet",
-    "auto": "Auto — current year's sheet ({{year}})",
-    "missing": "{{sheet}} (not found in the file)"
+    "label": "Sheet",
+    "auto": "Current year sheet ({{year}})",
+    "missing": "{{sheet}} — not in the table"
   }
 }

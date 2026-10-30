@@ -30,6 +30,8 @@ const api: Api = {
   confirm: (options) => ipcRenderer.invoke(IPC.confirm, options),
   mountSmb: () => ipcRenderer.invoke(IPC.mountSmb),
   smbPassword: () => ipcRenderer.invoke(IPC.smbPassword),
+  driveSignIn: () => ipcRenderer.invoke(IPC.driveSignIn),
+  driveSignOut: () => ipcRenderer.invoke(IPC.driveSignOut),
   clearJournal: () => ipcRenderer.invoke(IPC.clearJournal),
   open: (what) => ipcRenderer.invoke(IPC.open, what),
   onJournal: on(IPC.journal),

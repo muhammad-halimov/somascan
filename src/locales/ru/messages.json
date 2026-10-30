@@ -8,7 +8,7 @@
     "migratePlan": "Демонстрационная миграция",
     "migrateWrite": "Фактическая миграция",
     "createSheets": "Создание листов",
-    "restore": "Откат из бэкапа"
+    "restore": "Откат из копии"
   },
   "run": {
     "running": "{{trigger}} · выполняется",

@@ -1,43 +1,58 @@
 {
-  "intro": "Tabelele trebuie să existe deja: aplicația nu le creează. Înainte de fiecare scriere, lângă fișier se salvează o copie în folderul backups (se păstrează {{days}} zile); restaurarea se face din fila „Avansate”.",
+  "intro": "Scriere la modificarea Consum. Copii: {{days}} zile.",
   "target": {
-    "title": "Locație de stocare",
+    "title": "Destinație",
     "local": "Acest computer",
-    "smb": "Unitate de rețea (SMB)"
+    "smb": "Partajare rețea",
+    "googleDrive": "Google Drive"
   },
   "smb": {
-    "title": "Unitate de rețea",
-    "hint": "După conectare, alegeți fișierele de mai jos cu pictograma de folder.",
+    "account": "Cont",
+    "location": "Locație",
+    "hint": "După conectare, alegeți tabelele de mai jos cu pictograma de folder.",
     "host": "Server",
-    "hostPlaceholder": "192.168.1.10 sau server.local",
+    "hostPlaceholder": "server, 10.0.0.5 sau 10.0.0.5:445",
     "share": "Folder partajat",
+    "sharePlaceholder": "Atelier",
     "domain": "Domeniu",
+    "domainPlaceholder": "Opțional",
     "username": "Utilizator",
     "password": "Parolă",
     "showPassword": "Arată parola",
     "hidePassword": "Ascunde parola",
-    "mount": "Conectează unitatea",
+    "mount": "Testează conexiunea",
     "mounting": "Se conectează…"
   },
+  "googleDrive": {
+    "account": "Cont Google",
+    "signIn": "Conectare cu Google",
+    "signingIn": "Conectare în browser…",
+    "signedIn": "Conectat: {{account}}",
+    "signOut": "Deconectare",
+    "signOutLabel": "Deconectare de la Google",
+    "signOutTitle": "Vă deconectați de la Google?",
+    "signOutMessage": "Accesul aplicației la Google Drive al contului {{account}} va fi revocat. Urmărirea va aștepta o nouă conectare.",
+    "folder": "Folder",
+    "folderPlaceholder": "Link sau ID folder",
+    "hint": "Folder: link sau ID, gol — „Drive-ul meu”."
+  },
   "files": {
-    "title": "Fișiere",
-    "hint": "Căile sunt blocate cu lacăt împotriva modificărilor accidentale.",
+    "title": "Tabele",
+    "hint": "Tabelele trebuie să existe deja.",
     "consum": "Consum (consumul de metal)",
     "consumN": "Consum nr. {{n}} (consumul de metal)",
     "sarjele": "Sarjele din elemente",
     "probe": "Probe otel (registrul de probe)",
-    "unlock": "Deblochează calea",
-    "lock": "Blochează calea",
+    "unlock": "Deblocați calea tabelului pentru editare",
+    "lock": "Blocați calea tabelului",
     "pick": "Alege fișierul",
     "remove": "Elimină acest Consum",
-    "check": "Verifică fișierul",
+    "check": "Verifică tabelul",
     "checking": "Se verifică…"
   },
   "probeSheet": {
-    "title": "Foaia Probe",
-    "hint": "Aplicația citește foaia unui singur an. Implicit — anul curent; cât timp foaia anului nou este goală, citește și anul precedent.",
-    "label": "Foaia registrului de probe",
-    "auto": "Auto — foaia anului curent ({{year}})",
-    "missing": "{{sheet}} (nu există în fișier)"
+    "label": "Foaie",
+    "auto": "Foaia anului curent ({{year}})",
+    "missing": "{{sheet}} — nu există în tabel"
   }
 }

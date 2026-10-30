@@ -11,10 +11,13 @@
     "heat": "С какой плавки брать металл",
     "heatLabel": "Выбор плавки",
     "latest": "С последней использованной",
-    "oldest": "Самая старая незакрытая",
-    "backups": "Сколько хранить бэкапы",
-    "backupsLabel": "Хранение бэкапов",
-    "days": "{{n}} дн."
+    "oldest": "Самая старая незакрытая"
+  },
+  "backups": {
+    "title": "Резервные копии",
+    "keep": "Хранить копии таблиц",
+    "days": "{{count}} дн.",
+    "hint": "Копии — в папке «backups» рядом с таблицами."
   },
   "actions": {
     "title": "Действия",
@@ -22,11 +25,11 @@
     "plan": "Демонстрационный прогон",
     "planHint": "Показать план, ничего не записывать",
     "write": "Фактический прогон",
-    "writeHint": "Записать в Sarjele и Probe, с бэкапом",
+    "writeHint": "Записать в Sarjele и Probe, с копией",
     "migratePlan": "Демонстрационная миграция",
     "migratePlanHint": "Показать, какие блоки получат ID",
     "migrateWrite": "Фактическая миграция",
-    "migrateWriteHint": "Записать ID в Sarjele и Consum, с бэкапом",
+    "migrateWriteHint": "Записать ID в Sarjele и Consum, с копией",
     "guard": "Не писать в открытые файлы",
     "guardHint": "Пока Sarjele или Probe открыт, запись ждёт",
     "guardUnlock": "Открыть замок: изменить настройку",
@@ -35,19 +38,19 @@
     "autoProjectsHint": "Новый проект из Consum сам получает лист в Sarjele",
     "links": "Ручные привязки (links.json)",
     "linksHint": "Файл привязок элементов к блокам",
-    "restore": "Откат из бэкапа…",
+    "restore": "Откат из копии…",
     "restoreOpen": "Выберите состояние ниже",
-    "restoreHint": "Вернуть файлы к сохранённой копии",
-    "noBackups": "Бэкапов пока нет — они появляются при первой записи.",
-    "backups": "Бэкапы",
+    "restoreHint": "Вернуть таблицы к сохранённой копии",
+    "noBackups": "Копий пока нет — они появляются при первой записи.",
+    "backups": "Резервные копии",
     "beforeRestore": "Состояние перед откатом",
     "cancel": "Отмена",
     "confirmWriteTitle": "Запись в файлы",
-    "confirmWrite": "Изменения будут записаны в Sarjele и Probe. Перед записью создаётся бэкап.",
-    "confirmMigrate": "ID будут записаны в Sarjele и в служебный столбец Consum. Перед записью создаётся бэкап.",
+    "confirmWrite": "Изменения будут записаны в Sarjele и Probe. Перед записью создаётся копия.",
+    "confirmMigrate": "ID будут записаны в Sarjele и в служебный столбец Consum. Перед записью создаётся копия.",
     "confirmWriteOk": "Записать",
-    "confirmRestoreTitle": "Откат из бэкапа",
-    "confirmRestore": "Вернуть Sarjele, Probe и Consum к состоянию {{stamp}}? Текущее состояние тоже сохранится в бэкап.",
+    "confirmRestoreTitle": "Откат из копии",
+    "confirmRestore": "Вернуть Sarjele, Probe и Consum к состоянию {{stamp}}? Текущее состояние тоже сохранится в копию.",
     "confirmRestoreOk": "Откатить"
   },
   "system": {
@@ -62,7 +65,10 @@
     "startMinimized": "Запускать свёрнутым",
     "startMinimizedHint": "Окно не открывается, программа сразу в трее",
     "tray": "Сворачивать в трей",
-    "trayHint": "Закрытие окна не останавливает слежение",
-    "version": "Somasync {{version}}"
+    "trayHint": "Закрытие окна не останавливает слежение"
+  },
+  "about": {
+    "title": "О приложении",
+    "version": "Версия {{version}}"
   }
 }

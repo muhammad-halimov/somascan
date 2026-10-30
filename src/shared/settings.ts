@@ -2,7 +2,7 @@
  * Настройки приложения: строение, значения по умолчанию и разбор сохранённого файла.
  *
  * Хранит их главный процесс (`host/SettingsStore`) в `userData/state.json`; окно получает копию
- * без пароля сетевого диска. Каждое поле разбирается отдельно: одно испорченное поле не сбрасывает остальные.
+ * без пароля сетевого диска и без ключа доступа к Google Drive. Каждое поле разбирается отдельно: одно испорченное поле не сбрасывает остальные.
  */
 
 // ── Проверки данных извне (файл настроек, JSON) ─────────────────────────────
@@ -66,8 +66,8 @@ export const THEMES = ['system', 'light', 'dark'] as const
 export type ThemePreference = (typeof THEMES)[number]
 
 /** Где лежат таблицы. */
-export const TARGETS = ['local', 'smb'] as const
-/** Где лежат таблицы: на этом компьютере или на сетевом диске. */
+export const TARGETS = ['local', 'smb', 'googleDrive'] as const
+/** Где лежат таблицы: на этом компьютере, на сетевом диске или в Google Drive. */
 export type StorageTarget = (typeof TARGETS)[number]
 
 /** С какой плавки брать металл. */
@@ -93,7 +93,18 @@ export interface SmbSettings {
   password: string
 }
 
-/** Файлы одного места хранения. */
+/**
+ * Google Drive: вошедший аккаунт, папка таблиц (ссылка или id; пусто — «Мой диск») и ключ доступа.
+ * Ключ (refresh-токен) хранится зашифрованным, как пароль сетевого диска, и в окно не отдаётся.
+ */
+export interface GoogleDriveSettings {
+  /** Почта вошедшего аккаунта; пусто — вход не выполнен. */
+  account: string
+  folder: string
+  token: string
+}
+
+/** Файлы одного места хранения (в Google Drive — имена файлов в папке). */
 export interface FileSet {
   /** Consum (обычно один). */
   consums: string[]
@@ -110,13 +121,14 @@ export interface AppSettings {
   language: Language
   theme: ThemePreference
   target: StorageTarget
-  /** Файлы — свои для этого компьютера и для сетевого диска; работает набор текущего места хранения. */
+  /** Файлы — свои у каждого места хранения; работает набор текущего. */
   files: Record<StorageTarget, FileSet>
-  /** Замки на путях от случайной правки. */
-  locked: Record<FileKind, boolean>
+  /** Замки на путях (и на папке Google Drive) от случайной правки. */
+  locked: Record<FileKind | 'folder', boolean>
   /** Лист Probe; пусто — лист текущего года. */
   sheet: string
   smb: SmbSettings
+  googleDrive: GoogleDriveSettings
   projects: ProjectSettings[]
   /** Интервал проверки Consum, с (2–10). */
   intervalSec: number
@@ -143,10 +155,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
   language: 'en',
   theme: 'system',
   target: 'local',
-  files: { local: { consums: [''], sarjele: '', probe: '' }, smb: { consums: [''], sarjele: '', probe: '' } },
-  locked: { consum: false, sarjele: false, probe: false },
+  files: {
+    local: { consums: [''], sarjele: '', probe: '' },
+    smb: { consums: [''], sarjele: '', probe: '' },
+    googleDrive: { consums: [''], sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx' },
+  },
+  locked: { consum: false, sarjele: false, probe: false, folder: false },
   sheet: '',
   smb: { host: '', share: '', domain: '', username: '', password: '' },
+  googleDrive: { account: '', folder: '', token: '' },
   projects: [],
   intervalSec: 10,
   settleSec: 3,
@@ -178,11 +195,11 @@ function parseProject(raw: unknown): ProjectSettings | null {
   }
 }
 
-/** Разбирает набор файлов. */
-function parseFileSet(raw: unknown): FileSet {
-  const src = isRecord(raw) ? raw : {}
-  const consums = readArray(src, 'consums', (x): x is string => typeof x === 'string', [''])
-  return { consums: consums.length ? consums : [''], sarjele: readString(src, 'sarjele', ''), probe: readString(src, 'probe', '') }
+/** Разбирает набор файлов (нет его — `fallback`). */
+function parseFileSet(raw: unknown, fallback: FileSet = { consums: [''], sarjele: '', probe: '' }): FileSet {
+  if (!isRecord(raw)) return { ...fallback, consums: [...fallback.consums] }
+  const consums = readArray(raw, 'consums', (x): x is string => typeof x === 'string', [''])
+  return { consums: consums.length ? consums : [''], sarjele: readString(raw, 'sarjele', ''), probe: readString(raw, 'probe', '') }
 }
 
 /** Файлы текущего места хранения. */
@@ -193,9 +210,10 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
   const src = isRecord(raw) ? raw : {}
   const locked = isRecord(src.locked) ? src.locked : {}
   const smb = isRecord(src.smb) ? src.smb : {}
+  const drive = isRecord(src.googleDrive) ? src.googleDrive : {}
   const target = isOneOf(TARGETS)(src.target) ? src.target : defaults.target
   const files = isRecord(src.files) ? src.files : {}
-  const parsed = { local: parseFileSet(files.local), smb: parseFileSet(files.smb) }
+  const parsed = { local: parseFileSet(files.local), smb: parseFileSet(files.smb), googleDrive: parseFileSet(files.googleDrive, defaults.files.googleDrive) }
   // прежние версии хранили один набор (consums + paths) — он относится к месту хранения, выбранному тогда
   if (!isRecord(src.files) && (Array.isArray(src.consums) || isRecord(src.paths))) {
     parsed[target] = parseFileSet({ consums: src.consums, ...(isRecord(src.paths) ? src.paths : {}) })
@@ -211,6 +229,7 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
       consum: readBoolean(locked, 'consum', defaults.locked.consum),
       sarjele: readBoolean(locked, 'sarjele', defaults.locked.sarjele),
       probe: readBoolean(locked, 'probe', defaults.locked.probe),
+      folder: readBoolean(locked, 'folder', defaults.locked.folder),
     },
     sheet: readString(src, 'sheet', defaults.sheet),
     smb: {
@@ -219,6 +238,11 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
       domain: readString(smb, 'domain', ''),
       username: readString(smb, 'username', ''),
       password: readString(smb, 'password', ''),
+    },
+    googleDrive: {
+      account: readString(drive, 'account', ''),
+      folder: readString(drive, 'folder', ''),
+      token: readString(drive, 'token', ''),
     },
     projects: (Array.isArray(src.projects) ? src.projects : []).map(parseProject).filter((p): p is ProjectSettings => p !== null),
     intervalSec: Math.min(MAX_INTERVAL_SEC, Math.max(2, readNumber(src, 'intervalSec', defaults.intervalSec))),

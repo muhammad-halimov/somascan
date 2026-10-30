@@ -1,10 +1,10 @@
 /**
- * Вкладка «Расширенные»: таймер, правила, действия (разовые прогоны, миграция ID, откат, переключатели) и система
- * (язык, тема, автозапуск, трей, версия).
+ * Вкладка «Расширенные»: таймер, правила, резервные копии (как в мобильном приложении), действия (разовые прогоны,
+ * миграция ID, откат, переключатели), система (язык, тема, автозапуск, трей) и «О приложении» с версией в конце.
  */
 import { useState, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarIcon, ClockIcon, FactoryIcon, FileIcon, FlagGB, FlagRO, FlagRU, FlagTJ, LinkIcon, ListIcon, PlayIcon, ResetIcon, SunIcon, TableIcon, WrenchIcon } from '@/components/icons/Icons'
+import { CalendarIcon, ClockIcon, FactoryIcon, FileIcon, FlagGB, FlagRO, FlagRU, FlagTJ, InfoIcon, LinkIcon, ListIcon, PlayIcon, RefreshIcon, ResetIcon, SunIcon, TableIcon, WrenchIcon } from '@/components/icons/Icons'
 import { LockButton } from '@/components/ui/Button'
 import { FormSection, Notice } from '@/components/ui/Layout'
 import { List, ListItem, Switch } from '@/components/ui/List'
@@ -18,7 +18,7 @@ import './settings.css'
 /** Интервалы проверки и паузы после изменения, с (до 10 с). */
 const INTERVALS = [2, 3, 5, 10]
 const SETTLES = [1, 3, 5, 10]
-/** Сроки хранения бэкапов, дн. */
+/** Сроки хранения копий, дн. (как в мобильном приложении). */
 const BACKUP_DAYS = [7, 30, 90, 365]
 
 /** Языки: название на самом языке и флаг. */
@@ -40,8 +40,10 @@ export function SettingsScreen({ goHome }: { goHome: () => void }) {
     <>
       <TimerSection settings={settings} />
       <RulesSection settings={settings} />
+      <BackupsSection settings={settings} />
       <ActionsSection settings={settings} busy={!!run.busy} goHome={goHome} />
       <SystemSection settings={settings} />
+      <AboutSection />
     </>
   )
 }
@@ -51,7 +53,7 @@ function TimerSection({ settings }: { settings: AppSettings }) {
   const { t } = useTranslation('settings')
   const seconds = (values: number[]) => values.map((s) => ({ value: s, label: t('timer.seconds', { n: s }), icon: <ClockIcon /> }))
   return (
-    <FormSection title={t('timer.title')} icon={<ClockIcon />} hint={t('timer.hint')}>
+    <FormSection title={t('timer.title')} icon={<RefreshIcon />} hint={t('timer.hint')}>
       <span className="form-section-hint">{t('timer.interval')}</span>
       <Tabs label={t('timer.interval')} value={settings.intervalSec} options={seconds(INTERVALS)} onChange={(intervalSec) => settingsStore.update({ intervalSec })} />
       <span className="form-section-hint">{t('timer.settle')}</span>
@@ -60,7 +62,7 @@ function TimerSection({ settings }: { settings: AppSettings }) {
   )
 }
 
-/** Выбор плавки и срок бэкапов. */
+/** С какой плавки брать металл. */
 function RulesSection({ settings }: { settings: AppSettings }) {
   const { t } = useTranslation('settings')
   return (
@@ -75,11 +77,20 @@ function RulesSection({ settings }: { settings: AppSettings }) {
         ]}
         onChange={(rule) => settingsStore.update({ rule })}
       />
-      <span className="form-section-hint">{t('rules.backups')}</span>
+    </FormSection>
+  )
+}
+
+/** Сколько хранить копии таблиц — как «Резервные копии» мобильного приложения. */
+function BackupsSection({ settings }: { settings: AppSettings }) {
+  const { t } = useTranslation('settings')
+  return (
+    <FormSection title={t('backups.title')} icon={<ClockIcon />} hint={t('backups.hint')}>
+      <span className="form-section-hint">{t('backups.keep')}</span>
       <Tabs
-        label={t('rules.backupsLabel')}
+        label={t('backups.keep')}
         value={settings.backupDays}
-        options={BACKUP_DAYS.map((d) => ({ value: d, label: t('rules.days', { n: d }), icon: <CalendarIcon /> }))}
+        options={BACKUP_DAYS.map((count) => ({ value: count, label: t('backups.days', { count }), icon: <CalendarIcon /> }))}
         onChange={(backupDays) => settingsStore.update({ backupDays })}
       />
     </FormSection>
@@ -167,10 +178,9 @@ function ActionsSection({ settings, busy, goHome }: { settings: AppSettings; bus
   )
 }
 
-/** Язык, тема, автозапуск, трей, версия. */
+/** Язык, тема, автозапуск, трей. */
 function SystemSection({ settings }: { settings: AppSettings }) {
   const { t } = useTranslation('settings')
-  const info = useStore(appInfoStore)
   const toggle = (key: 'openAtLogin' | 'startMinimized' | 'trayMinimize') => settingsStore.update({ [key]: !settings[key] })
   return (
     <FormSection title={t('system.title')} icon={<SunIcon />}>
@@ -200,7 +210,17 @@ function SystemSection({ settings }: { settings: AppSettings }) {
         <ListItem itemRole="checkbox" primary={t('system.startMinimized')} secondary={t('system.startMinimizedHint')} selected={settings.startMinimized} trailing={<Switch on={settings.startMinimized} />} onClick={() => toggle('startMinimized')} />
         <ListItem itemRole="checkbox" primary={t('system.tray')} secondary={t('system.trayHint')} selected={settings.trayMinimize} trailing={<Switch on={settings.trayMinimize} />} onClick={() => toggle('trayMinimize')} />
       </List>
-      <p className="app-version">{t('system.version', { version: info.version })}</p>
+    </FormSection>
+  )
+}
+
+/** Версия программы — в конце, как «О приложении» мобильного приложения. */
+function AboutSection() {
+  const { t } = useTranslation('settings')
+  const info = useStore(appInfoStore)
+  return (
+    <FormSection title={t('about.title')} icon={<InfoIcon />}>
+      <p className="app-version">{t('about.version', { version: info.version })}</p>
     </FormSection>
   )
 }

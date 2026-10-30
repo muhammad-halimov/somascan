@@ -24,6 +24,8 @@ export const IPC = {
   confirm: 'confirm',
   mountSmb: 'smb:mount',
   smbPassword: 'smb:password',
+  driveSignIn: 'drive:signIn',
+  driveSignOut: 'drive:signOut',
   clearJournal: 'journal:clear',
   open: 'open',
   // события
@@ -345,6 +347,10 @@ export interface Api {
   mountSmb(): Promise<ActionResult>
   /** Сохранённый пароль сетевого диска (по нажатию на «глазок»). */
   smbPassword(): Promise<string>
+  /** Вход в Google в браузере системы (доступ к Drive); почта аккаунта приходит в настройках. */
+  driveSignIn(): Promise<ActionResult>
+  /** Выход из Google: доступ отзывается, папка и имена файлов остаются. */
+  driveSignOut(): Promise<void>
   clearJournal(): Promise<void>
   open(what: OpenTarget): Promise<void>
   onJournal(cb: (entry: JournalEntry) => void): () => void

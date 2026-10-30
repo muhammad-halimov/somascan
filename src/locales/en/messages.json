@@ -29,8 +29,8 @@
     "fileBack": "{{file}} is available again",
     "busy": "Already running: {{what}}. Wait until it finishes.",
     "missingFiles": "Files not found: {{files}}. Set the paths on the Storage tab.",
-    "smbMounted": "Network drive connected: {{mount}}",
-    "smbFailed": "Could not connect the network drive: {{error}}",
+    "smbMounted": "Network share connected: {{mount}}",
+    "smbFailed": "Could not connect the network share: {{error}}",
     "settingsNotSaved": "Could not save the settings: {{error}}",
     "error": "Error: {{error}}",
     "processGone": "Helper process {{type}} exited: {{reason}} (code {{code}})",
@@ -125,7 +125,7 @@
   },
   "smb": {
     "noHost": "Enter the server and the shared folder",
-    "unsupported": "Connect the network drive with system tools and choose the files on it"
+    "unsupported": "Connect the network share with system tools and choose the files on it"
   },
   "scan": {
     "busy": "Reading is already in progress",

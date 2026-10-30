@@ -26,6 +26,7 @@
 
 .button-icon-wrap { display: inline-grid; place-items: center; }
 .button-icon-wrap svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.button-icon-wrap svg.brand-icon { stroke: none; }
 /* Пока идёт действие, иконка вращается. */
 .button[aria-busy='true'] .button-icon-wrap svg { animation: spin 900ms linear infinite; }
 
@@ -36,3 +37,9 @@
 /* Тональная: мягкая акцентная заливка во всю ширину. */
 .button.is-tonal { width: 100%; min-height: 44px; color: var(--text-h); background: color-mix(in srgb, var(--accent) 14%, var(--bg)); }
 .button.is-tonal:active:not(:disabled) { background: color-mix(in srgb, var(--accent) 24%, var(--bg)); }
+
+/* «Войти через Google» — по правилам оформления Google: белая (в тёмной теме — тёмная) с серой рамкой и цветной «G». */
+.button.is-google { width: 100%; min-height: 44px; color: #1f1f1f; background: #fff; border: 1px solid #747775; font-family: Roboto, Inter, system-ui, sans-serif; font-weight: 500; }
+.button.is-google:active:not(:disabled) { background: #f2f2f2; }
+:root[data-theme='dark'] .button.is-google { color: #e3e3e3; background: #131314; border-color: #8e918f; }
+:root[data-theme='dark'] .button.is-google:active:not(:disabled) { background: #1f1f20; }

@@ -11,10 +11,13 @@
     "heat": "Din ce șarjă se ia oțelul",
     "heatLabel": "Alegerea șarjei",
     "latest": "Din ultima folosită",
-    "oldest": "Cea mai veche șarjă deschisă",
-    "backups": "Cât timp se păstrează copiile de rezervă",
-    "backupsLabel": "Păstrarea backup-urilor",
-    "days": "{{n}} zile"
+    "oldest": "Cea mai veche șarjă deschisă"
+  },
+  "backups": {
+    "title": "Copii de rezervă",
+    "keep": "Păstrați copiile tabelelor",
+    "days": "{{count}} zile",
+    "hint": "Copiile — în folderul „backups” lângă tabele."
   },
   "actions": {
     "title": "Acțiuni",
@@ -22,11 +25,11 @@
     "plan": "Rulare de test",
     "planHint": "Arată planul, nu scrie nimic",
     "write": "Rulare reală",
-    "writeHint": "Scrie în Sarjele și Probe, cu backup",
+    "writeHint": "Scrie în Sarjele și Probe, cu copie de rezervă",
     "migratePlan": "Migrare de test",
     "migratePlanHint": "Arată ce blocuri vor primi ID",
     "migrateWrite": "Migrare reală",
-    "migrateWriteHint": "Scrie ID-urile în Sarjele și Consum, cu backup",
+    "migrateWriteHint": "Scrie ID-urile în Sarjele și Consum, cu copie de rezervă",
     "guard": "Nu scrie în fișiere deschise",
     "guardHint": "Cât Sarjele sau Probe e deschis, scrierea așteaptă",
     "guardUnlock": "Deschide lacătul ca să schimbi setarea",
@@ -35,7 +38,7 @@
     "autoProjectsHint": "Un proiect nou din Consum primește singur o foaie în Sarjele",
     "links": "Legături manuale (links.json)",
     "linksHint": "Fișierul legăturilor element–bloc",
-    "restore": "Restaurare din backup…",
+    "restore": "Restaurare din copie…",
     "restoreOpen": "Alegeți o stare mai jos",
     "restoreHint": "Readuce fișierele la o copie salvată",
     "noBackups": "Încă nu există copii de rezervă — apar la prima scriere.",
@@ -46,8 +49,8 @@
     "confirmWrite": "Modificările vor fi scrise în Sarjele și Probe. Înainte se face o copie de rezervă.",
     "confirmMigrate": "ID-urile vor fi scrise în Sarjele și în coloana de serviciu din Consum. Înainte se face o copie de rezervă.",
     "confirmWriteOk": "Scrie",
-    "confirmRestoreTitle": "Restaurare din backup",
-    "confirmRestore": "Readuceți Sarjele, Probe și Consum la starea din {{stamp}}? Starea actuală se salvează și ea într-un backup.",
+    "confirmRestoreTitle": "Restaurare din copie",
+    "confirmRestore": "Readuceți Sarjele, Probe și Consum la starea din {{stamp}}? Starea actuală se salvează și ea într-o copie de rezervă.",
     "confirmRestoreOk": "Restaurează"
   },
   "system": {
@@ -62,7 +65,10 @@
     "startMinimized": "Pornește minimizat",
     "startMinimizedHint": "Fereastra nu se deschide, aplicația merge direct în bara de sistem",
     "tray": "Minimizează în bara de sistem",
-    "trayHint": "Închiderea ferestrei nu oprește monitorizarea",
-    "version": "Somasync {{version}}"
+    "trayHint": "Închiderea ferestrei nu oprește monitorizarea"
+  },
+  "about": {
+    "title": "Despre aplicație",
+    "version": "Versiunea {{version}}"
   }
 }

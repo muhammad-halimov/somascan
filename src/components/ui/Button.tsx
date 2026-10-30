@@ -5,9 +5,10 @@ import './Button.css'
 /**
  * Вид кнопки:
  * - `text` — текстовая кнопка без фона, для действий рядом с заголовком («Перечитать»);
- * - `tonal` — «таблетка» с мягкой акцентной заливкой на всю ширину, для действий формы.
+ * - `tonal` — «таблетка» с мягкой акцентной заливкой на всю ширину, для действий формы;
+ * - `google` — «Войти через Google» по правилам оформления Google.
  */
-export type ButtonVariant = 'text' | 'tonal'
+export type ButtonVariant = 'text' | 'tonal' | 'google'
 
 /** Свойства `Button`. */
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

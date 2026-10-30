@@ -1,3 +1,8 @@
 /* Поле файла и итог его проверки. */
 .file-field { display: flex; flex-direction: column; gap: 6px; }
 .storage-check { min-height: 4px; }
+/* Формы места хранения: те же отступы между секциями, что у вкладки. */
+.storage-stack { display: flex; flex-direction: column; gap: 24px; }
+/* Вошедший аккаунт Google. */
+.storage-account { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.storage-account .status-badge { min-width: 0; overflow-wrap: anywhere; }

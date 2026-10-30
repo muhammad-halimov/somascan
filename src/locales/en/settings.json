@@ -11,10 +11,13 @@
     "heat": "Which heat to take the steel from",
     "heatLabel": "Heat choice",
     "latest": "From the last one used",
-    "oldest": "Oldest open heat",
-    "backups": "How long to keep backups",
-    "backupsLabel": "Backup retention",
-    "days": "{{n}} days"
+    "oldest": "Oldest open heat"
+  },
+  "backups": {
+    "title": "Backups",
+    "keep": "Keep table backups for",
+    "days": "{{count}} d",
+    "hint": "Backups go to the “backups” folder by the tables."
   },
   "actions": {
     "title": "Actions",
@@ -62,7 +65,10 @@
     "startMinimized": "Start minimized",
     "startMinimizedHint": "No window opens, the app goes straight to the tray",
     "tray": "Minimize to tray",
-    "trayHint": "Closing the window does not stop watching",
-    "version": "Somasync {{version}}"
+    "trayHint": "Closing the window does not stop watching"
+  },
+  "about": {
+    "title": "About",
+    "version": "Version {{version}}"
   }
 }
