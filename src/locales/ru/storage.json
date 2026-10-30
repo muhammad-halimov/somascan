@@ -60,16 +60,16 @@
     "enable": "Бирки с телефонов через Google Drive",
     "enableHint": "Для телефонов без доступа к сети компании",
     "copy": "Копия Probe в Google Drive",
-    "hint": "Телефоны пишут бирки в копию, программа переносит их в Probe во время слежения с записью.",
-    "waiting": "Бирки с телефонов ждут: закройте Probe",
+    "hint": "Перенос в Probe — во время слежения с записью.",
+    "waiting": "Перенос отложен: Probe открыт",
     "synced": "Копия сверена в {{time}}",
-    "firestore": "Мгновенно через Firebase Firestore",
-    "firestoreHint": "Телефон сообщает о записи — перенос сразу, а не через 15 с",
+    "firestore": "Уведомления Firebase Firestore",
+    "firestoreHint": "Перенос без ожидания проверки копии",
     "firestoreLock": "Закрыть настройки Firestore",
     "firestoreUnlock": "Открыть настройки Firestore для изменения",
     "projectId": "ID проекта Firebase",
     "apiKey": "Ключ Web API",
-    "bellOn": "Firestore слушается",
+    "bellOn": "Firestore: подключено",
     "bellFailed": "Firestore: {{error}}"
   }
 }

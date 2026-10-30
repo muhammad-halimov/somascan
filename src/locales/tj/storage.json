@@ -60,16 +60,16 @@
     "enable": "Барчаспҳо аз телефонҳо тавассути Google Drive",
     "enableHint": "Барои телефонҳое, ки ба шабакаи ширкат дастрасӣ надоранд",
     "copy": "Нусхаи Probe дар Google Drive",
-    "hint": "Телефонҳо барчаспҳоро ба нусха менависанд, барнома онҳоро ҳангоми назорат бо сабт ба Probe мегузаронад.",
-    "waiting": "Барчаспҳо аз телефонҳо интизоранд: Probe-ро пӯшед",
+    "hint": "Интиқол ба Probe — ҳангоми назорат бо сабт.",
+    "waiting": "Интиқол ба таъхир афтод: Probe кушода аст",
     "synced": "Нусха соати {{time}} мувофиқ карда шуд",
-    "firestore": "Фавран тавассути Firebase Firestore",
-    "firestoreHint": "Телефон дар бораи сабт хабар медиҳад — интиқол фавран, на баъди 15 с",
+    "firestore": "Огоҳиҳои Firebase Firestore",
+    "firestoreHint": "Интиқол бе интизории санҷиши нусха",
     "firestoreLock": "Танзимоти Firestore-ро бастан",
     "firestoreUnlock": "Танзимоти Firestore-ро барои тағйир кушодан",
     "projectId": "ID-и лоиҳаи Firebase",
     "apiKey": "Калиди Web API",
-    "bellOn": "Firestore гӯш карда мешавад",
+    "bellOn": "Firestore: пайваст",
     "bellFailed": "Firestore: {{error}}"
   }
 }

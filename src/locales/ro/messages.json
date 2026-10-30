@@ -255,8 +255,8 @@
     "noEntry": "înregistrarea {{record}} a fost făcută de o versiune mai veche a aplicației — nu conține eticheta, introduceți-o manual",
     "probeChanged": "„{{file}}” a fost salvat în timpul transferului — transferul se va repeta",
     "integrity": "Verificarea înainte de scrierea în Probe nu a trecut (celula {{cell}}) — Probe nu a fost modificat",
-    "created": "Copia {{file}} a fost creată în Google Drive — telefoanele scriu etichetele în ea",
+    "created": "Copia {{file}} creată în Google Drive",
     "failed": "Telefoane (Google Drive): {{error}}",
-    "bellFailed": "Firestore nu ascultă: {{error}} — transferul se face la verificarea copiei"
+    "bellFailed": "Firestore indisponibil: {{error}}. Transfer — la verificarea copiei"
   }
 }
