@@ -230,7 +230,7 @@ Columns are found **by header text** (ignoring case and diacritics, with known v
 npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe otel.xlsx" "tests/fixtures/Probe otel.xlsx"
 ```
 
-**Which tags are already written** — in the hidden sheet `somascan-journal` (state `veryHidden`: it is visible neither in the sheet tabs nor in Excel's “Unhide”): record number `SCN-…` → sheet and row. Thanks to it, a retry after an interruption does not duplicate the row, and the check after saving finds it.
+**Which tags are already written** — in the hidden sheet `somascan-journal` (state `veryHidden`: it is visible neither in the sheet tabs nor in Excel's “Unhide”): record number `SCN-…` → sheet, row, write time and the tag itself (fields and columns, JSON). Thanks to it, a retry after an interruption does not duplicate the row, and the check after saving finds it. From the tag in this sheet the desktop app Somasync carries records made by phones into a copy of the log on Google Drive over to the log on the network drive, as the same row the phone would have written (phones with no access to the company network).
 
 ## Writing to a network drive
 

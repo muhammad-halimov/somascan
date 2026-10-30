@@ -11,8 +11,10 @@
  * (`snapshot`), так что повреждение данных при пересохранении не дойдёт до сервера.
  *
  * Какие бирки уже записаны, помнит скрытый служебный лист (`JOURNAL_SHEET`, `veryHidden` —
- * его не видно и в списке скрытых листов Excel): номер записи → лист и строка. По нему повтор
- * после обрыва не дублирует строку, а проверка после сохранения находит записанную строку.
+ * его не видно и в списке скрытых листов Excel): номер записи → лист и строка, время и сама бирка
+ * (поля и колонки, JSON). По нему повтор после обрыва не дублирует строку, а проверка после сохранения
+ * находит записанную строку. По бирке из этого листа Somasync переносит записи с телефонов из копии
+ * журнала в Google Drive в журнал на сетевом диске той же записью, что сделал бы телефон.
  *
  * Правила записи (`AppendOptions`, из настроек хранилища): строгое строение — лист без всех колонок журнала
  * по порядку не пишется (`layoutMismatch`); каждая плавка — один раз: если она уже есть на каком-либо листе
@@ -40,6 +42,9 @@ type ExcelModule = typeof import('exceljs')
  * скопировав журнал в новую книгу без скрытых листов), уже записанные бирки при повторе допишутся снова.
  */
 export const JOURNAL_SHEET = 'somascan-journal'
+
+/** Колонки служебного листа: номер записи, лист, строка, время записи, бирка (JSON: поля и колонки). */
+export const JOURNAL_HEADER = ['record', 'sheet', 'row', 'written_at', 'entry'] as const
 
 /** Формат ячеек с датой и с датой-временем (для своих колонок вида «дата»). */
 const DATE_FORMAT = 'yyyy-mm-dd'
@@ -247,7 +252,7 @@ export class LabelWorkbook {
     for (const [column, value] of cells) writeCell(target.getCell(column), value)
     target.commit()
     LabelWorkbook.extendFilter(sheet, row)
-    this.remember(entry.localNumber, { sheet: sheet.name, row }, writtenAt)
+    this.remember(entry, { sheet: sheet.name, row }, writtenAt)
     const numberColumn = layout.known.get('number')
     return { sheet: sheet.name, row, cells, item: numberColumn === undefined ? null : itemOf(cells.get(numberColumn) ?? null), newSheet: !existing }
   }
@@ -434,13 +439,17 @@ export class LabelWorkbook {
     return null
   }
 
-  /** Отмечает в служебном листе, куда записана бирка. */
-  private remember(localNumber: string, location: RowLocation, writtenAt: number) {
+  /** Отмечает в служебном листе, куда и когда записана бирка, и саму бирку (поля и колонки — JSON). */
+  private remember(entry: LabEntry, location: RowLocation, writtenAt: number) {
     let journal = this.workbook.getWorksheet(JOURNAL_SHEET)
     if (!journal) {
       journal = this.workbook.addWorksheet(JOURNAL_SHEET, { state: 'veryHidden' })
-      journal.addRow(['record', 'sheet', 'row', 'written_at'])
+      journal.addRow(JOURNAL_HEADER)
+    } else if (!cellText(journal.getCell(1, JOURNAL_HEADER.length).value ?? null)) {
+      // Лист прежней версии — без колонки бирки.
+      journal.getCell(1, JOURNAL_HEADER.length).value = JOURNAL_HEADER.at(-1)!
     }
-    journal.addRow([localNumber, location.sheet, location.row, new Date(writtenAt).toISOString()])
+    const label = JSON.stringify({ label: entry.label, columns: entry.columns })
+    journal.addRow([entry.localNumber, location.sheet, location.row, new Date(writtenAt).toISOString(), label])
   }
 }

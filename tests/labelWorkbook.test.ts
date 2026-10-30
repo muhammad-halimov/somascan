@@ -34,6 +34,19 @@ async function rowValues(bytes: Uint8Array, sheet: string, row: number) {
   return Object.fromEntries(['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'].map((letter) => [letter, values.getCell(letter).value ?? null]))
 }
 
+test('служебный лист хранит саму бирку (поля и колонки) — по ней Somasync переносит запись с телефона', async () => {
+  const workbook = await LabelWorkbook.open(template)
+  const label = { producer: 'Sovel', heat: 'H1', size: '12 mm', weight_kg: 2000, product_form: 'bara' }
+  workbook.append(entry(1, label), at(2026, 10, 8))
+  const book = new ExcelJS.Workbook()
+  await book.xlsx.load((await workbook.toBytes()) as unknown as Parameters<typeof book.xlsx.load>[0])
+  const journal = book.getWorksheet('somascan-journal')!
+  assert.deepEqual([1, 2, 3, 4, 5].map((column) => journal.getRow(1).getCell(column).value), ['record', 'sheet', 'row', 'written_at', 'entry'])
+  const row = journal.getRow(2)
+  assert.deepEqual([row.getCell(1).value, row.getCell(2).value, row.getCell(3).value], ['SCN-261008-0001', '2026', 7])
+  assert.deepEqual(JSON.parse(String(row.getCell(5).value)), { label, columns })
+})
+
 test('пустой журнал: шапка узнаётся, данных нет', async () => {
   const workbook = await LabelWorkbook.open(template)
   assert.deepEqual(workbook.sheetNames, ['2026'])
