@@ -256,6 +256,7 @@
     "probeChanged": "«{{file}}» сохранили во время переноса — перенос повторится",
     "integrity": "Проверка перед записью Probe не прошла (ячейка {{cell}}) — Probe не изменён",
     "created": "Копия {{file}} создана в Google Drive — телефоны пишут бирки в неё",
-    "failed": "Телефоны (Google Drive): {{error}}"
+    "failed": "Телефоны (Google Drive): {{error}}",
+    "bellFailed": "Firestore не слушается: {{error}} — перенос идёт по проверке копии"
   }
 }

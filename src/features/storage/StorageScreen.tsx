@@ -6,8 +6,8 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, LogoutIcon, PhoneIcon, PlugIcon, TableIcon, TrashIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
-import { Button } from '@/components/ui/Button'
+import { BellIcon, DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, LogoutIcon, PhoneIcon, PlugIcon, TableIcon, TrashIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
+import { Button, LockButton } from '@/components/ui/Button'
 import { ActionTextInput, SecretInput, SelectInput, TextInput } from '@/components/ui/Inputs'
 import { Field, FieldRow, FormSection, Notice, StatusBadge } from '@/components/ui/Layout'
 import { List, ListItem, Switch } from '@/components/ui/List'
@@ -288,9 +288,63 @@ function PhonesSection({ settings }: { settings: AppSettings }) {
           <div className="storage-check" role="status">
             <BridgeStatus bridge={run.bridge} />
           </div>
+          <FirestoreBell settings={settings} bridge={run.bridge} />
         </>
       )}
     </FormSection>
+  )
+}
+
+/**
+ * «Звонок» телефонов через Firebase Firestore: телефон после записи сообщает программе, и перенос идёт сразу,
+ * а не при проверке копии. Переключатель, ID проекта и ключ Web API — за замком (закрывается снова при уходе
+ * с вкладки); слушает окно (`app/bellListener`), пока работает мост.
+ */
+function FirestoreBell({ settings, bridge }: { settings: AppSettings; bridge: BridgeState }) {
+  const { t } = useTranslation('storage')
+  const [locked, setLocked] = useState(true)
+  const { firestore } = settings
+  const toggle = () => settingsStore.update({ firestore: { enabled: !firestore.enabled } })
+  return (
+    <>
+      <List label={t('phones.firestore')}>
+        <ListItem
+          itemRole="checkbox"
+          leading={<BellIcon />}
+          primary={t('phones.firestore')}
+          secondary={t('phones.firestoreHint')}
+          selected={firestore.enabled}
+          disabled={locked}
+          aside={
+            <>
+              <LockButton locked={locked} label={locked ? t('phones.firestoreUnlock') : t('phones.firestoreLock')} onToggle={() => setLocked(!locked)} />
+              {/* переключатель справа от замка — отдельной кнопкой (строку тоже можно нажать) */}
+              <button type="button" className="switch-btn" tabIndex={-1} aria-hidden="true" disabled={locked} onClick={toggle}>
+                <Switch on={firestore.enabled} />
+              </button>
+            </>
+          }
+          onClick={toggle}
+        />
+      </List>
+      {firestore.enabled && (
+        <>
+          <FieldRow>
+            <Field label={t('phones.projectId')}>
+              <TextInput placeholder="somascan-12345" value={firestore.projectId} readOnly={locked} className={locked ? 'is-locked' : undefined} onChange={(projectId) => settingsStore.update({ firestore: { projectId: projectId.trim() } })} />
+            </Field>
+            <Field label={t('phones.apiKey')}>
+              <TextInput placeholder="AIza…" value={firestore.apiKey} readOnly={locked} className={locked ? 'is-locked' : undefined} onChange={(apiKey) => settingsStore.update({ firestore: { apiKey: apiKey.trim() } })} />
+            </Field>
+          </FieldRow>
+          {bridge.bell && (
+            <div className="storage-check" role="status">
+              {bridge.bellError ? <StatusBadge tone="danger">{t('phones.bellFailed', { error: bridge.bellError })}</StatusBadge> : <StatusBadge tone="success">{t('phones.bellOn')}</StatusBadge>}
+            </div>
+          )}
+        </>
+      )}
+    </>
   )
 }
 

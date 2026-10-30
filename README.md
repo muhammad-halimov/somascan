@@ -116,12 +116,27 @@ The engine works with files, so the Drive tables live in a local copy (`<app dat
 
 When the tables are on this computer or a network drive and the phones cannot reach the company network, the mobile app writes tags into a **copy of Probe in Google Drive**, and the app moves them into Probe. Turned on in “Storage → Phones” (the section is there when “Save to” is not Google Drive): the Google account and folder are those of the Google Drive storage, the copy's name is its Probe name. On the phones — Google Drive storage with the same folder and the same name. The code is `host/PhoneBridge.ts` and the engine command `--bridge` (`engine/ProbeBridge.ts`).
 
-- **When.** While watching with writing to files is on: in every watching check, but not more often than once in 10 s. Drive sends no file-change notifications without a public address, so the app compares the copy's MD5 (the content; a change of sharing does not count) — two short requests.
+- **When.** While watching with writing to files is on: in every watching check, but not more often than once in 15 s. Drive sends no file-change notifications without a public address, so the app compares the copy's MD5 (the content; a change of sharing does not count) — two short requests.
 - **The phones changed the copy.** Under the lock `Probe otel.xlsx.lock` — the same one the phones set — the copy is downloaded and the engine appends to Probe the tags it does not have yet: by the hidden sheet `somascan-journal`, where the phone keeps the record number and the tag itself. The row is the one the phone would have written (`engine/lab/LabelWorkbook.ts` is taken from the mobile app): the sheet the phone wrote to (a new year's sheet is created), “Nr. Crt.” in Probe's order, arrival date — the write time on the phone. Then Probe is uploaded in place of the copy, and the phones see the fresh log. The app's journal shows a “Tags from phones” card.
 - **Only Probe changed** (an edit in Excel, filling heats) — Probe is uploaded in place of the copy without a run. No copy — it is created from Probe.
 - **Not moved.** The heat is already in Probe (each heat once), the sheet is not in Probe, a record of an older app version without the tag — the tag is skipped with the reason in the card; after Probe is uploaded it is gone from the copy.
 - **Probe is open in Excel.** The transfer waits and the copy is not replaced — otherwise the tags from phones would be lost. Under the section — “Tags from phones are waiting: close Probe”; once the file is closed they move by themselves.
 - **Safety.** Before Probe is replaced — a copy in `backups`, then the new workbook is checked before writing (all earlier values in place, moved tags in their rows); the copy's previous version in Drive goes to `backups` next to it. The synced state (copy MD5 and Probe's change time) is kept in `bridge.json`: no extra run after a restart.
+- **Instantly: Firebase Firestore** (optional, “Phones → Instantly via Firebase Firestore”, behind a lock). After writing into the copy the phone updates the document `somascan-bells/<channel>` in Firestore (the channel is the SHA-256 of “folder id/copy name”: the same on the phone and in the app with no extra setting). No data is kept in Firestore — only the notification: the document has one field, the time of the last ring. The app window listens to this document (`app/bellListener.ts`, the browser build of Firebase — Chromium networking with the system proxy) and starts a check at once: the transfer takes seconds instead of up to 15 s. Checking the copy stays as the fallback: a lost ring breaks nothing. Under the switch — “Listening to Firestore” or the error (it also goes to the journal).
+
+**Firestore setup (once).** 1) In the [Firebase console](https://console.firebase.google.com/) add Firebase to the Google Cloud project (the one with the Google sign-in clients will do) or create a new one. 2) Firestore Database → create a database (Standard). 3) Rules — below: read the document by its exact channel and write only the ring time into it; channels cannot be listed. 4) “Project settings” → project ID and Web API key (no key — add a web app to the project). The Web API key is not a secret: the rules set the access. 5) Enter the ID and the key here and on the phones (“Settings → Storage → Google Drive → Firebase Firestore”). The Firestore free quota (50,000 reads and 20,000 writes a day) is more than enough.
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /somascan-bells/{channel} {
+      allow get: if channel.size() == 64;
+      allow create, update: if channel.size() == 64 && request.resource.data.keys().hasOnly(['at']);
+    }
+  }
+}
+```
 
 ### Google Cloud setup (once)
 
@@ -267,7 +282,7 @@ Before releasing a new engine version, run the old and new versions on copies of
 ```
 src/
   main.tsx                window: entry point
-  app/                    App (tabs, macOS title bar, theme), state (bridge to the main process and stores), i18n
+  app/                    App (tabs, macOS title bar, theme), state (bridge to the main process and stores), i18n, bellListener (phones' ring via Firestore)
   features/               tabs
     run/                  Home: RunScreen (status, Start/Stop, mode), Journal (journal, run cards)
     storage/              Storage: destination, network share (account, location), Google account, tables with checks, sheet, phones

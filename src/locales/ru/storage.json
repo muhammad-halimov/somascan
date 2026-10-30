@@ -62,6 +62,14 @@
     "copy": "Копия Probe в Google Drive",
     "hint": "Телефоны пишут бирки в копию, программа переносит их в Probe во время слежения с записью.",
     "waiting": "Бирки с телефонов ждут: закройте Probe",
-    "synced": "Копия сверена в {{time}}"
+    "synced": "Копия сверена в {{time}}",
+    "firestore": "Мгновенно через Firebase Firestore",
+    "firestoreHint": "Телефон сообщает о записи — перенос сразу, а не через 15 с",
+    "firestoreLock": "Закрыть настройки Firestore",
+    "firestoreUnlock": "Открыть настройки Firestore для изменения",
+    "projectId": "ID проекта Firebase",
+    "apiKey": "Ключ Web API",
+    "bellOn": "Firestore слушается",
+    "bellFailed": "Firestore: {{error}}"
   }
 }

@@ -256,6 +256,7 @@
     "probeChanged": "«{{file}}» ҳангоми интиқол захира шуд — интиқол такрор мешавад",
     "integrity": "Санҷиш пеш аз сабти Probe нагузашт (катаки {{cell}}) — Probe тағйир наёфт",
     "created": "Нусхаи {{file}} дар Google Drive сохта шуд — телефонҳо барчаспҳоро ба он менависанд",
-    "failed": "Телефонҳо (Google Drive): {{error}}"
+    "failed": "Телефонҳо (Google Drive): {{error}}",
+    "bellFailed": "Firestore гӯш намекунад: {{error}} — интиқол ҳангоми санҷиши нусха мешавад"
   }
 }

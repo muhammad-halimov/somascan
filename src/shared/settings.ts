@@ -104,6 +104,18 @@ export interface GoogleDriveSettings {
   token: string
 }
 
+/**
+ * «Звонок» телефонов через Firebase Firestore (мост с телефонами, `host/PhoneBridge`): телефон после записи в копию
+ * Probe обновляет документ канала, окно слушает его, и перенос идёт сразу, а не при проверке копии.
+ */
+export interface FirestoreSettings {
+  enabled: boolean
+  /** ID проекта Firebase. */
+  projectId: string
+  /** Ключ Web API проекта Firebase (не секрет: доступ задают правила Firestore). */
+  apiKey: string
+}
+
 /** Файлы одного места хранения (в Google Drive — имена файлов в папке). */
 export interface FileSet {
   /** Consum (обычно один). */
@@ -151,6 +163,8 @@ export interface AppSettings {
    * Google Drive), программа переносит их в Probe (`host/PhoneBridge`). Только когда таблицы не в Google Drive.
    */
   bridge: boolean
+  /** «Звонок» телефонов через Firestore (под замком в «Телефонах»). */
+  firestore: FirestoreSettings
 }
 
 /** Значения по умолчанию. */
@@ -180,6 +194,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   startMinimized: false,
   guardOpenFiles: true,
   bridge: false,
+  firestore: { enabled: false, projectId: '', apiKey: '' },
 }
 
 /** Проект с пустыми полями по умолчанию. */
@@ -217,6 +232,7 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
   const locked = isRecord(src.locked) ? src.locked : {}
   const smb = isRecord(src.smb) ? src.smb : {}
   const drive = isRecord(src.googleDrive) ? src.googleDrive : {}
+  const firestore = isRecord(src.firestore) ? src.firestore : {}
   const target = isOneOf(TARGETS)(src.target) ? src.target : defaults.target
   const files = isRecord(src.files) ? src.files : {}
   const parsed = { local: parseFileSet(files.local), smb: parseFileSet(files.smb), googleDrive: parseFileSet(files.googleDrive, defaults.files.googleDrive) }
@@ -261,6 +277,11 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
     startMinimized: readBoolean(src, 'startMinimized', defaults.startMinimized),
     guardOpenFiles: readBoolean(src, 'guardOpenFiles', defaults.guardOpenFiles),
     bridge: readBoolean(src, 'bridge', defaults.bridge),
+    firestore: {
+      enabled: readBoolean(firestore, 'enabled', defaults.firestore.enabled),
+      projectId: readString(firestore, 'projectId', defaults.firestore.projectId).trim(),
+      apiKey: readString(firestore, 'apiKey', defaults.firestore.apiKey).trim(),
+    },
   }
 }
 

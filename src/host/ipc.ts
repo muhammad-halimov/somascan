@@ -4,7 +4,7 @@
 import path from 'node:path'
 import { app, dialog, ipcMain, nativeTheme, shell } from 'electron'
 import { message } from '@/shared/messages'
-import { IPC, type ActionName, type InitData, type OpenTarget } from '@/shared/protocol'
+import { IPC, type ActionName, type BellEvent, type InitData, type OpenTarget } from '@/shared/protocol'
 import type { FileKind, SettingsPatch } from '@/shared/settings'
 import type { HostServices } from './HostServices'
 import { StorageService } from './StorageService'
@@ -19,7 +19,7 @@ export function applyTheme(theme: string): void {
 
 /** Регистрирует обработчики. */
 export function registerIpc(h: HostServices): void {
-  const { settings, journal, sync, watcher, links, storage, window, paths, drive } = h
+  const { settings, journal, sync, watcher, links, storage, window, paths, drive, bridge } = h
 
   ipcMain.handle(IPC.init, (): InitData => ({
     settings: settings.publicSettings(),
@@ -91,6 +91,7 @@ export function registerIpc(h: HostServices): void {
 
   ipcMain.handle(IPC.driveSignIn, () => drive.signIn())
   ipcMain.handle(IPC.driveSignOut, () => drive.signOut())
+  ipcMain.handle(IPC.bridgeBell, (_e, event: BellEvent) => bridge.bell(event))
 
   ipcMain.handle(IPC.clearJournal, () => journal.clear())
 

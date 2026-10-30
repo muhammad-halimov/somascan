@@ -2,7 +2,8 @@
  * Мост с телефонами в главном процессе (`PhoneBridge`) на поддельном Drive, движок — в этом же процессе:
  * копии нет — создаётся из Probe; телефон дописал копию — бирка переносится в Probe, Probe ложится на место копии;
  * изменился только Probe — выкладывается без прогона; Probe открыт в Excel — копия не заменяется, перенос — после
- * закрытия; не работает без слежения с записью.
+ * закрытия; не работает без слежения с записью; «звонок» Firestore — канал как у мобильного приложения, звонок
+ * запускает проверку сразу, ошибка слушателя — в журнал один раз.
  */
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -18,7 +19,7 @@ import type { AppPaths } from '../src/host/AppPaths'
 import type { DriveClient } from '../src/host/drive/DriveClient'
 import type { DriveService } from '../src/host/drive/DriveService'
 import type { Journal } from '../src/host/Journal'
-import { PhoneBridge, POLL_MS } from '../src/host/PhoneBridge'
+import { bellChannel, PhoneBridge, POLL_MS } from '../src/host/PhoneBridge'
 import type { SettingsStore } from '../src/host/SettingsStore'
 import type { SyncService } from '../src/host/SyncService'
 import type { Message } from '../src/shared/messages'
@@ -59,7 +60,7 @@ function setup() {
   }
   const events: Message[] = []
   const runs: RunSummary[] = []
-  const state: RunState = { status: 'watching', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [], bridge: { syncedAt: null, waiting: false, problem: null } }
+  const state: RunState = { status: 'watching', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [], bridge: { syncedAt: null, waiting: false, problem: null, bell: null, bellError: null } }
   const sync = {
     getSnapshot: () => state,
     patch: (patch: Partial<RunState>) => Object.assign(state, patch),
@@ -71,6 +72,7 @@ function setup() {
       return { code, summary }
     }),
   }
+  let wakes = 0
   const bridge = new PhoneBridge(
     { data: dir } as AppPaths,
     { getSnapshot: () => settings, files: () => settings.files.smb } as unknown as SettingsStore,
@@ -85,8 +87,9 @@ function setup() {
     drive.now = now
     await bridge.tick()
   }
+  bridge.wake = () => wakes++
   const copy = () => drive.byName(NAME)[0]
-  return { dir, probe, drive, settings, state, events, runs, tick, copy }
+  return { dir, probe, drive, settings, state, events, runs, tick, copy, bridge, wakes: () => wakes, advance: (ms: number) => { now += ms } }
 }
 
 test('копии нет — создаётся из Probe; телефон дописал — бирка в Probe, Probe на месте копии', async () => {
@@ -157,4 +160,41 @@ test('без слежения, в пробном режиме или с табл
   t.settings.target = 'googleDrive'
   await t.tick()
   assert.equal(t.copy(), undefined)
+})
+
+test('«звонок» Firestore: что слушать — только при включённом мосте, проекте и ключе; канал как у мобильного приложения', () => {
+  const t = setup()
+  assert.equal(t.bridge.bellConfig(), null, 'выключен')
+  t.settings.firestore = { enabled: true, projectId: 'somascan-test', apiKey: '' }
+  assert.equal(t.bridge.bellConfig(), null, 'без ключа')
+  t.settings.firestore.apiKey = 'AIzaKey'
+  t.settings.files = { ...t.settings.files, googleDrive: { ...t.settings.files.googleDrive, probe: 'Probe otel' } }
+  // то же значение проверяет мобильное приложение (tests/firestoreBell.test.ts в main)
+  assert.deepEqual(t.bridge.bellConfig(), { projectId: 'somascan-test', apiKey: 'AIzaKey', channel: '97516de6565212525e5d356587bd5800105ddb13cc714eebc4e1eb7dd1cb63be' })
+  t.bridge.refreshBell()
+  assert.equal(t.state.bridge.bell?.channel, bellChannel(FOLDER, 'Probe otel.xlsx'))
+  t.state.status = 'idle'
+  t.bridge.refreshBell()
+  assert.equal(t.state.bridge.bell, null, 'слежение остановлено — не слушаем')
+})
+
+test('звонок запускает проверку сразу, не дожидаясь 15 с; ошибка слушателя — в журнал один раз', async () => {
+  const t = setup()
+  await t.tick()
+  const created = t.copy()!.version
+  t.drive.edit(t.copy()!.id, await withTag(t.copy()!.bytes, 5))
+  t.advance(1000)
+  await t.bridge.tick()
+  assert.equal(t.runs.length, 0, 'без звонка — ждём проверки')
+  t.bridge.bell({ ring: true })
+  assert.equal(t.wakes(), 1)
+  await t.bridge.tick()
+  assert.equal(t.runs.length, 1)
+  assert.notEqual(t.copy()!.version, created)
+  t.bridge.bell({ error: 'permission-denied' })
+  t.bridge.bell({ error: 'permission-denied' })
+  assert.deepEqual(t.events.filter((e) => e.code === 'bridge.bellFailed').length, 1)
+  assert.equal(t.state.bridge.bellError, 'permission-denied')
+  t.bridge.bell({ error: null })
+  assert.equal(t.state.bridge.bellError, null)
 })

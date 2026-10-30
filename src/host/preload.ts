@@ -32,6 +32,7 @@ const api: Api = {
   smbPassword: () => ipcRenderer.invoke(IPC.smbPassword),
   driveSignIn: () => ipcRenderer.invoke(IPC.driveSignIn),
   driveSignOut: () => ipcRenderer.invoke(IPC.driveSignOut),
+  bridgeBell: (event) => ipcRenderer.invoke(IPC.bridgeBell, event),
   clearJournal: () => ipcRenderer.invoke(IPC.clearJournal),
   open: (what) => ipcRenderer.invoke(IPC.open, what),
   onJournal: on(IPC.journal),

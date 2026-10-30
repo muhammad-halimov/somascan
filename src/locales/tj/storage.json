@@ -62,6 +62,14 @@
     "copy": "Нусхаи Probe дар Google Drive",
     "hint": "Телефонҳо барчаспҳоро ба нусха менависанд, барнома онҳоро ҳангоми назорат бо сабт ба Probe мегузаронад.",
     "waiting": "Барчаспҳо аз телефонҳо интизоранд: Probe-ро пӯшед",
-    "synced": "Нусха соати {{time}} мувофиқ карда шуд"
+    "synced": "Нусха соати {{time}} мувофиқ карда шуд",
+    "firestore": "Фавран тавассути Firebase Firestore",
+    "firestoreHint": "Телефон дар бораи сабт хабар медиҳад — интиқол фавран, на баъди 15 с",
+    "firestoreLock": "Танзимоти Firestore-ро бастан",
+    "firestoreUnlock": "Танзимоти Firestore-ро барои тағйир кушодан",
+    "projectId": "ID-и лоиҳаи Firebase",
+    "apiKey": "Калиди Web API",
+    "bellOn": "Firestore гӯш карда мешавад",
+    "bellFailed": "Firestore: {{error}}"
   }
 }

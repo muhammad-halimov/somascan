@@ -60,7 +60,8 @@ export class MainWindow {
       // Windows / Linux: без строки меню «File Edit View…» (Alt показывает её); копирование в полях работает и так
       autoHideMenuBar: process.platform !== 'darwin',
       show: false,
-      webPreferences: { preload: this.paths.preload, contextIsolation: true, nodeIntegration: false },
+      // спрятанное в трей окно не замедляет таймеры: оно слушает «звонок» телефонов (`app/bellListener`)
+      webPreferences: { preload: this.paths.preload, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
     })
     this.win = win
     // окно показывается по первой отрисовке; если её нет (драйвер, виртуальная машина) — всё равно через 3 с,

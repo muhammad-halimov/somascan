@@ -26,6 +26,7 @@ export const IPC = {
   smbPassword: 'smb:password',
   driveSignIn: 'drive:signIn',
   driveSignOut: 'drive:signOut',
+  bridgeBell: 'bridge:bell',
   clearJournal: 'journal:clear',
   open: 'open',
   // события
@@ -54,6 +55,17 @@ export const ENGINE_EXIT = {
 /** Что запустило прогон (подпись в журнале и в трее: `messages.trigger.*`). */
 export type RunTrigger = 'first' | 'changed' | 'retry' | 'plan' | 'write' | 'migratePlan' | 'migrateWrite' | 'createSheets' | 'restore' | 'bridge'
 
+/** Что слушать в Firestore: документ канала копии Probe (`somascan-bells/<канал>`). */
+export interface BellConfig {
+  projectId: string
+  apiKey: string
+  /** SHA-256 от «id папки/имя копии» — так же его считает мобильное приложение. */
+  channel: string
+}
+
+/** Событие слушателя Firestore в окне: «звонок» или состояние (ошибка или `null` — слушает). */
+export type BellEvent = { ring: true } | { error: string | null }
+
 /** Мост с телефонами (`host/PhoneBridge`): сверка копии Probe в Google Drive с Probe. */
 export interface BridgeState {
   /** Когда копия последний раз сверена с Probe, или `null`. */
@@ -62,6 +74,10 @@ export interface BridgeState {
   waiting: boolean
   /** Что мешает (вход в Google, папка, связь) или `null`. */
   problem: Message | null
+  /** Что слушать в Firestore (окно слушает, пока задано) или `null`. */
+  bell: BellConfig | null
+  /** Ошибка слушателя Firestore или `null`. */
+  bellError: string | null
 }
 
 /** Состояние слежения и прогонов. */
@@ -387,6 +403,8 @@ export interface Api {
   driveSignIn(): Promise<ActionResult>
   /** Выход из Google: доступ отзывается, папка и имена файлов остаются. */
   driveSignOut(): Promise<void>
+  /** Слушатель Firestore в окне: «звонок» телефона или состояние слушателя. */
+  bridgeBell(event: BellEvent): Promise<void>
   clearJournal(): Promise<void>
   open(what: OpenTarget): Promise<void>
   onJournal(cb: (entry: JournalEntry) => void): () => void

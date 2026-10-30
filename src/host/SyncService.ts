@@ -25,7 +25,7 @@ import type { SettingsStore } from './SettingsStore'
 const MAX_STAMPS = 40
 
 /** Начальное состояние. */
-const IDLE: RunState = { status: 'idle', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [], bridge: { syncedAt: null, waiting: false, problem: null } }
+const IDLE: RunState = { status: 'idle', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [], bridge: { syncedAt: null, waiting: false, problem: null, bell: null, bellError: null } }
 
 /** Таблицы в удалённом хранилище (Google Drive, см. `drive/DriveService`). */
 export interface RemoteStorage {

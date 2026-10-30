@@ -62,6 +62,10 @@ export class ConsumWatcher {
   remote: RemoteConsums | null = null
   /** Мост с телефонами (задаёт `HostServices`). */
   bridge: BridgeTick | null = null
+  /** Идёт проверка. */
+  private ticking = false
+  /** Просили проверить сейчас, пока шла проверка: следующая — сразу после неё. */
+  private wakeRequested = false
 
   constructor(settings: SettingsStore, journal: Journal, sync: SyncService) {
     this.settings = settings
@@ -100,11 +104,26 @@ export class ConsumWatcher {
     return { ok: true }
   }
 
+  /**
+   * Проверка сейчас, не дожидаясь таймера («звонок» телефона через Firestore). Идёт проверка — следующая сразу
+   * после неё.
+   */
+  wake(): void {
+    if (!this.watching) return
+    if (this.ticking) {
+      this.wakeRequested = true
+      return
+    }
+    if (this.timer) clearTimeout(this.timer)
+    this.timer = setTimeout(() => void this.tick(), 0)
+  }
+
   /** Планирует следующую проверку. */
   scheduleNext(): void {
     if (this.timer) clearTimeout(this.timer)
     if (!this.watching) return
-    const ms = Math.max(2, this.settings.getSnapshot().intervalSec) * 1000
+    const ms = this.wakeRequested ? 0 : Math.max(2, this.settings.getSnapshot().intervalSec) * 1000
+    this.wakeRequested = false
     this.sync.patch({ nextCheckAt: Date.now() + ms })
     this.timer = setTimeout(() => void this.tick(), ms)
   }
@@ -138,10 +157,22 @@ export class ConsumWatcher {
 
   /** Одна проверка. */
   private async tick(): Promise<void> {
-    if (!this.watching) return
+    if (!this.watching || this.ticking) return
+    this.ticking = true
+    try {
+      await this.check()
+    } finally {
+      this.ticking = false
+    }
+    if (this.watching) this.scheduleNext()
+    else this.finishStop()
+  }
+
+  /** Сравнивает Consum со снимком, запускает прогоны, затем мост с телефонами. */
+  private async check(): Promise<void> {
     this.sync.patch({ lastCheckAt: Date.now() })
     if (this.remote?.active() && !this.sync.getSnapshot().busy) await this.remote.refreshConsums()
-    if (!this.watching) return this.finishStop()
+    if (!this.watching) return
     const cur = this.snapAll()
     const changed: string[] = []
     for (const [f, v] of Object.entries(cur)) {
@@ -170,8 +201,6 @@ export class ConsumWatcher {
       await this.sync.syncOnce({ apply: true, trigger: 'retry', only: pending })
     }
     if (this.watching && this.bridge) await this.bridge.tick()
-    if (this.watching) this.scheduleNext()
-    else this.finishStop()
   }
 
   /** Закрыты ли Sarjele, Probe и эти Consum во всех редакторах. */

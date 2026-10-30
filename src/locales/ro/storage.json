@@ -62,6 +62,14 @@
     "copy": "Copia Probe în Google Drive",
     "hint": "Telefoanele scriu etichetele în copie, programul le mută în Probe în timpul urmăririi cu scriere.",
     "waiting": "Etichetele de pe telefoane așteaptă: închideți Probe",
-    "synced": "Copia sincronizată la {{time}}"
+    "synced": "Copia sincronizată la {{time}}",
+    "firestore": "Instantaneu prin Firebase Firestore",
+    "firestoreHint": "Telefonul anunță scrierea — transfer imediat, nu în 15 s",
+    "firestoreLock": "Blocați setările Firestore",
+    "firestoreUnlock": "Deblocați setările Firestore pentru modificare",
+    "projectId": "ID-ul proiectului Firebase",
+    "apiKey": "Cheie Web API",
+    "bellOn": "Se ascultă Firestore",
+    "bellFailed": "Firestore: {{error}}"
   }
 }

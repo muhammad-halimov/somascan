@@ -14,27 +14,38 @@
  *   - Копии нет — она создаётся из Probe.
  * Probe открыт в редакторе — перенос откладывается и копия не заменяется (иначе бирки с телефонов пропали бы);
  * повтор — когда файл закроют. Ошибка переноса не повторяется, пока не изменятся копия или Probe.
+ *
+ * «Звонок» через Firebase Firestore (необязательно, под замком): телефон после записи обновляет документ
+ * `somascan-bells/<канал>` (канал — SHA-256 от «id папки/имя копии», как в мобильном приложении), окно слушает его
+ * (`app/bellListener`, `bell` в состоянии) и сообщает о звонке — проверка идёт сразу, а не через `POLL_MS`.
  * Сверенное состояние (MD5 копии и «время:размер» Probe) хранится в `bridge.json`: после перезапуска
  * лишнего прогона нет.
  */
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { Backups, EditorLock } from '@/engine/FileGuard'
 import { message, type Message } from '@/shared/messages'
-import { ENGINE_EXIT, type BridgeState } from '@/shared/protocol'
+import { ENGINE_EXIT, type BellConfig, type BellEvent, type BridgeState } from '@/shared/protocol'
 import type { AppPaths } from './AppPaths'
-import { DriveMirror } from './drive/DriveMirror'
+import { DriveMirror, parseDriveFolder } from './drive/DriveMirror'
 import { driveMessage, type DriveService } from './drive/DriveService'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 import type { SyncService } from './SyncService'
 
 /** Как часто сверять копию, мс. */
-export const POLL_MS = 10_000
+export const POLL_MS = 15_000
 
 /** Имя копии, если в настройках Google Drive оно пустое. */
 const DEFAULT_NAME = 'Probe otel.xlsx'
+
+/** Имя копии с `.xlsx` (как его дополняет мобильное приложение). */
+const xlsxName = (name: string) => (name.toLowerCase().endsWith('.xlsx') ? name : `${name}.xlsx`)
+
+/** Канал «звонка»: SHA-256 от «id папки/имя таблицы» — так же, как в мобильном приложении (`firestoreBell.ts`). */
+export const bellChannel = (folderId: string, fileName: string) => crypto.createHash('sha256').update(`${folderId}/${fileName}`, 'utf8').digest('hex')
 
 /** Сверенное состояние: какая копия и какой Probe совпадают. */
 interface Synced {
@@ -77,6 +88,10 @@ export class PhoneBridge {
   private lastPoll = 0
   /** Код последней ошибки (в журнал — один раз, пока не пройдёт). */
   private lastProblem: string | null = null
+  /** Последняя ошибка слушателя Firestore, записанная в журнал. */
+  private lastBellError: string | null = null
+  /** Проверить сейчас (задаёт `HostServices`: внеочередная проверка слежения). */
+  wake: () => void = () => {}
 
   constructor(paths: AppPaths, settings: SettingsStore, journal: Journal, sync: SyncService, drive: DriveService, now: () => number = Date.now) {
     this.settings = settings
@@ -95,6 +110,39 @@ export class PhoneBridge {
     return s.bridge && s.target !== 'googleDrive' && s.write && this.sync.getSnapshot().status === 'watching'
   }
 
+  /** Что слушать в Firestore: только пока мост работает и «звонок» включён, с проектом, ключом и папкой. */
+  bellConfig(): BellConfig | null {
+    const s = this.settings.getSnapshot()
+    const { enabled, projectId, apiKey } = s.firestore
+    if (!this.active() || !enabled || !projectId || !apiKey) return null
+    try {
+      const name = xlsxName(path.basename(s.files.googleDrive.probe.trim()) || DEFAULT_NAME)
+      return { projectId, apiKey, channel: bellChannel(parseDriveFolder(s.googleDrive.folder), name) }
+    } catch {
+      return null
+    }
+  }
+
+  /** Сверяет, что слушает окно, с настройками и состоянием слежения (при каждом их изменении). */
+  refreshBell(): void {
+    const bell = this.bellConfig()
+    const state = this.sync.getSnapshot().bridge
+    if (JSON.stringify(bell) !== JSON.stringify(state.bell)) this.patch({ bell, ...(bell ? {} : { bellError: null }) })
+  }
+
+  /** Событие слушателя в окне: «звонок» — проверка сейчас; состояние — под «Телефонами», ошибка — в журнал один раз. */
+  bell(event: BellEvent): void {
+    if ('ring' in event) {
+      if (!this.active()) return
+      this.lastPoll = 0
+      this.wake()
+      return
+    }
+    if (event.error && event.error !== this.lastBellError) this.journal.event('warn', message('bridge.bellFailed', { error: event.error }))
+    this.lastBellError = event.error
+    if (event.error !== this.sync.getSnapshot().bridge.bellError) this.patch({ bellError: event.error })
+  }
+
   /** Одна проверка (из цикла слежения): не чаще раза в `POLL_MS`. */
   async tick(): Promise<void> {
     if (!this.active() || this.sync.getSnapshot().busy || this.now() - this.lastPoll < POLL_MS) return
@@ -103,7 +151,7 @@ export class PhoneBridge {
     const probe = this.settings.files().probe.trim()
     if (!probe || !fs.existsSync(probe)) return
     const folder = s.googleDrive.folder
-    const name = path.basename(s.files.googleDrive.probe.trim()) || DEFAULT_NAME
+    const name = xlsxName(path.basename(s.files.googleDrive.probe.trim()) || DEFAULT_NAME)
     const where = `${folder}|${name}`
     const synced = this.synced?.where === where ? this.synced : null
     try {

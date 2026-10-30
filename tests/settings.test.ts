@@ -49,3 +49,12 @@ test('прежний общий набор файлов переходит к м
   assert.deepEqual(s.files.smb, { consums: ['/c.xlsx'], sarjele: '/s.xlsx', probe: '/p.xlsx' })
   assert.equal(s.files.local.sarjele, '')
 })
+
+test('телефоны и «звонок» Firestore: по умолчанию выключены; сохранённые разбираются, испорченные — по умолчанию', () => {
+  assert.equal(DEFAULT_SETTINGS.bridge, false)
+  assert.deepEqual(DEFAULT_SETTINGS.firestore, { enabled: false, projectId: '', apiKey: '' })
+  const s = parseSettings({ bridge: true, firestore: { enabled: true, projectId: ' somascan-test ', apiKey: 'AIzaKey', extra: 1 } })
+  assert.equal(s.bridge, true)
+  assert.deepEqual(s.firestore, { enabled: true, projectId: 'somascan-test', apiKey: 'AIzaKey' })
+  assert.deepEqual(parseSettings({ firestore: 'мусор' }).firestore, DEFAULT_SETTINGS.firestore)
+})

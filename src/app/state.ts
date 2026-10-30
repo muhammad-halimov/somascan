@@ -49,7 +49,7 @@ class SettingsStore extends Store<AppSettings> {
 /** Состояние слежения и прогонов. */
 class RunStore extends Store<RunState> {
   constructor() {
-    super({ status: 'idle', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [], bridge: { syncedAt: null, waiting: false, problem: null } })
+    super({ status: 'idle', busy: null, nextCheckAt: null, lastCheckAt: null, lastRunAt: null, pending: [], bridge: { syncedAt: null, waiting: false, problem: null, bell: null, bellError: null } })
   }
 
   hydrate(run: RunState): void {

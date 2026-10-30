@@ -256,6 +256,7 @@
     "probeChanged": "“{{file}}” was saved during the transfer — the transfer will be retried",
     "integrity": "The check before writing Probe failed (cell {{cell}}) — Probe was not changed",
     "created": "Copy {{file}} created in Google Drive — phones write tags into it",
-    "failed": "Phones (Google Drive): {{error}}"
+    "failed": "Phones (Google Drive): {{error}}",
+    "bellFailed": "Firestore is not listening: {{error}} — the transfer goes by checking the copy"
   }
 }

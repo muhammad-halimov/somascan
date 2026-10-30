@@ -62,6 +62,14 @@
     "copy": "Probe copy in Google Drive",
     "hint": "Phones write tags into the copy; the app moves them to Probe while watching with writing on.",
     "waiting": "Tags from phones are waiting: close Probe",
-    "synced": "Copy synced at {{time}}"
+    "synced": "Copy synced at {{time}}",
+    "firestore": "Instantly via Firebase Firestore",
+    "firestoreHint": "The phone reports the write — moved at once, not within 15 s",
+    "firestoreLock": "Lock the Firestore settings",
+    "firestoreUnlock": "Unlock the Firestore settings for editing",
+    "projectId": "Firebase project ID",
+    "apiKey": "Web API key",
+    "bellOn": "Listening to Firestore",
+    "bellFailed": "Firestore: {{error}}"
   }
 }

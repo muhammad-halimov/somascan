@@ -53,14 +53,17 @@ export class HostServices {
     this.sync.remote = this.drive
     this.watcher.remote = this.drive
     this.watcher.bridge = this.bridge
+    this.bridge.wake = () => this.watcher.wake()
     this.window.hasTray = () => this.tray.exists
     this.window.onVisibilityChange = () => this.tray.refresh()
     this.window.onProblem = (m) => this.journal.event('err', m)
     this.settings.subscribe(() => {
       this.window.send(IPC.settings, this.settings.publicSettings())
       this.tray.refresh()
+      this.bridge.refreshBell()
     })
     this.sync.subscribe(() => {
+      this.bridge.refreshBell()
       this.window.send(IPC.run, this.sync.getSnapshot())
       this.tray.refresh()
     })
@@ -68,5 +71,6 @@ export class HostServices {
       this.window.send(IPC.journal, entry)
       this.tray.refresh()
     })
+    this.bridge.refreshBell()
   }
 }
