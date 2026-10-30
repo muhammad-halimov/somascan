@@ -35,6 +35,15 @@ test('SOMACO: в списке по умолчанию; сохранённый с
   assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Habas'], knownSuppliersVersion: 2 } }, defaults).advanced.knownSuppliers, ['Habas'])
 })
 
+test('зелёные бирки SOMACO: и в промпте по умолчанию, и в пояснениях полей — они идут и со своим промптом', () => {
+  const fields = enabledLabelFields(createDefaultLabelFields())
+  assert.match(buildLabelPrompt('', fields), /9\. Green tags of SOMACO/)
+  const own = buildLabelPrompt('Read the tag.', fields)
+  assert.ok(!own.includes('9. Green tags'))
+  assert.match(own, /"producer" — .*green SOMACO tags .*"SOMACO"/)
+  assert.match(own, /"heat" — .*green SOMACO tags .*in asterisks under the barcode/)
+})
+
 test('правило о поставщиках — только при непустом списке, перед оценкой фото', () => {
   const fields = enabledLabelFields(createDefaultLabelFields())
   assert.ok(!buildLabelPrompt('', fields).includes('Known suppliers'))

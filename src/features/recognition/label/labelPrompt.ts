@@ -18,7 +18,8 @@ Rules:
 5. Dates are ISO "YYYY-MM-DD"; tags write the day first (04/01/2026 → 2026-01-04) unless the year comes first. Times are 24-hour "HH:MM" or "HH:MM:SS".
 6. If the same value is printed twice (for example on a tear-off stub), use the most legible copy and make sure both agree.
 7. Never decode barcodes, QR or DataMatrix codes, and never invent or complete partially hidden values. If a field is absent, unreadable, covered by rust or paint, or you are not sure — use null.
-8. Ignore addresses, websites, certification-body boilerplate and marketing text unless a field asks for them. Exception: the mill's own e-mail address or website may name the producer when its name is not printed (see the producer field).`
+8. Ignore addresses, websites, certification-body boilerplate and marketing text unless a field asks for them. Exception: the mill's own e-mail address or website may name the producer when its name is not printed (see the producer field).
+9. Green tags of SOMACO — the warehouse itself, for its cut and bent rebar (a header like "13 Ø12 B500C", then "SOMACO", "Santier", "Lista", "BUC", "Kg", "L", "Bundle 2 of 11", a QR code and a barcode with a code in asterisks under it) — name no steel mill: the producer is "SOMACO". They have no heat label: the heat is the code printed in asterisks under the barcode, without the asterisks ("*B000713412E*" → "B000713412E"); reading that printed text is allowed, it is not decoding the barcode. The boxed number at the top (e.g. "3412") is not the heat. In the header the first number is the position mark, "Ø12" is the size ("12 mm") and "B500C" is the grade; the weight follows "Kg:".`
 
 /** Подсказка модели о формате значения по виду поля. */
 const KIND_FORMAT: Record<LabelFieldKind, string> = {
