@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CheckIcon, LayersIcon, RefreshIcon } from '@/components/icons/Icons'
+import { ActionButton } from '@/components/ui/ActionButton'
 import { Button } from '@/components/ui/Button'
 import { Disclosure } from '@/components/ui/Disclosure'
 import { StatusDot, type StatusDotTone } from '@/components/ui/StatusDot'
@@ -204,9 +205,16 @@ export function ModelPicker({ providerId }: ModelPickerProps) {
       title={t('general.model')}
       icon={<LayersIcon />}
       action={(
-        <Button icon={<RefreshIcon />} busy={isLoading} onClick={() => void modelCatalog.sync(providerId, access, { force: true })}>
-          {isLoading ? t('general.refreshing') : t('general.refresh')}
-        </Button>
+        <div className="form-section-actions">
+          <ActionButton
+            variant="ghost"
+            icon={<RefreshIcon />}
+            caption={t('general.refresh')}
+            label={isLoading ? t('general.refreshing') : t('general.refresh')}
+            busy={isLoading}
+            onClick={() => void modelCatalog.sync(providerId, access, { force: true })}
+          />
+        </div>
       )}
     >
       {models.length > 0 && (

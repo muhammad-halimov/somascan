@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CalendarIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, RefreshIcon } from '@/components/icons/Icons'
-import { Button } from '@/components/ui/Button'
+import { ActionButton } from '@/components/ui/ActionButton'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
 import { Notice } from '@/components/ui/Notice'
@@ -62,7 +62,11 @@ export function AdvancedTab() {
       <FormSection
         title={t('advanced.lists')}
         icon={<ListIcon />}
-        action={<Button icon={<RefreshIcon />} busy={isRefreshing} onClick={refreshAll}>{t('advanced.refreshAll')}</Button>}
+        action={(
+          <div className="form-section-actions">
+            <ActionButton variant="ghost" icon={<RefreshIcon />} caption={t('general.refresh')} label={t('advanced.refreshAll')} busy={isRefreshing} onClick={refreshAll} />
+          </div>
+        )}
       >
         <List>
           {providerRegistry.all().map(({ id }) => {

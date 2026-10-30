@@ -15,8 +15,8 @@ import { useTableLock } from './useTableLock'
 import './StorageForms.css'
 
 /**
- * Сетевой диск Windows: расположение (сервер, общая папка, путь к таблице под замком, итог проверки,
- * лист, правила записи, короткое пояснение под ними), учётная запись и «Проверить подключение».
+ * Сетевой диск Windows: сначала учётная запись, затем расположение (сервер, общая папка, путь к таблице
+ * под замком, итог проверки, лист, правила записи, короткое пояснение под ними) и «Проверить подключение».
  */
 export function SmbStorageForm() {
   const { t } = useTranslation('settings')
@@ -26,27 +26,6 @@ export function SmbStorageForm() {
 
   return (
     <>
-      <FormSection title={t('storage.smb.location')} icon={<FolderIcon />} hint={`${t('storage.smb.filePathHint')} ${t('storage.table.lockHint')} ${t('storage.sheet.hint')}`}>
-        <Field label={t('storage.smb.server')}>
-          <TextInput inputMode="url" placeholder={t('storage.smb.serverPlaceholder')} value={smb.host} onChange={(host) => settingsStore.updateSmb({ host })} />
-        </Field>
-        <Field label={t('storage.smb.share')}>
-          <TextInput placeholder={t('storage.smb.sharePlaceholder')} value={smb.share} onChange={(share) => settingsStore.updateSmb({ share })} />
-        </Field>
-        <Field label={t('storage.smb.filePath')}>
-          <ActionTextInput
-            placeholder={t('storage.smb.filePathPlaceholder')}
-            value={smb.filePath}
-            onChange={(filePath) => settingsStore.updateSmb({ filePath })}
-            locked={lock.locked}
-            action={[lock.action, check.action]}
-          />
-        </Field>
-        <div className="storage-check" role="status">{check.status}</div>
-        <TableSheetField />
-        <TableRulesField />
-      </FormSection>
-
       <FormSection title={t('storage.smb.account')} icon={<UserIcon />}>
         <FieldRow>
           <Field label={t('storage.smb.domain')}>
@@ -66,6 +45,27 @@ export function SmbStorageForm() {
             hideLabel={t('storage.smb.hidePassword')}
           />
         </Field>
+      </FormSection>
+
+      <FormSection title={t('storage.smb.location')} icon={<FolderIcon />} hint={`${t('storage.smb.filePathHint')} ${t('storage.table.lockHint')} ${t('storage.sheet.hint')}`}>
+        <Field label={t('storage.smb.server')}>
+          <TextInput inputMode="url" placeholder={t('storage.smb.serverPlaceholder')} value={smb.host} onChange={(host) => settingsStore.updateSmb({ host })} />
+        </Field>
+        <Field label={t('storage.smb.share')}>
+          <TextInput placeholder={t('storage.smb.sharePlaceholder')} value={smb.share} onChange={(share) => settingsStore.updateSmb({ share })} />
+        </Field>
+        <Field label={t('storage.smb.filePath')}>
+          <ActionTextInput
+            placeholder={t('storage.smb.filePathPlaceholder')}
+            value={smb.filePath}
+            onChange={(filePath) => settingsStore.updateSmb({ filePath })}
+            locked={lock.locked}
+            action={[lock.action, check.action]}
+          />
+        </Field>
+        <div className="storage-check" role="status">{check.status}</div>
+        <TableSheetField />
+        <TableRulesField />
       </FormSection>
 
       <Button variant="tonal" icon={<PlugIcon />} busy={check.isTesting} disabled={check.isChecking} onClick={() => void check.testConnection()}>
