@@ -212,6 +212,7 @@ export function ModelPicker({ providerId }: ModelPickerProps) {
             caption={t('general.refresh')}
             label={isLoading ? t('general.refreshing') : t('general.refresh')}
             busy={isLoading}
+            spinIcon
             onClick={() => void modelCatalog.sync(providerId, access, { force: true })}
           />
         </div>

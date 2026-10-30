@@ -77,7 +77,7 @@ export function AdvancedTab() {
         icon={<ListIcon />}
         action={(
           <div className="form-section-actions">
-            <ActionButton variant="ghost" icon={<RefreshIcon />} caption={t('general.refresh')} label={t('advanced.refreshAll')} busy={isRefreshing} onClick={refreshAll} />
+            <ActionButton variant="ghost" icon={<RefreshIcon />} caption={t('general.refresh')} label={t('advanced.refreshAll')} busy={isRefreshing} spinIcon onClick={refreshAll} />
           </div>
         )}
       >
