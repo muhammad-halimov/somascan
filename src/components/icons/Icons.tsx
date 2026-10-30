@@ -151,8 +151,20 @@ export function EmptyInboxIcon() {
   )
 }
 
-/** Две круговые стрелки: обновить список. */
+/** Две стрелки по квадратному кругу: обновить список. */
 export function RefreshIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m17 2 4 4-4 4" />
+      <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+      <path d="m7 22-4-4 4-4" />
+      <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+    </svg>
+  )
+}
+
+/** Две круговые стрелки: запись идёт (крутится в списке выгрузок). */
+export function SyncIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
-import { AlertIcon, CheckIcon, ClockIcon, CloseIcon, EmptyInboxIcon, RefreshIcon, ResetIcon, TrashIcon } from '@/components/icons/Icons'
+import { AlertIcon, CheckIcon, ClockIcon, CloseIcon, EmptyInboxIcon, ResetIcon, SyncIcon, TrashIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { List, ListItem } from '@/components/ui/List'
 import { PanelHeader } from '@/components/ui/PanelHeader'
@@ -27,7 +27,7 @@ export interface UploadsPopoverProps {
 /** Иконка состояния записи. */
 const STATUS_ICONS: Record<UploadStatus, ReactNode> = {
   queued: <ClockIcon />,
-  uploading: <RefreshIcon />,
+  uploading: <SyncIcon />,
   completed: <CheckIcon />,
   failed: <AlertIcon />,
 }
