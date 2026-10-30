@@ -2,6 +2,7 @@ import type { InputHTMLAttributes, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HEAT_KEY } from '@/features/recognition/label/heatNumber'
 import { enabledLabelFields, isEnabledByDefault, isMissingValue, SHEET_KEY, type LabelFieldKind, type LabelKey, type LabelRecord, type LabelValue } from '@/features/recognition/label/labelFields'
+import { sizeInput } from '@/features/recognition/label/measure'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { useLabelFormatter } from '@/features/recognition/label/useLabelFormatter'
 import { isProductForm, PRODUCT_FORM_KEY, PRODUCT_FORMS } from '@/features/recognition/label/productForm'
@@ -97,13 +98,14 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false, h
                   placeholder={required ? t('requiredField') : manual ? t('notFilled') : t('notRecognized')}
                   aria-required={required || undefined}
                   aria-invalid={duplicate ? true : undefined}
-                  onChange={(event) => onFieldChange(key, event.target.value)}
+                  // Размер вводится только числом: в журнал идёт число, единицы показывает просмотр.
+                  onChange={(event) => onFieldChange(key, key === SIZE_KEY ? sizeInput(event.target.value) : event.target.value)}
                   onKeyDown={moveToNextField}
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
                   enterKeyHint="next"
-                  {...(key === 'size' ? FIELD_KEYBOARD.weight : FIELD_KEYBOARD[field.kind])}
+                  {...(key === SIZE_KEY ? FIELD_KEYBOARD.weight : FIELD_KEYBOARD[field.kind])}
                 />
               ) : (
                 <span className={`label-field-value${missing ? ' is-missing' : ''}${(required && missing) || duplicate ? ' is-required' : ''}`}>
@@ -121,6 +123,9 @@ export function LabelFields({ label, isEditing, onFieldChange, manual = false, h
 
 /** Ключ поля «Производитель». */
 const PRODUCER_KEY = 'producer'
+
+/** Ключ поля «Размер»: в правке — только число. */
+const SIZE_KEY = 'size'
 
 /** Свойства `ProducerField`. */
 interface ProducerFieldProps {
