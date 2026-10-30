@@ -70,5 +70,6 @@ async function recognizeNow(imageUrl: string, signal: AbortSignal, rotation: num
     instructions: advanced.prompt,
     fields: recognizedLabelFields(advanced.labelFields),
     suppliers: advanced.knownSuppliers,
+    ruleLabels: advanced.ruleLabels,
   })
 }

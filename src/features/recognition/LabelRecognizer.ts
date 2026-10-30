@@ -26,6 +26,8 @@ export interface LabelRecognitionRequest {
   fields: readonly LabelFieldDefinition[]
   /** Известные поставщики — подсказка модели для плохо читаемых названий заводов. */
   suppliers?: readonly string[]
+  /** Подписи полей, изменённые в «Расширенных» → «Правила» (только для распознавания на устройстве). */
+  ruleLabels?: Readonly<Record<string, readonly string[]>>
 }
 
 /** Результат распознавания. */
@@ -67,12 +69,12 @@ export class LabelRecognizer {
    * Распознаёт одно фото: промпт собирается из инструкции, выбранных полей и известных поставщиков;
    * заодно оценивается качество фото.
    */
-  async recognize({ providerId, model, access, imageUrl, maxImageSide, rotation = 0, instructions, fields, suppliers = [] }: LabelRecognitionRequest): Promise<LabelRecognition> {
+  async recognize({ providerId, model, access, imageUrl, maxImageSide, rotation = 0, instructions, fields, suppliers = [], ruleLabels = {} }: LabelRecognitionRequest): Promise<LabelRecognition> {
     const provider = this.registry.get(providerId)
     // Распознаванию на устройстве — всегда перерисованное фото: поворот из EXIF уже применён.
     const image = await InlineImage.fromUrl(imageUrl, { maxSide: maxImageSide, rotation, redraw: provider.onDevice })
     const prompt = buildLabelPrompt(instructions, fields, suppliers)
-    const text = await provider.recognize({ image, model, prompt, fields, suppliers, access })
+    const text = await provider.recognize({ image, model, prompt, fields, suppliers, ruleLabels, access })
     const { label, photo } = this.parser.parseAnswer(text, fields.map((field) => field.key))
     // Проблемы, названные моделью, учитываем, только если она сочла фото непригодным.
     const issues = mergePhotoIssues(photo.ok ? [] : photo.issues, image.issues)

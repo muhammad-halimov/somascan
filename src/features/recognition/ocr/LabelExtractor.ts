@@ -36,6 +36,8 @@ export interface ExtractionInput {
   fields: readonly LabelFieldDefinition[]
   /** Известные поставщики. */
   suppliers: readonly string[]
+  /** Подписи полей, изменённые в «Расширенных» → «Правила» (остальные — стандартные). */
+  ruleLabels?: Readonly<Record<string, readonly string[]>>
 }
 
 /** Результат разбора одной страницы. */
@@ -179,7 +181,7 @@ const confidenceFactor = (line: PageLine) => 0.8 + 0.2 * (line.confidence ?? 1)
  * @returns Поля, оценка фото и признаки удачного поворота.
  */
 export function extractLabel(input: ExtractionInput): Extraction {
-  const rules = buildFieldRules(input.fields)
+  const rules = buildFieldRules(input.fields, input.ruleLabels)
   return bestExtraction([0, 1, 2, 3].map((turns) => extractTurned(input, rules, turns)))!
 }
 

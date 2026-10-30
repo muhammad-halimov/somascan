@@ -22,11 +22,13 @@ import { useSettings } from '../store/useSettings'
 import { KnownSuppliersPicker } from '../components/KnownSuppliersPicker'
 import { LabelFieldsPicker } from '../components/LabelFieldsPicker'
 import { PromptEditor } from '../components/PromptEditor'
+import { RecognitionRulesPicker } from '../components/RecognitionRulesPicker'
 import { PROVIDER_ICONS } from '../components/providerIcons'
 import './AdvancedTab.css'
 
 /**
- * Вкладка «Расширенные»: сначала то, что определяет распознавание, — промпт, поля бирки и известные поставщики;
+ * Вкладка «Расширенные»: сначала то, что определяет распознавание, — промпт (для ИИ-моделей) и правила
+ * (для распознавания на устройстве; действует одно из двух — по выбору в «Основных»), поля бирки и поставщики;
  * затем срок хранения резервных копий таблицы, фильтр возраста моделей, состояние списков моделей с обновлением,
  * размер фото для распознавания, текст последнего распознавания на устройстве (для отладки правил) и версия приложения.
  */
@@ -36,6 +38,7 @@ export function AdvancedTab() {
   const { general, storage, advanced } = useSettings()
   const catalog = useStore(modelCatalog)
   const isRefreshing = Object.values(catalog.loading).some(Boolean)
+  const onDevice = general.provider === 'device'
   // День и месяц без года: строка состояния списка — в одну строку (списки обновляются раз в месяц).
   const dateFormat = useMemo(() => new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }), [i18n.language])
 
@@ -64,7 +67,10 @@ export function AdvancedTab() {
 
   return (
     <>
-      <PromptEditor value={advanced.prompt} />
+      {/* Промпт — только для ИИ-моделей, правила — только для распознавания на устройстве: другое приглушено. */}
+      <PromptEditor value={advanced.prompt} unavailable={onDevice ? t('advanced.promptUnavailable') : undefined} />
+
+      <RecognitionRulesPicker value={advanced.ruleLabels} fields={advanced.labelFields} unavailable={onDevice ? undefined : t('advanced.rulesUnavailable')} />
 
       <LabelFieldsPicker value={advanced.labelFields} />
 

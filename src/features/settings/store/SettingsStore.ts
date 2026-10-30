@@ -6,6 +6,7 @@ import type { ThemePreference } from '@/lib/theme/theme'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import { isModelProviderId, type ProviderId } from '@/features/recognition/types'
 import { cleanSupplierName, DEFAULT_KNOWN_SUPPLIERS, normalizeSuppliers, supplierKey } from '@/features/recognition/label/knownSuppliers'
+import { compactRuleLabels } from '@/features/recognition/ocr/ruleLabels'
 import { createDefaultLabelFields, createLabelKey, isEnabledByDefault, type LabelFieldDefinition, type LabelKey } from '@/features/recognition/label/labelFields'
 import { DEFAULT_LABEL_INSTRUCTIONS } from '@/features/recognition/label/labelPrompt'
 import type { BackupRetentionDays } from '@/features/uploads/xlsx/BackupPolicy'
@@ -236,6 +237,17 @@ export class SettingsStore extends Store<AppSettings> {
   /** Возвращает список поставщиков по умолчанию. */
   resetKnownSuppliers() {
     this.updateAdvanced({ knownSuppliers: [...DEFAULT_KNOWN_SUPPLIERS] })
+  }
+
+  /** Сохраняет подписи поля для распознавания на устройстве; совпадающие со стандартными не хранятся. */
+  setRuleLabels(key: string, labels: readonly string[]) {
+    const current = this.getSnapshot().advanced.ruleLabels
+    this.updateAdvanced({ ruleLabels: compactRuleLabels({ ...current, [key]: labels }) })
+  }
+
+  /** Заменяет изменённые подписи целиком (отмена правки, импорт); без аргумента — все подписи стандартные. */
+  setAllRuleLabels(ruleLabels: Readonly<Record<string, readonly string[]>> = {}) {
+    this.updateAdvanced({ ruleLabels: compactRuleLabels(ruleLabels) })
   }
 
   /** Сохраняет инструкцию для модели; совпадающая с инструкцией по умолчанию хранится как пустая. */

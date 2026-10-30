@@ -20,6 +20,8 @@ export interface RecognitionRequest {
   fields: readonly LabelFieldDefinition[]
   /** Известные поставщики (то же, что в промпте). */
   suppliers: readonly string[]
+  /** Подписи полей для распознавания на устройстве, изменённые в «Расширенных» → «Правила». */
+  ruleLabels?: Readonly<Record<string, readonly string[]>>
   /** Учётные данные и отмена. */
   access: ProviderAccess
 }

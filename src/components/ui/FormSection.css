@@ -93,3 +93,14 @@
 .form-section-icon svg.brand-icon {
   stroke: none;
 }
+
+/* Обёртка кнопок и содержимого — без своей коробки: раскладка секции та же, что без неё. */
+.form-section-inert {
+  display: contents;
+}
+
+/* Секция не действует: кнопки и содержимое приглушены (причина под ними — обычным цветом). */
+.form-section.is-unavailable .form-section-inert > * {
+  opacity: .4;
+  transition: opacity 160ms ease;
+}

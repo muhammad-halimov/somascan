@@ -54,9 +54,9 @@ export class OnDeviceProvider extends RecognitionProvider {
    * (повёрнутый текст движок читает хуже) — ещё в трёх других поворотах и берёт лучший.
    * @throws {RecognitionError} `onDeviceUnavailable` в браузере, `requestFailed` при сбое движка.
    */
-  protected async complete({ image, fields, suppliers, access }: RecognitionRequest): Promise<string> {
+  protected async complete({ image, fields, suppliers, ruleLabels, access }: RecognitionRequest): Promise<string> {
     if (!TagOcr.isAvailable()) throw new RecognitionError('onDeviceUnavailable')
-    const extract = (page: OcrPage, codes: readonly OcrCode[]) => extractLabel({ page, codes, fields, suppliers })
+    const extract = (page: OcrPage, codes: readonly OcrCode[]) => extractLabel({ page, codes, fields, suppliers, ruleLabels })
     const first = await this.read(image.data, [0], true)
     throwIfAborted(access.signal)
     const pages = [...first.pages]

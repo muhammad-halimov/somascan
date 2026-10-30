@@ -13,26 +13,34 @@ export interface FormSectionProps {
   hint?: ReactNode
   /** Содержимое секции. */
   children: ReactNode
+  /**
+   * Секция сейчас не действует (например, промпт при распознавании на устройстве): кнопки и содержимое
+   * приглушены и не нажимаются (`inert`), а вместо пояснения — эта причина.
+   */
+  unavailable?: string
 }
 
 /** Группа элементов управления с заголовком в форме настроек. */
-export function FormSection({ title, icon, action, hint, children }: FormSectionProps) {
+export function FormSection({ title, icon, action, hint, children, unavailable }: FormSectionProps) {
   const heading = (
     <h2 className="form-section-title">
       {icon && <span className="form-section-icon" aria-hidden="true">{icon}</span>}
       {title}
     </h2>
   )
+  const isUnavailable = unavailable !== undefined
   return (
-    <section className="form-section">
+    <section className={`form-section${isUnavailable ? ' is-unavailable' : ''}`}>
       {action ? (
         <div className="form-section-header">
           {heading}
-          {action}
+          <div className="form-section-inert" inert={isUnavailable}>{action}</div>
         </div>
       ) : heading}
-      {children}
-      {hint && <span className="form-section-hint">{hint}</span>}
+      <div className="form-section-inert" inert={isUnavailable}>{children}</div>
+      {isUnavailable
+        ? <span className="form-section-hint">{unavailable}</span>
+        : hint && <span className="form-section-hint">{hint}</span>}
     </section>
   )
 }

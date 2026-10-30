@@ -17,6 +17,8 @@ const COLLAPSED_LINES = 6
 export interface PromptEditorProps {
   /** Инструкция из настроек; пустая строка — инструкция по умолчанию. */
   value: string
+  /** Промпт сейчас не действует (распознаёт телефон): причина вместо пояснения. */
+  unavailable?: string
 }
 
 /**
@@ -37,7 +39,7 @@ function collapsedHeight(area: HTMLElement, fullHeight: number) {
  * (возврат к тексту на момент начала правки). Изменения сохраняются сразу.
  * JSON со списком выбранных полей добавляется к инструкции автоматически (см. `buildLabelPrompt`).
  */
-export function PromptEditor({ value }: PromptEditorProps) {
+export function PromptEditor({ value, unavailable }: PromptEditorProps) {
   const { t } = useTranslation(['settings', 'common'])
   const [isEditing, setIsEditing] = useState(false)
   /** В режиме чтения длинный промпт свёрнут до нескольких строк. */
@@ -72,6 +74,7 @@ export function PromptEditor({ value }: PromptEditorProps) {
     <FormSection
       title={t('advanced.prompt')}
       icon={<SparklesIcon />}
+      unavailable={unavailable}
       action={(
         <div className="form-section-actions">
           {isEditing ? (

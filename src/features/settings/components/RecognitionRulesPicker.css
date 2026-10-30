@@ -1,0 +1,11 @@
+/*
+ * Правила распознавания на устройстве: подписи поля под его названием — не больше двух строк,
+ * полностью они видны в правке.
+ */
+
+.rules-picker .list-item-secondary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}

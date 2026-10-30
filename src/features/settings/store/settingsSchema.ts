@@ -1,6 +1,7 @@
 import { DEFAULT_LANGUAGE, readLanguageCode, type Language } from '@/i18n/languages'
 import { DEFAULT_MODEL_AGE_LIMIT, MODEL_AGE_LIMITS, type ModelAgeLimit } from '@/features/recognition/catalog/ModelFilter'
 import { DEFAULT_KNOWN_SUPPLIERS, normalizeSuppliers } from '@/features/recognition/label/knownSuppliers'
+import { compactRuleLabels, type RuleLabels } from '@/features/recognition/ocr/ruleLabels'
 import { BUILT_IN_FIELDS, createDefaultLabelFields, isEnabledByDefault, type LabelFieldDefinition, type LabelFieldKind } from '@/features/recognition/label/labelFields'
 import { LANGUAGES } from '@/i18n/languages'
 import type { ProviderRegistry } from '@/features/recognition/providers/ProviderRegistry'
@@ -130,6 +131,8 @@ export interface AdvancedSettings {
   knownSuppliers: string[]
   /** Версия списка поставщиков по умолчанию, с которой сохранён список (см. `KNOWN_SUPPLIERS_VERSION`). */
   knownSuppliersVersion: number
+  /** Правила распознавания на устройстве: подписи полей, изменённые пользователем (остальные — стандартные). */
+  ruleLabels: RuleLabels
   /** Скрывать модели старше указанного числа месяцев; `null` — показывать все. */
   modelMaxAgeMonths: ModelAgeLimit
   /** Уменьшать фото до этого размера перед отправкой. */
@@ -177,6 +180,7 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       labelFieldsVersion: LABEL_FIELDS_VERSION,
       knownSuppliers: [...DEFAULT_KNOWN_SUPPLIERS],
       knownSuppliersVersion: KNOWN_SUPPLIERS_VERSION,
+      ruleLabels: {},
       modelMaxAgeMonths: DEFAULT_MODEL_AGE_LIMIT,
       maxImageSide: 2048,
     },
@@ -338,6 +342,7 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
         readField(advanced, 'knownSuppliersVersion', (value): value is number => typeof value === 'number', 1),
       ),
       knownSuppliersVersion: KNOWN_SUPPLIERS_VERSION,
+      ruleLabels: compactRuleLabels(isRecord(advanced) ? advanced.ruleLabels : undefined),
       modelMaxAgeMonths: readField(advanced, 'modelMaxAgeMonths', isOneOf(MODEL_AGE_LIMITS), defaults.advanced.modelMaxAgeMonths),
       maxImageSide: readField(advanced, 'maxImageSide', isOneOf(IMAGE_SIZE_LIMITS), defaults.advanced.maxImageSide),
     },
