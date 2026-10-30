@@ -203,7 +203,7 @@
     "imageSizeAnthropic": "Для Claude — до 2048 px.",
     "ocrReading": "Текст распознавания",
     "ocrReadingShare": "Отправить",
-    "ocrReadingHint": "Ошибка? «Повтор», затем «Отправить».",
+    "ocrReadingHint": "Неверно? Нажмите «Повтор» на бирке и отправьте файл.",
     "ocrReadingEmpty": "Сначала распознайте бирку на устройстве.",
     "about": "О приложении",
     "version": "Версия {{version}}",

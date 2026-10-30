@@ -328,19 +328,27 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     return null
   }
 
-  // Столбец значений таблицы бирки: где начинаются строки значений, найденных у подписей (медиана левых краёв).
-  const valueLefts = [...values.values()].flat()
-    .flatMap((item) => (item.line === null ? [] : [lines[item.line]?.box?.left ?? null]))
-    .filter((left): left is number => left !== null)
-    .sort((a, b) => a - b)
+  // Таблица бирки — по строкам значений, найденных у подписей: столбец значений (медиана левых краёв)
+  // и высота от первой строки значения до последней.
+  const valueBoxes = [...values.values()].flat()
+    .flatMap((item) => (item.line === null ? [] : [lines[item.line]?.box ?? null]))
+    .filter((box): box is LineBox => box !== null)
+  const valueLefts = valueBoxes.map((box) => box.left).sort((a, b) => a - b)
   const valueColumn = valueLefts.length >= 3 ? valueLefts[Math.floor(valueLefts.length / 2)]! : null
+  const tableTop = Math.min(...valueBoxes.map((box) => box.top)) - lineHeight
+  const tableBottom = Math.max(...valueBoxes.map((box) => box.bottom)) + lineHeight
+  /** Слева на той же высоте есть текст — остатки подписи строки таблицы («Hea.da», «HE»). */
+  const hasCaptionLeft = (box: LineBox) => lines.some((other) => other.box && other.box !== box
+    && other.box.right <= box.left + lineHeight * 0.5 && sameRow(box, other.box))
   /**
    * Плавка без подписи (её закрыла ржавчина или OCR прочёл «Heat Number» как «Hea.da»): свободная строка,
-   * которая целиком — уверенный номер плавки и стоит в столбце значений таблицы, сверху вниз. Без таблицы
-   * (найдено меньше трёх значений) не ищется: номер счёта или штрихкода под ней легко принять за плавку.
+   * которая целиком — уверенный номер плавки и стоит в столбце значений строкой таблицы — внутри найденных
+   * значений или с остатками подписи слева, — сверху вниз. Номер над таблицей без подписи (под DataMatrix)
+   * — другое поле, хоть и похож на плавку. Без таблицы (найдено меньше трёх значений) не ищется.
    */
   const orphanHeatLines = valueColumn === null ? [] : [...freeLines]
-    .filter((line) => line.box !== null && Math.abs(line.box.left - valueColumn) <= lineHeight * 2)
+    .filter((line) => line.box !== null && Math.abs(line.box.left - valueColumn) <= lineHeight * 2
+      && ((line.box.top >= tableTop && line.box.bottom <= tableBottom) || hasCaptionLeft(line.box)))
     .sort((a, b) => (a.box?.top ?? 0) - (b.box?.top ?? 0))
 
   // Производитель: известный поставщик — сначала в строке у подписи, потом где угодно на бирке,

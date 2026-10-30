@@ -203,7 +203,7 @@
     "imageSizeAnthropic": "For Claude — up to 2048 px.",
     "ocrReading": "Recognized text",
     "ocrReadingShare": "Share",
-    "ocrReadingHint": "Wrong? “Retry”, then “Share”.",
+    "ocrReadingHint": "Wrong result? “Retry” the tag, then share the file.",
     "ocrReadingEmpty": "Recognize a tag on the device first.",
     "about": "About",
     "version": "Version {{version}}",

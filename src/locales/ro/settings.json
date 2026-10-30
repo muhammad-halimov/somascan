@@ -203,7 +203,7 @@
     "imageSizeAnthropic": "Pentru Claude — până la 2048 px.",
     "ocrReading": "Text recunoscut",
     "ocrReadingShare": "Trimite",
-    "ocrReadingHint": "Greșit? „Reia”, apoi „Trimite”.",
+    "ocrReadingHint": "Rezultat greșit? „Reia” eticheta, apoi trimiteți fișierul.",
     "ocrReadingEmpty": "Recunoașteți mai întâi o etichetă pe dispozitiv.",
     "about": "Despre aplicație",
     "version": "Versiunea {{version}}",
