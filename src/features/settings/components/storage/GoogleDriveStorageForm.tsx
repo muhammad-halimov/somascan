@@ -14,6 +14,7 @@ import { useUploadErrorText } from '@/features/uploads/useUploadErrorText'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { settingsStore } from '../../store/SettingsStore'
 import { useSettings } from '../../store/useSettings'
+import { FirestoreBellField } from './FirestoreBellField'
 import { TableRulesField } from './TableRulesField'
 import { TableSheetField } from './TableSheetField'
 import { useTableCheck } from './useTableCheck'
@@ -22,8 +23,8 @@ import './StorageForms.css'
 
 /**
  * Google Drive: вход через Google (нативный выбор аккаунта и согласие на доступ к Drive; после входа — почта
- * аккаунта, а справа в заголовке, напротив значка Google, — «Выйти»: отзывает доступ), таблица (папка и имя файла под замком, итог проверки, лист, правила записи)
- * и «Проверить подключение».
+ * аккаунта, а справа в заголовке, напротив значка Google, — «Выйти»: отзывает доступ), таблица (папка и имя файла под замком, итог проверки, лист, правила записи),
+ * «Проверить подключение» и «звонок» Somasync через Firebase Firestore (под замком).
  */
 export function GoogleDriveStorageForm() {
   const { t } = useTranslation(['settings', 'common'])
@@ -109,6 +110,8 @@ export function GoogleDriveStorageForm() {
       <Button variant="tonal" icon={<PlugIcon />} busy={check.isTesting} disabled={check.isChecking || !googleDrive.account} onClick={() => void check.testConnection()}>
         {check.isTesting ? t('storage.smb.testing') : t('storage.smb.test')}
       </Button>
+
+      <FirestoreBellField />
     </>
   )
 }

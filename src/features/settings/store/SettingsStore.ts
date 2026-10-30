@@ -16,6 +16,7 @@ import {
   parseSettings,
   type AdvancedSettings,
   type AppSettings,
+  type FirestoreBellSettings,
   type GoogleDriveSettings,
   type SmbSettings,
   type StorageTarget,
@@ -128,6 +129,11 @@ export class SettingsStore extends Store<AppSettings> {
   /** Обновляет часть полей Google Drive. */
   updateGoogleDrive(patch: Partial<GoogleDriveSettings>) {
     this.setState((state) => ({ ...state, storage: { ...state.storage, googleDrive: { ...state.storage.googleDrive, ...patch } } }))
+  }
+
+  /** Обновляет часть настроек «звонка» Somasync через Firestore. */
+  updateFirestore(patch: Partial<FirestoreBellSettings>) {
+    this.setState((state) => ({ ...state, storage: { ...state.storage, firestore: { ...state.storage.firestore, ...patch } } }))
   }
 
   /** Обновляет часть дополнительных параметров. */

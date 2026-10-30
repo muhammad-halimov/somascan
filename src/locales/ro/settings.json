@@ -158,6 +158,16 @@
       "hint": "Repetările nu se scriu.",
       "lock": "Blocați regula „Fiecare șarjă o singură dată”",
       "unlock": "Deblocați regula „Fiecare șarjă o singură dată” pentru a o modifica"
+    },
+    "firestore": {
+      "title": "Firebase Firestore",
+      "label": "Anunțați Somasync după scriere",
+      "hint": "Eticheta ajunge imediat în jurnalul de pe partajarea de rețea",
+      "projectId": "ID-ul proiectului Firebase",
+      "apiKey": "Cheie Web API",
+      "sectionHint": "Fără aceasta Somasync găsește eticheta la verificarea copiei — în cel mult 15 s.",
+      "lock": "Blocați setările Firestore",
+      "unlock": "Deblocați setările Firestore pentru modificare"
     }
   },
   "advanced": {

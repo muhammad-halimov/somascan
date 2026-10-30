@@ -43,6 +43,8 @@ const fromBase64 = (text: string) => new Uint8Array(Buffer.from(text, 'base64'))
 export class EngineHarness {
   readonly events: HarnessEvent[] = []
   readonly logs: string[] = []
+  /** Запросы к Firestore («звонок» Somasync): адрес и тело. */
+  readonly firestore: Array<{ url: string; body: string }> = []
   readonly storage: Map<string, string>
   /** Какие глобальные веб-API отсутствовали в контексте до загрузки движка. */
   readonly missingBefore: string[]
@@ -129,6 +131,10 @@ export class EngineHarness {
     if (method === 'googleToken') {
       if (!this.deps.token) throw { code: 'notSignedIn', message: 'no token' }
       return { accessToken: this.deps.token }
+    }
+    if (method === 'http' && String(args.url).startsWith('https://firestore.googleapis.com/')) {
+      this.firestore.push({ url: String(args.url), body: Buffer.from(String(args.body ?? ''), 'base64').toString('utf8') })
+      return { status: 200, body: toBase64(new TextEncoder().encode('{}')) }
     }
     if (method === 'http') {
       const drive = this.deps.drive

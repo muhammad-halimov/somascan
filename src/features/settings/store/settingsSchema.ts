@@ -66,6 +66,19 @@ export interface GoogleDriveSettings {
   fileName: string
 }
 
+/**
+ * «Звонок» Somasync через Firebase Firestore (`uploads/drive/firestoreBell.ts`): после записи в Google Drive
+ * телефон сообщает Somasync, и тот переносит бирку в журнал на сетевом диске сразу, а не при проверке копии.
+ */
+export interface FirestoreBellSettings {
+  /** Звонить после записи (под замком во вкладке Google Drive). */
+  enabled: boolean
+  /** ID проекта Firebase. */
+  projectId: string
+  /** Ключ Web API проекта Firebase. */
+  apiKey: string
+}
+
 /** Вкладка «Хранилище»: куда попадают распознанные строки. */
 export interface StorageSettings {
   /** Активная цель. */
@@ -74,6 +87,8 @@ export interface StorageSettings {
   smb: SmbSettings
   /** Настройки Google Drive. */
   googleDrive: GoogleDriveSettings
+  /** «Звонок» Somasync через Firebase Firestore (только для Google Drive). */
+  firestore: FirestoreBellSettings
   /**
    * Лист журнала, куда пишутся бирки; пусто — лист текущего года (создаётся, если его нет). У бирки
    * можно выбрать свой лист необязательным полем «Лист».
@@ -169,6 +184,7 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       target: 'smb',
       smb: { host: '', share: '', filePath: DEFAULT_TABLE_FILE, domain: '', username: '', password: '' },
       googleDrive: { account: '', folder: '', fileName: DEFAULT_TABLE_FILE },
+      firestore: { enabled: false, projectId: '', apiKey: '' },
       sheet: '',
       strictLayout: true,
       uniqueHeat: true,
@@ -325,6 +341,11 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
       target: readField(storage, 'target', isOneOf(STORAGE_TARGETS), defaults.storage.target),
       smb: withDefaultTable(readStrings(isRecord(storage) ? storage.smb : undefined, defaults.storage.smb), 'filePath', defaults.storage.smb.filePath),
       googleDrive: withDefaultTable(readStrings(isRecord(storage) ? storage.googleDrive : undefined, defaults.storage.googleDrive), 'fileName', defaults.storage.googleDrive.fileName),
+      firestore: {
+        enabled: readField(isRecord(storage) ? storage.firestore : undefined, 'enabled', (value): value is boolean => typeof value === 'boolean', defaults.storage.firestore.enabled),
+        projectId: readField(isRecord(storage) ? storage.firestore : undefined, 'projectId', isString, defaults.storage.firestore.projectId).trim(),
+        apiKey: readField(isRecord(storage) ? storage.firestore : undefined, 'apiKey', isString, defaults.storage.firestore.apiKey).trim(),
+      },
       sheet: readField(storage, 'sheet', isString, defaults.storage.sheet).trim(),
       strictLayout: readField(storage, 'strictLayout', (value): value is boolean => typeof value === 'boolean', defaults.storage.strictLayout),
       uniqueHeat: readField(storage, 'uniqueHeat', (value): value is boolean => typeof value === 'boolean', defaults.storage.uniqueHeat),

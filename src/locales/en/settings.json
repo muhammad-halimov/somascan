@@ -158,6 +158,16 @@
       "hint": "Repeats are not written.",
       "lock": "Lock the “Each heat number once” rule",
       "unlock": "Unlock the “Each heat number once” rule to change it"
+    },
+    "firestore": {
+      "title": "Firebase Firestore",
+      "label": "Notify Somasync after writing",
+      "hint": "The tag reaches the log on the network share at once",
+      "projectId": "Firebase project ID",
+      "apiKey": "Web API key",
+      "sectionHint": "Without it Somasync finds the tag when it checks the copy — within 15 s.",
+      "lock": "Lock the Firestore settings",
+      "unlock": "Unlock the Firestore settings for editing"
     }
   },
   "advanced": {

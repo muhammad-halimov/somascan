@@ -19,8 +19,12 @@
  * заменяется, отменять нечего: запись допишется и будет отмечена завершённой.
  *
  * В браузере нативного плагина нет: записи получают постоянный сбой `unavailable`.
+ *
+ * После записи в Google Drive — «звонок» Somasync через Firestore, если он включён (`drive/firestoreBell.ts`).
  */
 import type { StorageSettings } from '@/features/settings/store/settingsSchema'
+import { parseDriveFileName, parseDriveFolder } from '../drive/driveSettings'
+import { isBellConfigured, ringBell } from '../drive/firestoreBell'
 import type { UploadRecord, UploadStore } from '../store/UploadStore'
 import { isTransientUploadError, toUploadError } from '../UploadError'
 import type { RetryPolicy } from './RetryPolicy'
@@ -227,6 +231,21 @@ export class UploadWorker {
     }
   }
 
+  /**
+   * «Звонок» Somasync через Firestore после записи в Google Drive (если включён): Somasync переносит бирку сразу.
+   * Не удался — только предупреждение: Somasync найдёт бирку при проверке копии.
+   */
+  private async ringSomasync(storage: StorageSettings, record: string) {
+    if (!isBellConfigured(storage.firestore)) return
+    try {
+      const folderId = parseDriveFolder(storage.googleDrive.folder)
+      const fileName = parseDriveFileName(storage.googleDrive.fileName)
+      await ringBell(storage.firestore, folderId, fileName, this.backends.fetch ?? ((...args) => fetch(...args)))
+    } catch (error) {
+      console.warn('[uploads] firestore', record, error instanceof Error ? error.message : String(error))
+    }
+  }
+
   /** Пишет одну запись и переводит её в итоговый статус. */
   private async run(job: UploadRecord) {
     this.running = true
@@ -248,6 +267,7 @@ export class UploadWorker {
       })
       // Отмена пришла, когда файл уже заменялся: бирка в журнале — запись завершена.
       this.store.markCompleted(job.id, result.rowNumber, result.sheet, result.item ?? undefined)
+      if (storage.target === 'googleDrive') void this.ringSomasync(storage, job.localNumber)
     } catch (error) {
       // Отменили — запись остановлена до замены файла, журнал не тронут: убираем её из очереди.
       if (controller.signal.aborted) {

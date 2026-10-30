@@ -4,6 +4,7 @@
  * запись и своя блокировка), нет таблицы, отмена. Запуск: `npm test` (движок собирается Vite).
  */
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { before, test } from 'node:test'
 import type { StorageSettings } from '../src/features/settings/store/settingsSchema'
@@ -170,6 +171,36 @@ test('Google Drive: токен и HTTP через хост, запись в су
     await engine.until(() => statusOf(engine, 'id-3') === 'completed')
     const table = drive.childrenOf('folder1AbCdEfGh').find((file) => file.name === 'Probe otel.xlsx')!
     assert.equal((await LabelWorkbook.open(table.bytes)).locate('SCN-261009-0003')?.row, 7)
+  } finally {
+    engine.stop()
+  }
+})
+
+test('Google Drive со «звонком» Firestore: после записи — документ канала только со временем звонка', async () => {
+  const drive = new FakeDrive()
+  drive.add({ id: 'folder1AbCdEfGh', name: 'Somascan', mimeType: 'application/vnd.google-apps.folder', parents: ['root'] })
+  drive.add({ name: 'Probe otel.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', parents: ['folder1AbCdEfGh'], bytes: template })
+  const engine = new EngineHarness(code, { drive, token: 'token' })
+  try {
+    engine.command({
+      type: 'configure',
+      storage: {
+        ...smbStorage,
+        target: 'googleDrive',
+        googleDrive: { account: 'lab@example.com', folder: 'https://drive.google.com/drive/folders/folder1AbCdEfGh?usp=sharing', fileName: 'Probe otel' },
+        firestore: { enabled: true, projectId: 'somascan-test', apiKey: 'AIzaKey' },
+      },
+      deviceId: 'android-1',
+    })
+    engine.command({ type: 'enqueue', record: record(4) })
+    await engine.until(() => engine.firestore.length === 1)
+    const [{ url, body }] = engine.firestore as [{ url: string; body: string }]
+    assert.equal(url, 'https://firestore.googleapis.com/v1/projects/somascan-test/databases/(default)/documents:commit?key=AIzaKey')
+    const write = (JSON.parse(body) as { writes: Array<{ update: { name: string; fields: Record<string, unknown> } }> }).writes[0]!.update
+    const channel = createHash('sha256').update('folder1AbCdEfGh/Probe otel.xlsx').digest('hex')
+    assert.equal(write.name, `projects/somascan-test/databases/(default)/documents/somascan-bells/${channel}`)
+    assert.deepEqual(Object.keys(write.fields), ['at'])
+    assert.equal(statusOf(engine, 'id-4'), 'completed')
   } finally {
     engine.stop()
   }

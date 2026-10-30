@@ -32,6 +32,7 @@ const UNCONFIGURED: EngineConfig = {
     target: 'smb',
     smb: { host: '', share: '', filePath: '', domain: '', username: '', password: '' },
     googleDrive: { account: '', folder: '', fileName: '' },
+    firestore: { enabled: false, projectId: '', apiKey: '' },
     sheet: '',
     strictLayout: true,
     uniqueHeat: true,
