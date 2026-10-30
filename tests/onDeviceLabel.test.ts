@@ -14,7 +14,7 @@ import { companyDomains, supplierByDomain } from '../src/features/recognition/oc
 import { bestExtraction, extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrCode, OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
-import { findApproval, readCode, readDate, readGrade, readHeat, readSize, readTime, readWeightKg } from '../src/features/recognition/ocr/valueReaders'
+import { findApproval, findOrphanHeat, readCode, readDate, readGrade, readHeat, readSize, readTime, readWeightKg } from '../src/features/recognition/ocr/valueReaders'
 
 /** Все поля, читаемые с фото (включены и выключенные по умолчанию). */
 const ALL_FIELDS = createDefaultLabelFields().filter((field) => !field.manual).map((field) => ({ ...field, enabled: true }))
@@ -293,6 +293,20 @@ test('бирка Suez Steel: подписи слева, значения под 
     { size, heat, weight_kg, grade, standard, technical_approval, production_date, serial_number },
     { size: 'R20', heat: '2620037', weight_kg: 2000, grade: 'B500C', standard: 'ST009:2011', technical_approval: '016-01-584-2025', production_date: '2026-01-04', serial_number: 'L620037025A2260104' },
   )
+})
+
+test('бирка Suez Steel в ржавчине: подпись плавки съедена («Hea.da») — плавка по виду и столбцу значений', () => {
+  const { producer, size, heat, weight_kg } = extract(fixture('suez-rust'), DEFAULT_FIELDS).label
+  assert.deepEqual({ producer, size, heat, weight_kg }, { producer: 'Suez Steel', size: 'R22', heat: '2620040', weight_kg: 2000 })
+})
+
+test('плавка без подписи: только строка, которая целиком похожа на номер плавки', () => {
+  assert.equal(findOrphanHeat('2620040'), '2620040')
+  assert.equal(findOrphanHeat('3557'), null)
+  assert.equal(findOrphanHeat('05/01/2026'), null)
+  assert.equal(findOrphanHeat('11:38AM'), null)
+  assert.equal(findOrphanHeat('L620040055A2260105R22B500C'), null)
+  assert.equal(findOrphanHeat('56 Approx'), null)
 })
 
 test('правила значений: марка с классом отдельно, диапазон веса, пометка Q, двоеточие в коде, номер одобрения', () => {

@@ -19,7 +19,7 @@ import type { OcrCode, OcrPage } from './ocrTypes'
 import { boxHeight, isBelow, isRightOf, layoutPage, sameRow, typicalLineHeight, type PageLine } from './pageLayout'
 import { companyDomains, companyFromDomain, supplierByDomain } from './domainProducer'
 import { findSupplier } from './supplierMatch'
-import { findApproval, findGrade, findMarkedSize, findProduct } from './valueReaders'
+import { findApproval, findGrade, findMarkedSize, findOrphanHeat, findProduct } from './valueReaders'
 
 /** Что разбирать. */
 export interface ExtractionInput {
@@ -251,13 +251,27 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     return [...items].sort((a, b) => lineTop(a.line) - lineTop(b.line)).map((item) => String(item.value)).join('; ')
   }
   const freeLines = lines.filter((line) => !usedLines.has(line.index) && !isLabelLine.has(line.index))
-  const firstOf = (find: (text: string) => string | null) => {
-    for (const line of freeLines) {
+  const firstOf = (find: (text: string) => string | null, candidates: readonly PageLine[] = freeLines) => {
+    for (const line of candidates) {
       const value = find(line.text)
       if (value) return value
     }
     return null
   }
+
+  // Столбец значений таблицы бирки: где начинаются строки значений, найденных у подписей (медиана левых краёв).
+  const valueLefts = [...values.values()].flat()
+    .flatMap((item) => (item.line === null ? [] : [lines[item.line]?.box?.left ?? null]))
+    .filter((left): left is number => left !== null)
+    .sort((a, b) => a - b)
+  const valueColumn = valueLefts.length >= 3 ? valueLefts[Math.floor(valueLefts.length / 2)]! : null
+  /**
+   * Плавка без подписи (её закрыла ржавчина или OCR прочёл «Heat Number» как «Hea.da»): свободная строка,
+   * которая целиком — уверенный номер плавки и стоит в столбце значений таблицы (если он есть), сверху вниз.
+   */
+  const orphanHeatLines = [...freeLines]
+    .filter((line) => valueColumn === null || (line.box !== null && Math.abs(line.box.left - valueColumn) <= lineHeight * 2))
+    .sort((a, b) => (a.box?.top ?? 0) - (b.box?.top ?? 0))
 
   // Производитель: известный поставщик — сначала в строке у подписи, потом где угодно на бирке,
   // потом по почте или сайту завода; нет и его — своё название из домена (когда подписи с названием нет).
@@ -281,6 +295,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (value === null && field.key === 'grade') value = firstOf(findGrade)
     if (value === null && field.key === 'size') value = firstOf(findMarkedSize)
     if (value === null && field.key === 'technical_approval') value = firstOf(findApproval)
+    if (value === null && field.key === 'heat') value = firstOf(findOrphanHeat, orphanHeatLines)
     label[field.key] = typeof value === 'string' ? correctByCodes(value, codes) : value
   }
 

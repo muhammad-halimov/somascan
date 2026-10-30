@@ -97,6 +97,17 @@ export const isStrongHeat = (value: LabelValue) =>
   typeof value === 'string' && value.length >= 5 && value.length <= 12 && digitCount(value) >= 4 && !value.includes('-')
 
 /**
+ * Плавка без подписи: строка целиком — уверенный номер плавки («2620040»), без других слов. Дата, время,
+ * короткие числа («3557») и длинные коды (серийный номер) не подходят.
+ */
+export function findOrphanHeat(text: string): string | null {
+  const value = cleanValue(text)
+  if (/\s/.test(value) || /[/:.]/.test(value)) return null
+  const heat = readHeat(value, { label: '' })
+  return heat !== null && isStrongHeat(heat) ? String(heat) : null
+}
+
+/**
  * Размер: пометка (Ø, Ф, Φ, D — диаметр, R — гладкий пруток, Q — пометка Çolakoğlu), число от 4 до 60,
  * необязательно «mm».
  */
