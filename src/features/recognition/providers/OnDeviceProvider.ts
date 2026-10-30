@@ -38,8 +38,11 @@ export class OnDeviceProvider extends RecognitionProvider {
   /** Распознаёт на устройстве. */
   override readonly onDevice = true
 
-  /** Прочитанное в последний раз — для отладки правил: `__somascan.labelRecognizer.registry.get('device').lastReading` в инструментах разработчика. */
-  lastReading: { pages: OcrPage[]; codes: OcrCode[]; extraction: Extraction | null } | null = null
+  /**
+   * Прочитанное в последний раз — для отладки правил: файлом из «Расширенных» («Текст распознавания»)
+   * или `__somascan.labelRecognizer.registry.get('device').lastReading` в инструментах разработчика.
+   */
+  lastReading: { pages: OcrPage[]; codes: OcrCode[]; extraction: Extraction | null; at: string } | null = null
 
   /** Моделей нет. */
   async listCandidates(): Promise<ModelCandidate[]> {
@@ -64,7 +67,7 @@ export class OnDeviceProvider extends RecognitionProvider {
       pages.push(...turned.pages)
       best = bestExtraction([...(best ? [best] : []), ...turned.pages.map((page) => extract(page, first.codes))])
     }
-    this.lastReading = { pages, codes: first.codes, extraction: best }
+    this.lastReading = { pages, codes: first.codes, extraction: best, at: new Date().toISOString() }
     if (!best) return JSON.stringify({ [PHOTO_ASSESSMENT_KEY]: { ok: false, issues: ['noTag'] } })
     return JSON.stringify({ ...best.label, [PHOTO_ASSESSMENT_KEY]: best.photo })
   }

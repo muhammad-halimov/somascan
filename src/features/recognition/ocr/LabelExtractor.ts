@@ -140,7 +140,9 @@ function groupHits(line: PageLine, hits: readonly LabelHit[]): LabelGroup[] {
     else groups.push({ key: hit.key, start: hit.start, end: hit.end })
   }
   return groups.map((group, index) => {
-    const from = sourceEnd(line.folded, line.text, group.end)
+    // Подпись кончилась посреди слова — остаток слова тоже подпись («Diametrul» у подписи «diametru»).
+    let from = sourceEnd(line.folded, line.text, group.end)
+    while (from < line.text.length && /\p{L}/u.test(line.text[from]!)) from++
     const next = groups[index + 1]
     const to = next ? line.folded.origin[next.start]! : line.text.length
     return { key: group.key, rest: line.text.slice(from, to) }
@@ -155,7 +157,10 @@ function groupHits(line: PageLine, hits: readonly LabelHit[]): LabelGroup[] {
 function inlineText(rest: string): { text: string; colon: boolean } {
   const colon = /^[^\d:：]*[:：]/u.exec(rest)
   if (colon) return { text: rest.slice(colon[0].length), colon: true }
-  const text = rest.replace(/^(?:\s*[/|]\s*\p{L}[\p{L}.]*(?=[\s/|(]|$))+/u, '')
+  const text = rest
+    .replace(/^(?:\s*[/|]\s*\p{L}[\p{L}.]*(?=[\s/|(]|$))+/u, '')
+    // Единица в подписи («Size,mm», «Net weight, kg», «(t)») — часть подписи, не значение.
+    .replace(/^[\s,.]*\(?\s*(?:mm|kg|kgs|t|m|мм|кг|т)\s*\)?(?![\p{L}\d])[\s.,]*/iu, '')
   // Двоеточие потерялось, а перед значением с цифрами — ещё слова подписи («…identyfikator 8/7»).
   return { text: /\d/.test(text) ? text.replace(/^(?:\s*\p{L}{5,}(?=\s))+/u, '') : text, colon: false }
 }
@@ -174,6 +179,14 @@ export function extractLabel(input: ExtractionInput): Extraction {
   const rules = buildFieldRules(input.fields)
   return bestExtraction([0, 1, 2, 3].map((turns) => extractTurned(input, rules, turns)))!
 }
+
+/**
+ * На столько слабее страница с повёрнутыми координатами: настоящий поворот бирки обычно ловит перечитывание
+ * повёрнутого фото, а повёрнутые координаты прямо прочитанной бирки случайно находят «значения» не там
+ * (в перевёрнутой странице «под подписью» — это строка над ней), и чуть большее число таких находок
+ * не должно перевешивать правильное прочтение.
+ */
+const TURN_PENALTY = 2
 
 /** Разбор страницы, координаты строк которой повёрнуты на `turns` четвертей оборота. */
 function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rules: readonly FieldRule[], turns: number): Extraction {
@@ -350,11 +363,12 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
   // Текст боком (бирку сняли повёрнутой, а движок прочёл строки сверху вниз): подписи найдены, но «справа»
   // и «под» не работают — такая страница не годится, её заменит чтение повёрнутого фото.
   const filled = [...values.keys()].filter((key) => labelled.has(key)).length
-  const score = isUpright(lines) ? labelled.size + filled + (supplier ? 1 : 0) : 0
+  const rawScore = isUpright(lines) ? labelled.size + filled + (supplier ? 1 : 0) : 0
+  const score = turns === 0 ? rawScore : Math.max(0, rawScore - TURN_PENALTY)
   const textWeight = lines.reduce((sum, line) => sum + line.text.length * (line.confidence ?? 1), 0)
   const photo: PhotoAssessment = lines.length === 0
     ? { ok: false, issues: ['noTag'] }
-    : { ok: score > 0, issues: [] }
+    : { ok: rawScore > 0, issues: [] }
   return { label, photo, score, textWeight, turns }
 }
 

@@ -135,13 +135,17 @@ export const isRightOf = (label: LineBox, value: LineBox) =>
 
 /**
  * `value` сразу под подписью `label`: начинается ниже середины подписи, не дальше чем через строку,
- * и перекрывает её по горизонтали.
+ * и перекрывает её по горизонтали. Или начинается почти вровень с подписью, но уходит ниже неё хотя бы
+ * на полстроки: движок склеил вторую строку подписи с крупным значением справа («WEIGHT» над
+ * «about kg 1450», «Heat №» над «Șarja № 42600058») — рамка такой строки поднята крупным шрифтом.
  * @param lineHeight Типичная высота строки страницы.
  */
 export function isBelow(label: LineBox, value: LineBox, lineHeight: number): boolean {
   const height = Math.max(boxHeight(label), lineHeight)
   const gap = value.top - label.bottom
-  return value.top >= label.top + boxHeight(label) * 0.6
+  const startsBelow = value.top >= label.top + boxHeight(label) * 0.6
+  const reachesBelow = value.top >= label.top - boxHeight(label) * 0.2 && value.bottom >= label.bottom + height * 0.5
+  return (startsBelow || reachesBelow)
     && gap <= height * 1.3
     && value.left < label.right
     && value.right > label.left - height * 0.5

@@ -5,8 +5,9 @@
  * (`scripts/screenshots/tag.jpg`) ровно и под наклоном 12°; та же бирка, снятая боком, — прочитанная как есть
  * (строки сверху вниз), повёрнутой правильно и вверх ногами; грязная бирка SOVEL; бирки ArcelorMittal (ровно,
  * боком, в перспективе), Acciaierie di Sicilia, ICECON (Icdas), Suez Steel (ровно, в ржавчине, съехавший столбец
- * значений), Çolakoğlu, Mescier, Diler, Moldova Steel Works и внутренняя бирка SOMACO. Остальные бирки собраны
- * из строк в тесте.
+ * значений), Çolakoğlu, Mescier, Diler, Moldova Steel Works и внутренняя бирка SOMACO; бирка Acciaierie di Sicilia
+ * со строками, склеенными так, как это делает ML Kit (подпись и крупное значение на одной линии — одна строка).
+ * Остальные бирки собраны из строк в тесте.
  */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -476,11 +477,47 @@ test('подпись на двух языках в две строки: знач
   assert.equal(extract(page(rows)).label.weight_kg, 2048)
 })
 
+test('ML Kit склеил вторую строку подписи со значением («about kg 1450»): значение находится, перевёрнутая страница не побеждает', () => {
+  const { turns, label } = extract(fixture('ads-sicilia-joined'))
+  assert.equal(turns, 0)
+  assert.deepEqual({ heat: label.heat, size: label.size, weight_kg: label.weight_kg }, { heat: '2688.26', size: '10 mm', weight_kg: 1450 })
+})
+
+test('бирка Moldova Steel Works, как её читает ML Kit: подписи на трёх языках, третья склеена с крупным значением, «№» — «Ne»', () => {
+  const blocks: Array<[string, string, string, string]> = [
+    ['Steel Grade', 'Mapka cTanu', 'Marca de otel', 'B500C / bare'],
+    ['Standard', 'CTaHAapT', 'Standard', 'AT 003-01/200-2024'],
+    ['Heat Ne', 'Nnaeka Ne', 'Sarja Ne', '42600058'],
+    ['Size,mm', 'Pa3Mep,MM', 'Diametrul,mm', 'Ne 20'],
+    ['Net weight,kg', 'Macca HeTTo,kr', 'Masa neta,kg', '2706'],
+  ]
+  // Строки — [текст, левый, верхний, правый, нижний край] в долях; подписи прижаты вправо к столбцу значений.
+  const boxes: Array<[string, number, number, number, number]> = [['JSC "Moldova Steel Works"', 0.38, 0.18, 0.78, 0.21]]
+  blocks.forEach(([first, second, third, value], index) => {
+    const y = 0.3 + index * 0.085
+    boxes.push([first, 0.34 - first.length * 0.011, y, 0.34, y + 0.02])
+    boxes.push([second, 0.34 - second.length * 0.011, y + 0.026, 0.34, y + 0.046])
+    boxes.push([`${third} ${value}`, 0.34 - third.length * 0.011, y + 0.018, 0.36 + value.length * 0.022, y + 0.072])
+  })
+  const lines = boxes.map(([text, left, top, right, bottom]) => ({
+    text, corners: [left, top, right, top, right, bottom, left, bottom].map((value) => Math.round(value * 1000)), confidence: 0.9,
+  }))
+  const { turns, label } = extract({ rotation: 0, width: 1000, height: 1000, lines })
+  assert.equal(turns, 0)
+  const { producer, grade, technical_approval, heat, size, weight_kg } = label
+  assert.deepEqual(
+    { producer, grade, technical_approval, heat, size, weight_kg },
+    { producer: 'Moldova Steel Works', grade: 'B500C', technical_approval: 'AT 003-01/200-2024', heat: '42600058', size: '20 mm', weight_kg: 2706 },
+  )
+})
+
 test('правила значений с настоящих бирок', () => {
   const context = { label: '' }
   assert.equal(readHeat('2604 – 3 – 065 – 20', context), '2604-3-065-20')
   assert.equal(readHeat('2688.26', context), '2688.26')
   assert.equal(readHeat('：2501320', context), '2501320')
+  assert.equal(readHeat('Ne 42600058', context), '42600058')
+  assert.equal(readSize('Ne 20', context), '20 mm')
   assert.equal(readSize('012MM', context), '12 mm')
   assert.equal(readSize('10,0', context), '10 mm')
   assert.equal(readSize('、Q16', context), 'Q16')

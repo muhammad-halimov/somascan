@@ -1,14 +1,17 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, RefreshIcon } from '@/components/icons/Icons'
+import { CalendarIcon, ExportIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, RefreshIcon, ScanTextIcon } from '@/components/icons/Icons'
 import { Button } from '@/components/ui/Button'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
 import { Notice } from '@/components/ui/Notice'
 import { Tabs } from '@/components/ui/Tabs'
+import { NativeDialogs } from '@/lib/platform/NativeDialogs'
+import { shareTextFile } from '@/lib/platform/files'
 import { useStore } from '@/lib/store/useStore'
 import { modelCatalog } from '@/features/recognition/catalog/ModelCatalog'
 import { MODEL_AGE_LIMITS } from '@/features/recognition/catalog/ModelFilter'
+import { OnDeviceProvider } from '@/features/recognition/providers/OnDeviceProvider'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import { useErrorText } from '@/features/recognition/useErrorText'
 import { getProviderAccess } from '../store/providerAccess'
@@ -23,16 +26,36 @@ import './AdvancedTab.css'
 
 /**
  * Вкладка «Расширенные»: сначала то, что определяет распознавание, — промпт, поля бирки и известные поставщики;
- * затем фильтр возраста моделей, состояние списков моделей с обновлением,
- * размер фото для распознавания и версия приложения.
+ * затем фильтр возраста моделей, состояние списков моделей с обновлением, размер фото для распознавания,
+ * текст последнего распознавания на устройстве (для отладки правил) и версия приложения.
  */
 export function AdvancedTab() {
-  const { t, i18n } = useTranslation('settings')
+  const { t, i18n } = useTranslation(['settings', 'common'])
   const errorText = useErrorText()
-  const { advanced } = useSettings()
+  const { general, advanced } = useSettings()
   const catalog = useStore(modelCatalog)
   const isRefreshing = Object.values(catalog.loading).some(Boolean)
   const dateFormat = useMemo(() => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }), [i18n.language])
+
+  /**
+   * Текст, который движок прочитал с последней распознанной бирки (строки с рамками во всех поворотах, коды
+   * и найденные поля), — файлом JSON в панель «Поделиться»: по нему видно, почему правила ошиблись.
+   */
+  const shareOcrReading = async () => {
+    const provider = providerRegistry.get('device')
+    const reading = provider instanceof OnDeviceProvider ? provider.lastReading : null
+    if (!reading) {
+      await NativeDialogs.alert({ title: t('advanced.ocrReading'), message: t('advanced.ocrReadingEmpty'), buttonTitle: t('common:ok') })
+      return
+    }
+    const { extraction, ...rest } = reading
+    const text = `${JSON.stringify({ version: __APP_VERSION__, engine: provider.title, ...rest, label: extraction?.label ?? null, turns: extraction?.turns ?? null })}\n`
+    try {
+      await shareTextFile(`somascan-ocr-${reading.at.replace(/[:.]/g, '-')}.json`, text, 'application/json', t('advanced.ocrReadingShare'))
+    } catch (error) {
+      await NativeDialogs.alert({ title: t('advanced.ocrReading'), message: errorText(error), buttonTitle: t('common:ok') })
+    }
+  }
 
   /** Заново загружает списки всех провайдеров с текущими ключами. */
   const refreshAll = () => void modelCatalog.syncAll((id) => getProviderAccess(settingsStore.getSnapshot().general, id), { force: true })
@@ -107,6 +130,16 @@ export function AdvancedTab() {
         />
         <Notice>{t('advanced.imageSizeAnthropic')}</Notice>
       </FormSection>
+
+      {general.provider === 'device' && (
+        <FormSection
+          title={t('advanced.ocrReading')}
+          icon={<ScanTextIcon />}
+          action={<Button icon={<ExportIcon />} onClick={() => void shareOcrReading()}>{t('advanced.ocrReadingShare')}</Button>}
+        >
+          <span className="form-section-hint">{t('advanced.ocrReadingHint')}</span>
+        </FormSection>
+      )}
 
       <FormSection title={t('advanced.about')} icon={<InfoIcon />}>
         <p className="app-version">{t('advanced.version', { version: __APP_VERSION__ })}</p>
