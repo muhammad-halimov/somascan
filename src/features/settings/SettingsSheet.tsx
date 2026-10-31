@@ -72,7 +72,7 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
   useBodyScrollLock(true)
 
   const modalRef = useRef<HTMLElement>(null)
-  /** Высота окна в момент выбора вкладки: от неё плавно едет низ окна к высоте новой вкладки. */
+  /** Высота окна в момент выбора вкладки: от неё окно плавно меняет высоту (и положение — оно по середине) к новой вкладке. */
   const heightBeforeRef = useRef<number | null>(null)
   useLayoutEffect(() => {
     const modal = modalRef.current
@@ -105,7 +105,7 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
     }
   }, [panelTab])
 
-  /** Переключает вкладку; новая панель монтируется заново и начинается сверху, низ окна едет к её высоте. */
+  /** Переключает вкладку; новая панель монтируется заново и начинается сверху, окно плавно меняет высоту под неё. */
   const selectTab = (next: SettingsTab) => {
     if (next !== tab) heightBeforeRef.current = modalRef.current?.getBoundingClientRect().height ?? null
     setTab(next)

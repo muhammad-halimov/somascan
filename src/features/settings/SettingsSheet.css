@@ -1,8 +1,8 @@
 /*
  * Окно настроек: затемнённая подложка, окно, вкладки под заголовком и прокручиваемое содержимое вкладки.
- * Высота окна — по содержимому: у короткой вкладки внизу нет пустоты, при смене вкладки едет только низ
- * (см. `SettingsSheet.tsx`). Телефон: верх — сразу под линией шапки, окно растёт до низа экрана.
- * Компьютер: не выше 680 px, верх стоит там же, где у окна наибольшей высоты.
+ * Высота окна — по содержимому, окно — по середине свободного места: меняется высота (смена вкладки — плавно,
+ * см. `SettingsSheet.tsx`) — окно сдвигается вместе с ней. Телефон: свободное место — от линии шапки до низа
+ * экрана, самое высокое окно встаёт сразу под шапкой. Компьютер: не выше 680 px.
  */
 
 .settings-backdrop {
@@ -16,12 +16,12 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   justify-items: center;
-  align-items: start;
+  align-items: center;
   overflow: hidden;
   /* Поле между окном и краем экрана. */
   --settings-gap: 12px;
   padding:
-    max(4vh, var(--safe-top), calc((var(--visual-viewport-height, 100dvh) - 680px) / 2))
+    max(4vh, var(--safe-top))
     max(var(--settings-gap), var(--safe-right))
     max(4vh, var(--safe-bottom))
     max(var(--settings-gap), var(--safe-left));
@@ -46,7 +46,7 @@
   animation: modal-enter 220ms cubic-bezier(.2, .75, .25, 1) both;
 }
 
-/* Телефон: верх окна — сразу под линией шапки, окно растёт по содержимому до низа экрана (над полоской жестов). */
+/* Телефон: окно — между линией шапки и низом экрана (над полоской жестов). */
 :root:is([data-platform='ios'], [data-platform='android']) .settings-backdrop {
   padding-top: calc(var(--app-header-height) + var(--app-header-gap));
   padding-bottom: max(var(--settings-gap), var(--safe-bottom));
