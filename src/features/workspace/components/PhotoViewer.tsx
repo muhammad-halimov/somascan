@@ -37,7 +37,7 @@ export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isCl
   const transform = usePhotoTransform({ naturalSize, enabled: true, rotation, onRotationChange })
   const { attachFrame, wasGesture, touchHandlers, pointerHandlers } = transform
   /** Двойное нажатие — увеличение к пальцу, у увеличенного фото — исходный масштаб (как в карточке). */
-  const tapStage = useDoubleTap<string>({ onSingle: () => {}, onDouble: (_, point) => transform.toggleZoomAt(point) })
+  const tapStage = useDoubleTap<string>({ onDouble: (_, point) => transform.toggleZoomAt(point) })
   useBodyScrollLock(true)
 
   // Escape на компьютере.

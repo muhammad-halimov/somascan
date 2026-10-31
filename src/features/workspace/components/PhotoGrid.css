@@ -152,6 +152,11 @@
   transition: box-shadow 200ms ease, scale 240ms cubic-bezier(.2, 0, 0, 1);
 }
 
+/* Рамку ведёт палец (удержание на ячейке, `useGridDragSelect`): открытая ячейка чуть крупнее — видно, что перенос начался. */
+.photo-grid.is-dragging .photo-grid-cell.is-active {
+  scale: 1.1;
+}
+
 .photo-card.is-zooming .photo-grid-cell::after {
   opacity: 0;
   transition: none;

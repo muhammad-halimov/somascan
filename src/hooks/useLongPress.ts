@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, type MouseEvent, type PointerEvent } from 'react'
 
 /** Сколько держать палец, мс: как долгое нажатие Android и iOS. */
-const LONG_PRESS_MS = 500
+export const LONG_PRESS_MS = 500
 
 /** Палец сдвинулся дальше стольких точек — это прокрутка, а не удержание. */
-const MOVE_TOLERANCE = 10
+export const MOVE_TOLERANCE = 10
 
 /**
  * Долгое нажатие на кнопку: через полсекунды удержания (или по правой кнопке мыши) вызывает `onLongPress`

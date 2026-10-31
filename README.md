@@ -50,7 +50,6 @@ flowchart LR
 - The main screen holds up to nine tags (3 × 3 grid). A tag is sent with “Next” after its form (coil or bar) is selected and the required fields are filled in.
 - Each heat number is accepted once (by default): a repeat on screen, in “Uploads” or in the log is treated as an error.
 - A tag without a photo is filled in manually.
-- Gestures: in the grid a tap selects a tag and a double tap opens it; on the photo a tap opens the full-screen view and a double tap zooms in to the tapped point (a second double tap restores the scale).
 
 ## Recognition
 
