@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
@@ -15,6 +15,7 @@ import { useSettings } from './store/useSettings'
 import { AdvancedTab } from './tabs/AdvancedTab'
 import { GeneralTab } from './tabs/GeneralTab'
 import { StorageTab } from './tabs/StorageTab'
+import { SheetResizeContext } from './useSheetResize'
 import './SettingsSheet.css'
 
 /** Вкладки настроек в порядке показа. */
@@ -72,8 +73,18 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
   useBodyScrollLock(true)
 
   const modalRef = useRef<HTMLElement>(null)
-  /** Высота окна в момент выбора вкладки: от неё окно плавно меняет высоту (и положение — оно по середине) к новой вкладке. */
+  /**
+   * Высота окна до смены вкладки или содержимого вкладки (`useSheetResize`): от неё окно плавно переходит к новой
+   * высоте, а с ней и к новому положению (оно стоит в свободном месте по пропорции, см. `SettingsSheet.css`).
+   */
   const heightBeforeRef = useRef<number | null>(null)
+  /** Счётчик смен содержимого вкладки: после отрисовки новой высоты запускает переход. */
+  const [resizes, setResizes] = useState(0)
+  /** Запоминает высоту окна перед сменой содержимого вкладки (идущий переход продолжается с текущей высоты). */
+  const prepareResize = useCallback(() => {
+    heightBeforeRef.current ??= modalRef.current?.getBoundingClientRect().height ?? null
+    setResizes((count) => count + 1)
+  }, [])
   useLayoutEffect(() => {
     const modal = modalRef.current
     const from = heightBeforeRef.current
@@ -103,7 +114,7 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
       modal.removeEventListener('transitionend', onEnd)
       window.clearTimeout(timer)
     }
-  }, [panelTab])
+  }, [panelTab, resizes])
 
   /** Переключает вкладку; новая панель монтируется заново и начинается сверху, окно плавно меняет высоту под неё. */
   const selectTab = (next: SettingsTab) => {
@@ -160,7 +171,9 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
           options={TABS.map((id) => ({ value: id, label: t(`tabs.${id}`), icon: TAB_ICONS[id] }))}
           onChange={selectTab}
         />
-        <SettingsPanel tab={panelTab} label={t(`tabs.${panelTab}`)} />
+        <SheetResizeContext value={prepareResize}>
+          <SettingsPanel tab={panelTab} label={t(`tabs.${panelTab}`)} />
+        </SheetResizeContext>
       </section>
     </div>
   )

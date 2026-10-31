@@ -1,8 +1,10 @@
 /*
  * Окно настроек: затемнённая подложка, окно, вкладки под заголовком и прокручиваемое содержимое вкладки.
- * Высота окна — по содержимому, окно — по середине свободного места: меняется высота (смена вкладки — плавно,
- * см. `SettingsSheet.tsx`) — окно сдвигается вместе с ней. Телефон: свободное место — от линии шапки до низа
- * экрана, самое высокое окно встаёт сразу под шапкой. Компьютер: не выше 680 px.
+ * Высота окна — по содержимому; свободное место над окном и под ним делится в пропорции
+ * (`--settings-space-above` : `--settings-space-below`): меняется высота (смена вкладки, способа распознавания —
+ * плавно, см. `SettingsSheet.tsx`) — окно сдвигается вместе с ней. Телефон: свободное место — от линии шапки
+ * до низа экрана, окно выше середины (у верха блока фото), самое высокое — сразу под шапкой.
+ * Компьютер: по середине, не выше 680 px.
  */
 
 .settings-backdrop {
@@ -13,13 +15,15 @@
   right: 0;
   left: 0;
   height: var(--visual-viewport-height, 100dvh);
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   overflow: hidden;
   /* Поле между окном и краем экрана. */
   --settings-gap: 12px;
+  /* Как делится свободное место над окном и под ним. */
+  --settings-space-above: 1;
+  --settings-space-below: 1;
   padding:
     max(4vh, var(--safe-top))
     max(var(--settings-gap), var(--safe-right))
@@ -30,8 +34,20 @@
   animation: backdrop-enter 180ms ease-out both;
 }
 
+/* Свободное место над окном и под ним. */
+.settings-backdrop::before,
+.settings-backdrop::after {
+  content: '';
+  flex: var(--settings-space-above) 0 0;
+}
+
+.settings-backdrop::after {
+  flex-grow: var(--settings-space-below);
+}
+
 .settings-modal {
   display: flex;
+  flex: 0 1 auto;
   flex-direction: column;
   width: 100%;
   max-width: 520px;
@@ -46,8 +62,12 @@
   animation: modal-enter 220ms cubic-bezier(.2, .75, .25, 1) both;
 }
 
-/* Телефон: окно — между линией шапки и низом экрана (над полоской жестов). */
+/*
+ * Телефон: окно — между линией шапки и низом экрана (над полоской жестов); над окном пятая часть свободного места —
+ * короткое окно стоит у верха блока фото, а не посреди экрана.
+ */
 :root:is([data-platform='ios'], [data-platform='android']) .settings-backdrop {
+  --settings-space-below: 4;
   padding-top: calc(var(--app-header-height) + var(--app-header-gap));
   padding-bottom: max(var(--settings-gap), var(--safe-bottom));
 }

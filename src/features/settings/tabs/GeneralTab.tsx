@@ -6,7 +6,7 @@ import { Notice } from '@/components/ui/Notice'
 import { Tabs } from '@/components/ui/Tabs'
 import { TextInput } from '@/components/ui/TextInput'
 import { providerRegistry } from '@/features/recognition/providers/ProviderRegistry'
-import { ON_DEVICE_PROVIDER } from '@/features/recognition/types'
+import { ON_DEVICE_PROVIDER, type ProviderId } from '@/features/recognition/types'
 import { ApiKeyField } from '../components/ApiKeyField'
 import { LanguagePicker } from '../components/LanguagePicker'
 import { ModelPicker } from '../components/ModelPicker'
@@ -14,6 +14,7 @@ import { OnDeviceSection } from '../components/OnDeviceSection'
 import { PROVIDER_ICONS } from '../components/providerIcons'
 import { settingsStore } from '../store/SettingsStore'
 import { useSettings } from '../store/useSettings'
+import { useSheetResize } from '../useSheetResize'
 
 /** Как распознавать: телефоном или ИИ-моделью. */
 type RecognitionMode = 'device' | 'model'
@@ -34,6 +35,13 @@ export function GeneralTab() {
   const [modelUnlocked, setModelUnlocked] = useState(false)
   const modelOpen = modelUnlocked || mode === 'model'
   const modelLabel = t('general.recognitionModes.model')
+  /** Смена способа распознавания или провайдера меняет высоту окна — окно переходит к ней плавно. */
+  const resize = useSheetResize()
+  const setProvider = (id: ProviderId) => {
+    if (id === general.provider) return
+    resize()
+    settingsStore.setProvider(id)
+  }
 
   return (
     <>
@@ -58,50 +66,53 @@ export function GeneralTab() {
           ]}
           onChange={(next) => {
             if (next === 'model' && !modelOpen) setModelUnlocked(true)
-            else settingsStore.setProvider(next === 'device' ? ON_DEVICE_PROVIDER : general.modelProvider)
+            else setProvider(next === 'device' ? ON_DEVICE_PROVIDER : general.modelProvider)
           }}
         />
         {mode === 'device' && <Notice>{t('general.recognitionLockHint')}</Notice>}
       </FormSection>
 
-      {/* ИИ-провайдеры — только для распознавания моделью (у телефона своя секция ниже). */}
-      {!provider.onDevice && (
-        <FormSection title={t('general.provider')} icon={<SparklesIcon />}>
-          <Tabs
-            label={t('general.provider')}
-            value={general.provider}
-            options={providerRegistry.all().filter(({ onDevice }) => !onDevice)
-              .map(({ id }) => ({ value: id, label: t(`general.providers.${id}`), icon: PROVIDER_ICONS[id] }))}
-            onChange={(id) => settingsStore.setProvider(id)}
-          />
-        </FormSection>
-      )}
+      {/* Разделы способа распознавания; при смене способа — заново, с проявлением. */}
+      <div key={mode} className="settings-stack anim-enter">
+        {/* ИИ-провайдеры — только для распознавания моделью (у телефона своя секция ниже). */}
+        {!provider.onDevice && (
+          <FormSection title={t('general.provider')} icon={<SparklesIcon />}>
+            <Tabs
+              label={t('general.provider')}
+              value={general.provider}
+              options={providerRegistry.all().filter(({ onDevice }) => !onDevice)
+                .map(({ id }) => ({ value: id, label: t(`general.providers.${id}`), icon: PROVIDER_ICONS[id] }))}
+              onChange={setProvider}
+            />
+          </FormSection>
+        )}
 
-      {/* Только для провайдеров на своём сервере (LM Studio). */}
-      {provider.defaultEndpoint && (
-        <FormSection title={t('general.serverUrl')} icon={<LinkIcon />} hint={t('general.serverHint')}>
-          <TextInput
-            type="url"
-            inputMode="url"
-            aria-label={t('general.serverUrl')}
-            placeholder={provider.defaultEndpoint}
-            value={general.endpoints[provider.id]}
-            onChange={(value) => settingsStore.setEndpoint(provider.id, value)}
-          />
-        </FormSection>
-      )}
+        {/* Только для провайдеров на своём сервере (LM Studio). */}
+        {provider.defaultEndpoint && (
+          <FormSection title={t('general.serverUrl')} icon={<LinkIcon />} hint={t('general.serverHint')}>
+            <TextInput
+              type="url"
+              inputMode="url"
+              aria-label={t('general.serverUrl')}
+              placeholder={provider.defaultEndpoint}
+              value={general.endpoints[provider.id]}
+              onChange={(value) => settingsStore.setEndpoint(provider.id, value)}
+            />
+          </FormSection>
+        )}
 
-      {provider.onDevice ? (
-        <OnDeviceSection provider={provider} />
-      ) : (
-        <>
-          {/* Ключ — до списка моделей: список загружается по ключу, поэтому сначала вводят его. */}
-          <ApiKeyField key={`key-${provider.id}`} provider={provider} value={general.apiKeys[provider.id]} />
+        {provider.onDevice ? (
+          <OnDeviceSection provider={provider} />
+        ) : (
+          <>
+            {/* Ключ — до списка моделей: список загружается по ключу, поэтому сначала вводят его. */}
+            <ApiKeyField key={`key-${provider.id}`} provider={provider} value={general.apiKeys[provider.id]} />
 
-          {/* Пересоздаём на каждого провайдера: у каждого своя шторка (свёрнута при переключении). */}
-          <ModelPicker key={provider.id} providerId={provider.id} />
-        </>
-      )}
+            {/* Пересоздаём на каждого провайдера: у каждого своя шторка (свёрнута при переключении). */}
+            <ModelPicker key={provider.id} providerId={provider.id} />
+          </>
+        )}
+      </div>
     </>
   )
 }
