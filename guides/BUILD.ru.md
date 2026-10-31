@@ -17,6 +17,7 @@
 - [Google Drive](#google-drive)
 - [Firebase Firestore](#firebase-firestore)
 - [Иконка, сплэш-экран и скриншоты](#иконка-сплэш-экран-и-скриншоты)
+- [Логи и отладка](#логи-и-отладка)
 
 ## Требования
 
@@ -197,9 +198,27 @@ xcrun simctl shutdown all
 
 ## Распознавание: API-ключи и LM Studio
 
-- **На устройстве** (по умолчанию) настройки не требует.
-- **Gemini, Claude, OpenAI.** API-ключ вводится в приложении: «Настройки → Основные → Распознавание → ИИ-модели» (замок открывается первым нажатием), провайдер, поле «API-ключ». Ключ не входит в сборку: в проекте нет файлов `.env`, так как всё, что подставлено при сборке, читается из APK / IPA. Без ключа список показывает предпросмотр моделей из [models.dev](https://models.dev); модель выбирается после ввода ключа.
-- **LM Studio.** Сервер работает в сети завода, API совместим с OpenAI. В приложении: провайдер LM Studio, адрес сервера в коротком виде (`192.168.1.14`; схема `http://` и порт 1234 добавляются автоматически). В списке — модели типа `vlm`; выбранная модель загружается в LM Studio. Запросы идут через нативный плагин `NativeHttp`, поэтому CORS и блокировка `http://` в WebView не мешают.
+Распознавание **на устройстве** (по умолчанию) настройки не требует. Для ИИ-моделей ключ получается у провайдера и вводится в приложении.
+
+| Провайдер | Где получить ключ | Куда ввести |
+|---|---|---|
+| Gemini | [Google AI Studio → API keys](https://aistudio.google.com/apikey) | «Настройки → Основные → Распознавание → ИИ-модели → Google → API-ключ» |
+| Claude | [Claude Console → Settings → API keys](https://platform.claude.com/settings/keys) (ключ начинается с `sk-ant-`) | там же, провайдер Anthropic |
+| OpenAI | [OpenAI Platform → API keys](https://platform.openai.com/api-keys) | там же, провайдер OpenAI |
+| LM Studio | ключ не нужен (необязательно, если сервер его требует) | там же, провайдер LM Studio |
+
+- Вкладка «ИИ-модели» закрыта замком: первое нажатие открывает замок, второе выбирает её. Фото после этого отправляются провайдеру.
+- Ключ не входит в сборку: в проекте нет файлов `.env`, так как всё, что подставлено при сборке, читается из APK / IPA. Ключ показывается значком глаза в поле.
+- Без ключа список показывает предпросмотр моделей из [models.dev](https://models.dev); модель выбирается после ввода ключа.
+
+**LM Studio** (сервер в сети завода, данные не покидают сеть):
+
+1. Установить [LM Studio](https://lmstudio.ai) версии 0.4 или новее на компьютер в сети завода (приложение использует его REST API `/api/v0/models`, `/api/v1/models/load`, `/unload`).
+2. Скачать модель, которая читает изображения (тип `vlm`).
+3. Запустить сервер в разделе Developer с доступом из локальной сети (Serve on Local Network); порт по умолчанию — 1234.
+4. В приложении: провайдер LM Studio, адрес сервера в коротком виде (`192.168.1.14`; схема `http://` и порт 1234 добавляются автоматически). В списке моделей загруженная модель отмечена зелёной точкой; выбранная модель загружается в LM Studio.
+
+Запросы к LM Studio идут через нативный плагин `NativeHttp`, поэтому CORS и блокировка `http://` в WebView не мешают. Для облачных провайдеров или прокси с включённым CORS должны быть разрешены источники приложения: `capacitor://localhost` (iOS) и `https://localhost` (Android); иначе запросы молча завершаются ошибкой.
 
 ## Сетевой диск
 
@@ -236,7 +255,7 @@ docker run -d --name somascan-smb -p 1445:445 \
 1. В [Google Cloud Console](https://console.cloud.google.com/) создать проект и включить **Google Drive API**.
 2. Экран согласия OAuth: тип **Internal** для аккаунтов Google Workspace компании (без проверки Google) или **External** с тестовыми пользователями. Доступ — `https://www.googleapis.com/auth/drive`: приложению нужен доступ к уже существующей папке, а `drive.file` охватывает только файлы, созданные самим приложением.
 3. **OAuth-клиент Android:** пакет `com.somascan.app` и SHA-1 ключа проекта (см. [Подпись](#подпись)). Debug и release подписаны этим ключом, поэтому достаточно одного клиента. Сборке с debug-ключом машины нужен свой клиент; для Google Play — ещё один клиент для ключа Play App Signing.
-4. **OAuth-клиент iOS:** bundle ID `com.somascan.app`. Client ID указывается в `ios/App/App/Info.plist` → `GIDClientID`, перевёрнутый ID — в том же файле в `CFBundleURLTypes` → `CFBundleURLSchemes` (`697326360300-xxxx.apps.googleusercontent.com` → `com.googleusercontent.apps.697326360300-xxxx`; в консоли — поле клиента «iOS URL scheme»). При пустом `GIDClientID` вход сообщает, что вход через Google в этой сборке не настроен.
+4. **OAuth-клиент iOS:** bundle ID `com.somascan.app`. Client ID указывается в `ios/App/App/Info.plist` → `GIDClientID`, перевёрнутый ID — в том же файле в `CFBundleURLTypes` → `CFBundleURLSchemes` (`697326360300-xxxx.apps.googleusercontent.com` → `com.googleusercontent.apps.697326360300-xxxx`; в консоли — поле клиента «iOS URL scheme»). При пустом `GIDClientID` вход сообщает, что вход через Google в этой сборке не настроен. `CFBundleName` («Somascan») — имя, которое iOS показывает в запросе «… хочет использовать „accounts.google.com“ для входа».
 5. **Тестовые пользователи.** Пока экран External в режиме «Testing», войти могут только аккаунты из списка Test users; туда добавляются аккаунты склада.
 
 **В приложении:** «Настройки → Хранилище → Google Drive → Войти через Google», затем ссылка на папку из адресной строки Drive (или её ID; пусто — корень «Моего диска») и имя таблицы. Таблица должна уже находиться в папке; папка `backups` создаётся при первой записи.
@@ -263,6 +282,8 @@ service cloud.firestore {
 3. «Project settings» → ID проекта и Web API key (если ключа нет, в проект добавляется веб-приложение). Web API key не является секретом: доступ задают правила.
 4. На телефонах: «Настройки → Хранилище → Google Drive → Firebase Firestore» (под замком) — «Уведомление Somasync», «ID проекта Firebase», «Ключ Web API». В Somasync: «Хранилище → Телефоны → Уведомления Firebase Firestore».
 
+Бесплатной квоты Firestore (50 000 чтений и 20 000 записей в день) достаточно с запасом.
+
 ## Иконка, сплэш-экран и скриншоты
 
 Иконка и сплэш-экран создаются из `scripts/somaco-logo.png` во всех размерах и вариантах тем:
@@ -284,3 +305,14 @@ CHROME=/usr/bin/chromium node scripts/screenshots/capture.mjs
 ```bash
 npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe otel.xlsx" "tests/fixtures/Probe otel.xlsx"
 ```
+
+## Логи и отладка
+
+| Что | Команда |
+|---|---|
+| Движок выгрузки, Android | `adb logcat -s UploadEngine UploadWork UploadNotification` |
+| Движок выгрузки, iOS | Console.app, процесс App, фильтр `[UploadEngine]` |
+| Лог приложения, симулятор iOS | `xcrun simctl launch --console-pty <udid> com.somascan.app` |
+| Снимок или видео, симулятор iOS | `xcrun simctl io <udid> screenshot` / `recordVideo` |
+
+Продакшен-сборка удаляет вызовы `console`; для логов нужна сборка для разработки: `vite build --mode development`. В сборке для разработки (`npm run dev`, `vite build --mode development`) хранилища доступны в консоли браузера как `window.__somascan`. На Android 13+ разрешение на уведомления запрашивается при отправке (один раз за запуск); без него выгрузка работает, но уведомление не показывается.

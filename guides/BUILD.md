@@ -17,6 +17,7 @@ A complete guide: from installing the tools to a signed APK, an iOS build and co
 - [Google Drive](#google-drive)
 - [Firebase Firestore](#firebase-firestore)
 - [Icon, splash screen and screenshots](#icon-splash-screen-and-screenshots)
+- [Logs and debugging](#logs-and-debugging)
 
 ## Requirements
 
@@ -197,9 +198,27 @@ xcrun simctl shutdown all
 
 ## Recognition: API keys and LM Studio
 
-- **On-device** (default) requires no setup.
-- **Gemini, Claude, OpenAI.** The API key is entered in the app: “Settings → General → Recognition → AI models” (the lock opens on the first tap), provider, “API key” field. The key is not part of the build: the project has no `.env` files, since everything substituted at build time can be read from the APK / IPA. Without a key the list shows a preview of models from [models.dev](https://models.dev); a model is selected after the key is entered.
-- **LM Studio.** The server runs in the plant network with an OpenAI-compatible API. In the app: provider LM Studio, server address in short form (`192.168.1.14`; the `http://` scheme and port 1234 are added automatically). Models of type `vlm` are listed; selecting a model loads it into LM Studio. Requests go through the native `NativeHttp` plugin, so CORS and the WebView block of `http://` do not apply.
+**On-device** recognition (default) requires no setup. For AI models the key is obtained from the provider and entered in the app.
+
+| Provider | Where to get the key | Where to enter it |
+|---|---|---|
+| Gemini | [Google AI Studio → API keys](https://aistudio.google.com/apikey) | “Settings → General → Recognition → AI models → Google → API key” |
+| Claude | [Claude Console → Settings → API keys](https://platform.claude.com/settings/keys) (key starts with `sk-ant-`) | the same, provider Anthropic |
+| OpenAI | [OpenAI Platform → API keys](https://platform.openai.com/api-keys) | the same, provider OpenAI |
+| LM Studio | no key required (optional, if the server requires one) | the same, provider LM Studio |
+
+- The “AI models” tab is behind a lock: the first tap opens it, the second selects it. Photos are then sent to the provider.
+- The key is not part of the build: the project has no `.env` files, since everything substituted at build time can be read from the APK / IPA. The key is shown with the eye icon in the field.
+- Without a key the list shows a preview of models from [models.dev](https://models.dev); a model is selected after the key is entered.
+
+**LM Studio** (a server in the plant network, data stays in the network):
+
+1. Install [LM Studio](https://lmstudio.ai) 0.4 or later on a computer in the plant network (the app uses its REST API `/api/v0/models`, `/api/v1/models/load`, `/unload`).
+2. Download a vision model (type `vlm`).
+3. Start the server in the Developer section with access from the local network (Serve on Local Network); default port 1234.
+4. In the app: provider LM Studio, server address in short form (`192.168.1.14`; the `http://` scheme and port 1234 are added automatically). The model list shows a green dot for a loaded model; selecting a model loads it into LM Studio.
+
+Requests to LM Studio go through the native `NativeHttp` plugin, so CORS and the WebView block of `http://` do not apply. For cloud providers or a proxy with CORS enabled, the app origins must be allowed: `capacitor://localhost` (iOS) and `https://localhost` (Android); otherwise requests fail silently.
 
 ## Network drive
 
@@ -236,7 +255,7 @@ In the app: server `10.0.2.2:1445` (Android emulator) or `127.0.0.1:1445` (iOS s
 1. In [Google Cloud Console](https://console.cloud.google.com/) create a project and enable **Google Drive API**.
 2. OAuth consent screen: type **Internal** for the company's Google Workspace accounts (no Google verification) or **External** with test users. Scope — `https://www.googleapis.com/auth/drive`: the app needs access to an existing folder, while `drive.file` covers only files created by the app.
 3. **Android OAuth client:** package `com.somascan.app` and the SHA-1 of the project key (see [Signing](#signing)). Debug and release are signed with this key, so one client is sufficient. A build signed with a machine's debug key requires its own client; Google Play requires one more client for the Play App Signing key.
-4. **iOS OAuth client:** bundle ID `com.somascan.app`. The client ID goes to `ios/App/App/Info.plist` → `GIDClientID`; the reversed ID goes to the same file in `CFBundleURLTypes` → `CFBundleURLSchemes` (`697326360300-xxxx.apps.googleusercontent.com` → `com.googleusercontent.apps.697326360300-xxxx`; in the console — the client's “iOS URL scheme”). With an empty `GIDClientID` sign-in reports that Google sign-in is not configured in this build.
+4. **iOS OAuth client:** bundle ID `com.somascan.app`. The client ID goes to `ios/App/App/Info.plist` → `GIDClientID`; the reversed ID goes to the same file in `CFBundleURLTypes` → `CFBundleURLSchemes` (`697326360300-xxxx.apps.googleusercontent.com` → `com.googleusercontent.apps.697326360300-xxxx`; in the console — the client's “iOS URL scheme”). With an empty `GIDClientID` sign-in reports that Google sign-in is not configured in this build. `CFBundleName` (“Somascan”) is the name iOS shows in the “… Wants to Use ‘accounts.google.com’ to Sign In” prompt.
 5. **Test users.** While an External consent screen is in “Testing” mode, only accounts from the Test users list can sign in; the warehouse accounts are added there.
 
 **In the app:** “Settings → Storage → Google Drive → Sign in with Google”, then a folder link from the Drive address bar (or its ID; empty — the root of “My Drive”) and the table name. The table must already be in the folder; the `backups` folder is created on the first write.
@@ -263,6 +282,8 @@ service cloud.firestore {
 3. “Project settings” → project ID and Web API key (if there is no key, a web app is added to the project). The Web API key is not a secret: access is defined by the rules.
 4. On the phones: “Settings → Storage → Google Drive → Firebase Firestore” (behind a lock) — “Somasync notification”, “Firebase project ID”, “Web API key”. In Somasync: “Storage → Phones → Firebase Firestore notifications”.
 
+The free Firestore quota (50,000 reads and 20,000 writes a day) is more than sufficient.
+
 ## Icon, splash screen and screenshots
 
 The icon and the splash screen are generated from `scripts/somaco-logo.png` in all sizes and theme variants:
@@ -284,3 +305,14 @@ An empty log for tests is rebuilt from the real one:
 ```bash
 npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe otel.xlsx" "tests/fixtures/Probe otel.xlsx"
 ```
+
+## Logs and debugging
+
+| What | Command |
+|---|---|
+| Upload engine, Android | `adb logcat -s UploadEngine UploadWork UploadNotification` |
+| Upload engine, iOS | Console.app, process App, filter `[UploadEngine]` |
+| App log, iOS simulator | `xcrun simctl launch --console-pty <udid> com.somascan.app` |
+| Screenshot or video, iOS simulator | `xcrun simctl io <udid> screenshot` / `recordVideo` |
+
+The production build removes `console` calls; logs require a development build: `vite build --mode development`. In a development build (`npm run dev`, `vite build --mode development`) the stores are available in the browser console as `window.__somascan`. On Android 13+ the notification permission is requested when sending (once per launch); without it the upload works, but the notification is hidden.
