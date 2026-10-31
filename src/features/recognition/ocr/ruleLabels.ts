@@ -8,10 +8,6 @@
  * и др.). В настройках хранятся только изменённые списки (`advanced.ruleLabels`), остальные берутся отсюда.
  * РИСК: слова, которые бывают и в значениях («coil» в «Rebar in coil», «mill» в названии завода),
  * в подписи не входят — иначе строка значения считалась бы подписью; вместо них — «coil no», «bundle no».
- *
- * Здесь же — правила, которые не подписи полей (`NON_FIELD_RULE_KEYS`): по каким словам бирка считается канатом
- * и как выглядит её номер партии, производитель своих бирок, общие слова в названиях заводов, бесплатная почта.
- * В «Правилах» они в том же списке, что и подписи полей, и правятся так же.
  */
 import { foldText } from './foldText'
 
@@ -41,24 +37,7 @@ export const DEFAULT_RULE_LABELS: Readonly<Record<string, readonly string[]>> = 
   mark: ['mark', 'rolling mark', 'marking', 'size mark', 'size mark color', 'hengerlesi azonosito', 'azonosito', 'znak walcowniczy', 'kroczacy'],
   packing: ['packing', 'packaging', 'form of delivery', 'ambalare', 'ambalaj', 'csomagolas', 'opakowanie', 'упаковка'],
   origin_country: ['made in', 'country of origin', 'origin', 'produs in', 'producer country', 'tara de origine', 'kraj pochodzenia', 'szarmazasi hely', 'страна', 'країна'],
-  // ---- Правила, которые не подписи полей (`NON_FIELD_RULE_KEYS`) ----
-  /** Слова бирок канатов (PC strand): плавки на них нет — её место занимает номер партии или бухты (`strandTag.ts`). */
-  strand_words: ['strand', 'toroane', 'litze', 'канат'],
-  /**
-   * Шаблоны номера партии или бухты каната, когда подпись не прочитана: 9 — цифра, A — буква, X — буква или цифра,
-   * дефис — разделитель, прочее — как есть. BPM: «260909G392-06-2», D&D Drótáru: «26D0222».
-   */
-  strand_lot_masks: ['999999A999-99-9', '99A9999'],
-  /** Производитель своих бирок склада (после резки и гибки): завод на них не назван (`LabelExtractor`). */
-  house_supplier: ['SOMACO'],
-  /** Первые слова названий заводов, по которым одним завод не узнать: страна, город, «сталь» (`supplierMatch.ts`). */
-  generic_supplier_words: ['acciaierie', 'ferriere', 'hellenic', 'moldova', 'promet', 'stomana', 'power', 'suez', 'alfa', 'diler'],
-  /** Бесплатная и общая почта: по её домену завод не узнать (`domainProducer.ts`). */
-  free_mail_domains: ['gmail', 'googlemail', 'yahoo', 'ymail', 'outlook', 'hotmail', 'live', 'msn', 'icloud', 'aol', 'gmx', 'mail', 'yandex', 'rambler', 'inbox', 'list', 'ukr', 'proton', 'protonmail', 'zoho', 'abv', 'web'],
 }
-
-/** Правила, которые не подписи полей: в «Правилах» — в том же списке, после подписей полей. */
-export const NON_FIELD_RULE_KEYS = ['strand_words', 'strand_lot_masks', 'house_supplier', 'generic_supplier_words', 'free_mail_domains'] as const
 
 /** Изменённые подписи по ключам полей (только отличающиеся от стандартных). */
 export type RuleLabels = Record<string, string[]>

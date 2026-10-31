@@ -181,11 +181,12 @@
     "rules": "Rules",
     "rulesHint": "Captions the phone finds the fields by.",
     "rulesEditHint": "Tap a field to change its captions.",
-    "rulesSummary": "Rules: {{count}}",
-    "rulesChanged": "Changed rules: {{count}}",
+    "rulesSummary": "Fields: {{count}}",
+    "rulesChanged": "Changed fields: {{count}}",
     "rulesDefault": "All captions are standard",
     "rulesChangedMark": "changed",
     "rulesNoLabels": "no captions — by the value shape only",
+    "rulesLabels": "Field captions",
     "rulesLabelsHint": "One caption per line; case and punctuation do not matter.",
     "rulesDefaultButton": "Standard",
     "rulesExport": "Export rules to JSON",
@@ -194,9 +195,9 @@
     "rulesImportFailedTitle": "Couldn't import",
     "rulesImportInvalid": "The file has no Somascan rules.",
     "rulesImportedTitle": "Rules imported",
-    "rulesImportedMessage": "Rules updated: {{count}}.",
+    "rulesImportedMessage": "Captions updated for fields: {{count}}.",
     "rulesResetTitle": "Restore the standard rules?",
-    "rulesResetMessage": "All rules go back to the standard ones: added values are removed, removed ones come back.",
+    "rulesResetMessage": "The captions of all fields go back to the standard ones: added ones are removed, removed ones come back.",
     "promptUnavailable": "For AI models only.",
     "rulesUnavailable": "For on-device recognition only.",
     "fields": "Fields",
@@ -275,30 +276,7 @@
     "suppliersImportInvalid": "There is no supplier list in the file. A JSON like the export is needed: {\"suppliers\": [\"…\", \"…\"]}, or just an array of names.",
     "suppliersImportNotJson": "Choose a .json file — a list saved with “Export”.",
     "suppliersImportTooLarge": "The file is too large for a supplier list (over {{size}} MB).",
-    "suppliersExportFailedTitle": "Couldn't export",
-    "rulesItemsEmpty": "empty — the rule is off",
-    "rulesItems": {
-      "strand_words": {
-        "name": "Strand: words on the tag",
-        "hint": "A tag with such a word is a strand tag."
-      },
-      "strand_lot_masks": {
-        "name": "Strand: lot number without a caption",
-        "hint": "Template: 9 digit, A letter, X any."
-      },
-      "house_supplier": {
-        "name": "Own warehouse",
-        "hint": "Producer on warehouse tags without a mill name."
-      },
-      "generic_supplier_words": {
-        "name": "Generic words in mill names",
-        "hint": "Such a word alone does not identify a mill."
-      },
-      "free_mail_domains": {
-        "name": "Free mail",
-        "hint": "Such mail does not identify a mill."
-      }
-    }
+    "suppliersExportFailedTitle": "Couldn't export"
   },
   "theme": {
     "caption": "Theme",

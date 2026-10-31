@@ -23,7 +23,6 @@ import {
 } from './pageLayout'
 import { companyDomains, companyFromDomain, supplierByDomain } from './domainProducer'
 import { crossCheckHeat } from './heatCheck'
-import { ruleLabelsFor } from './ruleLabels'
 import { findStrandSize, isStrandTag, strandHeat } from './strandTag'
 import { findSupplier } from './supplierMatch'
 import {
@@ -197,10 +196,14 @@ export function extractLabel(input: ExtractionInput): Extraction {
  */
 const TURN_PENALTY = 2
 
+/**
+ * Свой склад: внутренние бирки после резки и гибки («SOMACO», «Santier», «Lista») завода не называют —
+ * производитель на них SOMACO, даже если его нет в списке поставщиков.
+ */
+const HOUSE_SUPPLIER = 'SOMACO'
+
 /** Разбор страницы, координаты строк которой повёрнуты на `turns` четвертей оборота. */
-function extractTurned({ page, codes, fields, suppliers, ruleLabels = {} }: ExtractionInput, rules: readonly FieldRule[], turns: number): Extraction {
-  /** Особое правило из «Правил» (изменённое или стандартное). */
-  const special = (key: string) => ruleLabelsFor(ruleLabels, key)
+function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rules: readonly FieldRule[], turns: number): Extraction {
   const ruleOf = new Map(rules.map((rule) => [rule.key, rule]))
   const lines = layoutPage(page, turns)
   const lineHeight = typicalLineHeight(lines)
@@ -377,12 +380,9 @@ function extractTurned({ page, codes, fields, suppliers, ruleLabels = {} }: Extr
     ...producerLabels,
     ...topDown,
   ]
-  const domains = companyDomains([...topDown, ...codes.map((code) => code.text)], special('free_mail_domains'))
-  // Свой склад: внутренние бирки после резки и гибки завода не называют — производитель на них свой
-  // (`house_supplier`), даже если его нет в списке поставщиков.
-  const house = special('house_supplier').filter((name) => !suppliers.some((known) => known.toUpperCase() === name.toUpperCase()))
-  const supplier = findSupplier(supplierTexts, [...suppliers, ...house], special('generic_supplier_words'))
-    ?? (suppliers.length > 0 ? supplierByDomain(domains, suppliers) : null)
+  const domains = companyDomains([...topDown, ...codes.map((code) => code.text)])
+  const withHouse = suppliers.some((name) => name.toUpperCase() === HOUSE_SUPPLIER) ? suppliers : [...suppliers, HOUSE_SUPPLIER]
+  const supplier = findSupplier(supplierTexts, withHouse) ?? (suppliers.length > 0 ? supplierByDomain(domains, suppliers) : null)
 
   /**
    * Плавка внутренней бирки склада — номер под штрихкодом Code 39 («*B000713412E*») или сам штрихкод.
@@ -393,10 +393,8 @@ function extractTurned({ page, codes, fields, suppliers, ruleLabels = {} }: Extr
   const code39Heat = heatCaptioned ? null : code39Texts.map(findCode39Text).find((text) => text !== null) ?? null
 
   // Бирка каната плавки не пишет: на её месте номер партии или бухты (`strandTag.ts`).
-  const strand = isStrandTag(allLines.map((line) => line.folded.text), special('strand_words'))
-  const strandLot = strand && !heatCaptioned
-    ? strandHeat(candidates.filter((candidate) => candidate.key === 'batch'), topDown, special('strand_lot_masks'))
-    : null
+  const strand = isStrandTag(allLines.map((line) => line.folded.text))
+  const strandLot = strand && !heatCaptioned ? strandHeat(candidates.filter((candidate) => candidate.key === 'batch')) : null
 
   /**
    * Плавка, сверенная с её повторами на бирке (серийный номер, код пачки, коды): ржавчина на строке плавки

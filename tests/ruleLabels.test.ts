@@ -6,13 +6,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createDefaultLabelFields } from '../src/features/recognition/label/labelFields'
-import { companyDomains } from '../src/features/recognition/ocr/domainProducer'
 import { extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import {
-  compactRuleLabels, DEFAULT_RULE_LABELS, isDefaultRuleLabels, normalizeRuleLabels, parseRulesJson, ruleLabelsFor, rulesToJson, NON_FIELD_RULE_KEYS,
+  compactRuleLabels, DEFAULT_RULE_LABELS, isDefaultRuleLabels, normalizeRuleLabels, parseRulesJson, ruleLabelsFor, rulesToJson,
 } from '../src/features/recognition/ocr/ruleLabels'
-import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
 import { providerRegistry } from '../src/features/recognition/providers/ProviderRegistry'
 import { createDefaultSettings, parseSettings } from '../src/features/settings/store/settingsSchema'
 
@@ -71,20 +69,4 @@ test('распознавание берёт подписи из правил: с
   assert.equal(read({ heat: [...DEFAULT_RULE_LABELS.heat!, 'Numar topire'] }).heat, '4417721')
   assert.equal(read().weight_kg, 1990)
   assert.equal(read({ weight_kg: ['net weight'] }).weight_kg, null, 'подпись «greutate» убрана — строка с ней больше не вес')
-})
-
-test('правила, которые не подписи полей: у каждого есть список по умолчанию; хранятся, экспортируются и импортируются как подписи полей', () => {
-  for (const key of NON_FIELD_RULE_KEYS) assert.ok((DEFAULT_RULE_LABELS[key] ?? []).length > 0, key)
-  assert.deepEqual(compactRuleLabels({ house_supplier: ['Depozit Nord'], strand_words: [...DEFAULT_RULE_LABELS.strand_words!] }), { house_supplier: ['Depozit Nord'] })
-  const parsed = parseRulesJson(rulesToJson({ free_mail_domains: ['mailbox'] }))!
-  assert.deepEqual(parsed.free_mail_domains, ['mailbox'])
-  assert.deepEqual(parsed.strand_lot_masks, DEFAULT_RULE_LABELS.strand_lot_masks)
-})
-
-test('общие слова в названиях и бесплатная почта — из правил', () => {
-  // «Moldova» — общее слово: по нему одному «Moldova Steel Works» не узнаётся, пока его не уберут из правила
-  assert.equal(matchSupplier('MOLDOVA', ['Moldova Steel Works']), null)
-  assert.equal(matchSupplier('MOLDOVA', ['Moldova Steel Works'], [])?.name, 'Moldova Steel Works')
-  assert.deepEqual(companyDomains(['sales@sovel.gr', 'office@mailbox.org']), ['sovel', 'mailbox'])
-  assert.deepEqual(companyDomains(['sales@sovel.gr', 'office@mailbox.org'], ['mailbox']), ['sovel'])
 })

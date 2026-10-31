@@ -4,7 +4,6 @@
  * Сравнение — без регистра, диакритики, пробелов и знаков; длинным названиям прощается одна-две ошибки OCR.
  */
 import { foldText, foldWithMap } from './foldText'
-import { DEFAULT_RULE_LABELS } from './ruleLabels'
 
 /** Название из списка, найденное в тексте. */
 export interface SupplierMatch {
@@ -19,10 +18,9 @@ const SHORT_NAME = 4
 
 /**
  * Первые слова названий, которые сами по себе завод не называют (страна, город, «сталеплавильный завод»
- * на разных языках): по ним одним поставщика не узнать. Особое правило `generic_supplier_words` — правится
- * в «Расширенных» → «Правила».
+ * на разных языках): по ним одним поставщика не узнать.
  */
-const DEFAULT_GENERIC_WORDS = DEFAULT_RULE_LABELS.generic_supplier_words ?? []
+const GENERIC_FIRST_WORDS = new Set(['acciaierie', 'ferriere', 'hellenic', 'moldova', 'promet', 'stomana', 'power', 'suez', 'alfa', 'diler'])
 
 /** Первое слово названия узнаёт поставщика, если в нём не меньше стольких букв (и оно не общее). */
 const DISTINCTIVE_WORD = 6
@@ -85,10 +83,8 @@ function foldedWords(text: string): string[] {
  * Лучший поставщик в одной строке: точное совпадение важнее приблизительного, длинное название — короткого.
  * @param text Строка OCR.
  * @param suppliers Известные поставщики.
- * @param genericWords Первые слова названий, по которым одним завод не узнать (`generic_supplier_words`).
  */
-export function matchSupplier(text: string, suppliers: readonly string[], genericWords: readonly string[] = DEFAULT_GENERIC_WORDS): SupplierMatch | null {
-  const generic = new Set(genericWords.map(foldText))
+export function matchSupplier(text: string, suppliers: readonly string[]): SupplierMatch | null {
   const folded = foldText(text)
   if (folded.length < 2) return null
   const words = foldedWords(text)
@@ -115,7 +111,7 @@ export function matchSupplier(text: string, suppliers: readonly string[], generi
     // как приблизительное совпадение.
     if (!exact && !near) {
       const firstWord = foldText(name.split(/\s+/)[0] ?? '')
-      near = name.trim().includes(' ') && firstWord.length >= DISTINCTIVE_WORD && !generic.has(firstWord)
+      near = name.trim().includes(' ') && firstWord.length >= DISTINCTIVE_WORD && !GENERIC_FIRST_WORDS.has(firstWord)
         && words.some((word) => Math.abs(word.length - firstWord.length) <= 1 && editDistance(word, firstWord) <= allowedErrors(firstWord.length))
     }
     if (!exact && !near) continue
@@ -128,12 +124,11 @@ export function matchSupplier(text: string, suppliers: readonly string[], generi
 /**
  * Поставщик по строкам бирки в порядке важности (сначала строка рядом с подписью «Producer», потом остальные):
  * первое точное совпадение, иначе первое приблизительное; `null`, если ничего не похоже.
- * @param genericWords Первые слова названий, по которым одним завод не узнать (`generic_supplier_words`).
  */
-export function findSupplier(texts: readonly string[], suppliers: readonly string[], genericWords: readonly string[] = DEFAULT_GENERIC_WORDS): string | null {
+export function findSupplier(texts: readonly string[], suppliers: readonly string[]): string | null {
   let near: string | null = null
   for (const text of texts) {
-    const match = matchSupplier(text, suppliers, genericWords)
+    const match = matchSupplier(text, suppliers)
     if (match?.exact) return match.name
     if (match && !near) near = match.name
   }
