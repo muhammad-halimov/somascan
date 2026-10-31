@@ -103,6 +103,10 @@ test('BPM: бледную подпись «LOT NO» OCR не узнал — но
   ])
   assert.equal(label.heat, '260909G392-06-2')
   assert.equal(findStrandLot('1OT N0. 260909G392-06-2'), '260909G392-06-2')
+  // мелкий бледный шрифт: буквы вместо цифр в дате, пробел посреди номера, тире и подчёркивание вместо дефиса
+  assert.equal(findStrandLot('26O9O9G392-06-2'), '260909G392-06-2')
+  assert.equal(findStrandLot('260909G 392-06-2'), '260909G392-06-2')
+  assert.equal(findStrandLot('260909G392 – 06_2'), '260909G392-06-2')
   assert.equal(findStrandLot('09/09/2026'), null)
   assert.equal(findStrandLot('ST 009-2011'), null)
   assert.equal(findStrandLot('Y1860T7-R1-F1-C1'), null)
