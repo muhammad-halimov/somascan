@@ -18,9 +18,6 @@
   --ios-segment-thumb: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
 
-  /* Высота шапки: от неё отступает содержимое, которое прокручивается под ней. */
-  --ios-header-height: calc(60px + var(--safe-top));
-
   /*
    * Скругления — одна шкала для всех версий iOS, в духе iOS 27: мягкие, но без капсул iOS 26.
    * У элементов одного уровня один радиус, вложенные концентричны (внутренний = внешний − отступ).
@@ -112,14 +109,14 @@
 }
 
 :root[data-platform='ios'] .scan-workspace {
-  padding-top: calc(var(--ios-header-height) + 12px);
-  scroll-padding-top: calc(var(--ios-header-height) + 8px);
+  padding-top: calc(var(--app-header-height) + 12px);
+  scroll-padding-top: calc(var(--app-header-height) + 8px);
 }
 
 :root[data-platform='ios'] .offline-banner {
   position: absolute;
   z-index: 4;
-  top: var(--ios-header-height);
+  top: var(--app-header-height);
   right: 0;
   left: 0;
 }

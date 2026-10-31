@@ -7,7 +7,7 @@
   z-index: 4;
   display: flex;
   flex: 0 0 auto;
-  min-height: calc(60px + var(--safe-top));
+  min-height: var(--app-header-height);
   align-items: center;
   justify-content: space-between;
   padding: var(--safe-top) max(8px, var(--safe-right)) 0 max(16px, var(--safe-left));
@@ -87,11 +87,4 @@
 .app-header .header-actions .action-button-caption {
   margin-top: 1px;
   line-height: 11px;
-}
-
-/* Телефон в горизонтальном положении: высота экрана на счету — шапка ниже (логотип и так размером со значок). */
-@media (orientation: landscape) and (max-height: 600px) {
-  .app-header {
-    min-height: calc(52px + var(--safe-top));
-  }
 }

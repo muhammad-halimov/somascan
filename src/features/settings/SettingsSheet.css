@@ -1,8 +1,8 @@
 /*
- * Окно настроек: затемнённая подложка, окно, вкладки под заголовком
- * и прокручиваемое содержимое вкладки. Высота окна — по содержимому (не выше 680 px и экрана): у короткой
- * вкладки внизу нет пустоты. Верх окна стоит там же, где у окна наибольшей высоты, — при смене вкладки
- * едет только низ (плавно, см. `SettingsSheet.tsx`).
+ * Окно настроек: затемнённая подложка, окно, вкладки под заголовком и прокручиваемое содержимое вкладки.
+ * Телефон: окно — от шапки до низа экрана, с теми же полями, что по бокам. Компьютер: высота окна —
+ * по содержимому (не выше 680 px и экрана), верх стоит там же, где у окна наибольшей высоты, — при смене
+ * вкладки едет только низ (см. `SettingsSheet.tsx`).
  */
 
 .settings-backdrop {
@@ -18,11 +18,13 @@
   justify-items: center;
   align-items: start;
   overflow: hidden;
+  /* Поле между окном и краем экрана. */
+  --settings-gap: 12px;
   padding:
     max(4vh, var(--safe-top), calc((var(--visual-viewport-height, 100dvh) - 680px) / 2))
-    max(12px, var(--safe-right))
+    max(var(--settings-gap), var(--safe-right))
     max(4vh, var(--safe-bottom))
-    max(12px, var(--safe-left));
+    max(var(--settings-gap), var(--safe-left));
   background: rgb(15 18 24 / 48%);
   overscroll-behavior: contain;
   animation: backdrop-enter 180ms ease-out both;
@@ -42,6 +44,17 @@
   border-radius: 16px;
   box-shadow: 0 24px 80px rgb(0 0 0 / 22%);
   animation: modal-enter 220ms cubic-bezier(.2, .75, .25, 1) both;
+}
+
+/* Телефон: окно от шапки до низа экрана (над полоской жестов), высота не зависит от вкладки. */
+:root:is([data-platform='ios'], [data-platform='android']) .settings-backdrop {
+  padding-top: calc(var(--app-header-height) + var(--settings-gap));
+  padding-bottom: max(var(--settings-gap), var(--safe-bottom));
+}
+
+:root:is([data-platform='ios'], [data-platform='android']) .settings-modal {
+  align-self: stretch;
+  max-height: none;
 }
 
 /* Вкладки разделов — во всю ширину окна сразу под заголовком, как в Android. */
