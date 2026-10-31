@@ -38,13 +38,13 @@ npm run build && node scripts/screenshots/capture.mjs   # retake the screenshots
 
 ```mermaid
 flowchart LR
-  photo["Tag photo"] --> device["On device<br/>ML Kit / Vision + field rules"]
-  photo --> model["AI model<br/>Gemini · Claude · OpenAI · LM Studio"]
+  photo["Tag photo"] -- or --> device["On device<br/>ML Kit / Vision + field rules"]
+  photo -- or --> model["AI model<br/>Gemini · Claude · OpenAI · LM Studio"]
   device --> fields["Fields<br/>check and edit"]
   model --> fields
   fields --> queue["Queue<br/>background writing"]
-  queue --> smb[("Probe otel.xlsx<br/>network drive")]
-  queue --> drive[("Probe otel.xlsx<br/>Google Drive")]
+  queue -- or --> smb@{ shape: doc, label: "Probe otel.xlsx<br/>network drive" }
+  queue -- or --> drive@{ shape: doc, label: "Probe otel.xlsx<br/>Google Drive" }
 ```
 
 - The main screen holds up to nine tags (3 × 3 grid). A tag is sent with “Next” after its form (coil or bar) is selected and the required fields are filled in.

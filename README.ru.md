@@ -38,13 +38,13 @@ npm run build && node scripts/screenshots/capture.mjs   # переснять с�
 
 ```mermaid
 flowchart LR
-  photo["Фото бирки"] --> device["На устройстве<br/>ML Kit / Vision + правила полей"]
-  photo --> model["ИИ-модель<br/>Gemini · Claude · OpenAI · LM Studio"]
+  photo["Фото бирки"] -- или --> device["На устройстве<br/>ML Kit / Vision + правила полей"]
+  photo -- или --> model["ИИ-модель<br/>Gemini · Claude · OpenAI · LM Studio"]
   device --> fields["Поля<br/>проверка и правка"]
   model --> fields
   fields --> queue["Очередь<br/>фоновая запись"]
-  queue --> smb[("Probe otel.xlsx<br/>сетевой диск")]
-  queue --> drive[("Probe otel.xlsx<br/>Google Drive")]
+  queue -- или --> smb@{ shape: doc, label: "Probe otel.xlsx<br/>сетевой диск" }
+  queue -- или --> drive@{ shape: doc, label: "Probe otel.xlsx<br/>Google Drive" }
 ```
 
 - На главном экране — до девяти бирок (сетка 3 × 3). Бирка отправляется кнопкой «Далее» после выбора формы (катушка или пруток) и заполнения обязательных полей.
