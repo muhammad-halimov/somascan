@@ -48,43 +48,19 @@
 }
 
 /*
- * Силуэты полей во время распознавания (`LabelFieldsSkeleton`): строки той же высоты, полосы (`.skeleton`)
- * разной ширины.
+ * Силуэты полей во время распознавания (`LabelFieldsSkeleton`): строки с той же разметкой и шрифтом, что у полей,
+ * полосы (`SkeletonLine`) разной ширины — как у настоящих названий и значений. Уголок формы занимает своё место,
+ * но не виден.
  */
-.label-fields.is-skeleton .label-field {
-  align-items: center;
+.label-fields.is-skeleton .label-field-dropdown-chevron {
+  visibility: hidden;
 }
 
-.label-fields.is-skeleton :is(.label-field-name, .label-field-value) {
-  display: flex;
-  align-items: center;
-}
-
-.label-fields.is-skeleton .label-field-name {
-  min-height: 20px;
-}
-
-.label-fields.is-skeleton .label-field-value {
-  min-height: 22px;
-}
-
-.label-skeleton {
-  display: block;
-  width: 70%;
-  height: 12px;
-  border-radius: 6px;
-}
-
-.label-field-value .label-skeleton {
-  height: 14px;
-}
-
-/* Разная ширина строк — как у настоящих названий и значений. */
-.label-field:nth-child(3n + 1) .label-field-name .label-skeleton { width: 55%; }
-.label-field:nth-child(3n + 2) .label-field-name .label-skeleton { width: 80%; }
-.label-field:nth-child(3n + 1) .label-field-value .label-skeleton { width: 45%; }
-.label-field:nth-child(3n + 2) .label-field-value .label-skeleton { width: 85%; }
-.label-field:nth-child(3n) .label-field-value .label-skeleton { width: 60%; }
+.label-field:nth-child(3n + 1) .label-skeleton:not(.is-value) { width: 55%; }
+.label-field:nth-child(3n + 2) .label-skeleton:not(.is-value) { width: 80%; }
+.label-field:nth-child(3n + 1) .label-skeleton.is-value { width: 45%; }
+.label-field:nth-child(3n + 2) .label-skeleton.is-value { width: 85%; }
+.label-field:nth-child(3n) .label-skeleton.is-value { width: 60%; }
 
 .label-field-value.is-missing {
   color: var(--text);

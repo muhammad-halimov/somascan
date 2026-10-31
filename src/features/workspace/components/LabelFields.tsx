@@ -1,5 +1,7 @@
 import type { InputHTMLAttributes, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { DisclosureChevron } from '@/components/ui/Disclosure'
+import { SkeletonLine } from '@/components/ui/SkeletonLine'
 import { HEAT_KEY } from '@/features/recognition/label/heatNumber'
 import { enabledLabelFields, isEnabledByDefault, isMissingValue, SHEET_KEY, type LabelFieldKind, type LabelKey, type LabelRecord, type LabelValue } from '@/features/recognition/label/labelFields'
 import { sizeInput } from '@/features/recognition/label/measure'
@@ -55,23 +57,37 @@ export interface LabelFieldsSkeletonProps {
   label: string
 }
 
+/** Строка-силуэт: название и значение — полосы; у выпадающего списка — ещё место под уголок, как у `DropdownField`. */
+function SkeletonRow({ dropdown = false }: { dropdown?: boolean }) {
+  const name = <span className="label-field-name"><SkeletonLine className="label-skeleton" /></span>
+  const value = <SkeletonLine className="label-skeleton is-value" />
+  if (!dropdown) {
+    return <div className="label-field">{name}<span className="label-field-value">{value}</span></div>
+  }
+  return (
+    <div className="label-field is-dropdown">
+      {name}
+      <div className="label-field-dropdown">
+        <span className="label-field-dropdown-text">{value}</span>
+        <span className="label-field-dropdown-chevron"><DisclosureChevron /></span>
+      </div>
+    </div>
+  )
+}
+
 /**
- * Силуэты полей, пока бирка распознаётся: те же строки, что у `LabelFields` (форма и включённые поля), вместо
- * названий и значений — переливающиеся полосы. Видно, где сейчас появятся данные, и при их появлении ничего не сдвигается.
+ * Силуэты полей, пока бирка распознаётся: те же строки, что у `LabelFields` (форма и «Лист» — выпадающие списки,
+ * затем остальные включённые поля), с той же разметкой и шрифтом, вместо названий и значений — переливающиеся
+ * полосы. Видно, где сейчас появятся данные, и при их появлении ничего не сдвигается.
  */
 export function LabelFieldsSkeleton({ label }: LabelFieldsSkeletonProps) {
   const { advanced } = useSettings()
-  // Форма — всегда первая строка, затем включённые поля.
-  const rows = 1 + enabledLabelFields(advanced.labelFields).length
+  const fields = enabledLabelFields(advanced.labelFields)
   return (
     <div className="label-fields is-skeleton anim-fade" role="status" aria-label={label}>
       <div className="label-fields-list" aria-hidden="true">
-        {Array.from({ length: rows }, (_, index) => (
-          <div className="label-field" key={index}>
-            <span className="label-field-name"><span className="label-skeleton skeleton" /></span>
-            <span className="label-field-value"><span className="label-skeleton skeleton" /></span>
-          </div>
-        ))}
+        <SkeletonRow dropdown />
+        {fields.map((field) => <SkeletonRow key={field.key} dropdown={field.key === SHEET_KEY} />)}
       </div>
     </div>
   )

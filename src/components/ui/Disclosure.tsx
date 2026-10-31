@@ -4,6 +4,16 @@ import { useHeightTransition } from '@/hooks/useHeightTransition'
 import { List, ListItem } from './List'
 import './Disclosure.css'
 
+/** Уголок шторки: iOS — уголок (chevron), Material — залитый треугольник; нужный показывает CSS по платформе. */
+export function DisclosureChevron() {
+  return (
+    <span className="disclosure-chevron">
+      <ChevronDownIcon />
+      <ArrowDropDownIcon />
+    </span>
+  )
+}
+
 /** Свойства `Disclosure`. */
 export interface DisclosureProps {
   /** Раскрыта ли шторка. */
@@ -44,13 +54,7 @@ export function Disclosure({ open, onToggle, summary, details, leading, children
           leading={leading}
           primary={summary}
           secondary={details}
-          trailing={(
-            // iOS — уголок (chevron), Material — залитый треугольник; нужный показывает CSS по платформе.
-            <span className="disclosure-chevron">
-              <ChevronDownIcon />
-              <ArrowDropDownIcon />
-            </span>
-          )}
+          trailing={<DisclosureChevron />}
           expanded={open}
           controls={contentId}
           disabled={disabled}

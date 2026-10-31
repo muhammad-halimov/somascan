@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, type ReactNode, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AddIcon, CheckIcon, CloseIcon, ExclamationIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { SkeletonLine } from '@/components/ui/SkeletonLine'
 import { Tabs, type TabOption } from '@/components/ui/Tabs'
 import { useLongPress } from '@/hooks/useLongPress'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
@@ -70,7 +71,8 @@ function itemMark(state: TagState): ReactNode {
 }
 
 /**
- * Карточка результата под фото: узкая полоса «Проверьте данные перед отправкой» (у распознанной бирки),
+ * Карточка результата под фото: узкая полоса «Проверьте данные перед отправкой» (у распознанной бирки; во время
+ * распознавания — её силуэт),
  * шапка с заголовком и кнопками правки, номера бирок (когда их
  * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
  * открытой бирки (во время распознавания — силуэты полей, иначе подсказка или ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
@@ -119,11 +121,19 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
 
   return (
     <div ref={cardRef} className={`notes-card${isEditing ? ' is-text-editing' : ''}`} aria-busy={isRecognizing}>
-      {/* Узкая плашка-примечание вверху карточки: распознанное проверяют перед каждой отправкой. */}
-      {status.kind === 'done' && (
-        <p className="notes-check anim-fade">
+      {/*
+        Узкая плашка-примечание вверху карточки: распознанное проверяют перед каждой отправкой. Пока бирка
+        распознаётся — её силуэт того же размера: карточка не меняет высоту, когда данные появятся.
+      */}
+      {status.kind === 'done' ? (
+        <p key="check" className="notes-check anim-fade">
           <InfoIcon />
           <span>{t('notes.checkBeforeSend')}</span>
+        </p>
+      ) : isRecognizing && (
+        <p key="check-skeleton" className="notes-check is-skeleton anim-fade" aria-hidden="true">
+          <span className="notes-check-mark skeleton" />
+          <span className="notes-check-text"><SkeletonLine className="notes-check-line" /></span>
         </p>
       )}
       {/*

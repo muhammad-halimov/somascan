@@ -34,6 +34,7 @@
  * скруглённый элемент с отступами от краёв (как плашка `Notice`, но в одну строку), а не полоса-«крыша».
  */
 .notes-check {
+  --notes-check-icon: 15px;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -54,15 +55,31 @@
 
 /* На 1 px выше центра строки: строка центрирует значок по себе, а буквы визуально сидят выше. */
 .notes-check svg {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 15px;
+  width: var(--notes-check-icon);
+  height: var(--notes-check-icon);
+  flex: 0 0 var(--notes-check-icon);
   translate: 0 -1px;
   fill: none;
   stroke: var(--accent);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Силуэт плашки во время распознавания: кружок на месте значка, полоса на месте текста (та же высота строки). */
+.notes-check-mark {
+  width: var(--notes-check-icon);
+  height: var(--notes-check-icon);
+  flex: 0 0 var(--notes-check-icon);
+  border-radius: 50%;
+}
+
+.notes-check-text {
+  flex: 1 1 auto;
+}
+
+.notes-check-line {
+  width: 75%;
 }
 
 /* Шапка — одна узкая строка: заголовок и «пилюли» «Готово» и «Правка» высотой 28. */

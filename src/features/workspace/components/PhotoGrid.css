@@ -11,15 +11,16 @@
   --photo-grid-gap: 6px;
   --photo-grid-radius: 8px;
   /*
-   * Поле сетки: обводка открытой ячейки (4 px с отступом 2 px) и её увеличение на 5 % помещаются внутри карточки,
-   * за края не выходят.
+   * Поле сетки: обводка открытой ячейки (4 px с отступом 2 px), её увеличение на 5 % (до 3 px) и свечение
+   * помещаются внутри карточки — край карточки не обрезает ни обводку, ни свечение.
    */
-  --photo-grid-frame-reach: 10px;
+  --photo-grid-frame-reach: 16px;
   /* Сколько обводка переезжает с ячейки на ячейку (рамка переноса читает это же значение). */
-  --photo-grid-frame-move: 180ms;
+  --photo-grid-frame-move: 260ms;
   /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже). */
   --photo-grid-frame-outline: 4px solid var(--focus);
-  --photo-grid-frame-glow: 0 0 14px 4px color-mix(in srgb, var(--focus) 80%, transparent), 0 0 34px 12px color-mix(in srgb, var(--focus) 45%, transparent);
+  /* Свечение гаснет в пределах поля сетки (`--photo-grid-frame-reach`). */
+  --photo-grid-frame-glow: 0 0 8px 3px color-mix(in srgb, var(--focus) 80%, transparent), 0 0 14px 2px color-mix(in srgb, var(--focus) 40%, transparent);
   --photo-grid-frame-scale: 1.05;
   position: absolute;
   z-index: 4;
@@ -151,13 +152,12 @@
 
 /*
  * Рамка переноса (`useGridDragSelect`): видна только во время переноса и переезжает с ячейки на ячейку под пальцем;
- * обводка открытой ячейки на это время скрыта — рамка одна.
+ * обводка открытой ячейки на это время скрыта — рамка одна. Стоит в области ячейки (`grid-area`) и занимает её целиком.
  */
 .photo-grid-frame {
   position: absolute;
   z-index: 3;
-  top: 0;
-  left: 0;
+  inset: 0;
   opacity: 0;
   pointer-events: none;
   border-radius: var(--photo-grid-radius);

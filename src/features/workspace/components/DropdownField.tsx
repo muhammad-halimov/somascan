@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type InputHTMLAttributes, type KeyboardEvent } from 'react'
-import { ArrowDropDownIcon, CheckIcon, ChevronDownIcon, PencilIcon } from '@/components/icons/Icons'
+import { CheckIcon, PencilIcon } from '@/components/icons/Icons'
+import { DisclosureChevron } from '@/components/ui/Disclosure'
 import { List, ListItem } from '@/components/ui/List'
 import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { useHeightTransition } from '@/hooks/useHeightTransition'
@@ -167,10 +168,7 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
         )}
         {/* Уголок дублирует нажатие на значение (для диктора — одна кнопка, значение). */}
         <button type="button" className="label-field-dropdown-chevron" tabIndex={-1} aria-hidden="true" onClick={toggle}>
-          <span className="disclosure-chevron">
-            <ChevronDownIcon />
-            <ArrowDropDownIcon />
-          </span>
+          <DisclosureChevron />
         </button>
       </div>
       <div ref={menuRef} id={menuId} className="disclosure-content label-field-dropdown-menu" inert={!isOpen}>

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
 import { MOVE_TOLERANCE } from '@/hooks/useLongPress'
-import { motionTiming, prefersReducedMotion } from '../utils/motion'
+import { cssDurationMs, motionTiming, prefersReducedMotion } from '../utils/motion'
 
 /** Класс сетки, пока рамку ведёт палец (`PhotoGrid.css`). */
 const DRAGGING_CLASS = 'is-dragging'
@@ -60,29 +60,46 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     let slide: Animation | null = null
 
     /** Время переезда рамки, мс — из стилей сетки (одно значение с обводкой ячейки). */
-    const slideMs = Number.parseFloat(getComputedStyle(grid).getPropertyValue(FRAME_MOVE_VAR)) || 0
+    const slideMs = cssDurationMs(getComputedStyle(grid).getPropertyValue(FRAME_MOVE_VAR))
     const cellOf = (index: number | null) => (index === null ? null : grid.querySelector<HTMLElement>(`[data-item-index="${index}"]`))
-    const cellPosition = (cell: HTMLElement) => `translate(${cell.offsetLeft}px, ${cell.offsetTop}px)`
 
-    /** Рамка переезжает на ячейку (с того места, где она сейчас, даже посреди прошлого переезда). */
+    /**
+     * Область ячейки в сетке (`grid-area`): рамка — абсолютный элемент сетки и встаёт ровно в эту область, тех же
+     * размеров, что ячейка, без округления до пикселя. Ячейки идут по порядку, рамка в раскладке не участвует.
+     * Конечные линии — явно: у абсолютного элемента `auto` означает край сетки, а не следующую линию.
+     */
+    const cellArea = (cell: HTMLElement) => {
+      const order = Array.from(grid.children).filter((child) => child !== frame).indexOf(cell)
+      const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').length
+      const row = Math.floor(order / columns) + 1
+      const column = (order % columns) + 1
+      return `${row} / ${column} / ${row + 1} / ${column + 1}`
+    }
+
+    /**
+     * Рамка переезжает на ячейку с того места, где она сейчас (даже посреди прошлого переезда): встаёт в область
+     * ячейки и доезжает до неё сдвигом `translate` — его, в отличие от `transform`, увеличение рамки (`scale`) не умножает.
+     */
     const slideTo = (cell: HTMLElement) => {
-      const from = getComputedStyle(frame).transform
-      const to = cellPosition(cell)
+      const from = frame.getBoundingClientRect()
       slide?.cancel()
-      frame.style.transform = to
-      slide = prefersReducedMotion() ? null : frame.animate([{ transform: from }, { transform: to }], motionTiming(slideMs))
+      slide = null
+      frame.style.gridArea = cellArea(cell)
+      if (prefersReducedMotion()) return
+      const to = frame.getBoundingClientRect()
+      // Сдвиг на экране — в единицах сетки: сетка может быть увеличена вместе с карточкой.
+      const zoom = grid.getBoundingClientRect().width / grid.offsetWidth || 1
+      const shift = `${(from.left - to.left) / zoom}px ${(from.top - to.top) / zoom}px`
+      slide = frame.animate([{ translate: shift }, { translate: '0px 0px' }], motionTiming(slideMs))
     }
 
     /** Рамка снимается с бирки `from` и переезжает на `to` (та становится открытой). */
     const begin = (from: number, to: number) => {
       const start = cellOf(from) ?? cellOf(to)
-      const target = cellOf(to)
-      if (!start || !target) return
+      if (!start || !cellOf(to)) return
       dragging = true
       armed = null
-      frame.style.width = `${target.offsetWidth}px`
-      frame.style.height = `${target.offsetHeight}px`
-      frame.style.transform = cellPosition(start)
+      frame.style.gridArea = cellArea(start)
       grid.classList.add(DRAGGING_CLASS)
       navigator.vibrate?.(DRAG_START_VIBRATION_MS)
       moveTo(to)
@@ -100,7 +117,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
       slide = null
       grid.classList.add(SETTLING_CLASS)
       grid.classList.remove(DRAGGING_CLASS)
-      frame.style.transform = ''
+      frame.style.gridArea = ''
       requestAnimationFrame(() => grid.classList.remove(SETTLING_CLASS))
     }
 
