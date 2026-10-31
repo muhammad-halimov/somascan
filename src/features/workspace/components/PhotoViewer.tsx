@@ -4,6 +4,7 @@ import { CloseIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { Size } from '../utils/PhotoGeometry'
+import { useDoubleTap } from '../hooks/useDoubleTap'
 import { usePhotoTransform } from '../hooks/usePhotoTransform'
 import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
@@ -28,12 +29,15 @@ export interface PhotoViewerProps {
 /**
  * Просмотр фото на весь экран: щипок, перетаскивание, кнопки масштаба и поворота.
  * Свой масштаб, независимый от карточки; поворот — общий с биркой (его же получит распознавание).
+ * Двойное нажатие увеличивает фото к точке нажатия (у увеличенного — исходный масштаб).
  * Закрывается крестиком, клавишей Escape и системным «Назад».
  */
 export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isClosing, onClose }: PhotoViewerProps) {
   const { t } = useTranslation(['workspace', 'common'])
   const transform = usePhotoTransform({ naturalSize, enabled: true, rotation, onRotationChange })
-  const { attachFrame, touchHandlers, pointerHandlers } = transform
+  const { attachFrame, wasGesture, touchHandlers, pointerHandlers } = transform
+  /** Двойное нажатие — увеличение к пальцу, у увеличенного фото — исходный масштаб (как в карточке). */
+  const tapStage = useDoubleTap<string>({ onSingle: () => {}, onDouble: (_, point) => transform.toggleZoomAt(point) })
   useBodyScrollLock(true)
 
   // Escape на компьютере.
@@ -51,7 +55,13 @@ export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isCl
         <h2 id="photo-viewer-title">{t('viewer.title')}</h2>
         <ActionButton variant="ghost" icon={<CloseIcon />} caption={t('common:close')} label={t('viewer.close')} onClick={onClose} />
       </header>
-      <div ref={attachFrame} className="photo-viewer-stage" {...touchHandlers} {...pointerHandlers}>
+      <div
+        ref={attachFrame}
+        className="photo-viewer-stage"
+        onClick={(event) => !wasGesture(event.timeStamp) && tapStage(url, { x: event.clientX, y: event.clientY })}
+        {...touchHandlers}
+        {...pointerHandlers}
+      >
         <PhotoFrame url={url} alt={t('photo.alt')} transform={transform} />
       </div>
       <PhotoControls className="photo-viewer-controls" transform={transform} showReset />

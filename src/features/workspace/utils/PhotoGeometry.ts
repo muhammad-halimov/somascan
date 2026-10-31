@@ -18,6 +18,8 @@ export class PhotoGeometry {
   static readonly MAX_SCALE = 5
   /** Шаг масштаба для кнопок «больше»/«меньше». */
   static readonly SCALE_STEP = 0.5
+  /** Увеличение по двойному нажатию на фото. */
+  static readonly DOUBLE_TAP_SCALE = 2.5
 
   /** Натуральный размер фото (заглушка 4:3, пока фото не загрузилось). */
   private readonly natural: Size

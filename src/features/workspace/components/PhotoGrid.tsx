@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/components/icons/Icons'
 import { useSettings } from '@/features/settings/store/useSettings'
+import { useDoubleTap } from '../hooks/useDoubleTap'
 import { useHeatDuplicates } from '../hooks/useHeatDuplicates'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
@@ -18,7 +19,9 @@ export interface PhotoGridProps {
   activeIndex: number
   /** Сетка на экране (во время перехода к одной бирке нажатия не принимаются). */
   interactive: boolean
-  /** Открыть бирку или следующую пустую ячейку. */
+  /** Сделать бирку открытой, не выходя из сетки (одно нажатие на ячейку бирки). */
+  onSelect: (index: number) => void
+  /** Открыть бирку (двойное нажатие) или следующую пустую ячейку (одно нажатие на «плюс»). */
   onOpen: (index: number) => void
   /** Выбрать бирку для отправки или снять выбор. */
   onToggleSelected: (index: number) => void
@@ -32,13 +35,17 @@ export interface PhotoGridProps {
  * открытой — оба кольца); выбор — «радиокнопка» в левом нижнем углу (кольцо, у выбранной — точка). Состояние — в правом нижнем:
  * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма, не заполнены обязательные поля
  * или плавка повторяется), красный знак (ошибка).
- * Нажатие на ячейку открывает бирку (карточка увеличивает ячейку до одной бирки). Когда бирки уходят
+ * Одно нажатие на ячейку бирки делает её открытой, не выходя из сетки (карточка результата показывает её данные),
+ * двойное — открывает (карточка увеличивает ячейку до одной бирки); «плюс» открывается одним нажатием. Когда бирки уходят
  * (отправка, «Сброс»), оставшиеся плавно переезжают на освободившиеся места.
  */
-export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, onToggleSelected }: PhotoGridProps) {
+export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, onOpen, onToggleSelected }: PhotoGridProps) {
   const { t } = useTranslation('workspace')
   const { advanced } = useSettings()
   const duplicates = useHeatDuplicates(items)
+
+  /** Нажатие на ячейку бирки: одно — бирка становится открытой (сразу), двойное — открывается. */
+  const tapItem = useDoubleTap<number>({ onSingle: onSelect, onDouble: onOpen })
 
   // Где стояли ячейки бирок: после отправки или «Сброса» оставшиеся переезжают на освободившиеся места
   // плавно, а не перескакивают (позиции — раскладки, без учёта transform перехода к одной бирке).
@@ -94,7 +101,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onOpen, on
               className="photo-grid-open"
               aria-label={stateText ? `${name}: ${stateText}` : name}
               aria-current={isActive || undefined}
-              onClick={() => onOpen(index)}
+              onClick={(event) => tapItem(index, { x: event.clientX, y: event.clientY })}
             >
               {/* Миниатюра — с поворотом бирки, как фото в карточке. */}
               {item.thumbUrl && !item.hasError && (

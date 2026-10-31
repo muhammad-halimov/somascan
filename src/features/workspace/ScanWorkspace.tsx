@@ -284,7 +284,7 @@ export function ScanWorkspace() {
     session.retry(activeIndex)
   }
 
-  /** Открывает бирку `index` из карточки результата (номера бирок). */
+  /** Делает бирку `index` открытой: номера бирок в карточке результата, одно нажатие на ячейку сетки. */
   const selectItem = (index: number) => {
     if (index !== activeIndex) session.select(index)
   }
@@ -306,7 +306,7 @@ export function ScanWorkspace() {
     setView('grid')
   }, [editMode.isEditing])
 
-  /** Ячейка сетки: бирка (или следующая пустая ячейка) открывается, ячейка увеличивается до неё. */
+  /** Ячейка сетки, двойное нажатие (у «плюса» — одно): бирка (или следующая пустая ячейка) открывается, ячейка увеличивается до неё. */
   const openCell = (index: number) => {
     session.select(index)
     closeGrid()
@@ -352,6 +352,7 @@ export function ScanWorkspace() {
           onLoad={(size) => item && session.markLoaded(item.id, size)}
           onError={() => item && session.markFailed(item.id)}
           onShowGrid={showGrid}
+          onSelectCell={selectItem}
           onOpenCell={openCell}
           onOpenActive={closeGrid}
           onToggleSelected={session.toggleSelected}

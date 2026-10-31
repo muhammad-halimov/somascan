@@ -55,7 +55,8 @@ export interface PhotoTransformOptions {
  *
  * Касание: щипок двумя пальцами масштабирует относительно точки между пальцами
  * (и одновременно двигает фото), одним пальцем — перетаскивание увеличенного фото.
- * Мышь: перетаскивание. Кнопки: `zoomIn`, `zoomOut`, `rotate`, `reset`.
+ * Мышь: перетаскивание. Двойное нажатие (`toggleZoomAt`): увеличение к точке нажатия, у увеличенного — исходный масштаб.
+ * Кнопки: `zoomIn`, `zoomOut`, `rotate`, `reset`.
  * Поворот может принадлежать бирке (`rotation` и `onRotationChange`) — тогда он сохраняется между бирками
  * и в сетке, а не только в этом просмотре.
  * Сдвиг всегда ограничен так, чтобы фото не уезжало за края рамки, но до любого
@@ -109,6 +110,23 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
     const clamped = PhotoGeometry.clampScale(nextScale)
     setScale(clamped)
     setOffset(clamp(PhotoGeometry.zoomOffset(offset, scale, clamped, NO_OFFSET), clamped))
+  }
+
+  /**
+   * Двойное нажатие: увеличение так, чтобы точка фото под пальцем осталась на месте; у увеличенного фото —
+   * исходный масштаб и положение.
+   * @param point Точка нажатия на экране.
+   */
+  const toggleZoomAt = (point: Point) => {
+    if (!enabled) return
+    if (isZoomed) {
+      setScale(PhotoGeometry.MIN_SCALE)
+      setOffset(NO_OFFSET)
+      return
+    }
+    const next = PhotoGeometry.clampScale(PhotoGeometry.DOUBLE_TAP_SCALE)
+    setScale(next)
+    setOffset(clamp(PhotoGeometry.zoomOffset(offset, scale, next, fromFrameCenter(point)), next))
   }
 
   /** Поворот на четверть оборота по часовой стрелке; сдвиг остаётся в допустимых границах. */
@@ -226,6 +244,7 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
     canZoomOut: isZoomed,
     zoomIn: () => zoomTo(scale + PhotoGeometry.SCALE_STEP),
     zoomOut: () => zoomTo(scale - PhotoGeometry.SCALE_STEP),
+    toggleZoomAt,
     rotate,
     reset,
     resetView,
