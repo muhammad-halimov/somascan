@@ -5,6 +5,7 @@
  * Запуск: `npm test`.
  */
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { DEFAULT_KNOWN_SUPPLIERS } from '../src/features/recognition/label/knownSuppliers'
 import { createDefaultLabelFields } from '../src/features/recognition/label/labelFields'
@@ -107,7 +108,16 @@ test('BPM: бледную подпись «LOT NO» OCR не узнал — но
   assert.equal(findStrandLot('26O9O9G392-06-2'), '260909G392-06-2')
   assert.equal(findStrandLot('260909G 392-06-2'), '260909G392-06-2')
   assert.equal(findStrandLot('260909G392 – 06_2'), '260909G392-06-2')
+  assert.equal(findStrandLot('260909G392.06-2'), '260909G392-06-2')
   assert.equal(findStrandLot('09/09/2026'), null)
   assert.equal(findStrandLot('ST 009-2011'), null)
   assert.equal(findStrandLot('Y1860T7-R1-F1-C1'), null)
+})
+
+test('BPM, настоящее чтение ML Kit (fixtures/ocr/bpm-strand.json): производитель, размер и вес — да; номер партии, испорченный OCR, — не угадывается', () => {
+  // ML Kit не прочёл подпись «LOT NO.» и номер бухты «6», а номер партии «260909G392-06-2» прочёл как
+  // «2609090392.0ó-2» (G — нулём, 6 — «ó»): угадать номер нельзя — плавка остаётся пустой, её вводят вручную.
+  const page = JSON.parse(readFileSync(new URL('./fixtures/ocr/bpm-strand.json', import.meta.url), 'utf8')) as OcrPage
+  const label = extractLabel({ page, codes: [], fields: FIELDS, suppliers: DEFAULT_KNOWN_SUPPLIERS }).label
+  assert.deepEqual([label.producer, label.size, label.weight_kg, label.heat], ['BPM', '15,2 mm', 2845, null])
 })
