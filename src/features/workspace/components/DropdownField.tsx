@@ -3,6 +3,7 @@ import { ArrowDropDownIcon, CheckIcon, ChevronDownIcon, PencilIcon } from '@/com
 import { List, ListItem } from '@/components/ui/List'
 import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { useHeightTransition } from '@/hooks/useHeightTransition'
+import { selectedFirst } from '@/lib/list/selectedFirst'
 import { matchesSearch } from '@/lib/text/searchText'
 // Меню и уголок — те же, что у шторок настроек (`Disclosure`): поверхность меню Material, список iOS.
 import '@/components/ui/Disclosure.css'
@@ -74,8 +75,8 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
   const [isOpen, setIsOpen] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [query, setQuery] = useState('')
-  // Порядок вариантов — на момент открытия: выбор не переставляет строки под пальцем и пока список сворачивается
-  // (выбранный поставщик встаёт первым к следующему открытию).
+  // Порядок вариантов — на момент открытия: выбранный — первым, остальные — на своих местах (`selectedFirst`);
+  // выбор не переставляет строки под пальцем и пока список сворачивается.
   const [listed, setListed] = useState(options)
   useHeightTransition(menuRef, isOpen)
   const hasSearch = searchable && listed.length >= LIST_SEARCH_MIN_ITEMS
@@ -92,7 +93,7 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
   }
   const toggle = () => {
     if (isOpen) return close()
-    setListed(options)
+    setListed(selectedFirst(options, (candidate) => candidate.value === option?.value))
     setIsOpen(true)
   }
   const select = (next: string) => {

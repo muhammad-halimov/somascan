@@ -10,6 +10,7 @@ import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components
 import { isDefaultLabelFields, type LabelFieldDefinition, type LabelKey } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { LANGUAGES } from '@/i18n/languages'
+import { selectedFirst } from '@/lib/list/selectedFirst'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { matchesSearch } from '@/lib/text/searchText'
 import { settingsStore } from '../store/SettingsStore'
@@ -25,12 +26,21 @@ export interface LabelFieldsPickerProps {
 /** Какое поле сейчас редактируется: ключ существующего или новое. */
 type EditTarget = { kind: 'field'; key: LabelKey } | { kind: 'new' } | null
 
+/** Порядок шторки: включённые поля — первыми, остальные — на своих местах. */
+const enabledFirst = (fields: readonly LabelFieldDefinition[]) => selectedFirst(fields, (field) => field.enabled).map((field) => field.key)
+
+/** Место поля в порядке шторки; поле, добавленное после раскрытия, — в конце. */
+function rankOf(order: readonly LabelKey[], key: LabelKey): number {
+  const index = order.indexOf(key)
+  return index < 0 ? order.length : index
+}
+
 /**
  * Поля, которые модель читает с фото.
  *
  * Список в шторке: в свёрнутом виде видно, сколько и какие поля выбраны, — длинный список
  * не загораживает остальные настройки. Обычный режим — выбор нескольких полей галочками
- * (последнее включённое снять нельзя).
+ * (последнее включённое снять нельзя); включённые — первыми, снятые возвращаются на свои места.
  * Карандаш включает правку: касание строки открывает форму поля (названия на языках —
  * английское обязательно, остальные по желанию — и пояснение для модели), внизу можно
  * добавить своё поле. Слева от «Готово» — «Вернуть стандартные» и «Отмена» (возврат к набору
@@ -48,8 +58,14 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
   const snapshot = useRef(value)
   /** Поиск по названиям полей (над длинным списком); сбрасывается, когда шторка сворачивается. */
   const [query, setQuery] = useState('')
+  /**
+   * Порядок строк при выборе — на момент раскрытия шторки: включённые поля — первыми, остальные — на своих местах
+   * (`selectedFirst`); пока шторка открыта, строки под пальцем не переставляются. В правке — порядок настроек.
+   */
+  const [order, setOrder] = useState<LabelKey[]>(() => enabledFirst(value))
+  const ordered = isEditing ? value : [...value].sort((a, b) => rankOf(order, a.key) - rankOf(order, b.key))
   const hasSearch = value.length >= LIST_SEARCH_MIN_ITEMS
-  const shown = hasSearch ? value.filter((field) => matchesSearch(fieldName(field), query)) : value
+  const shown = hasSearch ? ordered.filter((field) => matchesSearch(fieldName(field), query)) : ordered
   const enabledCount = value.filter((field) => field.enabled).length
   /** Включённые поля через запятую — подробности в заголовке шторки. */
   const enabledNames = value.filter((field) => field.enabled).map((field) => fieldName(field)).join(', ')
@@ -99,9 +115,11 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
     setIsOpen(true)
   }
 
+  /** Заканчивает правку: строки выбора — в порядке «включённые первыми» по полям после правки. */
   const finishEditing = () => {
     setIsEditing(false)
     setTarget(null)
+    setOrder(enabledFirst(settingsStore.getSnapshot().advanced.labelFields))
   }
 
   /** Отменяет все изменения полей, сделанные с начала правки. */
@@ -134,6 +152,7 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
         open={isOpen}
         onToggle={() => {
           if (isOpen) setQuery('')
+          else setOrder(enabledFirst(value))
           setIsOpen(!isOpen)
         }}
         summary={t('advanced.fieldsSummary', { count: enabledCount, total: value.length })}

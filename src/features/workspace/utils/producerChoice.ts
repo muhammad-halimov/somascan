@@ -15,12 +15,3 @@ export function listedSupplier(value: string, suppliers: readonly string[]): str
   if (!text) return null
   return suppliers.find((name) => supplierKey(name) === supplierKey(text)) ?? null
 }
-
-/**
- * Поставщики в порядке списка выбора: выбранный (из списка) — первым, остальные — по алфавиту, как в настройках.
- * @param suppliers Известные поставщики из настроек.
- * @param chosen Выбранный поставщик из списка (`listedSupplier`) или `null`.
- */
-export function supplierChoices(suppliers: readonly string[], chosen: string | null): string[] {
-  return chosen === null ? [...suppliers] : [chosen, ...suppliers.filter((name) => name !== chosen)]
-}

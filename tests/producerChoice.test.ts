@@ -1,11 +1,12 @@
 /**
- * Производитель в правке: поставщик из списка совпадает без учёта регистра и пробелов, иначе — своё название;
- * выбранный поставщик — первым в списке выбора.
+ * Производитель в правке: поставщик из списка совпадает без учёта регистра и пробелов, иначе — своё название.
+ * Порядок списков выбора: выбранные — первыми, снятые — на своих местах.
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { DEFAULT_KNOWN_SUPPLIERS } from '../src/features/recognition/label/knownSuppliers'
-import { listedSupplier, supplierChoices } from '../src/features/workspace/utils/producerChoice'
+import { selectedFirst } from '../src/lib/list/selectedFirst'
+import { listedSupplier } from '../src/features/workspace/utils/producerChoice'
 
 test('название из списка — написанием списка, без учёта регистра и пробелов', () => {
   assert.equal(listedSupplier('OAM Ózdi Acélművek', DEFAULT_KNOWN_SUPPLIERS), 'OAM Ózdi Acélművek')
@@ -18,9 +19,13 @@ test('название не из списка и пустое — не пост�
   assert.equal(listedSupplier('Sovel', []), null)
 })
 
-test('список выбора: выбранный поставщик — первым, остальные по алфавиту; ничего не выбрано — как в настройках', () => {
+test('списки выбора: выбранные — первыми в своём порядке, остальные — на своих местах; ничего не выбрано — как есть', () => {
   const suppliers = ['ArcelorMittal', 'BPM', 'Sovel']
-  assert.deepEqual(supplierChoices(suppliers, listedSupplier('bpm', suppliers)), ['BPM', 'ArcelorMittal', 'Sovel'])
-  assert.deepEqual(supplierChoices(suppliers, listedSupplier('Свой завод', suppliers)), suppliers)
-  assert.deepEqual(supplierChoices(suppliers, 'ArcelorMittal'), suppliers)
+  const chosen = listedSupplier('bpm', suppliers)
+  assert.deepEqual(selectedFirst(suppliers, (name) => name === chosen), ['BPM', 'ArcelorMittal', 'Sovel'])
+  assert.deepEqual(selectedFirst(suppliers, () => false), suppliers)
+  // несколько выбранных (поля бирки): первыми в своём порядке; снятый — снова на своём месте
+  const fields = ['producer', 'product', 'grade', 'size', 'heat', 'weight_kg']
+  assert.deepEqual(selectedFirst(fields, (key) => ['producer', 'size', 'heat', 'weight_kg'].includes(key)), ['producer', 'size', 'heat', 'weight_kg', 'product', 'grade'])
+  assert.deepEqual(selectedFirst(fields, (key) => ['producer', 'heat'].includes(key)), ['producer', 'heat', 'product', 'grade', 'size', 'weight_kg'])
 })
