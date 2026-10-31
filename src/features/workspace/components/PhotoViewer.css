@@ -12,8 +12,21 @@
   overflow: hidden;
   padding: var(--safe-top) max(12px, var(--safe-right)) max(12px, var(--safe-bottom)) max(12px, var(--safe-left));
   color: #f1f3f4;
-  background: #0b0c0f;
+  /* Свайп закрытия (`useSwipeToClose`) гасит фон и кнопки: `--viewer-dismiss` от 0 до 1. */
+  background: rgb(11 12 15 / calc(1 - var(--viewer-dismiss, 0) * .85));
+  transition: background-color 200ms ease;
   animation: backdrop-enter 180ms ease-out both;
+}
+
+.photo-viewer :is(.photo-viewer-header, .photo-viewer-controls) {
+  opacity: calc(1 - var(--viewer-dismiss, 0));
+  transition: opacity 200ms ease;
+}
+
+/* Фото ведёт палец: фон и кнопки следуют за ним без задержки. */
+.photo-viewer.is-swiping,
+.photo-viewer.is-swiping :is(.photo-viewer-header, .photo-viewer-controls) {
+  transition: none;
 }
 
 /* Фото при открытии слегка «вырастает», при закрытии — наоборот. */

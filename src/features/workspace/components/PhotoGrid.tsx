@@ -2,19 +2,12 @@ import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/components/icons/Icons'
 import { useSettings } from '@/features/settings/store/useSettings'
-import { useDoubleTap } from '../hooks/useDoubleTap'
 import { useGridDragSelect } from '../hooks/useGridDragSelect'
 import { useHeatDuplicates } from '../hooks/useHeatDuplicates'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import { tagState } from '../utils/tagState'
 import './PhotoGrid.css'
-
-/**
- * Второе нажатие на только что выбранную бирку открывает её, если пришло не позже, чем через столько мс:
- * нажал — рамка перешла, нажал ещё раз — бирка открылась (двойное нажатие — частный случай).
- */
-const OPEN_TAP_MS = 1000
 
 /** Свойства `PhotoGrid`. */
 export interface PhotoGridProps {
@@ -26,9 +19,9 @@ export interface PhotoGridProps {
   activeIndex: number
   /** Сетка на экране (во время перехода к одной бирке нажатия не принимаются). */
   interactive: boolean
-  /** Сделать бирку открытой, не выходя из сетки (одно нажатие на ячейку бирки). */
+  /** Перенести рамку на бирку, не выходя из сетки (нажатие на другую бирку, перенос рамки пальцем). */
   onSelect: (index: number) => void
-  /** Открыть бирку (двойное нажатие) или следующую пустую ячейку (одно нажатие на «плюс»). */
+  /** Открыть бирку (нажатие на бирку под рамкой) или следующую пустую ячейку (нажатие на «плюс»). */
   onOpen: (index: number) => void
   /** Выбрать бирку для отправки или снять выбор. */
   onToggleSelected: (index: number) => void
@@ -42,9 +35,9 @@ export interface PhotoGridProps {
  * открытой — оба кольца); выбор — «радиокнопка» в левом нижнем углу (кольцо, у выбранной — точка). Состояние — в правом нижнем:
  * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма, не заполнены обязательные поля
  * или плавка повторяется), красный знак (ошибка).
- * Одно нажатие на ячейку бирки делает её открытой, не выходя из сетки (карточка результата показывает её данные),
- * второе нажатие на неё же в течение секунды (или двойное) — открывает (карточка увеличивает ячейку до одной бирки); «плюс» открывается одним нажатием. Удержание пальца
- * на ячейке бирки переносит рамку открытой бирки: она идёт за пальцем по сетке (`useGridDragSelect`). Когда бирки уходят
+ * Нажатие на бирку под рамкой открывает её (карточка увеличивает ячейку до одной бирки), на другую бирку — переносит
+ * на неё рамку, не выходя из сетки (карточка результата показывает её данные); «плюс» открывается нажатием. Рамку можно
+ * вести пальцем по сетке (`useGridDragSelect`). Когда бирки уходят
  * (отправка, «Сброс»), оставшиеся плавно переезжают на освободившиеся места.
  */
 export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, onOpen, onToggleSelected }: PhotoGridProps) {
@@ -52,10 +45,9 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
   const { advanced } = useSettings()
   const duplicates = useHeatDuplicates(items)
 
-  /** Нажатие на ячейку бирки: первое — бирка становится открытой (сразу), второе за `OPEN_TAP_MS` — открывается. */
-  const tapItem = useDoubleTap<number>({ onSingle: onSelect, onDouble: onOpen, windowMs: OPEN_TAP_MS })
-  // Удержание пальца на ячейке бирки — рамка открытой бирки идёт за пальцем по сетке.
-  useGridDragSelect(gridRef, onSelect, interactive)
+  // Рамку открытой бирки ведёт палец: с рамки — сразу, с другой бирки — после короткого удержания.
+  const frameRef = useRef<HTMLSpanElement>(null)
+  useGridDragSelect({ gridRef, frameRef, activeIndex, enabled: interactive, onSelect })
 
   // Где стояли ячейки бирок: после отправки или «Сброса» оставшиеся переезжают на освободившиеся места
   // плавно, а не перескакивают (позиции — раскладки, без учёта transform перехода к одной бирке).
@@ -111,7 +103,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
               className="photo-grid-open"
               aria-label={stateText ? `${name}: ${stateText}` : name}
               aria-current={isActive || undefined}
-              onClick={(event) => tapItem(index, { x: event.clientX, y: event.clientY })}
+              onClick={() => (isActive ? onOpen(index) : onSelect(index))}
             >
               {/* Миниатюра — с поворотом бирки, как фото в карточке. */}
               {item.thumbUrl && !item.hasError && (
@@ -149,6 +141,8 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
           </div>
         )
       })}
+      {/* Рамка, которую ведёт палец (`useGridDragSelect`): видна только во время переноса. */}
+      <span ref={frameRef} className="photo-grid-frame" aria-hidden="true" />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CloseIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
@@ -6,6 +6,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { Size } from '../utils/PhotoGeometry'
 import { useDoubleTap } from '../hooks/useDoubleTap'
 import { usePhotoTransform } from '../hooks/usePhotoTransform'
+import { useSwipeToClose } from '../hooks/useSwipeToClose'
 import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
 import './PhotoViewer.css'
@@ -29,13 +30,23 @@ export interface PhotoViewerProps {
 /**
  * Просмотр фото на весь экран: щипок, перетаскивание, кнопки масштаба и поворота.
  * Свой масштаб, независимый от карточки; поворот — общий с биркой (его же получит распознавание).
- * Двойное нажатие увеличивает фото к точке нажатия (у увеличенного — исходный масштаб).
+ * Двойное нажатие увеличивает фото к точке нажатия (у увеличенного — исходный масштаб). Свайп вверх или вниз
+ * закрывает просмотр (`useSwipeToClose`).
  * Закрывается крестиком, клавишей Escape и системным «Назад».
  */
 export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isClosing, onClose }: PhotoViewerProps) {
   const { t } = useTranslation(['workspace', 'common'])
   const transform = usePhotoTransform({ naturalSize, enabled: true, rotation, onRotationChange })
-  const { attachFrame, wasGesture, touchHandlers, pointerHandlers } = transform
+  const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
+  // Свайп вверх или вниз закрывает просмотр (у увеличенного фото палец двигает фото).
+  const viewerRef = useRef<HTMLElement>(null)
+  const stageRef = useRef<HTMLDivElement | null>(null)
+  useSwipeToClose({ viewerRef, stageRef, enabled: !isZoomed && !isClosing, onClose })
+  /** Сцена: и рамка для масштаба (`attachFrame`), и цель свайпа закрытия. */
+  const attachStage = useCallback((element: HTMLDivElement | null) => {
+    stageRef.current = element
+    return attachFrame(element)
+  }, [attachFrame])
   /** Двойное нажатие — увеличение к пальцу, у увеличенного фото — исходный масштаб (как в карточке). */
   const tapStage = useDoubleTap<string>({ onDouble: (_, point) => transform.toggleZoomAt(point) })
   useBodyScrollLock(true)
@@ -50,13 +61,13 @@ export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isCl
   }, [onClose])
 
   return (
-    <section className={`photo-viewer${isClosing ? ' is-closing' : ''}`} role="dialog" aria-modal="true" aria-labelledby="photo-viewer-title">
+    <section ref={viewerRef} className={`photo-viewer${isClosing ? ' is-closing' : ''}`} role="dialog" aria-modal="true" aria-labelledby="photo-viewer-title">
       <header className="photo-viewer-header">
         <h2 id="photo-viewer-title">{t('viewer.title')}</h2>
         <ActionButton variant="ghost" icon={<CloseIcon />} caption={t('common:close')} label={t('viewer.close')} onClick={onClose} />
       </header>
       <div
-        ref={attachFrame}
+        ref={attachStage}
         className="photo-viewer-stage"
         onClick={(event) => !wasGesture(event.timeStamp) && tapStage(url, { x: event.clientX, y: event.clientY })}
         {...touchHandlers}

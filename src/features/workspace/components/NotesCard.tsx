@@ -8,7 +8,7 @@ import type { LabelKey } from '@/features/recognition/label/labelFields'
 import { MAX_SCAN_ITEMS, type RecognitionStatus } from '../hooks/useScanSession'
 import type { HeatDuplicate } from '../utils/sendReadiness'
 import { needsAttention, type TagState } from '../utils/tagState'
-import { LabelFields } from './LabelFields'
+import { LabelFields, LabelFieldsSkeleton } from './LabelFields'
 import './NotesCard.css'
 
 /** Свойства `NotesCard`. */
@@ -65,7 +65,7 @@ export interface NotesCardProps {
  * Карточка результата под фото: узкая полоса «Проверьте данные перед отправкой» (у распознанной бирки),
  * шапка с заголовком и кнопками правки, номера бирок (когда их
  * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
- * открытой бирки (во время распознавания — спиннер, иначе подсказка или ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
+ * открытой бирки (во время распознавания — силуэты полей, иначе подсказка или ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
 export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
@@ -171,10 +171,8 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
         // и строки прежнего сообщения оставались поверх нового — новый узел рисуется с нуля.
         <p key="cancelled" className="notes-message is-placeholder anim-fade" role="status">{t('notes.cancelled')}</p>
       ) : isRecognizing ? (
-        // Идёт распознавание: спиннер по центру блока вместо подсказки.
-        <div key="recognizing" className="notes-message is-loading anim-fade" role="status" aria-label={t('photo.recognizing')}>
-          <span className="notes-spinner" aria-hidden="true" />
-        </div>
+        // Идёт распознавание: силуэты полей на их местах вместо подсказки.
+        <LabelFieldsSkeleton key="recognizing" label={t('photo.recognizing')} />
       ) : (
         <p key="placeholder" className="notes-message is-placeholder anim-fade">{t('notes.placeholder')}</p>
       )}

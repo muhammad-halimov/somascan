@@ -10,6 +10,10 @@
 .photo-grid {
   --photo-grid-gap: 6px;
   --photo-grid-radius: 8px;
+  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже). */
+  --photo-grid-frame-outline: 4px solid var(--focus);
+  --photo-grid-frame-glow: 0 0 14px 4px color-mix(in srgb, var(--focus) 80%, transparent), 0 0 34px 12px color-mix(in srgb, var(--focus) 45%, transparent);
+  --photo-grid-frame-scale: 1.05;
   position: absolute;
   z-index: 4;
   inset: 0;
@@ -128,15 +132,44 @@
 /*
  * Открытая бирка — фирменный бирюзовый (цвет логотипа): толстая обводка снаружи ячейки, яркое широкое
  * свечение, и ячейка чуть крупнее соседних. Не путается ни с акцентным кольцом выбранных (внутри ячейки),
- * ни с цветами состояний.
+ * ни с цветами состояний. Та же обводка — у рамки, которую ведёт палец (`.photo-grid-frame`).
  */
 .photo-grid-cell.is-active {
   z-index: 1;
-  outline: 4px solid var(--focus);
+  outline: var(--photo-grid-frame-outline);
   outline-offset: 2px;
-  box-shadow: 0 0 14px 4px color-mix(in srgb, var(--focus) 80%, transparent), 0 0 34px 12px color-mix(in srgb, var(--focus) 45%, transparent);
-  scale: 1.05;
+  box-shadow: var(--photo-grid-frame-glow);
+  scale: var(--photo-grid-frame-scale);
   animation: photo-grid-focus 360ms cubic-bezier(.2, 0, 0, 1);
+}
+
+/*
+ * Рамка, которую ведёт палец (`useGridDragSelect`): видна только во время переноса, едет за пальцем с короткой
+ * плавной задержкой; обводка открытой ячейки на это время скрыта — рамка одна.
+ */
+.photo-grid-frame {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: var(--photo-grid-radius);
+  outline: var(--photo-grid-frame-outline);
+  outline-offset: 2px;
+  box-shadow: var(--photo-grid-frame-glow);
+  scale: var(--photo-grid-frame-scale);
+}
+
+.photo-grid.is-dragging .photo-grid-frame {
+  opacity: 1;
+  transition: transform 80ms ease-out;
+}
+
+.photo-grid.is-dragging .photo-grid-cell.is-active {
+  outline-color: transparent;
+  box-shadow: none;
+  animation: none;
 }
 
 /*
@@ -150,11 +183,6 @@
 
 .photo-grid-cell.is-active {
   transition: box-shadow 200ms ease, scale 240ms cubic-bezier(.2, 0, 0, 1);
-}
-
-/* Рамку ведёт палец (удержание на ячейке, `useGridDragSelect`): открытая ячейка чуть крупнее — видно, что перенос начался. */
-.photo-grid.is-dragging .photo-grid-cell.is-active {
-  scale: 1.1;
 }
 
 .photo-card.is-zooming .photo-grid-cell::after {

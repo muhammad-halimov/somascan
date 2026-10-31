@@ -76,6 +76,17 @@
 }
 
 /* Появление содержимого: лёгкий подъём и проявление, как у окон. */
+/* Переливание силуэтов загружаемого содержимого. */
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
 @keyframes content-enter {
   from {
     opacity: 0;

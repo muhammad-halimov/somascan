@@ -49,6 +49,34 @@ export interface LabelFieldsProps {
   heatDuplicate?: HeatDuplicate | null
 }
 
+/** Свойства `LabelFieldsSkeleton`. */
+export interface LabelFieldsSkeletonProps {
+  /** Доступное имя (что сейчас происходит): «Распознавание…». */
+  label: string
+}
+
+/**
+ * Силуэты полей, пока бирка распознаётся: те же строки, что у `LabelFields` (форма и включённые поля), вместо
+ * названий и значений — переливающиеся полосы. Видно, где сейчас появятся данные, и при их появлении ничего не сдвигается.
+ */
+export function LabelFieldsSkeleton({ label }: LabelFieldsSkeletonProps) {
+  const { advanced } = useSettings()
+  // Форма — всегда первая строка, затем включённые поля.
+  const rows = 1 + enabledLabelFields(advanced.labelFields).length
+  return (
+    <div className="label-fields is-skeleton anim-fade" role="status" aria-label={label}>
+      <div className="label-fields-list" aria-hidden="true">
+        {Array.from({ length: rows }, (_, index) => (
+          <div className="label-field" key={index}>
+            <span className="label-field-name"><span className="label-skeleton" /></span>
+            <span className="label-field-value"><span className="label-skeleton" /></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /**
  * Распознанная бирка в виде списка «название — значение»; в режиме правки редактируется.
  * Первая строка — форма поставки (пруток или катушка): её выбирают вручную, с фото она не читается;
