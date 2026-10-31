@@ -16,9 +16,8 @@ import {
   parseRulesJson,
   ruleLabelsFor,
   RULES_FILE_NAME,
-  RULE_GROUPS,
+  NON_FIELD_RULE_KEYS,
   rulesToJson,
-  type RuleGroup,
   type RuleLabels,
 } from '@/features/recognition/ocr/ruleLabels'
 import { MAX_TEXT_FILE_BYTES, PickedFileError, pickTextFile, shareTextFile } from '@/lib/platform/files'
@@ -41,7 +40,7 @@ export interface RecognitionRulesPickerProps {
 /** Текст ошибки для сообщения. */
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
-/** Правило в списке: подписи поля или правило из группы (`RULE_GROUPS`). */
+/** Правило в списке: подписи поля или правило, которое не подписи поля (`NON_FIELD_RULE_KEYS`). */
 interface RuleEntry {
   key: string
   /** Название строки. */
@@ -62,8 +61,8 @@ interface RuleEntry {
  * Импорт заменяет подписи полей, которые есть в файле, остальные не трогает.
  * Свои поля ищутся по их названиям («Поля»), здесь их нет.
  *
- * Ниже подписей полей — группы правил (`RULE_GROUPS`), каждая со своим заголовком: «Бирки канатов» (слова на бирке,
- * номер партии без подписи) и «Производитель» (свой склад, общие слова в названиях, бесплатная почта); правятся так же.
+ * В том же списке, после подписей полей, — правила, которые не подписи полей: слова и номер партии бирок канатов,
+ * свой склад, общие слова в названиях заводов, бесплатная почта; правятся так же.
  */
 export function RecognitionRulesPicker({ value, fields, unavailable }: RecognitionRulesPickerProps) {
   const { t } = useTranslation(['settings', 'common'])
@@ -74,20 +73,19 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
   const [target, setTarget] = useState<string | null>(null)
   /** Правила на момент начала правки — к ним возвращает «Отмена». */
   const snapshot = useRef(value)
-  // Встроенные поля, читаемые с фото, в порядке настроек; затем группы правил бирок канатов и производителя.
+  // Один список: подписи встроенных полей, читаемых с фото, в порядке настроек, затем правила, которые не подписи полей.
   const fieldEntries: RuleEntry[] = fields
     .filter((field) => field.builtIn && !field.manual && field.key in DEFAULT_RULE_LABELS)
     .map((field) => ({ key: field.key, name: fieldName(field), editHint: t('advanced.rulesLabelsHint'), empty: t('advanced.rulesNoLabels') }))
-  const groups = (Object.keys(RULE_GROUPS) as RuleGroup[]).map((group) => ({
-    group,
-    entries: RULE_GROUPS[group].map((key): RuleEntry => ({
+  const entries: RuleEntry[] = [
+    ...fieldEntries,
+    ...NON_FIELD_RULE_KEYS.map((key) => ({
       key,
       name: t(`advanced.rulesItems.${key}.name`),
       editHint: t(`advanced.rulesItems.${key}.hint`),
       empty: t('advanced.rulesItemsEmpty'),
     })),
-  }))
-  const ruleCount = fieldEntries.length + groups.reduce((sum, { entries }) => sum + entries.length, 0)
+  ]
   const changed = Object.keys(value).length
 
   /** Строка правила; в правке касание открывает его список (по одному значению на строку). */
@@ -208,21 +206,12 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
       <Disclosure
         open={isOpen}
         onToggle={() => setIsOpen(!isOpen)}
-        summary={t('advanced.rulesSummary', { count: ruleCount })}
+        summary={t('advanced.rulesSummary', { count: entries.length })}
         details={changed > 0 ? t('advanced.rulesChanged', { count: changed }) : t('advanced.rulesDefault')}
       >
-        <span className="rules-picker-heading">{t('advanced.rulesGroups.fields')}</span>
-        <List label={t('advanced.rulesGroups.fields')} className="label-fields-picker rules-picker">
-          {fieldEntries.map(renderRule)}
+        <List label={t('advanced.rules')} className="label-fields-picker rules-picker">
+          {entries.map(renderRule)}
         </List>
-        {groups.map(({ group, entries }) => (
-          <Fragment key={group}>
-            <span className="rules-picker-heading">{t(`advanced.rulesGroups.${group}`)}</span>
-            <List label={t(`advanced.rulesGroups.${group}`)} className="label-fields-picker rules-picker">
-              {entries.map(renderRule)}
-            </List>
-          </Fragment>
-        ))}
       </Disclosure>
     </FormSection>
   )

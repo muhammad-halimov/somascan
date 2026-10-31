@@ -10,7 +10,7 @@ import { companyDomains } from '../src/features/recognition/ocr/domainProducer'
 import { extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrPage } from '../src/features/recognition/ocr/ocrTypes'
 import {
-  compactRuleLabels, DEFAULT_RULE_LABELS, isDefaultRuleLabels, normalizeRuleLabels, parseRulesJson, ruleLabelsFor, rulesToJson, SPECIAL_RULE_KEYS,
+  compactRuleLabels, DEFAULT_RULE_LABELS, isDefaultRuleLabels, normalizeRuleLabels, parseRulesJson, ruleLabelsFor, rulesToJson, NON_FIELD_RULE_KEYS,
 } from '../src/features/recognition/ocr/ruleLabels'
 import { matchSupplier } from '../src/features/recognition/ocr/supplierMatch'
 import { providerRegistry } from '../src/features/recognition/providers/ProviderRegistry'
@@ -73,8 +73,8 @@ test('распознавание берёт подписи из правил: с
   assert.equal(read({ weight_kg: ['net weight'] }).weight_kg, null, 'подпись «greutate» убрана — строка с ней больше не вес')
 })
 
-test('особые правила: у каждого есть список по умолчанию; хранятся, экспортируются и импортируются как подписи полей', () => {
-  for (const key of SPECIAL_RULE_KEYS) assert.ok((DEFAULT_RULE_LABELS[key] ?? []).length > 0, key)
+test('правила, которые не подписи полей: у каждого есть список по умолчанию; хранятся, экспортируются и импортируются как подписи полей', () => {
+  for (const key of NON_FIELD_RULE_KEYS) assert.ok((DEFAULT_RULE_LABELS[key] ?? []).length > 0, key)
   assert.deepEqual(compactRuleLabels({ house_supplier: ['Depozit Nord'], strand_words: [...DEFAULT_RULE_LABELS.strand_words!] }), { house_supplier: ['Depozit Nord'] })
   const parsed = parseRulesJson(rulesToJson({ free_mail_domains: ['mailbox'] }))!
   assert.deepEqual(parsed.free_mail_domains, ['mailbox'])

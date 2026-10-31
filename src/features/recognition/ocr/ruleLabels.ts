@@ -9,9 +9,9 @@
  * РИСК: слова, которые бывают и в значениях («coil» в «Rebar in coil», «mill» в названии завода),
  * в подписи не входят — иначе строка значения считалась бы подписью; вместо них — «coil no», «bundle no».
  *
- * Кроме подписей полей здесь же — правила бирок канатов и производителя (`RULE_GROUPS`): списки, по которым
- * распознавание узнаёт бирку каната и её номер партии, свой склад и завод по названию или почте. Они хранятся
- * и правятся так же, как подписи полей.
+ * Здесь же — правила, которые не подписи полей (`NON_FIELD_RULE_KEYS`): по каким словам бирка считается канатом
+ * и как выглядит её номер партии, производитель своих бирок, общие слова в названиях заводов, бесплатная почта.
+ * В «Правилах» они в том же списке, что и подписи полей, и правятся так же.
  */
 import { foldText } from './foldText'
 
@@ -41,7 +41,7 @@ export const DEFAULT_RULE_LABELS: Readonly<Record<string, readonly string[]>> = 
   mark: ['mark', 'rolling mark', 'marking', 'size mark', 'size mark color', 'hengerlesi azonosito', 'azonosito', 'znak walcowniczy', 'kroczacy'],
   packing: ['packing', 'packaging', 'form of delivery', 'ambalare', 'ambalaj', 'csomagolas', 'opakowanie', 'упаковка'],
   origin_country: ['made in', 'country of origin', 'origin', 'produs in', 'producer country', 'tara de origine', 'kraj pochodzenia', 'szarmazasi hely', 'страна', 'країна'],
-  // ---- Правила бирок канатов и производителя (`RULE_GROUPS`) ----
+  // ---- Правила, которые не подписи полей (`NON_FIELD_RULE_KEYS`) ----
   /** Слова бирок канатов (PC strand): плавки на них нет — её место занимает номер партии или бухты (`strandTag.ts`). */
   strand_words: ['strand', 'toroane', 'litze', 'канат'],
   /**
@@ -57,23 +57,8 @@ export const DEFAULT_RULE_LABELS: Readonly<Record<string, readonly string[]>> = 
   free_mail_domains: ['gmail', 'googlemail', 'yahoo', 'ymail', 'outlook', 'hotmail', 'live', 'msn', 'icloud', 'aol', 'gmx', 'mail', 'yandex', 'rambler', 'inbox', 'list', 'ukr', 'proton', 'protonmail', 'zoho', 'abv', 'web'],
 }
 
-/**
- * Правила, которые не подписи полей, — по группам, как в «Правилах» (у каждой группы свой заголовок):
- * бирки канатов и производитель.
- */
-export const RULE_GROUPS = {
-  strand: ['strand_words', 'strand_lot_masks'],
-  producer: ['house_supplier', 'generic_supplier_words', 'free_mail_domains'],
-} as const
-
-/** Группа правил. */
-export type RuleGroup = keyof typeof RULE_GROUPS
-
-/** Ключ правила из группы. */
-export type SpecialRuleKey = (typeof RULE_GROUPS)[RuleGroup][number]
-
-/** Все правила из групп по порядку. */
-export const SPECIAL_RULE_KEYS: readonly SpecialRuleKey[] = Object.values(RULE_GROUPS).flat()
+/** Правила, которые не подписи полей: в «Правилах» — в том же списке, после подписей полей. */
+export const NON_FIELD_RULE_KEYS = ['strand_words', 'strand_lot_masks', 'house_supplier', 'generic_supplier_words', 'free_mail_domains'] as const
 
 /** Изменённые подписи по ключам полей (только отличающиеся от стандартных). */
 export type RuleLabels = Record<string, string[]>

@@ -9,12 +9,3 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-
-/* Заголовок группы правил («Подписи полей», «Бирки канатов», «Производитель»): над своим списком. */
-.rules-picker-heading {
-  display: block;
-  margin: 10px 0 -4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}

@@ -276,19 +276,14 @@
     "suppliersImportNotJson": "Alegeți un fișier .json — o listă salvată cu „Export”.",
     "suppliersImportTooLarge": "Fișierul este prea mare pentru o listă de furnizori (peste {{size}} MB).",
     "suppliersExportFailedTitle": "Exportul nu a reușit",
-    "rulesGroups": {
-      "fields": "Etichetele câmpurilor",
-      "strand": "Etichete de toroane (PC strand)",
-      "producer": "Producător"
-    },
     "rulesItemsEmpty": "gol — regula nu se aplică",
     "rulesItems": {
       "strand_words": {
-        "name": "Cuvinte pe etichetă",
+        "name": "Toron: cuvinte pe etichetă",
         "hint": "O etichetă cu acest cuvânt este de toron."
       },
       "strand_lot_masks": {
-        "name": "Număr de lot fără etichetă",
+        "name": "Toron: număr de lot fără etichetă",
         "hint": "Șablon: 9 cifră, A literă, X oricare."
       },
       "house_supplier": {
@@ -296,7 +291,7 @@
         "hint": "Producătorul pe etichetele de depozit fără fabrică."
       },
       "generic_supplier_words": {
-        "name": "Cuvinte generale în nume",
+        "name": "Cuvinte generale în numele fabricilor",
         "hint": "Doar după acest cuvânt fabrica nu se recunoaște."
       },
       "free_mail_domains": {
