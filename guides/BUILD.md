@@ -2,39 +2,55 @@
 
 # Building and setup
 
-A complete guide: from installing the tools to a signed APK, an iOS build and connecting recognition and storage. A short version is in the [README](../README.md#building).
+A complete guide: from cloning the repository and obtaining all keys to release builds for Android and iOS. A short version is in the [README](../README.md#building).
 
 ## Contents
 
 - [Requirements](#requirements)
-- [Web part](#web-part)
+- [Cloning and first run](#cloning-and-first-run)
 - [Android SDK from scratch (macOS)](#android-sdk-from-scratch-macos)
-- [APK](#apk)
-- [Signing](#signing)
+- [Signing key](#signing-key)
+- [Debug APK](#debug-apk)
 - [iOS](#ios)
+- [Release builds](#release-builds)
 - [Recognition: API keys and LM Studio](#recognition-api-keys-and-lm-studio)
 - [Network drive](#network-drive)
-- [Google Drive](#google-drive)
+- [Google Drive: OAuth clients](#google-drive-oauth-clients)
 - [Firebase Firestore](#firebase-firestore)
 - [Icon, splash screen and screenshots](#icon-splash-screen-and-screenshots)
 - [Logs and debugging](#logs-and-debugging)
 
 ## Requirements
 
-| Tool | Version |
-|---|---|
-| Node.js | 22+ |
-| JDK | 21 |
-| Android SDK | platform 36, build-tools 35 |
-| Xcode (iOS, macOS only) | 26+ |
-| Docker (optional) | for the local SMB server |
+| Tool | Version | Needed for |
+|---|---|---|
+| Node.js | 22+ | everything |
+| JDK | 21 | Android |
+| Android SDK | platform 36, build-tools 35 | Android |
+| Xcode | 26+ (macOS only) | iOS |
+| Apple Developer Program | paid account | iOS on devices, TestFlight, App Store |
+| Google account | — | Google Cloud (Drive), Firebase, Gemini |
+| Docker | optional | local SMB server for tests |
 
-## Web part
+## Cloning and first run
 
 ```bash
+git clone https://github.com/muhammad-halimov/somascan.git
+cd somascan
 npm install
 npm run dev        # web version, http://localhost:5173
+npm test           # all checks
 ```
+
+Branches: `main` — the mobile app Somascan; `desktop` — the desktop app Somasync (its own README).
+
+Files that are **not in git** and are created on each machine:
+
+| File | Contents | How to obtain |
+|---|---|---|
+| `android/local.properties` | path to the Android SDK | [step 6](#android-sdk-from-scratch-macos) |
+| `android/keystore/somascan.jks` | signing key | copy of the project key or a new one, see [Signing key](#signing-key) |
+| `android/keystore.properties` | key passwords | the same |
 
 | Command | What it does |
 |---|---|
@@ -49,7 +65,7 @@ npm run dev        # web version, http://localhost:5173
 | `npm run cap:run:android` | build + run on an Android emulator or device |
 | `npm run cap:run:ios` | build + run on the iOS simulator |
 
-After any change to the web code, `npm run build && npx cap sync` is required (all `cap:*` scripts do this themselves). App ID: `com.somascan.app` (`capacitor.config.ts`).
+After any change to the web code, `npm run build && npx cap sync` is required (all `cap:*` scripts do this themselves).
 
 ## Android SDK from scratch (macOS)
 
@@ -96,7 +112,7 @@ sdkmanager --sdk_root="$ANDROID_HOME" \
 avdmanager create avd -n somascan_pixel7 -k "system-images;android-35;google_apis;arm64-v8a" -d pixel_7 --force
 ```
 
-**6. `local.properties`** (in `.gitignore`: the SDK path differs between machines)
+**6. `local.properties`**
 
 ```bash
 echo "sdk.dir=$ANDROID_HOME" > android/local.properties
@@ -118,15 +134,46 @@ npx cap run android --target emulator-5554           # a specific device (id fro
 adb shell am start -n com.somascan.app/.MainActivity  # bring the app back to the foreground
 ```
 
-## APK
+## Signing key
+
+Debug and release builds are signed with one project key, so its SHA-1 is the same for every build and one Android OAuth client is sufficient. `android/app/build.gradle` reads the key from `android/keystore.properties`; without this file the debug build is signed with the machine's `~/.android/debug.keystore` and the release build is unsigned.
+
+**Option 1 — the existing project key.** `android/keystore/somascan.jks` and `android/keystore.properties` are obtained from the owner of the project and copied into the same paths. Key SHA-1:
+
+```
+AA:67:2E:F2:C4:DB:4C:CD:2A:EB:78:15:64:C5:C6:2A:FD:88:87:88
+```
+
+**Option 2 — a new key** (a fork or a separate installation). Apps signed with another key cannot be updated with it, and Google Drive requires a new Android OAuth client with the new SHA-1.
+
+```bash
+mkdir -p android/keystore
+keytool -genkeypair -v -keystore android/keystore/somascan.jks -alias somascan \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+`android/keystore.properties` (the path is relative to `android/`):
+
+```properties
+storeFile=keystore/somascan.jks
+storePassword=<keystore password>
+keyAlias=somascan
+keyPassword=<key password>
+```
+
+SHA-1 of the key:
+
+```bash
+keytool -list -v -keystore android/keystore/somascan.jks -alias somascan | grep SHA1
+cd android && ./gradlew signingReport
+```
+
+Both files are kept with a backup copy outside the repository: with a lost key the installed app cannot be updated.
+
+## Debug APK
 
 ```bash
 npm run build && npx cap sync android && cd android && ./gradlew assembleDebug && cd ..
-```
-
-File: `android/app/build/outputs/apk/debug/app-debug.apk`.
-
-```bash
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
@@ -135,48 +182,21 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```bash
 adb connect 192.168.1.1:5555      # device IP:port
 adb devices -l                    # the device must be listed
-npm run build && npx cap sync android && (cd android && ./gradlew assembleDebug)
 adb -s 192.168.1.1:5555 install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## Signing
-
-The app is signed with the shared project key, not with the machine's debug key:
-
-| File | Contents |
-|---|---|
-| `android/keystore/somascan.jks` | key, alias `somascan` |
-| `android/keystore.properties` | passwords |
-
-Both files are **not in git** (`android/.gitignore`). They are copied to another machine manually, and a backup copy is required: with a lost key the installed app cannot be updated, and Google Drive requires a new OAuth client. `app/build.gradle` signs both `assembleDebug` and `assembleRelease` with this key; without `keystore.properties` the debug build is signed with `~/.android/debug.keystore`.
-
-Key SHA-1 (for the Android OAuth client):
-
-```
-AA:67:2E:F2:C4:DB:4C:CD:2A:EB:78:15:64:C5:C6:2A:FD:88:87:88
-```
-
-Check:
-
-```bash
-cd android && ./gradlew signingReport
-apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk
-```
-
-A build with this key cannot be installed over a build signed with another key: the app is removed from the device first, together with its data (settings, API keys, queue).
+A build with one key cannot be installed over a build signed with another key: the app is removed from the device first, together with its data (settings, API keys, queue).
 
 ## iOS
 
-The `ios/` project is in the repository (the app target, the `UploadActivity` extension, local plugins); `npx cap add ios` is not required.
+The `ios/` project is in the repository (the app target, the `UploadActivity` extension, local plugins); `npx cap add ios` is not required. Dependencies come from Swift Package Manager (`CapApp-SPM`, AMSMB2, GoogleSignIn); CocoaPods is not used. Minimum iOS 16.2; Xcode 26+ is required (Swift 6.2, iOS 26 background task in `UploadBackground.swift`).
 
 ```bash
 npm run cap:ios          # build, sync and open the project in Xcode, then Run
 npm run cap:run:ios      # build and run on the simulator
 ```
 
-Xcode 26+ is required (Swift 6.2: the iOS 26 background task, `UploadBackground.swift`). Dependencies come from Swift Package Manager (`CapApp-SPM`, AMSMB2, GoogleSignIn); CocoaPods is not used. Minimum iOS 16.2.
-
-**Live Activity.** The `UploadActivity` extension (bundle ID `com.somascan.app.UploadActivity`) is signed with the same team as the app: Signing & Capabilities of the `UploadActivity` target.
+**Signing team.** The project uses team `PD62HNY4L2`. With another Apple account: Xcode → target `App` and target `UploadActivity` → Signing & Capabilities → Team. If the bundle IDs `com.somascan.app` and `com.somascan.app.UploadActivity` are registered to another team, both are changed to own ones (for example `com.example.somascan` and `com.example.somascan.UploadActivity`), and the iOS OAuth client is created for the new bundle ID.
 
 **`simctl` is not found** (`unable to find utility "simctl"`): `xcode-select` points to the Command Line Tools instead of Xcode.
 
@@ -190,11 +210,39 @@ xcrun simctl list devices available
 
 **Xcode 27: `cap run ios` fails on Simulator.app** (`Simulator.app does not exist`). The build succeeds, but `native-run` looks for `Simulator.app` at the old path. The project is run from Xcode (`npm run cap:ios`, then Run) or built with `xcodebuild` and installed with `xcrun simctl install` / `xcrun simctl launch`.
 
-**`Mach error -308 (server died)`** — CoreSimulator has stopped:
+**`Mach error -308 (server died)`** — CoreSimulator has stopped: `xcrun simctl shutdown all`.
+
+## Release builds
+
+**Version.** One version for the whole app, changed in three places together:
+
+| Where | Field |
+|---|---|
+| `package.json` | `version` (shown in “Advanced → About”) |
+| `android/app/build.gradle` | `versionName` and `versionCode` (+1 for every release) |
+| Xcode, targets `App` and `UploadActivity` | `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` |
+
+**Android.** Requires the [signing key](#signing-key).
 
 ```bash
-xcrun simctl shutdown all
+npm run build && npx cap sync android
+cd android
+./gradlew assembleRelease     # APK: app/build/outputs/apk/release/app-release.apk
+./gradlew bundleRelease       # AAB for Google Play: app/build/outputs/bundle/release/app-release.aab
+cd ..
+apksigner verify --print-certs android/app/build/outputs/apk/release/app-release.apk
 ```
+
+With Google Play App Signing, Google re-signs the app with its own key: its SHA-1 (Play Console → Test and release → App integrity) requires one more Android OAuth client.
+
+**iOS.**
+
+```bash
+npm run build && npx cap sync ios
+npm run cap:ios
+```
+
+In Xcode: device “Any iOS Device (arm64)” → Product → Archive → Distribute App → App Store Connect (TestFlight, App Store), Ad Hoc or Development. Distribution requires a paid Apple Developer Program account.
 
 ## Recognition: API keys and LM Studio
 
@@ -202,13 +250,13 @@ xcrun simctl shutdown all
 
 | Provider | Where to get the key | Where to enter it |
 |---|---|---|
-| Gemini | [Google AI Studio → API keys](https://aistudio.google.com/apikey) | “Settings → General → Recognition → AI models → Google → API key” |
-| Claude | [Claude Console → Settings → API keys](https://platform.claude.com/settings/keys) (key starts with `sk-ant-`) | the same, provider Anthropic |
-| OpenAI | [OpenAI Platform → API keys](https://platform.openai.com/api-keys) | the same, provider OpenAI |
-| LM Studio | no key required (optional, if the server requires one) | the same, provider LM Studio |
+| Gemini | [Google AI Studio → API keys](https://aistudio.google.com/apikey) → Create API key | “Settings → General → Recognition → AI models → Google → API key” |
+| Claude | [Claude Console → Settings → API keys](https://platform.claude.com/settings/keys) → Create Key (starts with `sk-ant-`) | the same, provider Anthropic |
+| OpenAI | [OpenAI Platform → API keys](https://platform.openai.com/api-keys) → Create new secret key | the same, provider OpenAI |
+| LM Studio | not required | the same, provider LM Studio |
 
 - The “AI models” tab is behind a lock: the first tap opens it, the second selects it. Photos are then sent to the provider.
-- The key is not part of the build: the project has no `.env` files, since everything substituted at build time can be read from the APK / IPA. The key is shown with the eye icon in the field.
+- The key is not part of the build: the project has no `.env` files, since everything substituted at build time can be read from the APK / IPA.
 - Without a key the list shows a preview of models from [models.dev](https://models.dev); a model is selected after the key is entered.
 
 **LM Studio** (a server in the plant network, data stays in the network):
@@ -216,9 +264,9 @@ xcrun simctl shutdown all
 1. Install [LM Studio](https://lmstudio.ai) 0.4 or later on a computer in the plant network (the app uses its REST API `/api/v0/models`, `/api/v1/models/load`, `/unload`).
 2. Download a vision model (type `vlm`).
 3. Start the server in the Developer section with access from the local network (Serve on Local Network); default port 1234.
-4. In the app: provider LM Studio, server address in short form (`192.168.1.14`; the `http://` scheme and port 1234 are added automatically). The model list shows a green dot for a loaded model; selecting a model loads it into LM Studio.
+4. In the app: provider LM Studio, server address in short form (`192.168.1.14`; the `http://` scheme and port 1234 are added automatically).
 
-Requests to LM Studio go through the native `NativeHttp` plugin, so CORS and the WebView block of `http://` do not apply. For cloud providers or a proxy with CORS enabled, the app origins must be allowed: `capacitor://localhost` (iOS) and `https://localhost` (Android); otherwise requests fail silently.
+Requests to LM Studio go through the native `NativeHttp` plugin, so CORS and the WebView block of `http://` do not apply. For cloud providers or a proxy with CORS enabled, the app origins must be allowed: `capacitor://localhost` (iOS) and `https://localhost` (Android).
 
 ## Network drive
 
@@ -248,24 +296,61 @@ docker run -d --name somascan-smb -p 1445:445 \
 
 In the app: server `10.0.2.2:1445` (Android emulator) or `127.0.0.1:1445` (iOS simulator), folder `Warehouse`, user `scanner`, password `scanner123`. A copy of the log or the empty log `tests/fixtures/Probe otel.xlsx` is placed into `share`.
 
-## Google Drive
+## Google Drive: OAuth clients
 
-**Google Cloud (once):**
+Google Drive needs no API key: the app signs in with Google, and access is granted to OAuth clients of a Google Cloud project — one for Android and one for iOS.
 
-1. In [Google Cloud Console](https://console.cloud.google.com/) create a project and enable **Google Drive API**.
-2. OAuth consent screen: type **Internal** for the company's Google Workspace accounts (no Google verification) or **External** with test users. Scope — `https://www.googleapis.com/auth/drive`: the app needs access to an existing folder, while `drive.file` covers only files created by the app.
-3. **Android OAuth client:** package `com.somascan.app` and the SHA-1 of the project key (see [Signing](#signing)). Debug and release are signed with this key, so one client is sufficient. A build signed with a machine's debug key requires its own client; Google Play requires one more client for the Play App Signing key.
-4. **iOS OAuth client:** bundle ID `com.somascan.app`. The client ID goes to `ios/App/App/Info.plist` → `GIDClientID`; the reversed ID goes to the same file in `CFBundleURLTypes` → `CFBundleURLSchemes` (`697326360300-xxxx.apps.googleusercontent.com` → `com.googleusercontent.apps.697326360300-xxxx`; in the console — the client's “iOS URL scheme”). With an empty `GIDClientID` sign-in reports that Google sign-in is not configured in this build. `CFBundleName` (“Somascan”) is the name iOS shows in the “… Wants to Use ‘accounts.google.com’ to Sign In” prompt.
-5. **Test users.** While an External consent screen is in “Testing” mode, only accounts from the Test users list can sign in; the warehouse accounts are added there.
+**1. Project and API.** [Google Cloud Console](https://console.cloud.google.com/) → project selector → New project. Then APIs & Services → Library → **Google Drive API** → Enable.
 
-**In the app:** “Settings → Storage → Google Drive → Sign in with Google”, then a folder link from the Drive address bar (or its ID; empty — the root of “My Drive”) and the table name. The table must already be in the folder; the `backups` folder is created on the first write.
+**2. Consent screen** (Google Auth Platform, formerly “OAuth consent screen”):
+
+- Branding: app name (Somascan), support e-mail.
+- Audience: **Internal** for the company's Google Workspace accounts (no Google verification) or **External**; for External in “Testing” mode the warehouse accounts are added to Test users.
+- Data access → Add or remove scopes → `https://www.googleapis.com/auth/drive`. The app needs access to an existing folder; `drive.file` covers only files created by the app itself.
+
+**3. Android client.** Google Auth Platform → Clients → Create client (or APIs & Services → Credentials → Create credentials → OAuth client ID):
+
+- Application type: **Android**;
+- Package name: `com.somascan.app`;
+- SHA-1: the SHA-1 of the [signing key](#signing-key).
+
+Nothing is copied into the project: Google identifies the app by the package name and the signature. A build signed with another key (the machine's debug key, Google Play App Signing) requires its own Android client with that SHA-1.
+
+**4. iOS client.** The same place, Create client:
+
+- Application type: **iOS**;
+- Bundle ID: `com.somascan.app` (or the own bundle ID, see [iOS](#ios)).
+
+After creation the console shows the **Client ID** (`…apps.googleusercontent.com`) and the **iOS URL scheme** (the reversed client ID, `com.googleusercontent.apps.…`). Both go into `ios/App/App/Info.plist`:
+
+```xml
+<key>GIDClientID</key>
+<string>697326360300-xxxx.apps.googleusercontent.com</string>
+...
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>com.googleusercontent.apps.697326360300-xxxx</string>
+    </array>
+  </dict>
+</array>
+```
+
+The repository already contains the client of project `697326360300`; with another project both values are replaced. With an empty `GIDClientID` sign-in reports that Google sign-in is not configured in this build. `CFBundleName` (“Somascan”) is the name iOS shows in the “… Wants to Use ‘accounts.google.com’ to Sign In” prompt.
+
+**5. In the app:** “Settings → Storage → Google Drive → Sign in with Google”, then a folder link from the Drive address bar (or its ID; empty — the root of “My Drive”) and the table name. The table must already be in the folder; the `backups` folder is created on the first write.
+
+The desktop app Somasync uses a separate client of type **Desktop app** in the same project: see the README of the `desktop` branch.
 
 ## Firebase Firestore
 
-Optional. It is used when the log is on a network drive and the phones write into a copy of it in Google Drive: the desktop app Somasync transfers the tags, and Firestore notifies it immediately after a write instead of a check every 15 s. Firestore stores only the time of the last notification.
+Optional. It is used when the log is on a network drive and the phones write into a copy of it in Google Drive: Somasync transfers the tags, and Firestore notifies it immediately after a write instead of a check every 15 s. Firestore stores only the time of the last notification. No `google-services.json` or `GoogleService-Info.plist` is needed: the app uses the REST API with a project ID and a Web API key.
 
-1. In the [Firebase console](https://console.firebase.google.com/) add Firebase to the Google Cloud project or create a new one.
-2. Firestore Database → create a database (Standard) and set the rules:
+1. [Firebase console](https://console.firebase.google.com/) → Create a project → select the existing Google Cloud project (the one with the OAuth clients) or create a new one. Google Analytics is not required.
+2. Build → Firestore Database → Create database → edition Standard, a location close to the plant (for example `europe-west3`), production mode.
+3. Firestore Database → Rules → replace with the rules below → Publish:
 
 ```
 rules_version = '2';
@@ -279,8 +364,8 @@ service cloud.firestore {
 }
 ```
 
-3. “Project settings” → project ID and Web API key (if there is no key, a web app is added to the project). The Web API key is not a secret: access is defined by the rules.
-4. On the phones: “Settings → Storage → Google Drive → Firebase Firestore” (behind a lock) — “Somasync notification”, “Firebase project ID”, “Web API key”. In Somasync: “Storage → Phones → Firebase Firestore notifications”.
+4. Project settings (gear icon) → General: **Project ID**. The **Web API key** is shown there after a web app is added: Your apps → Add app → Web (`</>`) → any name, without Firebase Hosting. The Web API key is not a secret: access is defined by the rules.
+5. On the phones: “Settings → Storage → Google Drive → Firebase Firestore” (behind a lock) — “Somasync notification”, “Firebase project ID”, “Web API key”. In Somasync: “Storage → Phones → Firebase Firestore notifications” with the same values.
 
 The free Firestore quota (50,000 reads and 20,000 writes a day) is more than sufficient.
 
@@ -315,4 +400,4 @@ npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe o
 | App log, iOS simulator | `xcrun simctl launch --console-pty <udid> com.somascan.app` |
 | Screenshot or video, iOS simulator | `xcrun simctl io <udid> screenshot` / `recordVideo` |
 
-The production build removes `console` calls; logs require a development build: `vite build --mode development`. In a development build (`npm run dev`, `vite build --mode development`) the stores are available in the browser console as `window.__somascan`. On Android 13+ the notification permission is requested when sending (once per launch); without it the upload works, but the notification is hidden.
+The production build removes `console` calls; logs require a development build: `vite build --mode development`. In a development build the stores are available in the browser console as `window.__somascan`. On Android 13+ the notification permission is requested when sending (once per launch); without it the upload works, but the notification is hidden.
