@@ -1,4 +1,4 @@
-import type { AriaRole, ReactNode } from 'react'
+import type { AriaRole, ReactNode, Ref } from 'react'
 import './List.css'
 
 /** Свойства `List`. */
@@ -13,12 +13,15 @@ export interface ListProps {
   disabled?: boolean
   /** Дополнительный CSS-класс (например, для ограничения высоты). */
   className?: string
+  /** Элемент списка (плавная перестановка строк — `useListReorder`). */
+  ref?: Ref<HTMLUListElement>
 }
 
 /** Плоский список в стиле Material: строки без карточек, разделённые тонкими линиями. */
-export function List({ children, role, label, disabled = false, className = '' }: ListProps) {
+export function List({ children, role, label, disabled = false, className = '', ref }: ListProps) {
   return (
     <ul
+      ref={ref}
       className={`list${disabled ? ' is-disabled' : ''}${className ? ` ${className}` : ''}`}
       role={role}
       aria-label={label}
@@ -57,13 +60,15 @@ export interface ListItemProps {
   controls?: string
   /** Своя кнопка справа, вне строки-кнопки (например, замок): её нажатие не нажимает строку. */
   action?: ReactNode
+  /** Ключ строки для плавной перестановки (`useListReorder`). */
+  reorderKey?: string
 }
 
 /**
  * Строка списка. С `onClick` вся строка — кнопка; без него — просто строка
  * (в `trailing` можно положить свою кнопку, например «удалить»).
  */
-export function ListItem({ primary, secondary, secondaryTone = 'default', leading, trailing, selected = false, disabled = false, onClick, itemRole, className = '', expanded, controls, action }: ListItemProps) {
+export function ListItem({ primary, secondary, secondaryTone = 'default', leading, trailing, selected = false, disabled = false, onClick, itemRole, className = '', expanded, controls, action, reorderKey }: ListItemProps) {
   const classes = `list-item${selected ? ' is-selected' : ''}${className ? ` ${className}` : ''}`
   const content = (
     <>
@@ -77,9 +82,9 @@ export function ListItem({ primary, secondary, secondaryTone = 'default', leadin
   )
 
   const aside = action && <span className="list-item-action">{action}</span>
-  if (!onClick) return <li className={classes}>{content}{aside}</li>
+  if (!onClick) return <li className={classes} data-reorder-key={reorderKey}>{content}{aside}</li>
   return (
-    <li role="none" className={action ? 'list-item-row' : undefined}>
+    <li role="none" className={action ? 'list-item-row' : undefined} data-reorder-key={reorderKey}>
       <button
         type="button"
         role={itemRole}

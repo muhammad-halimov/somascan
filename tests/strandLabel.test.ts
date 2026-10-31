@@ -11,7 +11,7 @@ import { createDefaultLabelFields } from '../src/features/recognition/label/labe
 import { buildLabelPrompt } from '../src/features/recognition/label/labelPrompt'
 import { extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrPage } from '../src/features/recognition/ocr/ocrTypes'
-import { findStrandSize } from '../src/features/recognition/ocr/valueReaders'
+import { findStrandLot, findStrandSize } from '../src/features/recognition/ocr/valueReaders'
 
 /** Поля по умолчанию (производитель, размер, плавка, вес), читаемые с фото. */
 const FIELDS = createDefaultLabelFields().filter((field) => field.enabled && !field.manual)
@@ -90,4 +90,20 @@ test('модели: правило 10 промпта по умолчанию и 
   const prompt = buildLabelPrompt('', FIELDS)
   assert.match(prompt, /10\. Tags of prestressed concrete strand/)
   assert.match(prompt, /"heat" — .*Prestressed strand tags .*LOT NO.*Coil Nr\./)
+})
+
+test('BPM: бледную подпись «LOT NO» OCR не узнал — номер партии узнаётся по виду (дата ГГММДД и дефисы)', () => {
+  const label = read([
+    ['BPM', 0.3, 0.05],
+    ['PRESTRESSED CONCRETE STRAND - PC STRAND', 0.1, 0.15],
+    ['NOMINAL DIAMETER, mm', 0.15, 0.36], ['15.2', 0.6, 0.36],
+    ['WEIGHT, KG', 0.15, 0.4], ['2845', 0.6, 0.4],
+    ['COIL NO.', 0.15, 0.48], ['6', 0.62, 0.48],
+    ['1OT N0', 0.15, 0.6], ['260909G392 - 06 - 2', 0.55, 0.6],
+  ])
+  assert.equal(label.heat, '260909G392-06-2')
+  assert.equal(findStrandLot('1OT N0. 260909G392-06-2'), '260909G392-06-2')
+  assert.equal(findStrandLot('09/09/2026'), null)
+  assert.equal(findStrandLot('ST 009-2011'), null)
+  assert.equal(findStrandLot('Y1860T7-R1-F1-C1'), null)
 })

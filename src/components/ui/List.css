@@ -148,3 +148,10 @@
 .list-item.is-locked .list-item-trailing {
   color: var(--text);
 }
+
+/* Строка, которая переезжает дальше всех при перестановке (`useListReorder`): поверх соседей, с фоном списка. */
+.list > li.is-reordering {
+  position: relative;
+  z-index: 1;
+  background: inherit;
+}

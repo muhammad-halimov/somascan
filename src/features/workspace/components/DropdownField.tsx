@@ -3,6 +3,7 @@ import { ArrowDropDownIcon, CheckIcon, ChevronDownIcon, PencilIcon } from '@/com
 import { List, ListItem } from '@/components/ui/List'
 import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { useHeightTransition } from '@/hooks/useHeightTransition'
+import { useListReorder } from '@/hooks/useListReorder'
 import { selectedFirst } from '@/lib/list/selectedFirst'
 import { matchesSearch } from '@/lib/text/searchText'
 // Меню и уголок — те же, что у шторок настроек (`Disclosure`): поверхность меню Material, список iOS.
@@ -75,14 +76,14 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
   const [isOpen, setIsOpen] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [query, setQuery] = useState('')
-  // Порядок вариантов — на момент открытия: выбранный — первым, остальные — на своих местах (`selectedFirst`);
-  // выбор не переставляет строки под пальцем и пока список сворачивается.
-  const [listed, setListed] = useState(options)
   useHeightTransition(menuRef, isOpen)
+  const option = options.find((candidate) => candidate.value === (selected ?? value))
+  // Выбранный — первым, остальные — на своих местах (`selectedFirst`); перестановка — плавная.
+  const listed = selectedFirst(options, (candidate) => candidate.value === option?.value)
+  useListReorder(menuRef, listed.map((candidate) => candidate.value).join('|'))
   const hasSearch = searchable && listed.length >= LIST_SEARCH_MIN_ITEMS
   const shown = hasSearch ? listed.filter((candidate) => matchesSearch(candidate.label, query)) : listed
 
-  const option = options.find((candidate) => candidate.value === (selected ?? value))
   const missing = value.trim() === '' && (!option || option.unset === true)
   const text = option ? option.label : missing ? placeholder : value
 
@@ -91,11 +92,7 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
     setIsOpen(false)
     setQuery('')
   }
-  const toggle = () => {
-    if (isOpen) return close()
-    setListed(selectedFirst(options, (candidate) => candidate.value === option?.value))
-    setIsOpen(true)
-  }
+  const toggle = () => (isOpen ? close() : setIsOpen(true))
   const select = (next: string) => {
     onChange(next)
     close()
@@ -186,6 +183,7 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
               return (
                 <ListItem
                   key={candidate.value}
+                  reorderKey={candidate.value}
                   itemRole="radio"
                   className={candidate.unset ? 'is-unset' : undefined}
                   primary={candidate.label}

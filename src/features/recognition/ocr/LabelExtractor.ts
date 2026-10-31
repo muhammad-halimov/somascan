@@ -25,7 +25,7 @@ import { companyDomains, companyFromDomain, supplierByDomain } from './domainPro
 import { crossCheckHeat } from './heatCheck'
 import { findSupplier } from './supplierMatch'
 import {
-  findApproval, findCode39Text, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findStrandSize, findWeightLine,
+  findApproval, findCode39Text, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findStrandLot, findStrandSize, findWeightLine,
 } from './valueReaders'
 
 /** Что разбирать. */
@@ -398,7 +398,8 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
 
   /**
    * Бирка каната (PC strand: «Prestressed concrete strand», «pc-strand») плавки не пишет — в журнале на её месте
-   * номер партии («LOT NO. 260909G392-06-2»), а без него — номер бухты («Coil Nr. 26D0222»). Номер бухты в партии
+   * номер партии («LOT NO. 260909G392-06-2»; бледную подпись OCR может не узнать — тогда номер партии узнаётся
+   * по виду, `findStrandLot`), а без него — номер бухты («Coil Nr. 26D0222»). Номер бухты в партии
    * («COIL NO. 6») — не номер: берутся только значения от пяти букв и цифр с цифрой.
    */
   const strand = allLines.some((line) => STRAND_WORDS.test(line.folded.text))
@@ -409,7 +410,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
         && candidate.value.replace(/[^\p{L}\d]/gu, '').length >= 5)
       .sort((a, b) => b.score - a.score)
     const isLot = (candidate: Candidate) => /lot/.test(allLines[candidate.label]?.folded.text ?? '')
-    return (ids.find(isLot) ?? ids[0])?.value ?? null
+    return ids.find(isLot)?.value ?? topDown.map(findStrandLot).find(Boolean) ?? ids[0]?.value ?? null
   })()
 
   /**

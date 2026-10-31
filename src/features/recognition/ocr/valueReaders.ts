@@ -366,6 +366,16 @@ export function findStrandSize(text: string): string | null {
 }
 
 /**
+ * Номер партии каната без подписи (бледную «LOT NO» OCR не узнал или прочёл вместе со значением): слово — код,
+ * который начинается с даты производства ГГММДД и идёт через дефисы: «260909G392-06-2» (BPM). Пробелы вокруг
+ * дефисов убираются.
+ */
+export function findStrandLot(text: string): string | null {
+  const words = latinize(cleanValue(text)).toUpperCase().replace(/\s*[-–—]\s*/g, '-').split(/\s+/)
+  return words.map((word) => word.replace(/[.,;:]+$/, '')).find((word) => /^\d{6}[A-Z0-9]{2,8}(?:-[A-Z0-9]{1,4}){1,3}$/.test(word)) ?? null
+}
+
+/**
  * Вес без подписи: строка целиком — вес в килограммах с единицей («2066 kg», «1956.240 KGS») в пределах
  * веса бунта или пачки.
  */
