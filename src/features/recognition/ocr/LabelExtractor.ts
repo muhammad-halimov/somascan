@@ -9,7 +9,7 @@
  * 4. Производитель сверяется со списком известных поставщиков; изделие, марка стали и размер с «Ø»
  *    находятся и без подписи; коды (QR, DataMatrix) исправляют похожие знаки в номерах.
  * 5. Бирки канатов (PC strand) плавки не пишут: её место занимает номер партии («LOT NO»), иначе бухты
- *    («Coil Nr.»), а диаметр без подписи берётся из обозначения («Y1860 S7-12,9-F1-C1-R1» → 12,9 мм).
+ *    («Coil Nr.»), а диаметр без подписи берётся из обозначения («Y1860 S7-12,9-F1-C1-R1» → 12,9 мм) — `strandTag.ts`.
  *
  * Результат — в том же виде, что ответ модели: поля и оценка фото.
  */
@@ -23,9 +23,10 @@ import {
 } from './pageLayout'
 import { companyDomains, companyFromDomain, supplierByDomain } from './domainProducer'
 import { crossCheckHeat } from './heatCheck'
+import { findStrandSize, isStrandTag, strandHeat } from './strandTag'
 import { findSupplier } from './supplierMatch'
 import {
-  findApproval, findCode39Text, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findStrandLot, findStrandSize, findWeightLine,
+  findApproval, findCode39Text, findDuctilityClass, findGrade, findMarkedSize, findOrphanHeat, findProduct, findSoleApproval, findWeightLine,
 } from './valueReaders'
 
 /** Что разбирать. */
@@ -93,8 +94,6 @@ interface Candidate {
   line: number | null
   /** Строка, из которой прочитано значение (строка значения или подписи). */
   source: number
-  /** Строка подписи. */
-  label: number
 }
 
 /** Насколько сильнее кандидат, похожий на значение поля как две капли воды. */
@@ -203,9 +202,6 @@ const TURN_PENALTY = 2
  */
 const HOUSE_SUPPLIER = 'SOMACO'
 
-/** Слова канатов в сложенном тексте: «PC strand», «toroane» (рум.), «Litze» (нем.), «канат». */
-const STRAND_WORDS = /strand|toroan|litze|канат/
-
 /** Разбор страницы, координаты строк которой повёрнуты на `turns` четвертей оборота. */
 function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rules: readonly FieldRule[], turns: number): Extraction {
   const ruleOf = new Map(rules.map((rule) => [rule.key, rule]))
@@ -276,7 +272,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (value === null || value === '') return
     const strong = rule.strong?.(value) ? STRONG_BONUS : 0
     const source = valueLine ?? label
-    candidates.push({ key: rule.key, value, score: (baseScore + strong) * confidenceFactor(source), line: valueLine?.index ?? null, source: source.index, label: label.index })
+    candidates.push({ key: rule.key, value, score: (baseScore + strong) * confidenceFactor(source), line: valueLine?.index ?? null, source: source.index })
   }
 
   for (const { line, groups } of labelLines) {
@@ -396,22 +392,9 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
   const code39Texts = [...codes.filter((code) => /code\s*39/i.test(code.format)).map((code) => `*${code.text}*`), ...topDown]
   const code39Heat = heatCaptioned ? null : code39Texts.map(findCode39Text).find((text) => text !== null) ?? null
 
-  /**
-   * Бирка каната (PC strand: «Prestressed concrete strand», «pc-strand») плавки не пишет — в журнале на её месте
-   * номер партии («LOT NO. 260909G392-06-2»; бледную подпись OCR может не узнать — тогда номер партии узнаётся
-   * по виду, `findStrandLot`), а без него — номер бухты («Coil Nr. 26D0222»). Номер бухты в партии
-   * («COIL NO. 6») — не номер: берутся только значения от пяти букв и цифр с цифрой.
-   */
-  const strand = allLines.some((line) => STRAND_WORDS.test(line.folded.text))
-  const strandHeat = (() => {
-    if (!strand || heatCaptioned) return null
-    const ids = candidates
-      .filter((candidate) => candidate.key === 'batch' && typeof candidate.value === 'string' && /\d/.test(candidate.value)
-        && candidate.value.replace(/[^\p{L}\d]/gu, '').length >= 5)
-      .sort((a, b) => b.score - a.score)
-    const isLot = (candidate: Candidate) => /lot/.test(allLines[candidate.label]?.folded.text ?? '')
-    return ids.find(isLot)?.value ?? topDown.map(findStrandLot).find(Boolean) ?? ids[0]?.value ?? null
-  })()
+  // Бирка каната плавки не пишет: на её месте номер партии или бухты (`strandTag.ts`).
+  const strand = isStrandTag(allLines.map((line) => line.folded.text))
+  const strandLot = strand && !heatCaptioned ? strandHeat(candidates.filter((candidate) => candidate.key === 'batch'), topDown) : null
 
   /**
    * Плавка, сверенная с её повторами на бирке (серийный номер, код пачки, коды): ржавчина на строке плавки
@@ -435,7 +418,7 @@ function extractTurned({ page, codes, fields, suppliers }: ExtractionInput, rule
     if (value === null && field.key === 'grade') value = firstOf(findGrade)
     if (value === null && field.key === 'size') value = firstOf(findMarkedSize) ?? (strand ? topDown.map(findStrandSize).find(Boolean) ?? null : null)
     if (value === null && field.key === 'technical_approval') value = firstOf(findApproval)
-    if (value === null && field.key === 'heat') value = strandHeat ?? firstOf(findOrphanHeat, orphanHeatLines) ?? code39Heat
+    if (value === null && field.key === 'heat') value = strandLot ?? firstOf(findOrphanHeat, orphanHeatLines) ?? code39Heat
     if (value === null && field.key === 'weight_kg') value = firstOf(findWeightLine)
     // Марка без класса пластичности («CALITATE OTEL: B500»), а класс напечатан отдельной строкой
     // («CLASA DUCTILITATE C») — дописывается.

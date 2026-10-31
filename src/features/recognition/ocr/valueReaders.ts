@@ -355,39 +355,6 @@ export function findMarkedSize(text: string): string | null {
 }
 
 /**
- * Диаметр каната (PC strand) из обозначения по EN 10138-3, когда подписи диаметра нет: «Y1860 S7-12,9-F1-C1-R1»
- * (7 проволок, 12,9 мм), «Y1860S7-15,2», «S3-6,5». Пишется как напечатано: «12,9 mm».
- */
-export function findStrandSize(text: string): string | null {
-  const match = /(?:^|[^\p{L}\d])(?:Y\d{4}\s*)?S[237]G?\s*[-–—]\s*(\d{1,2}[.,]\d{1,2})(?!\d)/iu.exec(text)
-  if (!match) return null
-  const size = Number.parseFloat(match[1]!.replace(',', '.'))
-  return size >= 4 && size <= 20 ? `${match[1]} mm` : null
-}
-
-/** Номер партии каната: дата производства ГГММДД, код и группы через дефисы («260909G392-06-2»). */
-const STRAND_LOT = /^\d{6}[A-Z0-9]{2,8}(?:-[A-Z0-9]{1,4}){1,3}$/
-
-/** Буквы, которые OCR ставит вместо цифр, — в дате номера партии. */
-const DATE_LOOKALIKES: Readonly<Record<string, string>> = { O: '0', Q: '0', D: '0', I: '1', L: '1', '|': '1', S: '5', B: '8', Z: '2' }
-
-/**
- * Номер партии каната без подписи (бледную «LOT NO» OCR не узнал или прочёл вместе со значением): слово — код,
- * который начинается с даты производства ГГММДД и идёт через дефисы: «260909G392-06-2» (BPM). Мелкий бледный
- * шрифт OCR портит: пробелы вокруг дефисов и тире, подчёркивание или тильда вместо дефиса, буквы вместо цифр
- * в дате («26O9O9G392-06-2»), пробел посреди номера («260909G 392-06-2» — слово берётся вместе с соседним).
- */
-export function findStrandLot(text: string): string | null {
-  const words = latinize(cleanValue(text)).toUpperCase().replace(/\s*[-–—_~]\s*/g, '-').split(/\s+/)
-    .map((word) => word.replace(/[.,;:]+$/, ''))
-  for (const word of [...words, ...words.slice(1).map((next, index) => words[index] + next)]) {
-    const fixed = word.slice(0, 6).replace(/[OQDILSBZ|]/g, (char) => DATE_LOOKALIKES[char]!) + word.slice(6)
-    if (STRAND_LOT.test(fixed)) return fixed
-  }
-  return null
-}
-
-/**
  * Вес без подписи: строка целиком — вес в килограммах с единицей («2066 kg», «1956.240 KGS») в пределах
  * веса бунта или пачки.
  */

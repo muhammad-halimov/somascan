@@ -11,7 +11,7 @@ import { createDefaultLabelFields } from '../src/features/recognition/label/labe
 import { buildLabelPrompt } from '../src/features/recognition/label/labelPrompt'
 import { extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrPage } from '../src/features/recognition/ocr/ocrTypes'
-import { findStrandLot, findStrandSize } from '../src/features/recognition/ocr/valueReaders'
+import { findStrandLot, findStrandSize } from '../src/features/recognition/ocr/strandTag'
 
 /** Поля по умолчанию (производитель, размер, плавка, вес), читаемые с фото. */
 const FIELDS = createDefaultLabelFields().filter((field) => field.enabled && !field.manual)
