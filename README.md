@@ -65,8 +65,8 @@ Each run is shown on the Home tab as a card with the outcome: Written, Plan only
 The tables must already exist; the app does not create them. Each storage has its own set of files.
 
 - **This computer** — paths to the tables.
-- **Network drive** (SMB) — account and location; the share is connected with system tools (`net use` on Windows, `mount volume` on macOS). The password is stored encrypted (DPAPI / Keychain).
-- **Google Drive** — Google account sign-in in the system browser (OAuth, PKCE), a folder link and table names. The tables are processed in a local copy: only changed tables are downloaded, the same `<table>.lock` locks as in the mobile app are used, the previous version is saved to `backups` on the server. A table changed in Drive during a run is not overwritten.
+- **Network drive** (SMB) — account (domain, user, password) and location (server, shared folder). “Test connection” connects the share with system tools: Windows — `net use \\server\share` (paths `\\server\share\…`), macOS — `mount volume smb://…` (the share appears in `/Volumes`); then the tables are picked with the folder icon. The password is stored encrypted (DPAPI / Keychain).
+- **Google Drive** — Google account sign-in in the system browser (OAuth for desktop apps: the answer returns to `http://127.0.0.1:<port>`, PKCE), a folder link and table names. Without an OAuth client, “Sign in with Google” reports that Google Drive is not set up. The tables are processed in a local copy (`<app data>/drive/<folder id>/`): only changed tables are downloaded, the same `<table>.lock` locks as in the mobile app are used, the previous version is saved to `backups` on the server. A table changed in Drive during a run is not overwritten.
 
 Google Cloud setup (one-time; the project and the consent screen are the same as for the mobile app, see its [build guide](https://github.com/muhammad-halimov/somascan/blob/main/guides/BUILD.md#google-drive-oauth-clients)):
 
@@ -84,7 +84,16 @@ If the tables are on this computer or a network drive and the phones have no acc
 - While Probe is open in Excel, the transfer is postponed and the copy is not replaced.
 - A tag whose heat is already in Probe is skipped with the reason shown in the journal.
 
-**Firebase Firestore** (optional, behind a lock) — instant transfer: after writing, the phone updates the document `somascan-bells/<channel>`, and the app starts a check immediately. Firestore stores only the time of the last notification. Setup: Firebase project → Firestore Database → the rules below → project ID and Web API key on the computer and on the phones.
+**Firebase Firestore** (optional, behind a lock) — instant transfer: after writing, the phone updates the document `somascan-bells/<channel>` (the channel is the SHA-256 of “folder id/copy name”, the same on the phone and in the app without a separate setting), and the app starts a check immediately. Firestore stores only the time of the last notification. Checking the copy remains the fallback.
+
+Setup (one-time; details with screens — in the [build guide of the mobile app](https://github.com/muhammad-halimov/somascan/blob/main/guides/BUILD.md#firebase-firestore)):
+
+1. [Firebase console](https://console.firebase.google.com/) → add Firebase to the Google Cloud project or create a new one.
+2. Firestore Database → create a database (Standard) → Rules: the rules below → Publish.
+3. Project settings → General: project ID and Web API key (without a key — Add app → Web). The Web API key is not a secret: access is defined by the rules.
+4. The ID and the key are entered on the computer (“Storage → Phones → Firebase Firestore notifications”) and on the phones (“Settings → Storage → Google Drive → Firebase Firestore”).
+
+The free quota (50,000 reads and 20,000 writes a day) is more than sufficient.
 
 ```
 rules_version = '2';
@@ -138,15 +147,15 @@ npm start          # build and run from the project folder
 
 | Command | Purpose |
 |---|---|
-| `npm run build` | type check, window, engine and main process build |
+| `npm run build` | `tsc -b` + window (`dist/`) + engine (`dist-engine/`) + main process (`dist-host/`) |
 | `npm test` | all checks (`node:test` + `tsx`) |
 | `npm run dist` / `dist:x64` | macOS (Apple Silicon / Intel) → `release/` |
 | `npm run dist:win` | Windows x64 → `release/Somasync-<version>-win-x64.zip` |
 
 - **Windows:** the archive is unpacked into any folder, the app is started with `Somasync\Somasync.exe`; no installation is required.
-- **macOS:** after unpacking, `install-macos.command` next to `Somasync.app` copies the app to Applications, removes the quarantine flag and signs it locally.
+- **macOS:** after unpacking, Somasync is closed (Cmd+Q) and `install-macos.command` next to `Somasync.app` is started (the first time: right-click → Open); it copies the app to Applications, removes the quarantine flag and signs it locally. Changes in the project reach the installed app only this way.
 
-Tests run on synthetic workbooks; the plant's real files are not part of the project.
+Tests run on synthetic workbooks (`tests/fixtures.ts`) and the empty log of the mobile app (`tests/fixtures/Probe otel.xlsx`); Google Drive is tested on a fake server, sign-in — through `127.0.0.1` with a fake token server (`tests/drive.test.ts`), the phone bridge — with the real engine (`tests/phoneBridge.test.ts`, `tests/bridge.test.ts`). The plant's real files are not part of the project: before releasing a new engine version, the old and new versions are run on copies of the real files and the journal and the result are compared.
 
 ## Structure
 
