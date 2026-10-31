@@ -2,7 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { applyNativeSystemBars, applyNativeThemeMode } from '@/lib/theme/nativeTheme'
-import { applyTheme, DARK_SCHEME_QUERY, resolveTheme, systemPrefersDark, type Theme, type ThemePreference } from '@/lib/theme/theme'
+import { changeTheme, DARK_SCHEME_QUERY, resolveTheme, systemPrefersDark, type Theme, type ThemePreference } from '@/lib/theme/theme'
 
 /** Подписка на смену системной темы (для `useSyncExternalStore`). */
 function subscribeToSystemTheme(onChange: () => void) {
@@ -21,8 +21,8 @@ export function useResolvedTheme(preference: ThemePreference): Theme {
 }
 
 /**
- * Применяет тему из настроек: веб-часть (`data-theme`), нативные диалоги, фон и значки
- * системных панелей. Заодно скрывает сплэш-экран после первого кадра.
+ * Применяет тему из настроек: веб-часть (`data-theme`, смена — плавная, `changeTheme`), нативные диалоги, фон
+ * и значки системных панелей. Заодно скрывает сплэш-экран после первого кадра.
  * Самая первая установка темы делается ещё раньше — скриптом в `index.html`.
  */
 export function useTheme(preference: ThemePreference) {
@@ -34,10 +34,11 @@ export function useTheme(preference: ThemePreference) {
   }, [preference])
 
   useEffect(() => {
-    applyTheme(theme)
-    // Цвет фона берём из токенов уже после смены темы, чтобы панель совпала с шапкой.
-    const background = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
-    applyNativeSystemBars(theme, background)
+    changeTheme(theme, () => {
+      // Цвет фона берём из токенов уже после смены темы, чтобы панель совпала с шапкой.
+      const background = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+      applyNativeSystemBars(theme, background)
+    })
   }, [theme])
 
   // Сплэш убираем, только когда первый кадр уже нарисован, — без белой вспышки.

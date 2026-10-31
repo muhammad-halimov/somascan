@@ -538,6 +538,7 @@ The web view is drawn over the whole screen; cutouts and bars are handled by CSS
 - `viewport-fit=cover` in the meta viewport (`index.html`), the insets come from `--safe-top/right/bottom/left` (`src/styles/tokens.css`: `env(safe-area-inset-*)` or the `--safe-area-inset-*` variables from Capacitor);
 - Android: the built-in `SystemBars` plugin (`insetsHandling: 'css'`). On WebView 140+ the page is drawn under the system bars, and their heights arrive in CSS; on older WebViews Capacitor itself places the page between the bars (the insets are then 0);
 - the colour of the status bar and the navigation bar follows the theme — the local `NativeTheme` plugin (`src/lib/theme/`).
+- switching the theme is smooth: the old frame dissolves into the new one in 300 ms (View Transitions API; without it — the colours change over the same time); the first setting and “reduce motion” — without animation (`changeTheme`, `src/lib/theme/theme.ts`).
 
 ### CORS for iOS / Android
 

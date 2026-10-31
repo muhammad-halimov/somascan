@@ -128,3 +128,27 @@
 .anim-fade {
   animation: backdrop-enter 200ms ease-out backwards;
 }
+
+/*
+ * Плавная смена темы (`changeTheme` в `lib/theme/theme.ts`, класс `is-theme-changing`, длительность — `--theme-fade`):
+ * с View Transitions старый кадр растворяется в новом, без них — цвета всех элементов переходят на время смены.
+ */
+:root.is-theme-changing::view-transition-old(root),
+:root.is-theme-changing::view-transition-new(root) {
+  animation-duration: var(--theme-fade, 300ms);
+}
+
+@supports not (view-transition-name: none) {
+  :root.is-theme-changing,
+  :root.is-theme-changing *,
+  :root.is-theme-changing *::before,
+  :root.is-theme-changing *::after {
+    transition:
+      background-color var(--theme-fade, 300ms) ease,
+      color var(--theme-fade, 300ms) ease,
+      border-color var(--theme-fade, 300ms) ease,
+      fill var(--theme-fade, 300ms) ease,
+      stroke var(--theme-fade, 300ms) ease,
+      box-shadow var(--theme-fade, 300ms) ease !important;
+  }
+}

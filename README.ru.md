@@ -538,6 +538,7 @@ xcrun simctl list devices available
 - `viewport-fit=cover` в meta viewport (`index.html`), отступы — через `--safe-top/right/bottom/left` (`src/styles/tokens.css`: `env(safe-area-inset-*)` или переменные `--safe-area-inset-*` от Capacitor);
 - Android: встроенный плагин `SystemBars` (`insetsHandling: 'css'`). На WebView 140+ страница рисуется под системными панелями, а их высоты приходят в CSS; на более старых WebView Capacitor сам ставит страницу между панелями (отступы тогда 0);
 - цвет статус-бара и панели навигации под тему — локальный плагин `NativeTheme` (`src/lib/theme/`).
+- смена темы плавная: старый кадр растворяется в новом за 300 мс (View Transitions API; без него — за то же время меняются цвета); первая установка и «уменьшить движение» — без анимации (`changeTheme`, `src/lib/theme/theme.ts`).
 
 ### CORS для iOS / Android
 
