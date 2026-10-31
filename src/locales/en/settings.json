@@ -276,20 +276,24 @@
     "suppliersImportNotJson": "Choose a .json file — a list saved with “Export”.",
     "suppliersImportTooLarge": "The file is too large for a supplier list (over {{size}} MB).",
     "suppliersExportFailedTitle": "Couldn't export",
-    "rulesSpecial": "Special rules",
-    "rulesSpecialEmpty": "empty — the rule is off",
-    "rulesSpecialItems": {
+    "rulesGroups": {
+      "fields": "Field captions",
+      "strand": "Strand tags (PC strand)",
+      "producer": "Producer"
+    },
+    "rulesItemsEmpty": "empty — the rule is off",
+    "rulesItems": {
       "strand_words": {
-        "name": "Strand tag words",
+        "name": "Words on the tag",
         "hint": "A tag with such a word is a strand tag."
       },
       "strand_lot_masks": {
-        "name": "Strand lot number",
+        "name": "Lot number without a caption",
         "hint": "Template: 9 digit, A letter, X any."
       },
       "house_supplier": {
-        "name": "Producer of own tags",
-        "hint": "Warehouse tags without a mill name."
+        "name": "Own warehouse",
+        "hint": "Producer on warehouse tags without a mill name."
       },
       "generic_supplier_words": {
         "name": "Generic words in names",

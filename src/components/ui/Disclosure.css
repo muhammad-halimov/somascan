@@ -124,7 +124,17 @@
 
 /* Содержимое — поверхность меню: отступ 4 px от поля, скругление, мягкая тень (уровень 2). */
 :root:not([data-platform='ios']) .disclosure-inner {
-  padding: 4px 0 8px;
+  padding: 4px 0 var(--menu-shadow-reach);
+}
+
+/*
+ * Тень меню выходит за поверхность (до 10 px вниз и 8 px в стороны), а шторка обрезает содержимое ради анимации
+ * высоты: область обрезки шире поверхности на размах тени — ширина меню та же, тень не срезана.
+ */
+:root:not([data-platform='ios']) .disclosure-content {
+  --menu-shadow-reach: 12px;
+  margin-inline: calc(-1 * var(--menu-shadow-reach));
+  padding-inline: var(--menu-shadow-reach);
 }
 
 :root:not([data-platform='ios']) .disclosure-inner > .list {

@@ -16,8 +16,9 @@ import {
   parseRulesJson,
   ruleLabelsFor,
   RULES_FILE_NAME,
+  RULE_GROUPS,
   rulesToJson,
-  SPECIAL_RULE_KEYS,
+  type RuleGroup,
   type RuleLabels,
 } from '@/features/recognition/ocr/ruleLabels'
 import { MAX_TEXT_FILE_BYTES, PickedFileError, pickTextFile, shareTextFile } from '@/lib/platform/files'
@@ -61,8 +62,8 @@ interface RuleEntry {
  * Импорт заменяет подписи полей, которые есть в файле, остальные не трогает.
  * Свои поля ищутся по их названиям («Поля»), здесь их нет.
  *
- * Ниже подписей полей — особые правила (`SPECIAL_RULE_KEYS`): слова бирок канатов, шаблоны номера партии,
- * производитель своих бирок, общие слова в названиях заводов, бесплатная почта; правятся так же.
+ * Ниже подписей полей — группы правил (`RULE_GROUPS`), каждая со своим заголовком: «Бирки канатов» (слова на бирке,
+ * номер партии без подписи) и «Производитель» (свой склад, общие слова в названиях, бесплатная почта); правятся так же.
  */
 export function RecognitionRulesPicker({ value, fields, unavailable }: RecognitionRulesPickerProps) {
   const { t } = useTranslation(['settings', 'common'])
@@ -77,12 +78,16 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
   const fieldEntries: RuleEntry[] = fields
     .filter((field) => field.builtIn && !field.manual && field.key in DEFAULT_RULE_LABELS)
     .map((field) => ({ key: field.key, name: fieldName(field), editHint: t('advanced.rulesLabelsHint'), empty: t('advanced.rulesNoLabels') }))
-  const specialEntries: RuleEntry[] = SPECIAL_RULE_KEYS.map((key) => ({
-    key,
-    name: t(`advanced.rulesSpecialItems.${key}.name`),
-    editHint: t(`advanced.rulesSpecialItems.${key}.hint`),
-    empty: t('advanced.rulesSpecialEmpty'),
+  const groups = (Object.keys(RULE_GROUPS) as RuleGroup[]).map((group) => ({
+    group,
+    entries: RULE_GROUPS[group].map((key): RuleEntry => ({
+      key,
+      name: t(`advanced.rulesItems.${key}.name`),
+      editHint: t(`advanced.rulesItems.${key}.hint`),
+      empty: t('advanced.rulesItemsEmpty'),
+    })),
   }))
+  const ruleCount = fieldEntries.length + groups.reduce((sum, { entries }) => sum + entries.length, 0)
   const changed = Object.keys(value).length
 
   /** Строка правила; в правке касание открывает его список (по одному значению на строку). */
@@ -203,16 +208,21 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
       <Disclosure
         open={isOpen}
         onToggle={() => setIsOpen(!isOpen)}
-        summary={t('advanced.rulesSummary', { count: fieldEntries.length + specialEntries.length })}
+        summary={t('advanced.rulesSummary', { count: ruleCount })}
         details={changed > 0 ? t('advanced.rulesChanged', { count: changed }) : t('advanced.rulesDefault')}
       >
-        <List label={t('advanced.rules')} className="label-fields-picker rules-picker">
+        <span className="rules-picker-heading">{t('advanced.rulesGroups.fields')}</span>
+        <List label={t('advanced.rulesGroups.fields')} className="label-fields-picker rules-picker">
           {fieldEntries.map(renderRule)}
         </List>
-        <span className="rules-picker-heading">{t('advanced.rulesSpecial')}</span>
-        <List label={t('advanced.rulesSpecial')} className="label-fields-picker rules-picker">
-          {specialEntries.map(renderRule)}
-        </List>
+        {groups.map(({ group, entries }) => (
+          <Fragment key={group}>
+            <span className="rules-picker-heading">{t(`advanced.rulesGroups.${group}`)}</span>
+            <List label={t(`advanced.rulesGroups.${group}`)} className="label-fields-picker rules-picker">
+              {entries.map(renderRule)}
+            </List>
+          </Fragment>
+        ))}
       </Disclosure>
     </FormSection>
   )

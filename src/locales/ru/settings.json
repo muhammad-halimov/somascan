@@ -276,20 +276,24 @@
     "suppliersImportNotJson": "Выберите файл .json — список, сохранённый «Экспортом».",
     "suppliersImportTooLarge": "Файл слишком большой для списка поставщиков (больше {{size}} МБ).",
     "suppliersExportFailedTitle": "Не удалось экспортировать",
-    "rulesSpecial": "Особые правила",
-    "rulesSpecialEmpty": "пусто — правило не действует",
-    "rulesSpecialItems": {
+    "rulesGroups": {
+      "fields": "Подписи полей",
+      "strand": "Бирки канатов (PC strand)",
+      "producer": "Производитель"
+    },
+    "rulesItemsEmpty": "пусто — правило не действует",
+    "rulesItems": {
       "strand_words": {
-        "name": "Слова бирок канатов",
+        "name": "Слова на бирке",
         "hint": "По этим словам бирка считается канатом."
       },
       "strand_lot_masks": {
-        "name": "Номер партии каната",
+        "name": "Номер партии без подписи",
         "hint": "Шаблон: 9 — цифра, A — буква, X — любой знак."
       },
       "house_supplier": {
-        "name": "Производитель своих бирок",
-        "hint": "Бирки склада без названия завода."
+        "name": "Свой склад",
+        "hint": "Производитель на бирках склада без названия завода."
       },
       "generic_supplier_words": {
         "name": "Общие слова в названиях",
