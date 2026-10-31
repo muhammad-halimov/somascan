@@ -68,7 +68,12 @@ The tables must already exist; the app does not create them. Each storage has it
 - **Network drive** (SMB) — account and location; the share is connected with system tools (`net use` on Windows, `mount volume` on macOS). The password is stored encrypted (DPAPI / Keychain).
 - **Google Drive** — Google account sign-in in the system browser (OAuth, PKCE), a folder link and table names. The tables are processed in a local copy: only changed tables are downloaded, the same `<table>.lock` locks as in the mobile app are used, the previous version is saved to `backups` on the server. A table changed in Drive during a run is not overwritten.
 
-Google Cloud setup (one-time): enable **Google Drive API**; create an OAuth client of the **Desktop app** type (scope `https://www.googleapis.com/auth/drive`); place its JSON in the app data folder as `google-oauth.json` or pass `SOMASYNC_GOOGLE_CLIENT_ID` and `SOMASYNC_GOOGLE_CLIENT_SECRET` at build time.
+Google Cloud setup (one-time; the project and the consent screen are the same as for the mobile app, see its [build guide](https://github.com/muhammad-halimov/somascan/blob/main/guides/BUILD.md#google-drive-oauth-clients)):
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Library → **Google Drive API** → Enable.
+2. Google Auth Platform → Data access → scope `https://www.googleapis.com/auth/drive`; Audience → Test users for an External screen in “Testing” mode.
+3. Google Auth Platform → Clients → Create client → type **Desktop app** → Create → Download JSON.
+4. The JSON is placed into the app data folder as `google-oauth.json`, or the build receives `SOMASYNC_GOOGLE_CLIENT_ID` and `SOMASYNC_GOOGLE_CLIENT_SECRET`: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`.
 
 ## Phones
 

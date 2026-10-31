@@ -68,7 +68,12 @@ flowchart LR
 - **Сетевой диск** (SMB) — учётная запись и расположение; папка подключается системными средствами (`net use` на Windows, `mount volume` на macOS). Пароль хранится в зашифрованном виде (DPAPI / Keychain).
 - **Google Drive** — вход через аккаунт Google в системном браузере (OAuth, PKCE), ссылка на папку и имена таблиц. Таблицы обрабатываются в локальной копии: скачиваются только изменённые, используются те же блокировки `<таблица>.lock`, что и в мобильном приложении, прежняя версия сохраняется в `backups` на сервере. Таблица, изменённая в Drive во время прогона, не перезаписывается.
 
-Настройка Google Cloud (однократно): включить **Google Drive API**; создать OAuth-клиент типа **Desktop app** (доступ `https://www.googleapis.com/auth/drive`); разместить его JSON в папке данных программы как `google-oauth.json` или передать `SOMASYNC_GOOGLE_CLIENT_ID` и `SOMASYNC_GOOGLE_CLIENT_SECRET` при сборке.
+Настройка Google Cloud (однократно; проект и экран согласия — те же, что у мобильного приложения, см. его [руководство по сборке](https://github.com/muhammad-halimov/somascan/blob/main/guides/BUILD.ru.md#google-drive-oauth-клиенты)):
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Library → **Google Drive API** → Enable.
+2. Google Auth Platform → Data access → доступ `https://www.googleapis.com/auth/drive`; Audience → Test users для экрана External в режиме «Testing».
+3. Google Auth Platform → Clients → Create client → тип **Desktop app** → Create → Download JSON.
+4. JSON помещается в папку данных программы как `google-oauth.json`, либо сборка получает `SOMASYNC_GOOGLE_CLIENT_ID` и `SOMASYNC_GOOGLE_CLIENT_SECRET`: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`.
 
 ## Телефоны
 
