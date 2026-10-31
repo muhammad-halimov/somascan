@@ -42,20 +42,20 @@ npm run dev        # веб-версия, http://localhost:5173
 npm test           # все проверки
 ```
 
-Ветки: `main` — мобильное приложение Somascan; `desktop` — программа для компьютера Somasync (свой README).
+Ветки: `main` — мобильное приложение Somascan; `desktop` — программа для компьютера Somasync (свой README). App ID: `com.somascan.app` (`capacitor.config.ts`).
 
 Файлы, которых **нет в git** и которые создаются на каждой машине:
 
 | Файл | Содержание | Как получить |
 |---|---|---|
-| `android/local.properties` | путь к Android SDK | [шаг 6](#android-sdk-с-нуля-macos) |
-| `android/keystore/somascan.jks` | ключ подписи | копия ключа проекта или новый, см. [Ключ подписи](#ключ-подписи) |
+| `android/local.properties` | путь к Android SDK (в `.gitignore`) | [шаг 6](#android-sdk-с-нуля-macos) |
+| `android/keystore/somascan.jks` | ключ подписи (в `android/.gitignore`) | копия ключа проекта или новый, см. [Ключ подписи](#ключ-подписи) |
 | `android/keystore.properties` | пароли ключа | там же |
 
 | Команда | Назначение |
 |---|---|
 | `npm run dev` | dev-сервер Vite |
-| `npm run build` | `tsc -b` + `vite build` (страница) + сборка движка очереди → `dist/upload-engine.js` |
+| `npm run build` | `tsc -b` + `vite build` (страница) + сборка движка очереди (`vite.engine.config.ts`) → `dist/upload-engine.js` |
 | `npm test` | все проверки (`node:test` + `tsx`) |
 | `npm run preview` | локальный просмотр продакшен-сборки |
 | `npm run lint` | линтер (oxlint) |
@@ -166,6 +166,7 @@ SHA-1 ключа:
 ```bash
 keytool -list -v -keystore android/keystore/somascan.jks -alias somascan | grep SHA1
 cd android && ./gradlew signingReport
+apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Оба файла хранятся с резервной копией вне репозитория: с утраченным ключом установленное приложение не обновить.
@@ -198,7 +199,13 @@ npm run cap:run:ios      # сборка и запуск на симулятор�
 
 **Команда подписи.** В проекте указана команда `PD62HNY4L2`. С другим аккаунтом Apple: Xcode → цель `App` и цель `UploadActivity` → Signing & Capabilities → Team. Если bundle ID `com.somascan.app` и `com.somascan.app.UploadActivity` зарегистрированы за другой командой, оба меняются на свои (например, `com.example.somascan` и `com.example.somascan.UploadActivity`), и OAuth-клиент iOS создаётся для нового bundle ID.
 
-**Не находится `simctl`** (`unable to find utility "simctl"`): `xcode-select` указывает на Command Line Tools, а не на Xcode.
+**Не находится `simctl`.** `npx cap run ios` сообщает:
+
+```
+Unable to retrieve simulator list: xcrun: error: unable to find utility "simctl", not a developer tool or in PATH
+```
+
+`xcode-select` указывает на Command Line Tools, а не на Xcode.app. Исправление (нужен пароль) и проверка:
 
 ```bash
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
@@ -208,9 +215,18 @@ xcodebuild -version
 xcrun simctl list devices available
 ```
 
-**Xcode 27: `cap run ios` завершается ошибкой на Simulator.app** (`Simulator.app does not exist`). Сборка проходит, но `native-run` ищет `Simulator.app` по старому пути. Проект запускается из Xcode (`npm run cap:ios`, затем Run) или собирается `xcodebuild` и устанавливается через `xcrun simctl install` / `xcrun simctl launch`.
+**Xcode 27: `cap run ios` завершается ошибкой на Simulator.app.** Сборка проходит, но в конце:
 
-**`Mach error -308 (server died)`** — остановился CoreSimulator: `xcrun simctl shutdown all`.
+```
+[error] ERR_UNKNOWN: There was an error opening simulator: The file
+        /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app does not exist.
+```
+
+В Xcode 27 `Simulator.app` больше не лежит по старому пути, и `native-run` падает на вспомогательном шаге; сам симулятор и `xcrun simctl` работают. Проект запускается из Xcode (`npm run cap:ios`, затем Run) или собирается `xcodebuild` и устанавливается через `xcrun simctl install` / `xcrun simctl launch`.
+
+**`Mach error -308 (server died)`** — остановился CoreSimulator: `xcrun simctl shutdown all`, затем повтор; на слабых ноутбуках запускается только один симулятор.
+
+**Расширение Live Activity.** Цель `UploadActivity` в `App.xcodeproj` (`ios/App/UploadActivity/`, встраивается фазой «Embed Foundation Extensions»); общая модель `App/UploadActivityAttributes.swift` входит в обе цели; в `Info.plist` приложения — `NSSupportsLiveActivities`.
 
 ## Релизные сборки
 
@@ -261,12 +277,14 @@ npm run cap:ios
 
 **LM Studio** (сервер в сети завода, данные не покидают сеть):
 
-1. Установить [LM Studio](https://lmstudio.ai) версии 0.4 или новее на компьютер в сети завода (приложение использует его REST API `/api/v0/models`, `/api/v1/models/load`, `/unload`).
+1. Установить [LM Studio](https://lmstudio.ai) версии 0.4 или новее на компьютер в сети завода (приложение использует его REST API `/api/v0/models`, `/api/v1/models/load`, `/api/v1/models/unload`).
 2. Скачать модель, которая читает изображения (тип `vlm`).
 3. Запустить сервер в разделе Developer с доступом из локальной сети (Serve on Local Network); порт по умолчанию — 1234.
-4. В приложении: провайдер LM Studio, адрес сервера в коротком виде (`192.168.1.14`; схема `http://` и порт 1234 добавляются автоматически).
+4. В приложении: провайдер LM Studio, адрес сервера в коротком виде (`192.168.1.14` дополняется до `http://192.168.1.14:1234/v1`).
 
-Запросы к LM Studio идут через нативный плагин `NativeHttp`, поэтому CORS и блокировка `http://` в WebView не мешают. Для облачных провайдеров или прокси с включённым CORS должны быть разрешены источники приложения: `capacitor://localhost` (iOS) и `https://localhost` (Android).
+Сервер общий для всех телефонов и держит в памяти одну модель, поэтому телефоны отмечаются в хранилище таблицы: папка `somascan-lmstudio` рядом с таблицей на сетевом диске (`<id устройства>.json`), файлы `somascan-lmstudio-<id устройства>` в папке Google Drive. Отметка истекает через минуту; без настроенного хранилища телефоны работают без общей очереди.
+
+Запросы к LM Studio идут через нативный плагин `NativeHttp`, поэтому CORS и блокировка `http://` в WebView не мешают. Для облачных провайдеров или прокси с включённым CORS должны быть разрешены источники приложения: `capacitor://localhost` (iOS) и `https://localhost` (Android); иначе запросы молча завершаются ошибкой (`didFailResourceLoad` в логе WebKit).
 
 ## Сетевой диск
 
@@ -298,7 +316,7 @@ docker run -d --name somascan-smb -p 1445:445 \
 
 ## Google Drive: OAuth-клиенты
 
-Для Google Drive API-ключ не нужен: приложение выполняет вход через Google, а доступ выдаётся OAuth-клиентам проекта Google Cloud — одному для Android и одному для iOS.
+Для Google Drive API-ключ не нужен: приложение выполняет вход через Google (Android — Google Identity `AuthorizationClient`, iOS — Google Sign-In SDK; плагин `GoogleDriveAuth`), а доступ выдаётся OAuth-клиентам проекта Google Cloud — одному для Android и одному для iOS.
 
 **1. Проект и API.** [Google Cloud Console](https://console.cloud.google.com/) → выбор проекта → New project. Затем APIs & Services → Library → **Google Drive API** → Enable.
 
@@ -321,7 +339,7 @@ docker run -d --name somascan-smb -p 1445:445 \
 - Application type: **iOS**;
 - Bundle ID: `com.somascan.app` (или свой bundle ID, см. [iOS](#ios)).
 
-После создания консоль показывает **Client ID** (`…apps.googleusercontent.com`) и **iOS URL scheme** (перевёрнутый Client ID, `com.googleusercontent.apps.…`). Оба значения указываются в `ios/App/App/Info.plist`:
+После создания консоль показывает **Client ID** (`…apps.googleusercontent.com`) и **iOS URL scheme** (перевёрнутый Client ID, `com.googleusercontent.apps.…`; в скачиваемом `.plist` клиента — `REVERSED_CLIENT_ID`). Оба значения указываются в `ios/App/App/Info.plist`:
 
 ```xml
 <key>GIDClientID</key>
@@ -341,6 +359,8 @@ docker run -d --name somascan-smb -p 1445:445 \
 В репозитории уже указан клиент проекта `697326360300`; для другого проекта оба значения заменяются. При пустом `GIDClientID` вход сообщает, что вход через Google в этой сборке не настроен. `CFBundleName` («Somascan») — имя, которое iOS показывает в запросе «… хочет использовать „accounts.google.com“ для входа».
 
 **5. В приложении:** «Настройки → Хранилище → Google Drive → Войти через Google», затем ссылка на папку из адресной строки Drive (или её ID; пусто — корень «Моего диска») и имя таблицы. Таблица должна уже находиться в папке; папка `backups` создаётся при первой записи.
+
+Проверка без сети и аккаунта: `npm test` выполняет запись через поддельный Drive API (`tests/fakeDrive.ts`).
 
 Программа Somasync использует отдельный клиент типа **Desktop app** в том же проекте: см. README ветки `desktop`.
 
@@ -371,7 +391,15 @@ service cloud.firestore {
 
 ## Иконка, сплэш-экран и скриншоты
 
-Иконка и сплэш-экран создаются из `scripts/somaco-logo.png` во всех размерах и вариантах тем:
+Иконка и сплэш-экран создаются из `scripts/somaco-logo.png` (знак вырезается из белого фона и перекрашивается в фирменный бирюзовый) и раскладываются во все размеры через `@capacitor/assets`:
+
+| Файл | Назначение |
+|---|---|
+| `AppIcon-512@2x.png` в `AppIcon.appiconset` (1024 × 1024, белый фон, без прозрачности — требование iOS) | светлая иконка iOS |
+| `AppIcon-Dark-512@2x.png`, `AppIcon-Tinted-512@2x.png` | тёмная и тонированная иконки iOS 18+ |
+| `mipmap-*/ic_launcher*.png` | обычная и адаптивная иконка Android |
+| `mipmap-*/ic_launcher_monochrome.png`, `values-night/ic_launcher_background.xml` | тематическая иконка Android 13+, тёмный фон иконки |
+| `Splash.imageset`, `mipmap-*/splash_icon.png`, `drawable*/splash.png` | сплэш-экран: iOS, Android 12+, Android до 12 |
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install pillow   # однократно
@@ -400,4 +428,4 @@ npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe o
 | Лог приложения, симулятор iOS | `xcrun simctl launch --console-pty <udid> com.somascan.app` |
 | Снимок или видео, симулятор iOS | `xcrun simctl io <udid> screenshot` / `recordVideo` |
 
-Продакшен-сборка удаляет вызовы `console`; для логов нужна сборка для разработки: `vite build --mode development`. В сборке для разработки хранилища доступны в консоли браузера как `window.__somascan`. На Android 13+ разрешение на уведомления запрашивается при отправке (один раз за запуск); без него выгрузка работает, но уведомление не показывается.
+Продакшен-сборка удаляет вызовы `console`; для логов нужна сборка для разработки: `vite build --mode development`. В сборке для разработки хранилища доступны в консоли браузера как `window.__somascan`. На Android 13+ разрешение на уведомления запрашивается при отправке (один раз за запуск); без него выгрузка работает, но уведомление не показывается. Движок хранит очередь в `files/upload-engine/` (Android) и `Application Support/upload-engine/` (iOS). Проверка без телефона: `npm test` запускает собранный движок в «голом» JS-контексте с поддельным хостом (`tests/engine.test.ts`).

@@ -42,20 +42,20 @@ npm run dev        # web version, http://localhost:5173
 npm test           # all checks
 ```
 
-Branches: `main` — the mobile app Somascan; `desktop` — the desktop app Somasync (its own README).
+Branches: `main` — the mobile app Somascan; `desktop` — the desktop app Somasync (its own README). App ID: `com.somascan.app` (`capacitor.config.ts`).
 
 Files that are **not in git** and are created on each machine:
 
 | File | Contents | How to obtain |
 |---|---|---|
-| `android/local.properties` | path to the Android SDK | [step 6](#android-sdk-from-scratch-macos) |
-| `android/keystore/somascan.jks` | signing key | copy of the project key or a new one, see [Signing key](#signing-key) |
+| `android/local.properties` | path to the Android SDK (in `.gitignore`) | [step 6](#android-sdk-from-scratch-macos) |
+| `android/keystore/somascan.jks` | signing key (in `android/.gitignore`) | copy of the project key or a new one, see [Signing key](#signing-key) |
 | `android/keystore.properties` | key passwords | the same |
 
 | Command | What it does |
 |---|---|
 | `npm run dev` | Vite dev server |
-| `npm run build` | `tsc -b` + `vite build` (page) + queue engine build → `dist/upload-engine.js` |
+| `npm run build` | `tsc -b` + `vite build` (page) + queue engine build (`vite.engine.config.ts`) → `dist/upload-engine.js` |
 | `npm test` | all checks (`node:test` + `tsx`) |
 | `npm run preview` | local preview of the production build |
 | `npm run lint` | linter (oxlint) |
@@ -166,6 +166,7 @@ SHA-1 of the key:
 ```bash
 keytool -list -v -keystore android/keystore/somascan.jks -alias somascan | grep SHA1
 cd android && ./gradlew signingReport
+apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Both files are kept with a backup copy outside the repository: with a lost key the installed app cannot be updated.
@@ -198,7 +199,13 @@ npm run cap:run:ios      # build and run on the simulator
 
 **Signing team.** The project uses team `PD62HNY4L2`. With another Apple account: Xcode → target `App` and target `UploadActivity` → Signing & Capabilities → Team. If the bundle IDs `com.somascan.app` and `com.somascan.app.UploadActivity` are registered to another team, both are changed to own ones (for example `com.example.somascan` and `com.example.somascan.UploadActivity`), and the iOS OAuth client is created for the new bundle ID.
 
-**`simctl` is not found** (`unable to find utility "simctl"`): `xcode-select` points to the Command Line Tools instead of Xcode.
+**`simctl` is not found.** `npx cap run ios` reports:
+
+```
+Unable to retrieve simulator list: xcrun: error: unable to find utility "simctl", not a developer tool or in PATH
+```
+
+`xcode-select` points to the Command Line Tools instead of Xcode.app. Fix (requires a password) and check:
 
 ```bash
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
@@ -208,9 +215,18 @@ xcodebuild -version
 xcrun simctl list devices available
 ```
 
-**Xcode 27: `cap run ios` fails on Simulator.app** (`Simulator.app does not exist`). The build succeeds, but `native-run` looks for `Simulator.app` at the old path. The project is run from Xcode (`npm run cap:ios`, then Run) or built with `xcodebuild` and installed with `xcrun simctl install` / `xcrun simctl launch`.
+**Xcode 27: `cap run ios` fails on Simulator.app.** The build succeeds, but at the end:
 
-**`Mach error -308 (server died)`** — CoreSimulator has stopped: `xcrun simctl shutdown all`.
+```
+[error] ERR_UNKNOWN: There was an error opening simulator: The file
+        /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app does not exist.
+```
+
+In Xcode 27 `Simulator.app` is no longer at the old path, and `native-run` fails on a helper step; the simulator itself and `xcrun simctl` work. The project is run from Xcode (`npm run cap:ios`, then Run) or built with `xcodebuild` and installed with `xcrun simctl install` / `xcrun simctl launch`.
+
+**`Mach error -308 (server died)`** — CoreSimulator has stopped: `xcrun simctl shutdown all`, then a retry; on weak laptops only one simulator is kept running.
+
+**Live Activity extension.** Target `UploadActivity` in `App.xcodeproj` (`ios/App/UploadActivity/`, embedded by the “Embed Foundation Extensions” phase); the shared model `App/UploadActivityAttributes.swift` belongs to both targets; the app's `Info.plist` contains `NSSupportsLiveActivities`.
 
 ## Release builds
 
@@ -261,12 +277,14 @@ In Xcode: device “Any iOS Device (arm64)” → Product → Archive → Distri
 
 **LM Studio** (a server in the plant network, data stays in the network):
 
-1. Install [LM Studio](https://lmstudio.ai) 0.4 or later on a computer in the plant network (the app uses its REST API `/api/v0/models`, `/api/v1/models/load`, `/unload`).
+1. Install [LM Studio](https://lmstudio.ai) 0.4 or later on a computer in the plant network (the app uses its REST API `/api/v0/models`, `/api/v1/models/load`, `/api/v1/models/unload`).
 2. Download a vision model (type `vlm`).
 3. Start the server in the Developer section with access from the local network (Serve on Local Network); default port 1234.
-4. In the app: provider LM Studio, server address in short form (`192.168.1.14`; the `http://` scheme and port 1234 are added automatically).
+4. In the app: provider LM Studio, server address in short form (`192.168.1.14` is expanded to `http://192.168.1.14:1234/v1`).
 
-Requests to LM Studio go through the native `NativeHttp` plugin, so CORS and the WebView block of `http://` do not apply. For cloud providers or a proxy with CORS enabled, the app origins must be allowed: `capacitor://localhost` (iOS) and `https://localhost` (Android).
+The server is shared by all phones and holds one model in memory, so phones mark themselves in the table storage: a `somascan-lmstudio` folder next to the table on the network drive (`<device id>.json`), `somascan-lmstudio-<device id>` files in the Google Drive folder. A mark expires after a minute; without configured storage the phones work without the shared queue.
+
+Requests to LM Studio go through the native `NativeHttp` plugin, so CORS and the WebView block of `http://` do not apply. For cloud providers or a proxy with CORS enabled, the app origins must be allowed: `capacitor://localhost` (iOS) and `https://localhost` (Android); otherwise requests fail silently (`didFailResourceLoad` in the WebKit log).
 
 ## Network drive
 
@@ -298,7 +316,7 @@ In the app: server `10.0.2.2:1445` (Android emulator) or `127.0.0.1:1445` (iOS s
 
 ## Google Drive: OAuth clients
 
-Google Drive needs no API key: the app signs in with Google, and access is granted to OAuth clients of a Google Cloud project — one for Android and one for iOS.
+Google Drive needs no API key: the app signs in with Google (Android — Google Identity `AuthorizationClient`, iOS — Google Sign-In SDK; plugin `GoogleDriveAuth`), and access is granted to OAuth clients of a Google Cloud project — one for Android and one for iOS.
 
 **1. Project and API.** [Google Cloud Console](https://console.cloud.google.com/) → project selector → New project. Then APIs & Services → Library → **Google Drive API** → Enable.
 
@@ -321,7 +339,7 @@ Nothing is copied into the project: Google identifies the app by the package nam
 - Application type: **iOS**;
 - Bundle ID: `com.somascan.app` (or the own bundle ID, see [iOS](#ios)).
 
-After creation the console shows the **Client ID** (`…apps.googleusercontent.com`) and the **iOS URL scheme** (the reversed client ID, `com.googleusercontent.apps.…`). Both go into `ios/App/App/Info.plist`:
+After creation the console shows the **Client ID** (`…apps.googleusercontent.com`) and the **iOS URL scheme** (the reversed client ID, `com.googleusercontent.apps.…`; in the downloadable `.plist` of the client — `REVERSED_CLIENT_ID`). Both go into `ios/App/App/Info.plist`:
 
 ```xml
 <key>GIDClientID</key>
@@ -341,6 +359,8 @@ After creation the console shows the **Client ID** (`…apps.googleusercontent.c
 The repository already contains the client of project `697326360300`; with another project both values are replaced. With an empty `GIDClientID` sign-in reports that Google sign-in is not configured in this build. `CFBundleName` (“Somascan”) is the name iOS shows in the “… Wants to Use ‘accounts.google.com’ to Sign In” prompt.
 
 **5. In the app:** “Settings → Storage → Google Drive → Sign in with Google”, then a folder link from the Drive address bar (or its ID; empty — the root of “My Drive”) and the table name. The table must already be in the folder; the `backups` folder is created on the first write.
+
+Testing without network or an account: `npm test` runs writing through a fake Drive API (`tests/fakeDrive.ts`).
 
 The desktop app Somasync uses a separate client of type **Desktop app** in the same project: see the README of the `desktop` branch.
 
@@ -371,7 +391,15 @@ The free Firestore quota (50,000 reads and 20,000 writes a day) is more than suf
 
 ## Icon, splash screen and screenshots
 
-The icon and the splash screen are generated from `scripts/somaco-logo.png` in all sizes and theme variants:
+The icon and the splash screen are generated from `scripts/somaco-logo.png` (the mark is cut out of the white background and recoloured in the brand turquoise) and laid out in all sizes by `@capacitor/assets`:
+
+| File | Purpose |
+|---|---|
+| `AppIcon-512@2x.png` in `AppIcon.appiconset` (1024 × 1024, white background, no transparency — an iOS requirement) | light iOS icon |
+| `AppIcon-Dark-512@2x.png`, `AppIcon-Tinted-512@2x.png` | dark and tinted iOS 18+ icons |
+| `mipmap-*/ic_launcher*.png` | regular and adaptive Android icon |
+| `mipmap-*/ic_launcher_monochrome.png`, `values-night/ic_launcher_background.xml` | Android 13+ themed icon, dark icon background |
+| `Splash.imageset`, `mipmap-*/splash_icon.png`, `drawable*/splash.png` | splash screen: iOS, Android 12+, Android before 12 |
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install pillow   # once
@@ -400,4 +428,4 @@ npx tsx --tsconfig tsconfig.app.json scripts/lab-table/make-template.ts "Probe o
 | App log, iOS simulator | `xcrun simctl launch --console-pty <udid> com.somascan.app` |
 | Screenshot or video, iOS simulator | `xcrun simctl io <udid> screenshot` / `recordVideo` |
 
-The production build removes `console` calls; logs require a development build: `vite build --mode development`. In a development build the stores are available in the browser console as `window.__somascan`. On Android 13+ the notification permission is requested when sending (once per launch); without it the upload works, but the notification is hidden.
+The production build removes `console` calls; logs require a development build: `vite build --mode development`. In a development build the stores are available in the browser console as `window.__somascan`. On Android 13+ the notification permission is requested when sending (once per launch); without it the upload works, but the notification is hidden. The engine keeps the queue in `files/upload-engine/` (Android) and `Application Support/upload-engine/` (iOS). Testing without a phone: `npm test` runs the built engine in a bare JS context with a fake host (`tests/engine.test.ts`).
