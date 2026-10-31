@@ -41,7 +41,7 @@ export interface RecognitionRulesPickerProps {
 /** Текст ошибки для сообщения. */
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
-/** Правило в списке: подписи поля или особое правило. */
+/** Правило в списке: подписи поля или правило из группы (`RULE_GROUPS`). */
 interface RuleEntry {
   key: string
   /** Название строки. */
