@@ -14,7 +14,7 @@ export interface Point { x: number; y: number }
 export class PhotoGeometry {
   /** Без увеличения: фото целиком помещается в рамку. */
   static readonly MIN_SCALE = 1
-  /** Максимальное увеличение. */
+  /** Максимальное увеличение относительно исходного вида. */
   static readonly MAX_SCALE = 5
   /** Шаг масштаба для кнопок «больше»/«меньше». */
   static readonly SCALE_STEP = 0.5
@@ -33,11 +33,6 @@ export class PhotoGeometry {
   constructor(natural: Size | null, frame: Size) {
     this.natural = natural ?? { width: 4, height: 3 }
     this.frame = frame
-  }
-
-  /** Ограничивает масштаб допустимым диапазоном. */
-  static clampScale(scale: number) {
-    return Math.min(PhotoGeometry.MAX_SCALE, Math.max(PhotoGeometry.MIN_SCALE, scale))
   }
 
   /** Следующий поворот на четверть оборота по часовой стрелке (0 → 90 → 180 → 270 → 0). */
@@ -62,6 +57,15 @@ export class PhotoGeometry {
     const width = this.natural.width * fit
     const height = this.natural.height * fit
     return { width, height }
+  }
+
+  /**
+   * Масштаб, при котором фото заполняет рамку целиком, без полос по краям (лишнее уходит за края):
+   * относительно размера `layout`, где фото вписано целиком (масштаб 1).
+   */
+  coverScale(rotation: number): number {
+    const visual = this.visualSize(rotation, 1)
+    return Math.max(this.frame.width / visual.width, this.frame.height / visual.height)
   }
 
   /** Размер фото на экране после поворота и масштаба. */

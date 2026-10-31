@@ -37,7 +37,7 @@ export interface PhotoGridProps {
  * или плавка повторяется), красный знак (ошибка).
  * Нажатие на бирку под рамкой открывает её (карточка увеличивает ячейку до одной бирки), на другую бирку — переносит
  * на неё рамку, не выходя из сетки (карточка результата показывает её данные); «плюс» открывается нажатием. Рамку можно
- * вести пальцем по сетке (`useGridDragSelect`). Когда бирки уходят
+ * вести пальцем по ячейкам сетки (`useGridDragSelect`). Когда бирки уходят
  * (отправка, «Сброс»), оставшиеся плавно переезжают на освободившиеся места.
  */
 export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, onOpen, onToggleSelected }: PhotoGridProps) {
@@ -45,7 +45,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
   const { advanced } = useSettings()
   const duplicates = useHeatDuplicates(items)
 
-  // Рамку открытой бирки ведёт палец: с рамки — сразу, с другой бирки — после короткого удержания.
+  // Рамку открытой бирки ведёт палец: она переезжает с ячейки на ячейку под пальцем.
   const frameRef = useRef<HTMLSpanElement>(null)
   useGridDragSelect({ gridRef, frameRef, activeIndex, enabled: interactive, onSelect })
 

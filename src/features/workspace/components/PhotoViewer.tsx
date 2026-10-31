@@ -21,6 +21,8 @@ export interface PhotoViewerProps {
   rotation: number
   /** Новый поворот фото бирки. */
   onRotationChange: (rotation: number) => void
+  /** Когда просмотр открыли нажатием на фото (`performance.now()`): второе нажатие вовремя — двойное. */
+  openedAt?: number
   /** Проигрывается анимация закрытия. */
   isClosing: boolean
   /** Закрыть просмотр. */
@@ -28,13 +30,13 @@ export interface PhotoViewerProps {
 }
 
 /**
- * Просмотр фото на весь экран: щипок, перетаскивание, кнопки масштаба и поворота.
- * Свой масштаб, независимый от карточки; поворот — общий с биркой (его же получит распознавание).
- * Двойное нажатие увеличивает фото к точке нажатия (у увеличенного — исходный масштаб). Свайп вверх или вниз
- * закрывает просмотр (`useSwipeToClose`).
+ * Просмотр фото на весь экран: фото — во весь экран, заголовок и кнопки висят поверх него. Щипок, перетаскивание,
+ * кнопки масштаба и поворота. Свой масштаб, независимый от карточки; поворот — общий с биркой (его же получит
+ * распознавание). Двойное нажатие плавно увеличивает фото к точке нажатия (у увеличенного — исходный вид); первым
+ * нажатием может быть то, что открыло просмотр. Свайп вверх или вниз закрывает просмотр (`useSwipeToClose`).
  * Закрывается крестиком, клавишей Escape и системным «Назад».
  */
-export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isClosing, onClose }: PhotoViewerProps) {
+export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, openedAt, isClosing, onClose }: PhotoViewerProps) {
   const { t } = useTranslation(['workspace', 'common'])
   const transform = usePhotoTransform({ naturalSize, enabled: true, rotation, onRotationChange })
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -48,7 +50,7 @@ export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isCl
     return attachFrame(element)
   }, [attachFrame])
   /** Двойное нажатие — увеличение к пальцу, у увеличенного фото — исходный масштаб (как в карточке). */
-  const tapStage = useDoubleTap<string>({ onDouble: (_, point) => transform.toggleZoomAt(point) })
+  const tapStage = useDoubleTap<string>({ onDouble: (_, point) => transform.toggleZoomAt(point), firstTap: openedAt ? { key: url, at: openedAt } : undefined })
   useBodyScrollLock(true)
 
   // Escape на компьютере.
@@ -64,7 +66,7 @@ export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isCl
     <section ref={viewerRef} className={`photo-viewer${isClosing ? ' is-closing' : ''}`} role="dialog" aria-modal="true" aria-labelledby="photo-viewer-title">
       <header className="photo-viewer-header">
         <h2 id="photo-viewer-title">{t('viewer.title')}</h2>
-        <ActionButton variant="ghost" icon={<CloseIcon />} caption={t('common:close')} label={t('viewer.close')} onClick={onClose} />
+        <ActionButton variant="overlay" icon={<CloseIcon />} caption={t('common:close')} label={t('viewer.close')} onClick={onClose} />
       </header>
       <div
         ref={attachStage}

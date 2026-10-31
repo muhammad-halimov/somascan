@@ -144,9 +144,8 @@
 }
 
 /*
- * Рамка, которую ведёт палец (`useGridDragSelect`): видна только во время переноса — бежит от открытой бирки
- * туда, куда встал палец, и едет за ним с короткой плавной задержкой; обводка открытой ячейки на это время
- * скрыта — рамка одна.
+ * Рамка переноса (`useGridDragSelect`): видна только во время переноса и переезжает с ячейки на ячейку под пальцем;
+ * обводка открытой ячейки на это время скрыта — рамка одна.
  */
 .photo-grid-frame {
   position: absolute;
@@ -164,7 +163,6 @@
 
 .photo-grid.is-dragging .photo-grid-frame {
   opacity: 1;
-  transition: transform 120ms ease-out;
 }
 
 .photo-grid.is-dragging .photo-grid-cell.is-active {

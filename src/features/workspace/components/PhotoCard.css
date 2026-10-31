@@ -282,6 +282,19 @@
   will-change: transform;
 }
 
+/* Масштаб, сдвиг и поворот кнопками или двойным нажатием — плавно (`PhotoFrame`), жесты пальцами — без задержки. */
+.photo-pan-layer.is-animated,
+.photo-pan-layer.is-animated .photo-transform {
+  transition: transform 280ms cubic-bezier(.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-pan-layer.is-animated,
+  .photo-pan-layer.is-animated .photo-transform {
+    transition: none;
+  }
+}
+
 .photo-preview {
   display: block;
   width: 100%;

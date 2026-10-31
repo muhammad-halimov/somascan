@@ -17,7 +17,8 @@ export interface PhotoFrameProps {
 
 /**
  * Фото внутри рамки с учётом масштаба, сдвига и поворота.
- * Два слоя: внешний сдвигает, внутренний поворачивает и масштабирует вокруг центра.
+ * Два слоя: внешний сдвигает, внутренний поворачивает и масштабирует вокруг центра. Изменения кнопками и двойным
+ * нажатием — плавно (`is-animated`), жесты пальцами — сразу.
  *
  * Пока картинка не загрузилась, её пропорции неизвестны и рамка размечена по заглушке 4:3 —
  * поэтому до загрузки фото скрыто и проявляется уже в правильных пропорциях
@@ -26,11 +27,11 @@ export interface PhotoFrameProps {
  * заметную долю секунды, и показанная раньше картинка оставляла рамку пустой (фото «моргало» при листании).
  */
 export function PhotoFrame({ url, alt, transform, onLoad, onError }: PhotoFrameProps) {
-  const { offset, layout, rotation, scale } = transform
+  const { offset, layout, rotation, scale, animated } = transform
   const [loaded, setLoaded] = useState(false)
   return (
     <span
-      className={`photo-pan-layer${loaded ? ' is-loaded' : ''}`}
+      className={`photo-pan-layer${loaded ? ' is-loaded' : ''}${animated ? ' is-animated' : ''}`}
       style={{ transform: `translate3d(${offset.x}px, ${offset.y}px, 0)` }}
     >
       <span

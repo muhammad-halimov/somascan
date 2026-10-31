@@ -23,6 +23,12 @@ interface PanStart {
   offset: Point
 }
 
+/**
+ * Исходный вид фото в рамке: `contain` — целиком (по краям могут быть полосы), `cover` — заполняет рамку
+ * без полос, лишнее уходит за края. Только вид: распознавание получает исходное фото.
+ */
+export type PhotoFit = 'contain' | 'cover'
+
 /** Без сдвига. */
 const NO_OFFSET: Point = { x: 0, y: 0 }
 
@@ -35,12 +41,17 @@ const TAP_SLOP = 6
 /** Столько миллисекунд после жеста нажатие на фото не считается тапом. */
 const TAP_GUARD_MS = 350
 
+/** Увеличение больше исходного вида на эту долю — уже «увеличено» (дробные погрешности щипка не в счёт). */
+const ZOOM_EPSILON = 0.01
+
 /** Параметры `usePhotoTransform`. */
 export interface PhotoTransformOptions {
   /** Натуральный размер фото или `null`, пока оно грузится. */
   naturalSize: Size | null
   /** Разрешены ли жесты (фото показано и загружено). */
   enabled: boolean
+  /** Исходный вид (по умолчанию `contain`). */
+  fit?: PhotoFit
   /**
    * Поворот, которым владеет бирка (он же уходит на распознавание): кнопка поворота и «Сброс» меняют его
    * через `onRotationChange`. Без него поворот — своё состояние просмотра.
@@ -53,22 +64,28 @@ export interface PhotoTransformOptions {
 /**
  * Масштаб, сдвиг и поворот фото.
  *
+ * Масштаб считается от исходного вида (`fit`): «увеличено» — крупнее исходного, «Меньше» не уходит
+ * мельче него, увеличение — до `PhotoGeometry.MAX_SCALE` раз.
  * Касание: щипок двумя пальцами масштабирует относительно точки между пальцами
  * (и одновременно двигает фото), одним пальцем — перетаскивание увеличенного фото.
- * Мышь: перетаскивание. Двойное нажатие (`toggleZoomAt`): увеличение к точке нажатия, у увеличенного — исходный масштаб.
- * Кнопки: `zoomIn`, `zoomOut`, `rotate`, `reset`.
+ * Мышь: перетаскивание. Двойное нажатие (`toggleZoomAt`): увеличение к точке нажатия, у увеличенного — исходный вид.
+ * Кнопки: `zoomIn`, `zoomOut`, `rotate`, `reset`. Кнопки и двойное нажатие меняют вид плавно (`animated`),
+ * жесты пальцами — сразу, без задержки.
  * Поворот может принадлежать бирке (`rotation` и `onRotationChange`) — тогда он сохраняется между бирками
  * и в сетке, а не только в этом просмотре.
  * Сдвиг всегда ограничен так, чтобы фото не уезжало за края рамки, но до любого
  * края увеличенного фото можно дотянуться.
  */
-export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotation, onRotationChange }: PhotoTransformOptions) {
-  const [scale, setScale] = useState(PhotoGeometry.MIN_SCALE)
+export function usePhotoTransform({ naturalSize, enabled, fit = 'contain', rotation: ownedRotation, onRotationChange }: PhotoTransformOptions) {
+  /** Увеличение относительно исходного вида (1 — исходный). */
+  const [zoom, setZoom] = useState(1)
   const [viewRotation, setViewRotation] = useState(0)
   const rotation = ownedRotation ?? viewRotation
   const setRotation = (next: number) => (onRotationChange ? onRotationChange(next) : setViewRotation(next))
   const [offset, setOffset] = useState<Point>(NO_OFFSET)
   const [frameSize, setFrameSize] = useState<Size>(INITIAL_FRAME)
+  /** Последнее изменение — кнопкой или двойным нажатием: показывается плавно. */
+  const [animated, setAnimated] = useState(false)
   const frameElement = useRef<HTMLElement | null>(null)
   const pinchStart = useRef<PinchStart | null>(null)
   const panStart = useRef<PanStart | null>(null)
@@ -76,7 +93,14 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
   const lastMoveAt = useRef(0)
 
   const geometry = new PhotoGeometry(naturalSize, frameSize)
-  const isZoomed = scale > PhotoGeometry.MIN_SCALE
+  /** Масштаб исходного вида при текущем повороте. */
+  const baseScale = (forRotation = rotation) => (fit === 'cover' ? geometry.coverScale(forRotation) : PhotoGeometry.MIN_SCALE)
+  const base = baseScale()
+  const scale = base * zoom
+  const isZoomed = zoom > 1 + ZOOM_EPSILON
+
+  /** Масштаб в допустимых границах: от исходного вида до `MAX_SCALE` раз крупнее. */
+  const clampScale = (next: number) => Math.min(base * PhotoGeometry.MAX_SCALE, Math.max(base, next))
 
   /** Сдвиг в допустимых границах для заданных масштаба и поворота (по умолчанию текущих). */
   const clamp = (next: Point, nextScale = scale, nextRotation = rotation) => geometry.clampOffset(next, nextScale, nextRotation)
@@ -86,6 +110,13 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
     const rect = frameElement.current?.getBoundingClientRect()
     if (!rect) return NO_OFFSET
     return { x: point.x - (rect.left + rect.width / 2), y: point.y - (rect.top + rect.height / 2) }
+  }
+
+  /** Новый масштаб и сдвиг, который сохраняет точку `focus` (от центра рамки) на месте. */
+  const scaleAround = (nextScale: number, focus: Point) => {
+    const clamped = clampScale(nextScale)
+    setZoom(clamped / base)
+    setOffset(clamp(PhotoGeometry.zoomOffset(offset, scale, clamped, focus), clamped))
   }
 
   /**
@@ -105,47 +136,48 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
     }
   }, [])
 
-  /** Масштаб кнопками: относительно центра рамки. */
-  const zoomTo = (nextScale: number) => {
-    const clamped = PhotoGeometry.clampScale(nextScale)
-    setScale(clamped)
-    setOffset(clamp(PhotoGeometry.zoomOffset(offset, scale, clamped, NO_OFFSET), clamped))
+  /** Масштаб кнопками: относительно центра рамки, плавно. */
+  const zoomBy = (step: number) => {
+    setAnimated(true)
+    scaleAround(scale + step * base, NO_OFFSET)
   }
 
   /**
-   * Двойное нажатие: увеличение так, чтобы точка фото под пальцем осталась на месте; у увеличенного фото —
-   * исходный масштаб и положение.
+   * Двойное нажатие: плавное увеличение так, чтобы точка фото под пальцем осталась на месте; у увеличенного фото —
+   * исходный вид.
    * @param point Точка нажатия на экране.
    */
   const toggleZoomAt = (point: Point) => {
     if (!enabled) return
+    setAnimated(true)
     if (isZoomed) {
-      setScale(PhotoGeometry.MIN_SCALE)
+      setZoom(1)
       setOffset(NO_OFFSET)
       return
     }
-    const next = PhotoGeometry.clampScale(PhotoGeometry.DOUBLE_TAP_SCALE)
-    setScale(next)
-    setOffset(clamp(PhotoGeometry.zoomOffset(offset, scale, next, fromFrameCenter(point)), next))
+    scaleAround(base * PhotoGeometry.DOUBLE_TAP_SCALE, fromFrameCenter(point))
   }
 
-  /** Поворот на четверть оборота по часовой стрелке; сдвиг остаётся в допустимых границах. */
+  /** Поворот на четверть оборота по часовой стрелке, плавно; сдвиг остаётся в допустимых границах. */
   const rotate = () => {
     const next = PhotoGeometry.nextRotation(rotation)
+    setAnimated(true)
     setRotation(next)
-    setOffset(clamp(offset, scale, next))
+    setOffset(clamp(offset, baseScale(next) * zoom, next))
   }
 
-  /** Исходный масштаб и сдвиг (другая бирка: её поворот — свой, его не трогаем). */
+  /** Исходный вид и сдвиг сразу, без анимации (другая бирка: её поворот — свой, его не трогаем). */
   const resetView = useCallback(() => {
-    setScale(PhotoGeometry.MIN_SCALE)
+    setAnimated(false)
+    setZoom(1)
     setOffset(NO_OFFSET)
     setViewRotation(0)
   }, [])
 
-  /** «Сброс»: исходный масштаб, сдвиг и поворот. */
+  /** «Сброс»: исходный вид, сдвиг и поворот, плавно. */
   const reset = () => {
     resetView()
+    setAnimated(true)
     setRotation(0)
   }
 
@@ -154,11 +186,12 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
     if (Math.abs(dx) + Math.abs(dy) > TAP_SLOP) lastMoveAt.current = timeStamp
   }
 
-  /** Начинает щипок (два пальца) или перетаскивание (один палец по увеличенному фото). */
+  /** Начинает щипок (два пальца) или перетаскивание (один палец по увеличенному фото); жест — без анимации. */
   const onTouchStart = (event: TouchEvent<HTMLElement>) => {
     if (!enabled) return
     const { touches } = event
     if (touches.length === 2) {
+      setAnimated(false)
       pinchStart.current = {
         distance: touchDistance(touches[0], touches[1]),
         center: fromFrameCenter(touchCenter(touches[0], touches[1])),
@@ -167,6 +200,7 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
       }
       panStart.current = null
     } else if (touches.length === 1 && isZoomed) {
+      setAnimated(false)
       panStart.current = { position: { x: touches[0].clientX, y: touches[0].clientY }, offset }
     }
   }
@@ -176,13 +210,13 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
     const { touches } = event
     const pinch = pinchStart.current
     if (touches.length === 2 && pinch) {
-      const nextScale = PhotoGeometry.clampScale(pinch.scale * touchDistance(touches[0], touches[1]) / pinch.distance)
+      const nextScale = clampScale(pinch.scale * touchDistance(touches[0], touches[1]) / pinch.distance)
       const center = fromFrameCenter(touchCenter(touches[0], touches[1]))
       // Точка фото, бывшая под центром щипка, остаётся под пальцами: и масштаб, и сдвиг сразу.
       const ratio = nextScale / pinch.scale
       const next = { x: center.x - (pinch.center.x - pinch.offset.x) * ratio, y: center.y - (pinch.center.y - pinch.offset.y) * ratio }
       lastMoveAt.current = event.timeStamp
-      setScale(nextScale)
+      setZoom(nextScale / base)
       setOffset(clamp(next, nextScale))
       return
     }
@@ -210,6 +244,7 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
   /** Начинает перетаскивание мышью (касания обрабатываются touch-обработчиками). */
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
     if (event.pointerType !== 'mouse' || !enabled || !isZoomed) return
+    setAnimated(false)
     event.currentTarget.setPointerCapture(event.pointerId)
     panStart.current = { pointerId: event.pointerId, position: { x: event.clientX, y: event.clientY }, offset }
   }
@@ -238,12 +273,14 @@ export function usePhotoTransform({ naturalSize, enabled, rotation: ownedRotatio
     /** Размер блока фото до поворота (см. `PhotoGeometry.layout`). */
     layout: geometry.layout(rotation),
     isZoomed,
-    /** Исходный вид: без масштаба, сдвига и поворота (сбрасывать нечего). */
+    /** Последнее изменение показывать плавно (кнопки, двойное нажатие), а не сразу (жесты). */
+    animated,
+    /** Исходный вид: без увеличения, сдвига и поворота (сбрасывать нечего). */
     isPristine: !isZoomed && rotation === 0 && offset.x === 0 && offset.y === 0,
-    canZoomIn: scale < PhotoGeometry.MAX_SCALE,
+    canZoomIn: zoom < PhotoGeometry.MAX_SCALE,
     canZoomOut: isZoomed,
-    zoomIn: () => zoomTo(scale + PhotoGeometry.SCALE_STEP),
-    zoomOut: () => zoomTo(scale - PhotoGeometry.SCALE_STEP),
+    zoomIn: () => zoomBy(PhotoGeometry.SCALE_STEP),
+    zoomOut: () => zoomBy(-PhotoGeometry.SCALE_STEP),
     toggleZoomAt,
     rotate,
     reset,

@@ -1,8 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
+import { MOVE_TOLERANCE } from '@/hooks/useLongPress'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 
 /** Класс сетки, пока рамку ведёт палец (`PhotoGrid.css`). */
 const DRAGGING_CLASS = 'is-dragging'
+
+/** Сколько рамка переезжает с ячейки на ячейку, мс. */
+const FRAME_SLIDE_MS = 180
 
 /** Короткая вибрация в начале переноса, мс (Android; iOS в WebView не вибрирует). */
 const DRAG_START_VIBRATION_MS = 10
@@ -17,7 +21,7 @@ function itemIndexAt(x: number, y: number): number | null {
 export interface GridDragSelectOptions {
   /** Сетка; ячейки бирок помечены `data-item-index`. */
   gridRef: RefObject<HTMLElement | null>
-  /** Рамка, которая едет за пальцем (абсолютно в сетке, без событий указателя). */
+  /** Рамка переноса (абсолютно в сетке, без событий указателя). */
   frameRef: RefObject<HTMLElement | null>
   /** Бирка под рамкой. */
   activeIndex: number
@@ -28,10 +32,11 @@ export interface GridDragSelectOptions {
 }
 
 /**
- * Перенос рамки открытой бирки пальцем: куда палец встал (на любую бирку, кроме открытой), туда рамка и бежит,
- * а дальше едет за пальцем по сетке; бирка под пальцем сразу становится открытой, при отпускании рамка доезжает
- * до неё. На открытой бирке перенос не начинается: нажатие на неё открывает бирку. Во время переноса экран
- * не прокручивается, а клик при отпускании гасится (иначе он попал бы в бирку, уже ставшую открытой, и открыл её).
+ * Перенос рамки открытой бирки пальцем. Рамка всегда стоит на ячейке: переезжает с ячейки на ячейку под пальцем
+ * (вверх, вниз, влево, вправо), за края бирок не выходит — палец вне бирок оставляет её на последней.
+ * Касание другой бирки сразу переносит рамку туда; с открытой бирки перенос начинается со сдвигом пальца,
+ * а простое нажатие на неё открывает бирку. Во время переноса экран не прокручивается, а клик при отпускании
+ * гасится (иначе он попал бы в бирку, уже ставшую открытой, и открыл её).
  */
 export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onSelect }: GridDragSelectOptions) {
   const latest = useRef({ activeIndex, onSelect })
@@ -43,59 +48,63 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     const grid = gridRef.current
     const frame = frameRef.current
     if (!grid || !frame || !enabled) return
-    let frameRequest = 0
-    let finger = { x: 0, y: 0 }
-    /** Рамка, с которой начался перенос (открытая бирка): отсюда она бежит к пальцу. */
-    let origin: number | null = null
+    /** Касание открытой бирки: перенос начнётся, когда палец сдвинется. */
+    let armed: { x: number; y: number } | null = null
     let current: number | null = null
     let dragging = false
     /** Перенос закончился: клик, который придёт при отпускании пальца, — не нажатие. */
     let swallowClick = false
-    /** Рамка — размером с ячейку, центр — под пальцем (координаты сетки). */
-    let gridBox = grid.getBoundingClientRect()
-    let frameSize = { width: 0, height: 0 }
+    let slide: Animation | null = null
 
     const cellOf = (index: number | null) => (index === null ? null : grid.querySelector<HTMLElement>(`[data-item-index="${index}"]`))
-    const placeAtFinger = () => {
-      frameRequest = 0
-      frame.style.transform = `translate(${finger.x - gridBox.left - frameSize.width / 2}px, ${finger.y - gridBox.top - frameSize.height / 2}px)`
+    const cellPosition = (cell: HTMLElement) => `translate(${cell.offsetLeft}px, ${cell.offsetTop}px)`
+
+    /** Рамка переезжает на ячейку (с того места, где она сейчас, даже посреди прошлого переезда). */
+    const slideTo = (cell: HTMLElement) => {
+      const from = getComputedStyle(frame).transform
+      const to = cellPosition(cell)
+      slide?.cancel()
+      frame.style.transform = to
+      slide = prefersReducedMotion() ? null : frame.animate([{ transform: from }, { transform: to }], motionTiming(FRAME_SLIDE_MS))
     }
 
-    const begin = () => {
-      const cell = cellOf(current)
-      if (!cell) return
+    /** Рамка снимается с бирки `from` и переезжает на `to` (та становится открытой). */
+    const begin = (from: number, to: number) => {
+      const start = cellOf(from) ?? cellOf(to)
+      const target = cellOf(to)
+      if (!start || !target) return
       dragging = true
-      gridBox = grid.getBoundingClientRect()
-      frameSize = { width: cell.offsetWidth, height: cell.offsetHeight }
-      frame.style.width = `${frameSize.width}px`
-      frame.style.height = `${frameSize.height}px`
-      // Рамка снимается с открытой бирки (если та — бирка, а не пустая ячейка) и бежит под палец.
-      const from = cellOf(origin) ?? cell
-      frame.style.transform = `translate(${from.offsetLeft}px, ${from.offsetTop}px)`
+      armed = null
+      frame.style.width = `${target.offsetWidth}px`
+      frame.style.height = `${target.offsetHeight}px`
+      frame.style.transform = cellPosition(start)
       grid.classList.add(DRAGGING_CLASS)
       navigator.vibrate?.(DRAG_START_VIBRATION_MS)
-      if (current !== null) latest.current.onSelect(current)
-      frameRequest = requestAnimationFrame(placeAtFinger)
+      moveTo(to)
+    }
+
+    const moveTo = (index: number) => {
+      const cell = cellOf(index)
+      if (!cell) return
+      if (index !== current) latest.current.onSelect(index)
+      current = index
+      slideTo(cell)
     }
 
     const finish = () => {
+      slide = null
       grid.classList.remove(DRAGGING_CLASS)
       frame.style.transform = ''
     }
 
     const stop = () => {
+      armed = null
       if (!dragging) return
       dragging = false
       swallowClick = true
-      cancelAnimationFrame(frameRequest)
-      frameRequest = 0
-      // Рамка доезжает до бирки, на которой отпустили палец.
-      const cell = cellOf(current)
-      if (!cell || prefersReducedMotion()) return finish()
-      const from = frame.style.transform
-      const to = `translate(${cell.offsetLeft}px, ${cell.offsetTop}px)`
-      frame.style.transform = to
-      frame.animate([{ transform: from }, { transform: to }], motionTiming()).finished.then(finish, finish)
+      // Рамка доезжает до ячейки и сменяется обводкой самой ячейки на том же месте.
+      if (slide) slide.finished.then(finish, () => {})
+      else finish()
     }
 
     const onTouchStart = (event: TouchEvent) => {
@@ -103,25 +112,25 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
       if (event.touches.length !== 1) return stop()
       const touch = event.touches[0]!
       const index = itemIndexAt(touch.clientX, touch.clientY)
-      // На открытой бирке перенос не начинается: нажатие на неё открывает бирку.
-      if (index === null || index === latest.current.activeIndex) return
-      finger = { x: touch.clientX, y: touch.clientY }
-      origin = latest.current.activeIndex
-      current = index
-      begin()
+      if (index === null) return
+      const active = latest.current.activeIndex
+      current = active
+      if (index === active) armed = { x: touch.clientX, y: touch.clientY }
+      else begin(active, index)
     }
 
     const onTouchMove = (event: TouchEvent) => {
       const touch = event.touches[0]
-      if (!touch || !dragging) return
-      finger = { x: touch.clientX, y: touch.clientY }
+      if (!touch) return
+      if (armed && !dragging) {
+        if (Math.hypot(touch.clientX - armed.x, touch.clientY - armed.y) <= MOVE_TOLERANCE) return
+        begin(latest.current.activeIndex, latest.current.activeIndex)
+      }
+      if (!dragging) return
       // Палец ведёт рамку, а не экран.
       if (event.cancelable) event.preventDefault()
-      if (!frameRequest) frameRequest = requestAnimationFrame(placeAtFinger)
-      const index = itemIndexAt(finger.x, finger.y)
-      if (index === null || index === current) return
-      current = index
-      latest.current.onSelect(index)
+      const index = itemIndexAt(touch.clientX, touch.clientY)
+      if (index !== null && index !== current) moveTo(index)
     }
 
     const onClick = (event: MouseEvent) => {
@@ -137,7 +146,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     grid.addEventListener('touchcancel', stop)
     grid.addEventListener('click', onClick, { capture: true })
     return () => {
-      cancelAnimationFrame(frameRequest)
+      slide?.cancel()
       finish()
       grid.removeEventListener('touchstart', onTouchStart)
       grid.removeEventListener('touchmove', onTouchMove)

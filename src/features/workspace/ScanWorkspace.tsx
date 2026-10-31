@@ -36,6 +36,12 @@ export function ScanWorkspace() {
   const activeIndex = session.activeIndex
   const status = item?.status ?? IDLE
   const [isViewerOpen, setIsViewerOpen] = useState(false)
+  /** Когда нажатием на фото открыли просмотр: второе нажатие вовремя — двойное, оно увеличивает фото в просмотре. */
+  const [viewerOpenedAt, setViewerOpenedAt] = useState(0)
+  const openViewer = () => {
+    setViewerOpenedAt(performance.now())
+    setIsViewerOpen(true)
+  }
   /** Карточка фото: одна бирка или сетка. */
   const [view, setView] = useState<PhotoCardView>('single')
   /**
@@ -54,6 +60,8 @@ export function ScanWorkspace() {
   const rotateItem = (rotation: number) => item && session.setRotation(item.id, rotation)
   const transform = usePhotoTransform({
     naturalSize: item?.naturalSize ?? null,
+    // В карточке фото заполняет рамку без полос по бокам (только вид, на распознавание не влияет).
+    fit: 'cover',
     enabled: hasPhoto && !item.isLoading && view === 'single',
     rotation: item?.rotation ?? 0,
     onRotationChange: rotateItem,
@@ -348,7 +356,7 @@ export function ScanWorkspace() {
           retakeHint={retakeHint}
           onPick={() => void addPhotos()}
           onToggleManual={toggleManual}
-          onOpen={() => setIsViewerOpen(true)}
+          onOpen={openViewer}
           onLoad={(size) => item && session.markLoaded(item.id, size)}
           onError={() => item && session.markFailed(item.id)}
           onShowGrid={showGrid}
@@ -399,7 +407,7 @@ export function ScanWorkspace() {
         Просмотр — в body: рабочая область в горизонтальном положении — контейнер размеров (container-type),
         а он, как и любое сдерживание раскладки, удержал бы fixed-слой в своих границах.
       */}
-      {viewer.mounted && item && createPortal(<PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} rotation={item.rotation} onRotationChange={rotateItem} isClosing={viewer.closing} onClose={closeViewer} />, document.body)}
+      {viewer.mounted && item && createPortal(<PhotoViewer url={item.photoUrl} naturalSize={item.naturalSize} rotation={item.rotation} onRotationChange={rotateItem} openedAt={viewerOpenedAt} isClosing={viewer.closing} onClose={closeViewer} />, document.body)}
     </section>
   )
 }
