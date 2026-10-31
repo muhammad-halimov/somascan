@@ -5,8 +5,11 @@ import { motionTiming, prefersReducedMotion } from '../utils/motion'
 /** Класс сетки, пока рамку ведёт палец (`PhotoGrid.css`). */
 const DRAGGING_CLASS = 'is-dragging'
 
-/** Сколько рамка переезжает с ячейки на ячейку, мс. */
-const FRAME_SLIDE_MS = 180
+/** Класс сетки на кадр, когда рамка сменяется обводкой ячейки: без переходов, иначе свечение проявлялось бы заново. */
+const SETTLING_CLASS = 'is-settling'
+
+/** CSS-переменная сетки: сколько рамка переезжает с ячейки на ячейку (так же переезжает обводка ячейки). */
+const FRAME_MOVE_VAR = '--photo-grid-frame-move'
 
 /** Короткая вибрация в начале переноса, мс (Android; iOS в WebView не вибрирует). */
 const DRAG_START_VIBRATION_MS = 10
@@ -56,6 +59,8 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     let swallowClick = false
     let slide: Animation | null = null
 
+    /** Время переезда рамки, мс — из стилей сетки (одно значение с обводкой ячейки). */
+    const slideMs = Number.parseFloat(getComputedStyle(grid).getPropertyValue(FRAME_MOVE_VAR)) || 0
     const cellOf = (index: number | null) => (index === null ? null : grid.querySelector<HTMLElement>(`[data-item-index="${index}"]`))
     const cellPosition = (cell: HTMLElement) => `translate(${cell.offsetLeft}px, ${cell.offsetTop}px)`
 
@@ -65,7 +70,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
       const to = cellPosition(cell)
       slide?.cancel()
       frame.style.transform = to
-      slide = prefersReducedMotion() ? null : frame.animate([{ transform: from }, { transform: to }], motionTiming(FRAME_SLIDE_MS))
+      slide = prefersReducedMotion() ? null : frame.animate([{ transform: from }, { transform: to }], motionTiming(slideMs))
     }
 
     /** Рамка снимается с бирки `from` и переезжает на `to` (та становится открытой). */
@@ -93,8 +98,10 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
 
     const finish = () => {
       slide = null
+      grid.classList.add(SETTLING_CLASS)
       grid.classList.remove(DRAGGING_CLASS)
       frame.style.transform = ''
+      requestAnimationFrame(() => grid.classList.remove(SETTLING_CLASS))
     }
 
     const stop = () => {

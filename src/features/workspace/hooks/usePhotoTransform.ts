@@ -25,7 +25,7 @@ interface PanStart {
 
 /**
  * Исходный вид фото в рамке: `contain` — целиком (по краям могут быть полосы), `cover` — заполняет рамку
- * без полос, лишнее уходит за края. Только вид: распознавание получает исходное фото.
+ * без полос, лишнее уходит за края (отдалить можно до вида целиком). Только вид: распознавание получает исходное фото.
  */
 export type PhotoFit = 'contain' | 'cover'
 
@@ -64,8 +64,8 @@ export interface PhotoTransformOptions {
 /**
  * Масштаб, сдвиг и поворот фото.
  *
- * Масштаб считается от исходного вида (`fit`): «увеличено» — крупнее исходного, «Меньше» не уходит
- * мельче него, увеличение — до `PhotoGeometry.MAX_SCALE` раз.
+ * Масштаб считается от исходного вида (`fit`): «увеличено» — крупнее исходного (тогда палец двигает фото),
+ * «Меньше» отдаляет до фото целиком, увеличение — до `PhotoGeometry.MAX_SCALE` раз.
  * Касание: щипок двумя пальцами масштабирует относительно точки между пальцами
  * (и одновременно двигает фото), одним пальцем — перетаскивание увеличенного фото.
  * Мышь: перетаскивание. Двойное нажатие (`toggleZoomAt`): увеличение к точке нажатия, у увеличенного — исходный вид.
@@ -99,8 +99,8 @@ export function usePhotoTransform({ naturalSize, enabled, fit = 'contain', rotat
   const scale = base * zoom
   const isZoomed = zoom > 1 + ZOOM_EPSILON
 
-  /** Масштаб в допустимых границах: от исходного вида до `MAX_SCALE` раз крупнее. */
-  const clampScale = (next: number) => Math.min(base * PhotoGeometry.MAX_SCALE, Math.max(base, next))
+  /** Масштаб в допустимых границах: от фото целиком до `MAX_SCALE` раз крупнее исходного вида. */
+  const clampScale = (next: number) => Math.min(base * PhotoGeometry.MAX_SCALE, Math.max(PhotoGeometry.MIN_SCALE, next))
 
   /** Сдвиг в допустимых границах для заданных масштаба и поворота (по умолчанию текущих). */
   const clamp = (next: Point, nextScale = scale, nextRotation = rotation) => geometry.clampOffset(next, nextScale, nextRotation)
@@ -275,10 +275,10 @@ export function usePhotoTransform({ naturalSize, enabled, fit = 'contain', rotat
     isZoomed,
     /** Последнее изменение показывать плавно (кнопки, двойное нажатие), а не сразу (жесты). */
     animated,
-    /** Исходный вид: без увеличения, сдвига и поворота (сбрасывать нечего). */
-    isPristine: !isZoomed && rotation === 0 && offset.x === 0 && offset.y === 0,
+    /** Исходный вид: без увеличения и отдаления, сдвига и поворота (сбрасывать нечего). */
+    isPristine: Math.abs(zoom - 1) <= ZOOM_EPSILON && rotation === 0 && offset.x === 0 && offset.y === 0,
     canZoomIn: zoom < PhotoGeometry.MAX_SCALE,
-    canZoomOut: isZoomed,
+    canZoomOut: scale > PhotoGeometry.MIN_SCALE + ZOOM_EPSILON,
     zoomIn: () => zoomBy(PhotoGeometry.SCALE_STEP),
     zoomOut: () => zoomBy(-PhotoGeometry.SCALE_STEP),
     toggleZoomAt,

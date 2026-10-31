@@ -10,6 +10,13 @@
 .photo-grid {
   --photo-grid-gap: 6px;
   --photo-grid-radius: 8px;
+  /*
+   * Поле сетки: обводка открытой ячейки (4 px с отступом 2 px) и её увеличение на 5 % помещаются внутри карточки,
+   * за края не выходят.
+   */
+  --photo-grid-frame-reach: 10px;
+  /* Сколько обводка переезжает с ячейки на ячейку (рамка переноса читает это же значение). */
+  --photo-grid-frame-move: 180ms;
   /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже). */
   --photo-grid-frame-outline: 4px solid var(--focus);
   --photo-grid-frame-glow: 0 0 14px 4px color-mix(in srgb, var(--focus) 80%, transparent), 0 0 34px 12px color-mix(in srgb, var(--focus) 45%, transparent);
@@ -21,7 +28,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: var(--photo-grid-gap);
-  padding: var(--photo-grid-gap);
+  padding: var(--photo-grid-frame-reach);
   background: var(--photo-empty-bg);
   /* Скругление карточки: когда та не обрезает (сетка на экране), углы сетки не торчат. */
   border-radius: inherit;
@@ -140,7 +147,6 @@
   outline-offset: 2px;
   box-shadow: var(--photo-grid-frame-glow);
   scale: var(--photo-grid-frame-scale);
-  animation: photo-grid-focus 360ms cubic-bezier(.2, 0, 0, 1);
 }
 
 /*
@@ -168,20 +174,23 @@
 .photo-grid.is-dragging .photo-grid-cell.is-active {
   outline-color: transparent;
   box-shadow: none;
-  animation: none;
 }
 
 /*
  * Во время перехода между сеткой и одной биркой колец нет: увеличенные вместе с ячейкой втрое, они
- * выглядели бы толстой светящейся рамкой по краю карточки. После перехода кольца проявляются,
- * а обводка открытой бирки снова «подтягивается» к ячейке.
+ * выглядели бы толстой светящейся рамкой по краю карточки. После перехода кольца проявляются.
  */
 .photo-grid-cell::after {
   transition: opacity 200ms ease;
 }
 
 .photo-grid-cell.is-active {
-  transition: box-shadow 200ms ease, scale 240ms cubic-bezier(.2, 0, 0, 1);
+  transition: box-shadow 200ms ease, scale var(--photo-grid-frame-move) cubic-bezier(.2, 0, 0, 1);
+}
+
+/* Рамка переноса доехала и сменяется обводкой ячейки на том же месте — сразу, без проявления (`useGridDragSelect`). */
+.photo-grid.is-settling .photo-grid-cell.is-active {
+  transition: none;
 }
 
 .photo-card.is-zooming .photo-grid-cell::after {
@@ -194,15 +203,6 @@
   box-shadow: none;
   scale: 1;
   transition: none;
-  animation: none;
-}
-
-/* Выбор ячейки — короткий «отклик»: обводка подтягивается к ячейке. */
-@keyframes photo-grid-focus {
-  from {
-    outline-offset: 7px;
-    outline-color: transparent;
-  }
 }
 
 /* Номер бирки — в левом верхнем углу: у выбранной акцентный, у открытой — бирюзовый. */
