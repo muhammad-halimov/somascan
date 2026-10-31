@@ -68,8 +68,8 @@ export function LabelFieldsSkeleton({ label }: LabelFieldsSkeletonProps) {
       <div className="label-fields-list" aria-hidden="true">
         {Array.from({ length: rows }, (_, index) => (
           <div className="label-field" key={index}>
-            <span className="label-field-name"><span className="label-skeleton" /></span>
-            <span className="label-field-value"><span className="label-skeleton" /></span>
+            <span className="label-field-name"><span className="label-skeleton skeleton" /></span>
+            <span className="label-field-value"><span className="label-skeleton skeleton" /></span>
           </div>
         ))}
       </div>

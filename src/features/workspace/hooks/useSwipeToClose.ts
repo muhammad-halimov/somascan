@@ -91,6 +91,9 @@ export function useSwipeToClose({ viewerRef, stageRef, enabled, onClose }: Swipe
         swiping = true
         viewer.classList.add(SWIPING_CLASS)
       }
+      // Жест — наш: иначе браузер посчитает его броском прокрутки, и следующее касание (открыть фото снова)
+      // уйдёт на остановку этой «инерции», а не на нажатие.
+      if (event.cancelable) event.preventDefault()
       const elapsed = event.timeStamp - last.at
       if (elapsed > 0) velocity = (touch.clientY - last.y) / elapsed
       last = { y: touch.clientY, at: event.timeStamp }
@@ -106,7 +109,7 @@ export function useSwipeToClose({ viewerRef, stageRef, enabled, onClose }: Swipe
     }
 
     stage.addEventListener('touchstart', onTouchStart, { passive: true })
-    stage.addEventListener('touchmove', onTouchMove, { passive: true })
+    stage.addEventListener('touchmove', onTouchMove, { passive: false })
     stage.addEventListener('touchend', onTouchEnd)
     stage.addEventListener('touchcancel', onTouchEnd)
     return () => {

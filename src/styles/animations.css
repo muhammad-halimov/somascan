@@ -76,7 +76,7 @@
 }
 
 /* Появление содержимого: лёгкий подъём и проявление, как у окон. */
-/* Переливание силуэтов загружаемого содержимого. */
+/* Переливание силуэтов загружаемого содержимого (`.skeleton`). */
 @keyframes skeleton-shimmer {
   from {
     background-position: 100% 0;
@@ -161,5 +161,21 @@
       fill var(--theme-fade, 300ms) ease,
       stroke var(--theme-fade, 300ms) ease,
       box-shadow var(--theme-fade, 300ms) ease !important;
+  }
+}
+
+/* Силуэт загружаемого содержимого: полоса или кружок переливается слева направо. Размер и форму задаёт место. */
+.skeleton {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--text) 12%, transparent) 0%,
+    color-mix(in srgb, var(--text) 24%, transparent) 50%,
+    color-mix(in srgb, var(--text) 12%, transparent) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
   }
 }

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type Ref } from 'react'
+import { useLayoutEffect, useRef, type ReactNode, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AddIcon, CheckIcon, CloseIcon, ExclamationIcon, InfoIcon, NextIcon, PencilIcon, ResetIcon, TagIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
@@ -61,6 +61,14 @@ export interface NotesCardProps {
   isUploading?: boolean
 }
 
+/** Значок у номера бирки по её состоянию или `null`, если значка нет. */
+function itemMark(state: TagState): ReactNode {
+  if (state === 'busy') return <span className="notes-item-mark skeleton" />
+  if (needsAttention(state)) return <span className="notes-item-mark is-attention"><ExclamationIcon /></span>
+  if (state === 'done') return <span className="notes-item-mark is-done"><CheckIcon /></span>
+  return null
+}
+
 /**
  * Карточка результата под фото: узкая полоса «Проверьте данные перед отправкой» (у распознанной бирки),
  * шапка с заголовком и кнопками правки, номера бирок (когда их
@@ -98,22 +106,14 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
   // Заголовок карточки: «Данные с бирки» для результата, иначе нейтральное «Результат».
   const title = status.kind === 'done' ? t('label:title') : t('notes.label')
   // Номера бирок и (пока их меньше девяти) «+» — пустая ячейка для следующей. Рядом с номером — тот же значок,
-  // что в углу ячейки бирки в сетке: зелёная галочка у готовой, оранжевый «!» у ждущей действий (диктору — словами).
+  // что в углу ячейки бирки в сетке: зелёная галочка у готовой, оранжевый «!» у ждущей действий, у распознаваемой —
+  // силуэт значка, как у полей (диктору — словами).
   const itemOptions: TabOption<number>[] = Array.from({ length: itemCount }, (_, index) => {
     const state = itemStates[index] ?? 'none'
     const label = String(index + 1)
-    const attention = needsAttention(state)
-    if (!attention && state !== 'done') return { value: index, label }
-    return {
-      value: index,
-      label,
-      badge: (
-        <span className={`notes-item-mark ${attention ? 'is-attention' : 'is-done'}`}>
-          {attention ? <ExclamationIcon /> : <CheckIcon />}
-        </span>
-      ),
-      ariaLabel: `${t('grid.item', { number: index + 1 })}: ${t(`grid.state.${state}`)}`,
-    }
+    const badge = itemMark(state)
+    if (!badge || state === 'none') return { value: index, label }
+    return { value: index, label, badge, ariaLabel: `${t('grid.item', { number: index + 1 })}: ${t(`grid.state.${state}`)}` }
   })
   if (itemCount < MAX_SCAN_ITEMS) itemOptions.push({ value: itemCount, label: '+' })
 

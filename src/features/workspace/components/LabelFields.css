@@ -48,8 +48,8 @@
 }
 
 /*
- * Силуэты полей во время распознавания (`LabelFieldsSkeleton`): строки той же высоты, полосы разной ширины
- * переливаются слева направо.
+ * Силуэты полей во время распознавания (`LabelFieldsSkeleton`): строки той же высоты, полосы (`.skeleton`)
+ * разной ширины.
  */
 .label-fields.is-skeleton .label-field {
   align-items: center;
@@ -73,12 +73,6 @@
   width: 70%;
   height: 12px;
   border-radius: 6px;
-  background: linear-gradient(90deg,
-    color-mix(in srgb, var(--text) 12%, transparent) 0%,
-    color-mix(in srgb, var(--text) 24%, transparent) 50%,
-    color-mix(in srgb, var(--text) 12%, transparent) 100%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
 .label-field-value .label-skeleton {
@@ -91,12 +85,6 @@
 .label-field:nth-child(3n + 1) .label-field-value .label-skeleton { width: 45%; }
 .label-field:nth-child(3n + 2) .label-field-value .label-skeleton { width: 85%; }
 .label-field:nth-child(3n) .label-field-value .label-skeleton { width: 60%; }
-
-@media (prefers-reduced-motion: reduce) {
-  .label-skeleton {
-    animation: none;
-  }
-}
 
 .label-field-value.is-missing {
   color: var(--text);
