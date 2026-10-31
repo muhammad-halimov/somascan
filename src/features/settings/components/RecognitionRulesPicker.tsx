@@ -74,7 +74,7 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
   const [target, setTarget] = useState<string | null>(null)
   /** Правила на момент начала правки — к ним возвращает «Отмена». */
   const snapshot = useRef(value)
-  // Встроенные поля, читаемые с фото, в порядке настроек; затем особые правила.
+  // Встроенные поля, читаемые с фото, в порядке настроек; затем группы правил бирок канатов и производителя.
   const fieldEntries: RuleEntry[] = fields
     .filter((field) => field.builtIn && !field.manual && field.key in DEFAULT_RULE_LABELS)
     .map((field) => ({ key: field.key, name: fieldName(field), editHint: t('advanced.rulesLabelsHint'), empty: t('advanced.rulesNoLabels') }))
