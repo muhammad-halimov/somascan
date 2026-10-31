@@ -9,7 +9,7 @@ import { isProductForm, PRODUCT_FORM_KEY, PRODUCT_FORMS } from '@/features/recog
 import { useSettings } from '@/features/settings/store/useSettings'
 import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
 import { useStore } from '@/lib/store/useStore'
-import { listedSupplier } from '../utils/producerChoice'
+import { listedSupplier, supplierChoices } from '../utils/producerChoice'
 import type { HeatDuplicate } from '../utils/sendReadiness'
 import { DropdownField } from './DropdownField'
 import './LabelFields.css'
@@ -141,18 +141,20 @@ interface ProducerFieldProps {
 
 /**
  * Производитель в правке: выпадающий список известных поставщиков (название из списка совпадает без учёта
- * регистра). Название не из списка (так распознано) остаётся в поле как есть; карандаш слева от уголка
- * делает текст полем ввода на том же месте — так вписывают своё название или правят распознанное.
+ * регистра); выбранный — первым в списке и отмечен. Название не из списка (так распознано) остаётся в поле
+ * как есть; карандаш слева от уголка делает текст полем ввода на том же месте — так вписывают своё название
+ * или правят распознанное.
  */
 function ProducerField({ name, value, suppliers, onChange }: ProducerFieldProps) {
   const { t } = useTranslation('label')
   const text = value === null || value === undefined ? '' : String(value)
+  const chosen = listedSupplier(text, suppliers)
   return (
     <DropdownField
       name={name}
       value={text}
-      selected={listedSupplier(text, suppliers)}
-      options={suppliers.map((supplier) => ({ value: supplier, label: supplier }))}
+      selected={chosen}
+      options={supplierChoices(suppliers, chosen).map((supplier) => ({ value: supplier, label: supplier }))}
       placeholder={t('requiredField')}
       isEditing
       required

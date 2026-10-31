@@ -23,16 +23,20 @@ test('нормализация убирает пустые, повторы бе�
 
 test('чтение настроек: нет списка — по умолчанию, свой список и пустой сохраняются', () => {
   assert.deepEqual(parseSettings({ advanced: {} }, defaults).advanced.knownSuppliers, [...DEFAULT_KNOWN_SUPPLIERS])
-  assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Sovel', 42, 'Habas', 'sovel'], knownSuppliersVersion: 2 } }, defaults).advanced.knownSuppliers, ['Habas', 'Sovel'])
+  assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Sovel', 42, 'Habas', 'sovel'], knownSuppliersVersion: 3 } }, defaults).advanced.knownSuppliers, ['Habas', 'Sovel'])
   assert.deepEqual(parseSettings({ advanced: { knownSuppliers: [] } }, defaults).advanced.knownSuppliers, [])
 })
 
-test('SOMACO: в списке по умолчанию; сохранённый список прежней версии его получает, удалённый потом — не возвращается', () => {
-  assert.ok(DEFAULT_KNOWN_SUPPLIERS.includes('SOMACO'))
-  const before = DEFAULT_KNOWN_SUPPLIERS.filter((name) => name !== 'SOMACO')
+test('SOMACO, BPM, D&D Drótáru: в списке по умолчанию; сохранённый список прежней версии их получает, удалённые потом — не возвращаются', () => {
+  const added = ['SOMACO', 'BPM', 'D&D Drótáru']
+  for (const name of added) assert.ok(DEFAULT_KNOWN_SUPPLIERS.includes(name), name)
+  const before = DEFAULT_KNOWN_SUPPLIERS.filter((name) => !added.includes(name))
   const migrated = parseSettings({ advanced: { knownSuppliers: before } }, defaults).advanced
-  assert.deepEqual([migrated.knownSuppliers, migrated.knownSuppliersVersion], [[...DEFAULT_KNOWN_SUPPLIERS], 2])
-  assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Habas'], knownSuppliersVersion: 2 } }, defaults).advanced.knownSuppliers, ['Habas'])
+  assert.deepEqual([migrated.knownSuppliers, migrated.knownSuppliersVersion], [[...DEFAULT_KNOWN_SUPPLIERS], 3])
+  // список версии 2 (SOMACO уже был) получает только канаты
+  const fromV2 = parseSettings({ advanced: { knownSuppliers: ['Habas', 'SOMACO'], knownSuppliersVersion: 2 } }, defaults).advanced.knownSuppliers
+  assert.deepEqual(fromV2, ['BPM', 'D&D Drótáru', 'Habas', 'SOMACO'])
+  assert.deepEqual(parseSettings({ advanced: { knownSuppliers: ['Habas'], knownSuppliersVersion: 3 } }, defaults).advanced.knownSuppliers, ['Habas'])
 })
 
 test('зелёные бирки SOMACO: и в промпте по умолчанию, и в пояснениях полей — они идут и со своим промптом', () => {

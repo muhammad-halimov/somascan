@@ -1,0 +1,93 @@
+/**
+ * Бирки канатов (PC strand) на устройстве: плавки на них нет — её место занимает номер партии (BPM: «LOT NO»),
+ * без него номер бухты (D&D Drótáru: «Coil Nr.»); номер бухты в партии («COIL NO. 6») — не плавка; диаметр без
+ * подписи — из обозначения («Y1860 S7-12,9-F1-C1-R1»); BPM и D&D Drótáru — в списке поставщиков.
+ * Запуск: `npm test`.
+ */
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { DEFAULT_KNOWN_SUPPLIERS } from '../src/features/recognition/label/knownSuppliers'
+import { createDefaultLabelFields } from '../src/features/recognition/label/labelFields'
+import { buildLabelPrompt } from '../src/features/recognition/label/labelPrompt'
+import { extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
+import type { OcrPage } from '../src/features/recognition/ocr/ocrTypes'
+import { findStrandSize } from '../src/features/recognition/ocr/valueReaders'
+
+/** Поля по умолчанию (производитель, размер, плавка, вес), читаемые с фото. */
+const FIELDS = createDefaultLabelFields().filter((field) => field.enabled && !field.manual)
+
+/** Страница из строк: текст, x и y в долях страницы 1000×1000. */
+function page(rows: ReadonlyArray<[string, number, number]>): OcrPage {
+  return {
+    rotation: 0,
+    width: 1000,
+    height: 1000,
+    lines: rows.map(([text, x, y]) => {
+      const [left, top, right, bottom] = [x * 1000, y * 1000, (x + text.length * 0.012) * 1000, (y + 0.03) * 1000]
+      return { text, corners: [left, top, right, top, right, bottom, left, bottom], confidence: 0.9 }
+    }),
+  }
+}
+
+const read = (rows: ReadonlyArray<[string, number, number]>) =>
+  extractLabel({ page: page(rows), codes: [], fields: FIELDS, suppliers: DEFAULT_KNOWN_SUPPLIERS }).label
+
+test('BPM (Кишинёв): плавка — номер партии (LOT NO), а не «COIL NO. 6»; диаметр по подписи', () => {
+  const label = read([
+    ['BPM', 0.3, 0.05],
+    ['PC STRAND', 0.3, 0.09],
+    ['PRESTRESSED CONCRETE STRAND - PC STRAND', 0.1, 0.15],
+    ['PRODUCTION DATE', 0.15, 0.2], ['09/09/2026', 0.55, 0.2],
+    ['SPECIFICATION', 0.15, 0.25], ['LOW RELAXATION', 0.55, 0.235], ['7-Wire Plain PC Strand', 0.55, 0.26], ['Y1860T7-R1-F1-C1', 0.55, 0.285],
+    ['STANDARD', 0.15, 0.32], ['ST 009-2011', 0.55, 0.32],
+    ['NOMINAL DIAMETER, mm', 0.15, 0.36], ['15.2', 0.6, 0.36],
+    ['WEIGHT, KG', 0.15, 0.4], ['2845', 0.6, 0.4],
+    ['LENGTH, M', 0.15, 0.44], ['2630', 0.6, 0.44],
+    ['COIL NO.', 0.15, 0.48], ['6', 0.62, 0.48],
+    ['INNER COIL DIAMETER, mm', 0.15, 0.52], ['800', 0.6, 0.52],
+    ['LAY DIRECTION', 0.15, 0.56], ['Left', 0.6, 0.56],
+    ['LOT NO.', 0.15, 0.6], ['260909G392-06-2', 0.55, 0.6],
+    ['104 UZINELOR STR. CHISINAU, MD-2023 www.bpmpcstrand.md', 0.05, 0.65],
+    ['MADE IN THE REPUBLIC OF MOLDOVA', 0.2, 0.68],
+  ])
+  assert.deepEqual([label.producer, label.size, label.heat, label.weight_kg], ['BPM', '15.2 mm', '260909G392-06-2', 2845])
+})
+
+test('D&D Drótáru (Мишкольц): плавка — номер бухты (Coil Nr.), диаметр — из обозначения «S7-12,9»', () => {
+  const label = read([
+    ['D&D', 0.3, 0.05],
+    ['DRÓTÁRU ZRT.', 0.25, 0.12],
+    ['H-3527 Miskolc, Sajószigeti út 4.', 0.2, 0.17],
+    ['E-mail:contact@drotaru.hu - www.drotaru.hu', 0.15, 0.22],
+    ['D&D Drótáru Ipari és Ker. ZRt', 0.35, 0.28],
+    ['HUNGARY', 0.45, 0.31],
+    ['pc-strand prEN 10138-3 Y1860 S7-12,9-F1-C1-R1, LEFT', 0.08, 0.36],
+    ['Agrement Technic: 001SC-01/340-2025', 0.08, 0.39],
+    ['Coil Nr.', 0.12, 0.45], ['Weight:', 0.5, 0.47], ['2930', 0.7, 0.47], ['kg', 0.8, 0.47],
+    ['26D0222', 0.1, 0.495],
+    ['Length:', 0.5, 0.56], ['3745', 0.7, 0.56], ['m', 0.8, 0.56],
+  ])
+  assert.deepEqual([label.producer, label.size, label.heat, label.weight_kg], ['D&D Drótáru', '12,9 mm', '26D0222', 2930])
+})
+
+test('обозначение каната: диаметр после S7/S3; без него и вне пределов — нет', () => {
+  assert.equal(findStrandSize('Y1860S7-15,2'), '15,2 mm')
+  assert.equal(findStrandSize('prEN 10138-3 Y1860 S3-6,5-F1'), '6,5 mm')
+  assert.equal(findStrandSize('Y1860T7-R1-F1-C1'), null)
+  assert.equal(findStrandSize('prEN 10138-3'), null)
+})
+
+test('арматура с номером пачки и без подписи плавки — пачка плавкой не становится (это не канат)', () => {
+  const label = read([
+    ['ArcelorMittal', 0.3, 0.05],
+    ['Bundle No', 0.15, 0.2], ['250123456', 0.55, 0.2],
+    ['Weight', 0.15, 0.25], ['2050 kg', 0.55, 0.25],
+  ])
+  assert.notEqual(label.heat, '250123456')
+})
+
+test('модели: правило 10 промпта по умолчанию и пояснение плавки — канаты (LOT NO, иначе Coil Nr.)', () => {
+  const prompt = buildLabelPrompt('', FIELDS)
+  assert.match(prompt, /10\. Tags of prestressed concrete strand/)
+  assert.match(prompt, /"heat" — .*Prestressed strand tags .*LOT NO.*Coil Nr\./)
+})

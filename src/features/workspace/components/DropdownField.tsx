@@ -74,9 +74,12 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
   const [isOpen, setIsOpen] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [query, setQuery] = useState('')
+  // Порядок вариантов — на момент открытия: выбор не переставляет строки под пальцем и пока список сворачивается
+  // (выбранный поставщик встаёт первым к следующему открытию).
+  const [listed, setListed] = useState(options)
   useHeightTransition(menuRef, isOpen)
-  const hasSearch = searchable && options.length >= LIST_SEARCH_MIN_ITEMS
-  const shown = hasSearch ? options.filter((candidate) => matchesSearch(candidate.label, query)) : options
+  const hasSearch = searchable && listed.length >= LIST_SEARCH_MIN_ITEMS
+  const shown = hasSearch ? listed.filter((candidate) => matchesSearch(candidate.label, query)) : listed
 
   const option = options.find((candidate) => candidate.value === (selected ?? value))
   const missing = value.trim() === '' && (!option || option.unset === true)
@@ -87,7 +90,11 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
     setIsOpen(false)
     setQuery('')
   }
-  const toggle = () => (isOpen ? close() : setIsOpen(true))
+  const toggle = () => {
+    if (isOpen) return close()
+    setListed(options)
+    setIsOpen(true)
+  }
   const select = (next: string) => {
     onChange(next)
     close()

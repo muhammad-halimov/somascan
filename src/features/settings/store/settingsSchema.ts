@@ -120,13 +120,13 @@ export interface StorageSettings {
 export const LABEL_FIELDS_VERSION = 3
 
 /**
- * Версия списка поставщиков по умолчанию. 2 — добавлен SOMACO. Сохранённый список прежней версии
+ * Версия списка поставщиков по умолчанию. 2 — добавлен SOMACO, 3 — BPM и D&D Drótáru (канаты). Сохранённый список прежней версии
  * при чтении получает добавленные названия; удалённые потом пользователем — не возвращаются.
  */
-export const KNOWN_SUPPLIERS_VERSION = 2
+export const KNOWN_SUPPLIERS_VERSION = 3
 
 /** Названия, добавленные в список по умолчанию в каждой версии. */
-const ADDED_SUPPLIERS: Readonly<Record<number, readonly string[]>> = { 2: ['SOMACO'] }
+const ADDED_SUPPLIERS: Readonly<Record<number, readonly string[]>> = { 2: ['SOMACO'], 3: ['BPM', 'D&D Drótáru'] }
 
 /** Допустимые ограничения размера фото (по длинной стороне, px); `null` — отправлять оригинал фото. */
 export const IMAGE_SIZE_LIMITS = [1024, 1600, 2048, null] as const

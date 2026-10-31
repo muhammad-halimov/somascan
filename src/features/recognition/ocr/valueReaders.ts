@@ -355,6 +355,17 @@ export function findMarkedSize(text: string): string | null {
 }
 
 /**
+ * Диаметр каната (PC strand) из обозначения по EN 10138-3, когда подписи диаметра нет: «Y1860 S7-12,9-F1-C1-R1»
+ * (7 проволок, 12,9 мм), «Y1860S7-15,2», «S3-6,5». Пишется как напечатано: «12,9 mm».
+ */
+export function findStrandSize(text: string): string | null {
+  const match = /(?:^|[^\p{L}\d])(?:Y\d{4}\s*)?S[237]G?\s*[-–—]\s*(\d{1,2}[.,]\d{1,2})(?!\d)/iu.exec(text)
+  if (!match) return null
+  const size = Number.parseFloat(match[1]!.replace(',', '.'))
+  return size >= 4 && size <= 20 ? `${match[1]} mm` : null
+}
+
+/**
  * Вес без подписи: строка целиком — вес в килограммах с единицей («2066 kg», «1956.240 KGS») в пределах
  * веса бунта или пачки.
  */
