@@ -123,6 +123,8 @@ After a change in the web code, `npm run build && npx cap sync` is required. A l
 
 ## Building
 
+The full guide — tools from scratch, signing, iOS, API keys, LM Studio, network drive, Google Drive, Firebase: [guides/BUILD.md](guides/BUILD.md).
+
 ### Android
 
 Android SDK (Android Studio or `android-commandlinetools`), JDK 21; `compileSdk` 36, `minSdk` 24. Put `sdk.dir=…` into `android/local.properties`.
@@ -161,6 +163,7 @@ src/
   lib/, hooks/          infrastructure without business logic
   locales/              texts en / ro / tj / ru
 tests/                  checks and fixtures
+guides/                 build and setup guide, native feel plan
 android/, ios/          native projects and plugins
 ```
 

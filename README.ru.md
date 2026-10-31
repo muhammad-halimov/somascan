@@ -123,6 +123,8 @@ npm run dev        # веб-версия, http://localhost:5173
 
 ## Сборка
 
+Полное руководство — инструменты с нуля, подпись, iOS, API-ключи, LM Studio, сетевой диск, Google Drive, Firebase: [guides/BUILD.ru.md](guides/BUILD.ru.md).
+
 ### Android
 
 Android SDK (Android Studio или `android-commandlinetools`), JDK 21; `compileSdk` 36, `minSdk` 24. В `android/local.properties` — `sdk.dir=…`.
@@ -161,6 +163,7 @@ src/
   lib/, hooks/          инфраструктура без бизнес-логики
   locales/              тексты en / ro / tj / ru
 tests/                  проверки и фикстуры
+guides/                 руководство по сборке и настройке, план нативного поведения
 android/, ios/          нативные проекты и плагины
 ```
 
