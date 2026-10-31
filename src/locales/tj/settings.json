@@ -181,12 +181,11 @@
     "rules": "Қоидаҳо",
     "rulesHint": "Сарлавҳаҳое, ки телефон бо онҳо майдонҳоро меёбад.",
     "rulesEditHint": "Барои тағйири сарлавҳаҳо ба майдон пахш кунед.",
-    "rulesSummary": "Майдонҳо: {{count}}",
-    "rulesChanged": "Майдонҳои тағйирёфта: {{count}}",
+    "rulesSummary": "Қоидаҳо: {{count}}",
+    "rulesChanged": "Қоидаҳои тағйирёфта: {{count}}",
     "rulesDefault": "Ҳамаи сарлавҳаҳо стандартӣ",
     "rulesChangedMark": "тағйир ёфт",
     "rulesNoLabels": "бе сарлавҳа — танҳо аз рӯи шакли қимат",
-    "rulesLabels": "Сарлавҳаҳои майдон",
     "rulesLabelsHint": "Дар ҳар сатр як сарлавҳа; ҳарфҳои калон ва аломатҳо аҳамият надоранд.",
     "rulesDefaultButton": "Стандартӣ",
     "rulesExport": "Содир кардани қоидаҳо ба JSON",
@@ -195,9 +194,9 @@
     "rulesImportFailedTitle": "Ворид кардан нашуд",
     "rulesImportInvalid": "Дар файл қоидаҳои Somascan нест.",
     "rulesImportedTitle": "Қоидаҳо ворид шуданд",
-    "rulesImportedMessage": "Сарлавҳаҳо дар майдонҳо нав шуданд: {{count}}.",
+    "rulesImportedMessage": "Қоидаҳо нав шуданд: {{count}}.",
     "rulesResetTitle": "Ба қоидаҳои стандартӣ баргардем?",
-    "rulesResetMessage": "Сарлавҳаҳои ҳамаи майдонҳо ба стандартӣ бармегарданд: иловашудаҳо нест мешаванд, нестшудаҳо барқарор мешаванд.",
+    "rulesResetMessage": "Ҳамаи қоидаҳо ба стандартӣ бармегарданд: иловашуда нест мешавад, нестшуда барқарор мешавад.",
     "promptUnavailable": "Танҳо барои моделҳои AI.",
     "rulesUnavailable": "Танҳо барои шинохтан дар дастгоҳ.",
     "fields": "Майдонҳо",
@@ -276,7 +275,31 @@
     "suppliersImportInvalid": "Дар файл рӯйхати таъминкунандагон нест. JSON мисли содирот лозим аст: {\"suppliers\": [\"…\", \"…\"]} ё танҳо массиви номҳо.",
     "suppliersImportNotJson": "Файли .json-ро интихоб кунед — рӯйхате, ки бо «Содирот» нигоҳ дошта шудааст.",
     "suppliersImportTooLarge": "Файл барои рӯйхати таъминкунандагон хеле калон аст (зиёда аз {{size}} МБ).",
-    "suppliersExportFailedTitle": "Содир кардан нашуд"
+    "suppliersExportFailedTitle": "Содир кардан нашуд",
+    "rulesSpecial": "Қоидаҳои махсус",
+    "rulesSpecialEmpty": "холӣ — қоида амал намекунад",
+    "rulesSpecialItems": {
+      "strand_words": {
+        "name": "Калимаҳои барчаспи арғамчин",
+        "hint": "Барчасп бо ин калима — арғамчин аст."
+      },
+      "strand_lot_masks": {
+        "name": "Рақами партияи арғамчин",
+        "hint": "Қолиб: 9 — рақам, A — ҳарф, X — ҳар аломат."
+      },
+      "house_supplier": {
+        "name": "Истеҳсолкунандаи барчаспҳои худӣ",
+        "hint": "Барчаспҳои анбор бе номи завод."
+      },
+      "generic_supplier_words": {
+        "name": "Калимаҳои умумӣ дар номҳо",
+        "hint": "Танҳо бо ин калима заводро шинохтан мумкин нест."
+      },
+      "free_mail_domains": {
+        "name": "Почтаи ройгон",
+        "hint": "Бо ин почта заводро шинохтан мумкин нест."
+      }
+    }
   },
   "theme": {
     "caption": "Мавзӯъ",

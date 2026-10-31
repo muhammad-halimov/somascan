@@ -29,7 +29,19 @@
     "cancelled": "Recognition cancelled. The photo is kept — tap “Retry” to recognize it again.",
     "checkBeforeSend": "Check the data before sending"
   },
-  "retakeHint": "Try rotating the photo",
+  "retakeHints": {
+    "noTag": "No tag found",
+    "rotated": "Rotate the photo",
+    "blurry": "The photo is blurry",
+    "glare": "Glare covers the text",
+    "dark": "Too dark",
+    "overexposed": "The photo is overexposed",
+    "cropped": "The tag is cut off",
+    "angle": "Shoot the tag straight on",
+    "far": "Move closer to the tag",
+    "obstructed": "The text is covered",
+    "missing": "Not all fields recognized"
+  },
   "editing": {
     "edit": "Edit text",
     "finish": "Finish editing",
@@ -103,6 +115,7 @@
   },
   "photoIssues": {
     "noTag": "no tag is visible",
+    "rotated": "the tag is rotated",
     "blurry": "the photo is blurry",
     "glare": "glare covers the text",
     "dark": "too dark",

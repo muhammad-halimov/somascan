@@ -1,6 +1,7 @@
 import { PHOTO_ASSESSMENT_KEY } from '../label/labelPrompt'
 import { bestExtraction, extractLabel, type Extraction } from '../ocr/LabelExtractor'
 import type { OcrCode, OcrPage } from '../ocr/ocrTypes'
+import { readingIssues } from '../ocr/readingAdvice'
 import { TagOcr } from '../ocr/TagOcr'
 import { RecognitionError } from '../RecognitionError'
 import type { ModelCandidate } from '../types'
@@ -16,6 +17,18 @@ const CONFIDENT_SCORE = 5
 
 /** Повороты, которые пробуются, если в исходном мало подписей: бирку сняли боком или вверх ногами. */
 const OTHER_ROTATIONS = [90, 270, 180]
+
+/** Прочитанная страница и её разбор. */
+interface PageReading {
+  page: OcrPage
+  extraction: Extraction
+}
+
+/** Чтение с лучшим разбором (`bestExtraction`) или `null`, если страниц нет. */
+function bestReading(readings: readonly PageReading[]): PageReading | null {
+  const best = bestExtraction(readings.map(({ extraction }) => extraction))
+  return readings.find(({ extraction }) => extraction === best) ?? null
+}
 
 /**
  * Распознавание на самом телефоне, без сети и ключей: текст бирки читает ML Kit (Android) или Apple Vision (iOS),
@@ -56,20 +69,22 @@ export class OnDeviceProvider extends RecognitionProvider {
    */
   protected async complete({ image, fields, suppliers, ruleLabels, access }: RecognitionRequest): Promise<string> {
     if (!TagOcr.isAvailable()) throw new RecognitionError('onDeviceUnavailable')
-    const extract = (page: OcrPage, codes: readonly OcrCode[]) => extractLabel({ page, codes, fields, suppliers, ruleLabels })
     const first = await this.read(image.data, [0], true)
     throwIfAborted(access.signal)
-    const pages = [...first.pages]
-    let best = bestExtraction(pages.map((page) => extract(page, first.codes)))
-    if (!best || best.score < CONFIDENT_SCORE || best.turns !== 0) {
+    // Каждая страница — со своим разбором: по странице лучшего разбора видно, что посоветовать (`readingIssues`).
+    const readPage = (page: OcrPage): PageReading => ({ page, extraction: extractLabel({ page, codes: first.codes, fields, suppliers, ruleLabels }) })
+    const readings = first.pages.map(readPage)
+    let best = bestReading(readings)
+    if (!best || best.extraction.score < CONFIDENT_SCORE || best.extraction.turns !== 0) {
       const turned = await this.read(image.data, OTHER_ROTATIONS, false)
       throwIfAborted(access.signal)
-      pages.push(...turned.pages)
-      best = bestExtraction([...(best ? [best] : []), ...turned.pages.map((page) => extract(page, first.codes))])
+      readings.push(...turned.pages.map(readPage))
+      best = bestReading(readings)
     }
-    this.lastReading = { pages, codes: first.codes, extraction: best, at: new Date().toISOString() }
+    this.lastReading = { pages: readings.map(({ page }) => page), codes: first.codes, extraction: best?.extraction ?? null, at: new Date().toISOString() }
     if (!best) return JSON.stringify({ [PHOTO_ASSESSMENT_KEY]: { ok: false, issues: ['noTag'] } })
-    return JSON.stringify({ ...best.label, [PHOTO_ASSESSMENT_KEY]: best.photo })
+    const { label, photo, turns } = best.extraction
+    return JSON.stringify({ ...label, [PHOTO_ASSESSMENT_KEY]: { ...photo, issues: [...photo.issues, ...readingIssues(best.page, turns)] } })
   }
 
   /** Чтение с переводом сбоя движка в `RecognitionError`. */

@@ -8,6 +8,7 @@ import type { ScanItem } from '../hooks/useScanSession'
 import type { Size } from '../utils/PhotoGeometry'
 import type { PhotoTransform } from '../hooks/usePhotoTransform'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
+import type { RetakeHintReason } from '../utils/retakeHint'
 import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
 import { PhotoGrid } from './PhotoGrid'
@@ -53,8 +54,8 @@ export interface PhotoCardProps {
   isReceiving: boolean
   /** Масштаб, сдвиг, поворот и обработчики жестов открытого фото. */
   transform: PhotoTransform
-  /** Бирка распознана не полностью: между «Назад» и «Сеткой» — подсказка повернуть или переснять. */
-  retakeHint: boolean
+  /** Бирка распознана не полностью: между «Назад» и «Сеткой» — подсказка, что мешает (`retakeHintReason`); `null` — без неё. */
+  retakeHint: RetakeHintReason | null
   /** Открывает источник фото (пустая ячейка). */
   onPick: () => void
   /** Угловая кнопка «Без фото» / «С фото»: переключает ячейку между фото и вводом данных вручную. */
@@ -103,8 +104,10 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
    */
   const [loadedId, setLoadedId] = useState<string | null>(null)
   const placeholder = hasPhoto && item?.thumbUrl && item.thumbUrl !== photoUrl && loadedId !== item.id ? item.thumbUrl : null
-  /** Подсказка повернуть или переснять — у показанного фото; появляется и уходит плавно. */
-  const hint = usePresence(retakeHint && hasPhoto && !isBusy)
+  /** Подсказка, что мешает, — у показанного фото; появляется и уходит плавно (уходит с прежним текстом). */
+  const hint = usePresence(retakeHint !== null && hasPhoto && !isBusy)
+  const [hintReason, setHintReason] = useState(retakeHint)
+  if (retakeHint !== null && retakeHint !== hintReason) setHintReason(retakeHint)
 
   const cardRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -315,7 +318,7 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
           {showBack && (
             <ActionButton variant="overlay" size={44} icon={<BackIcon />} caption={t('grid.back')} label={t('grid.backLabel')} onClick={onShowGrid} />
           )}
-          {hint.mounted && <RetakeHint isClosing={hint.closing} />}
+          {hint.mounted && hintReason && <RetakeHint reason={hintReason} isClosing={hint.closing} />}
           <ActionButton className="photo-nav-grid" variant="overlay" size={44} icon={<GridIcon />} caption={t('grid.open')} label={t('grid.openLabel')} onClick={onShowGrid} />
         </div>
       </div>

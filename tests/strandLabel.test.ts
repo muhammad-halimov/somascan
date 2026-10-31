@@ -12,7 +12,8 @@ import { createDefaultLabelFields } from '../src/features/recognition/label/labe
 import { buildLabelPrompt } from '../src/features/recognition/label/labelPrompt'
 import { extractLabel } from '../src/features/recognition/ocr/LabelExtractor'
 import type { OcrPage } from '../src/features/recognition/ocr/ocrTypes'
-import { findStrandLot, findStrandSize } from '../src/features/recognition/ocr/strandTag'
+import { DEFAULT_RULE_LABELS } from '../src/features/recognition/ocr/ruleLabels'
+import { findStrandLot as findLot, findStrandSize, matchMask } from '../src/features/recognition/ocr/strandTag'
 
 /** Поля по умолчанию (производитель, размер, плавка, вес), читаемые с фото. */
 const FIELDS = createDefaultLabelFields().filter((field) => field.enabled && !field.manual)
@@ -30,8 +31,11 @@ function page(rows: ReadonlyArray<[string, number, number]>): OcrPage {
   }
 }
 
-const read = (rows: ReadonlyArray<[string, number, number]>) =>
-  extractLabel({ page: page(rows), codes: [], fields: FIELDS, suppliers: DEFAULT_KNOWN_SUPPLIERS }).label
+const read = (rows: ReadonlyArray<[string, number, number]>, ruleLabels: Record<string, string[]> = {}) =>
+  extractLabel({ page: page(rows), codes: [], fields: FIELDS, suppliers: DEFAULT_KNOWN_SUPPLIERS, ruleLabels }).label
+
+/** Номер партии по шаблонам по умолчанию. */
+const findStrandLot = (text: string) => findLot(text, DEFAULT_RULE_LABELS.strand_lot_masks!)
 
 test('BPM (Кишинёв): плавка — номер партии (LOT NO), а не «COIL NO. 6»; диаметр по подписи', () => {
   const label = read([
@@ -120,4 +124,26 @@ test('BPM, настоящее чтение ML Kit (fixtures/ocr/bpm-strand.json)
   const page = JSON.parse(readFileSync(new URL('./fixtures/ocr/bpm-strand.json', import.meta.url), 'utf8')) as OcrPage
   const label = extractLabel({ page, codes: [], fields: FIELDS, suppliers: DEFAULT_KNOWN_SUPPLIERS }).label
   assert.deepEqual([label.producer, label.size, label.weight_kg, label.heat], ['BPM', '15,2 mm', 2845, null])
+})
+
+test('шаблон номера: 9 — цифра (буква-двойник становится цифрой), A — буква, X — буква или цифра, дефис и длина — как в шаблоне', () => {
+  assert.equal(matchMask('26O9O9G392-06-2', '999999A999-99-9'), '260909G392-06-2')
+  assert.equal(matchMask('2609090392-06-2', '999999A999-99-9'), null, 'буква шаблона, прочитанная цифрой, не угадывается')
+  assert.equal(matchMask('AB-12', 'XX-99'), 'AB-12')
+  assert.equal(matchMask('26D0222', '99A999'), null)
+})
+
+test('особые правила из «Правил»: свои слова канатов и шаблоны партии, свой склад — правка без обновления приложения', () => {
+  const rows: Array<[string, number, number]> = [
+    ['ACME', 0.3, 0.05],
+    ['LITZE 1860 HOCHFEST', 0.1, 0.15],
+    ['WEIGHT, KG', 0.15, 0.4], ['2100', 0.6, 0.4],
+    ['AB-1234-77', 0.55, 0.6],
+  ]
+  assert.equal(read(rows).heat, null, 'стандартные шаблоны такой номер не берут')
+  assert.equal(read(rows, { strand_lot_masks: ['AA-9999-99'] }).heat, 'AB-1234-77')
+  assert.equal(read(rows, { strand_lot_masks: ['AA-9999-99'], strand_words: ['strand'] }).heat, null, 'без слова «Litze» это не канат')
+  const house = [['SANTIER 12', 0.1, 0.1], ['Kg: 1200', 0.1, 0.2]] as Array<[string, number, number]>
+  assert.equal(read([...house, ['SOMACO', 0.1, 0.3]]).producer, 'SOMACO')
+  assert.equal(read([...house, ['DEPOZIT NORD', 0.1, 0.3]], { house_supplier: ['Depozit Nord'] }).producer, 'Depozit Nord')
 })

@@ -27,9 +27,11 @@ export type PhotoIssue =
   | 'obstructed'
   /** На фото нет бирки. */
   | 'noTag'
+  /** Бирка снята боком или вверх ногами: текст прочитан с повёрнутого фото (распознавание на устройстве). */
+  | 'rotated'
 
-/** Все проблемы в порядке показа. */
-export const PHOTO_ISSUES: readonly PhotoIssue[] = ['noTag', 'blurry', 'glare', 'dark', 'overexposed', 'cropped', 'angle', 'far', 'obstructed']
+/** Все проблемы в порядке показа (и важности: первая из найденных — подсказка над фото). */
+export const PHOTO_ISSUES: readonly PhotoIssue[] = ['noTag', 'rotated', 'blurry', 'glare', 'dark', 'overexposed', 'cropped', 'angle', 'far', 'obstructed']
 
 /** Проверка, что значение — известная проблема фото. */
 export const isPhotoIssue = (value: unknown): value is PhotoIssue =>

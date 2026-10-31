@@ -76,8 +76,9 @@ export class LabelRecognizer {
     const prompt = buildLabelPrompt(instructions, fields, suppliers)
     const text = await provider.recognize({ image, model, prompt, fields, suppliers, ruleLabels, access })
     const { label, photo } = this.parser.parseAnswer(text, fields.map((field) => field.key))
-    // Проблемы, названные моделью, учитываем, только если она сочла фото непригодным.
-    const issues = mergePhotoIssues(photo.ok ? [] : photo.issues, image.issues)
+    // Проблемы, названные моделью, учитываем, только если она сочла фото непригодным; распознавание на устройстве
+    // называет их и при пригодном фото — как подсказку над фото (повёрнуто, мелкий текст), без совета переснять.
+    const issues = mergePhotoIssues(photo.ok && !provider.onDevice ? [] : photo.issues, image.issues)
     return { label, photo: { retake: !photo.ok || image.issues.length > 0, issues } }
   }
 }

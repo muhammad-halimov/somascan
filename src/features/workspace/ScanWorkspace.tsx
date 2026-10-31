@@ -17,7 +17,7 @@ import { useSendSelected } from './hooks/useSendSelected'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
 import { IDLE, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
-import { needsRetakeHint } from './utils/retakeHint'
+import { retakeHintReason } from './utils/retakeHint'
 import { tagState } from './utils/tagState'
 import './ScanWorkspace.css'
 
@@ -321,8 +321,8 @@ export function ScanWorkspace() {
   /** Панель выезжает и уходит плавно: пока она схлопывается, остаётся в DOM. */
   const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
 
-  /** Открытая бирка распознана не полностью: на фото — подсказка повернуть или переснять. */
-  const showRetakeHint = needsRetakeHint(item, advanced.labelFields)
+  /** Открытая бирка распознана не полностью: на фото — подсказка, что мешает. */
+  const retakeHint = retakeHintReason(item, advanced.labelFields)
 
   /** Сколько бирок выбрано для отправки. */
   const selectedCount = session.items.filter((candidate) => candidate.selected).length
@@ -345,7 +345,7 @@ export function ScanWorkspace() {
           showBack={usedGrid}
           isReceiving={picker.isReceiving}
           transform={transform}
-          retakeHint={showRetakeHint}
+          retakeHint={retakeHint}
           onPick={() => void addPhotos()}
           onToggleManual={toggleManual}
           onOpen={() => setIsViewerOpen(true)}

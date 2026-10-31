@@ -29,7 +29,19 @@
     "cancelled": "Recunoașterea a fost anulată. Fotografia a rămas — apăsați „Reia” pentru a o recunoaște din nou.",
     "checkBeforeSend": "Verificați datele înainte de trimitere"
   },
-  "retakeHint": "Încercați să rotiți poza",
+  "retakeHints": {
+    "noTag": "Eticheta nu a fost găsită",
+    "rotated": "Rotiți fotografia",
+    "blurry": "Fotografia este neclară",
+    "glare": "Reflexia acoperă textul",
+    "dark": "Prea întuneric",
+    "overexposed": "Fotografia este supraexpusă",
+    "cropped": "Eticheta nu e întreagă în cadru",
+    "angle": "Fotografiați eticheta drept",
+    "far": "Fotografiați mai aproape",
+    "obstructed": "Textul este acoperit",
+    "missing": "Nu toate câmpurile recunoscute"
+  },
   "editing": {
     "edit": "Editează textul",
     "finish": "Finalizează editarea",
@@ -103,6 +115,7 @@
   },
   "photoIssues": {
     "noTag": "eticheta nu se vede",
+    "rotated": "eticheta este rotită",
     "blurry": "fotografia este neclară",
     "glare": "reflexiile acoperă textul",
     "dark": "prea întunecată",

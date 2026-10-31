@@ -181,12 +181,11 @@
     "rules": "Правила",
     "rulesHint": "Подписи, по которым телефон находит поля.",
     "rulesEditHint": "Нажмите на поле, чтобы изменить подписи.",
-    "rulesSummary": "Полей: {{count}}",
-    "rulesChanged": "Изменено полей: {{count}}",
+    "rulesSummary": "Правил: {{count}}",
+    "rulesChanged": "Изменено правил: {{count}}",
     "rulesDefault": "Все подписи стандартные",
     "rulesChangedMark": "изменено",
     "rulesNoLabels": "без подписей — только по виду значения",
-    "rulesLabels": "Подписи поля",
     "rulesLabelsHint": "Одна подпись на строку; регистр и знаки не важны.",
     "rulesDefaultButton": "Стандартные",
     "rulesExport": "Экспортировать правила в JSON",
@@ -195,9 +194,9 @@
     "rulesImportFailedTitle": "Не удалось импортировать",
     "rulesImportInvalid": "В файле нет правил Somascan.",
     "rulesImportedTitle": "Правила импортированы",
-    "rulesImportedMessage": "Подписи обновлены у полей: {{count}}.",
+    "rulesImportedMessage": "Обновлено правил: {{count}}.",
     "rulesResetTitle": "Вернуть стандартные правила?",
-    "rulesResetMessage": "Подписи всех полей вернутся к стандартным: добавленные удалятся, удалённые — восстановятся.",
+    "rulesResetMessage": "Все правила вернутся к стандартным: добавленное удалится, удалённое восстановится.",
     "promptUnavailable": "Только для ИИ-моделей.",
     "rulesUnavailable": "Только для распознавания на устройстве.",
     "fields": "Поля",
@@ -276,7 +275,31 @@
     "suppliersImportInvalid": "В файле нет списка поставщиков. Нужен JSON, как при экспорте: {\"suppliers\": [\"…\", \"…\"]}, или просто массив названий.",
     "suppliersImportNotJson": "Выберите файл .json — список, сохранённый «Экспортом».",
     "suppliersImportTooLarge": "Файл слишком большой для списка поставщиков (больше {{size}} МБ).",
-    "suppliersExportFailedTitle": "Не удалось экспортировать"
+    "suppliersExportFailedTitle": "Не удалось экспортировать",
+    "rulesSpecial": "Особые правила",
+    "rulesSpecialEmpty": "пусто — правило не действует",
+    "rulesSpecialItems": {
+      "strand_words": {
+        "name": "Слова бирок канатов",
+        "hint": "По этим словам бирка считается канатом."
+      },
+      "strand_lot_masks": {
+        "name": "Номер партии каната",
+        "hint": "Шаблон: 9 — цифра, A — буква, X — любой знак."
+      },
+      "house_supplier": {
+        "name": "Производитель своих бирок",
+        "hint": "Бирки склада без названия завода."
+      },
+      "generic_supplier_words": {
+        "name": "Общие слова в названиях",
+        "hint": "По одному такому слову завод не узнать."
+      },
+      "free_mail_domains": {
+        "name": "Бесплатная почта",
+        "hint": "По такой почте завод не узнать."
+      }
+    }
   },
   "theme": {
     "caption": "Тема",

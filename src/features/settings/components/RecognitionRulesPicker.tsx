@@ -17,6 +17,7 @@ import {
   ruleLabelsFor,
   RULES_FILE_NAME,
   rulesToJson,
+  SPECIAL_RULE_KEYS,
   type RuleLabels,
 } from '@/features/recognition/ocr/ruleLabels'
 import { MAX_TEXT_FILE_BYTES, PickedFileError, pickTextFile, shareTextFile } from '@/lib/platform/files'
@@ -39,6 +40,17 @@ export interface RecognitionRulesPickerProps {
 /** Текст ошибки для сообщения. */
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
+/** Правило в списке: подписи поля или особое правило. */
+interface RuleEntry {
+  key: string
+  /** Название строки. */
+  name: string
+  /** Пояснение под полем ввода в правке. */
+  editHint: string
+  /** Что показать, если список пуст. */
+  empty: string
+}
+
 /**
  * Правила распознавания на устройстве: подписи, по которым телефон находит поля на бирке (`ruleLabels.ts`).
  * В шторке — поля с их подписями; карандаш включает правку: касание поля открывает его подписи (по одной
@@ -48,6 +60,9 @@ const errorText = (error: unknown) => (error instanceof Error ? error.message : 
  * «Экспорт» и «Импорт» — правила в файле JSON, чтобы дополнить подписи на одном телефоне и раздать коллегам.
  * Импорт заменяет подписи полей, которые есть в файле, остальные не трогает.
  * Свои поля ищутся по их названиям («Поля»), здесь их нет.
+ *
+ * Ниже подписей полей — особые правила (`SPECIAL_RULE_KEYS`): слова бирок канатов, шаблоны номера партии,
+ * производитель своих бирок, общие слова в названиях заводов, бесплатная почта; правятся так же.
  */
 export function RecognitionRulesPicker({ value, fields, unavailable }: RecognitionRulesPickerProps) {
   const { t } = useTranslation(['settings', 'common'])
@@ -58,9 +73,45 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
   const [target, setTarget] = useState<string | null>(null)
   /** Правила на момент начала правки — к ним возвращает «Отмена». */
   const snapshot = useRef(value)
-  // Встроенные поля, читаемые с фото, в порядке настроек.
-  const ruleFields = fields.filter((field) => field.builtIn && !field.manual && field.key in DEFAULT_RULE_LABELS)
+  // Встроенные поля, читаемые с фото, в порядке настроек; затем особые правила.
+  const fieldEntries: RuleEntry[] = fields
+    .filter((field) => field.builtIn && !field.manual && field.key in DEFAULT_RULE_LABELS)
+    .map((field) => ({ key: field.key, name: fieldName(field), editHint: t('advanced.rulesLabelsHint'), empty: t('advanced.rulesNoLabels') }))
+  const specialEntries: RuleEntry[] = SPECIAL_RULE_KEYS.map((key) => ({
+    key,
+    name: t(`advanced.rulesSpecialItems.${key}.name`),
+    editHint: t(`advanced.rulesSpecialItems.${key}.hint`),
+    empty: t('advanced.rulesSpecialEmpty'),
+  }))
   const changed = Object.keys(value).length
+
+  /** Строка правила; в правке касание открывает его список (по одному значению на строку). */
+  const renderRule = ({ key, name, editHint, empty }: RuleEntry) => {
+    const labels = ruleLabelsFor(value, key)
+    const secondary = `${key in value ? `${t('advanced.rulesChangedMark')} · ` : ''}${labels.join(', ') || empty}`
+    if (!isEditing) return <ListItem key={key} primary={name} secondary={secondary} />
+    const isRuleOpen = target === key
+    return (
+      <Fragment key={key}>
+        <ListItem primary={name} secondary={secondary} selected={isRuleOpen} trailing={<PencilIcon />} onClick={() => setTarget(isRuleOpen ? null : key)} />
+        {isRuleOpen && (
+          <li className="label-fields-picker-form">
+            <RuleLabelsEditor
+              ruleKey={key}
+              name={name}
+              hint={editHint}
+              labels={labels}
+              onSave={(next) => {
+                settingsStore.setRuleLabels(key, next)
+                setTarget(null)
+              }}
+              onCancel={() => setTarget(null)}
+            />
+          </li>
+        )}
+      </Fragment>
+    )
+  }
 
   const exportRules = async () => {
     try {
@@ -152,41 +203,15 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
       <Disclosure
         open={isOpen}
         onToggle={() => setIsOpen(!isOpen)}
-        summary={t('advanced.rulesSummary', { count: ruleFields.length })}
+        summary={t('advanced.rulesSummary', { count: fieldEntries.length + specialEntries.length })}
         details={changed > 0 ? t('advanced.rulesChanged', { count: changed }) : t('advanced.rulesDefault')}
       >
         <List label={t('advanced.rules')} className="label-fields-picker rules-picker">
-          {ruleFields.map((field) => {
-            const labels = ruleLabelsFor(value, field.key)
-            const isChanged = field.key in value
-            const secondary = `${isChanged ? `${t('advanced.rulesChangedMark')} · ` : ''}${labels.join(', ') || t('advanced.rulesNoLabels')}`
-            if (!isEditing) return <ListItem key={field.key} primary={fieldName(field)} secondary={secondary} />
-            const isFieldOpen = target === field.key
-            return (
-              <Fragment key={field.key}>
-                <ListItem
-                  primary={fieldName(field)}
-                  secondary={secondary}
-                  selected={isFieldOpen}
-                  trailing={<PencilIcon />}
-                  onClick={() => setTarget(isFieldOpen ? null : field.key)}
-                />
-                {isFieldOpen && (
-                  <li className="label-fields-picker-form">
-                    <RuleLabelsEditor
-                      fieldKey={field.key}
-                      labels={labels}
-                      onSave={(next) => {
-                        settingsStore.setRuleLabels(field.key, next)
-                        setTarget(null)
-                      }}
-                      onCancel={() => setTarget(null)}
-                    />
-                  </li>
-                )}
-              </Fragment>
-            )
-          })}
+          {fieldEntries.map(renderRule)}
+        </List>
+        <span className="rules-picker-heading">{t('advanced.rulesSpecial')}</span>
+        <List label={t('advanced.rulesSpecial')} className="label-fields-picker rules-picker">
+          {specialEntries.map(renderRule)}
         </List>
       </Disclosure>
     </FormSection>
@@ -195,33 +220,37 @@ export function RecognitionRulesPicker({ value, fields, unavailable }: Recogniti
 
 /** Свойства `RuleLabelsEditor`. */
 interface RuleLabelsEditorProps {
-  fieldKey: string
-  /** Подписи поля сейчас. */
+  ruleKey: string
+  /** Название правила (доступное имя поля ввода). */
+  name: string
+  /** Пояснение под полем ввода. */
+  hint: string
+  /** Значения сейчас. */
   labels: readonly string[]
   onSave: (labels: string[]) => void
   onCancel: () => void
 }
 
-/** Подписи одного поля: по одной на строку; «Стандартные» подставляет список по умолчанию (сохраняется кнопкой). */
-function RuleLabelsEditor({ fieldKey, labels, onSave, onCancel }: RuleLabelsEditorProps) {
+/** Список одного правила: по одному значению на строку; «Стандартные» подставляет список по умолчанию (сохраняется кнопкой). */
+function RuleLabelsEditor({ ruleKey, name, hint, labels, onSave, onCancel }: RuleLabelsEditorProps) {
   const { t } = useTranslation(['settings', 'common'])
   const [draft, setDraft] = useState(labels.join('\n'))
   const next = normalizeRuleLabels(draft.split('\n'))
-  const isDefault = isDefaultRuleLabels(fieldKey, next)
+  const isDefault = isDefaultRuleLabels(ruleKey, next)
 
   return (
     <div className="label-field-editor anim-enter">
       <TextArea
-        aria-label={t('advanced.rulesLabels')}
+        aria-label={name}
         value={draft}
         rows={Math.min(10, Math.max(4, labels.length))}
         autoCapitalize="none"
         spellCheck={false}
         onChange={setDraft}
       />
-      <span className="form-section-hint">{t('advanced.rulesLabelsHint')}</span>
+      <span className="form-section-hint">{hint}</span>
       <div className="label-field-editor-actions">
-        <Button icon={<ResetIcon />} disabled={isDefault} onClick={() => setDraft((DEFAULT_RULE_LABELS[fieldKey] ?? []).join('\n'))}>{t('advanced.rulesDefaultButton')}</Button>
+        <Button icon={<ResetIcon />} disabled={isDefault} onClick={() => setDraft((DEFAULT_RULE_LABELS[ruleKey] ?? []).join('\n'))}>{t('advanced.rulesDefaultButton')}</Button>
         <span className="label-field-editor-spacer" />
         <Button icon={<CloseIcon />} onClick={onCancel}>{t('common:cancel')}</Button>
         <Button icon={<CheckIcon />} onClick={() => onSave(next)}>{t('advanced.fieldSave')}</Button>
