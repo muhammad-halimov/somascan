@@ -10,18 +10,20 @@
 .photo-grid {
   --photo-grid-gap: 6px;
   --photo-grid-radius: 8px;
+  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина, зазор от ячейки, увеличение ячейки. */
+  --photo-grid-frame-width: 3px;
+  --photo-grid-frame-offset: 1px;
+  --photo-grid-frame-scale: 1.03;
+  --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--focus);
   /*
-   * Поле сетки: обводка открытой ячейки (4 px с отступом 2 px), её увеличение на 5 % (до 3 px) и свечение
-   * помещаются внутри карточки — край карточки не обрезает ни обводку, ни свечение.
+   * Поле сетки — чуть шире промежутка между ячейками: в нём помещаются обводка открытой ячейки с зазором (4 px)
+   * и её увеличение (меньше 2 px); край карточки обводку не обрезает.
    */
-  --photo-grid-frame-reach: 16px;
+  --photo-grid-frame-reach: 8px;
+  /* Свечение — узкое, гаснет в пределах поля сетки. */
+  --photo-grid-frame-glow: 0 0 6px 1px color-mix(in srgb, var(--focus) 75%, transparent);
   /* Сколько обводка переезжает с ячейки на ячейку (рамка переноса читает это же значение). */
   --photo-grid-frame-move: 260ms;
-  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже). */
-  --photo-grid-frame-outline: 4px solid var(--focus);
-  /* Свечение гаснет в пределах поля сетки (`--photo-grid-frame-reach`). */
-  --photo-grid-frame-glow: 0 0 8px 3px color-mix(in srgb, var(--focus) 80%, transparent), 0 0 14px 2px color-mix(in srgb, var(--focus) 40%, transparent);
-  --photo-grid-frame-scale: 1.05;
   position: absolute;
   z-index: 4;
   inset: 0;
@@ -145,7 +147,7 @@
 .photo-grid-cell.is-active {
   z-index: 1;
   outline: var(--photo-grid-frame-outline);
-  outline-offset: 2px;
+  outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-glow);
   scale: var(--photo-grid-frame-scale);
 }
@@ -162,7 +164,7 @@
   pointer-events: none;
   border-radius: var(--photo-grid-radius);
   outline: var(--photo-grid-frame-outline);
-  outline-offset: 2px;
+  outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-glow);
   scale: var(--photo-grid-frame-scale);
 }
@@ -430,12 +432,12 @@
 }
 
 /*
- * iOS: ячейки концентричны карточке (радиус карточки 24 минус отступ), значки на миниатюрах —
+ * iOS: ячейки концентричны карточке (радиус карточки минус поле сетки), значки на миниатюрах —
  * материал UIKit (iOS 18) или стекло с бликом (iOS 26+).
  */
 :root[data-platform='ios'] .photo-grid {
   --photo-grid-gap: 8px;
-  --photo-grid-radius: 14px;
+  --photo-grid-radius: calc(var(--ios-radius-card) - var(--photo-grid-frame-reach));
 }
 
 :root[data-platform='ios'] .photo-grid-cell:not(.is-selected, .is-active) .photo-grid-number {
