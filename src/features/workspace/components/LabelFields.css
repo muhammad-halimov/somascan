@@ -56,8 +56,8 @@
   visibility: hidden;
 }
 
-/* Ровные силуэты (фото ещё нет): подсказка — по центру оставшегося места карточки, под силуэтами. */
-.label-fields.is-skeleton.is-still {
+/* Подсказка под силуэтами — по центру оставшегося места карточки. */
+.label-fields.is-skeleton.has-hint {
   display: flex;
   flex-direction: column;
 }

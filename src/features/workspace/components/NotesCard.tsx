@@ -184,8 +184,14 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
         <p key="cancelled" className="notes-message is-placeholder anim-fade" role="status">{t('notes.cancelled')}</p>
       ) : (
         // Силуэты полей на их местах: ровные, пока фото нет, переливаются, пока бирка распознаётся. Один узел
-        // на оба состояния — при выборе фото силуэты не появляются заново, а начинают переливаться.
-        <LabelFieldsSkeleton key="skeleton" label={isRecognizing ? t('photo.recognizing') : t('notes.placeholder')} still={isIdle} />
+        // на оба состояния — при выборе фото силуэты не появляются заново, а начинают переливаться. Подсказка,
+        // что будет дальше, — только у первой бирки: дальше это уже известно.
+        <LabelFieldsSkeleton
+          key="skeleton"
+          label={isRecognizing ? t('photo.recognizing') : t('notes.placeholder')}
+          still={isIdle}
+          hint={isIdle && activeIndex === 0 ? t('notes.placeholder') : undefined}
+        />
       )}
 
       <div ref={actionsRef} className="notes-actions" role="group" aria-label={t('actions.group')}>
