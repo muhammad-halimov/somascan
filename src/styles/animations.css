@@ -183,6 +183,12 @@
   border-radius: 999px;
 }
 
+/* Силуэты места, где содержимое появится позже (`.is-still` у контейнера): ровные, не переливаются — ничего не грузится. */
+.is-still .skeleton {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;

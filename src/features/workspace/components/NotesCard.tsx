@@ -75,13 +75,15 @@ function itemMark(state: TagState): ReactNode {
  * распознавания — её силуэт),
  * шапка с заголовком и кнопками правки, номера бирок (когда их
  * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
- * открытой бирки (во время распознавания — силуэты полей, иначе подсказка или ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
+ * открытой бирки (пока фото нет — ровные силуэты полей, во время распознавания — переливающиеся, иначе ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
  * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
  */
 export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const clearAllPress = useLongPress(onClearAll)
   const isRecognizing = status.kind === 'recognizing'
+  // Фото ещё нет: на местах плашки и полей — ровные силуэты (при распознавании они же переливаются).
+  const isIdle = status.kind === 'idle'
   const actionsRef = useRef<HTMLDivElement>(null)
 
   // Высота панели действий — в `--notes-actions-height`: на телефоне панель внизу экрана, и рабочая область
@@ -122,16 +124,16 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
   return (
     <div ref={cardRef} className={`notes-card${isEditing ? ' is-text-editing' : ''}`} aria-busy={isRecognizing}>
       {/*
-        Узкая плашка-примечание вверху карточки: распознанное проверяют перед каждой отправкой. Пока бирка
-        распознаётся — её силуэт того же размера: карточка не меняет высоту, когда данные появятся.
+        Узкая плашка-примечание вверху карточки: распознанное проверяют перед каждой отправкой. Пока фото нет или
+        бирка распознаётся — её силуэт того же размера: карточка не меняет высоту, когда данные появятся.
       */}
       {status.kind === 'done' ? (
         <p key="check" className="notes-check anim-fade">
           <InfoIcon />
           <span>{t('notes.checkBeforeSend')}</span>
         </p>
-      ) : isRecognizing && (
-        <p key="check-skeleton" className="notes-check is-skeleton anim-fade" aria-hidden="true">
+      ) : (isIdle || isRecognizing) && (
+        <p key="check-skeleton" className={`notes-check is-skeleton anim-fade${isIdle ? ' is-still' : ''}`} aria-hidden="true">
           <span className="notes-check-mark skeleton" />
           <span className="notes-check-text"><SkeletonLine className="notes-check-line" /></span>
         </p>
@@ -180,11 +182,10 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
         // Разные `key`: iOS (WebKit) не перерисовывал прокручиваемый абзац при смене текста,
         // и строки прежнего сообщения оставались поверх нового — новый узел рисуется с нуля.
         <p key="cancelled" className="notes-message is-placeholder anim-fade" role="status">{t('notes.cancelled')}</p>
-      ) : isRecognizing ? (
-        // Идёт распознавание: силуэты полей на их местах вместо подсказки.
-        <LabelFieldsSkeleton key="recognizing" label={t('photo.recognizing')} />
       ) : (
-        <p key="placeholder" className="notes-message is-placeholder anim-fade">{t('notes.placeholder')}</p>
+        // Силуэты полей на их местах: ровные, пока фото нет, переливаются, пока бирка распознаётся. Один узел
+        // на оба состояния — при выборе фото силуэты не появляются заново, а начинают переливаться.
+        <LabelFieldsSkeleton key="skeleton" label={isRecognizing ? t('photo.recognizing') : t('notes.placeholder')} still={isIdle} />
       )}
 
       <div ref={actionsRef} className="notes-actions" role="group" aria-label={t('actions.group')}>

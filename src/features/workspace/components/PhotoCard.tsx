@@ -242,8 +242,9 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
             type="button"
             className="photo-image-action"
             aria-label={t('photo.open')}
+            onPointerDownCapture={(event) => tapPhoto.onPress(photoUrl, event)}
             // Нажатие сразу после перетаскивания или щипка — не «тап»: не открываем и не увеличиваем.
-            onClick={(event) => !wasGesture(event.timeStamp) && tapPhoto(photoUrl, { x: event.clientX, y: event.clientY })}
+            onClick={(event) => !wasGesture(event.timeStamp) && tapPhoto.onTap(photoUrl, event)}
             {...pointerHandlers}
           >
             {placeholder && (

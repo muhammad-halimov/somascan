@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState, type PointerEvent, type TouchEvent } from 'react'
+import { MOVE_TOLERANCE } from '@/hooks/useLongPress'
 import { PhotoGeometry, touchCenter, touchDistance, type Point, type Size } from '../utils/PhotoGeometry'
 
 /** Начало щипка: расстояние и центр между пальцами, масштаб и сдвиг в этот момент. */
@@ -34,9 +35,6 @@ const NO_OFFSET: Point = { x: 0, y: 0 }
 
 /** Размер рамки до первого замера (совпадает с размером карточки в CSS). */
 const INITIAL_FRAME: Size = { width: 380, height: 352 }
-
-/** Движение пальца меньше этого (px) — ещё касание, а не перетаскивание. */
-const TAP_SLOP = 6
 
 /** Столько миллисекунд после жеста нажатие на фото не считается тапом. */
 const TAP_GUARD_MS = 350
@@ -181,9 +179,9 @@ export function usePhotoTransform({ naturalSize, enabled, fit = 'contain', rotat
     setRotation(0)
   }
 
-  /** Запоминает время движения, если оно больше порога касания. */
+  /** Запоминает время движения, если палец ушёл дальше дрожания касания (`MOVE_TOLERANCE`): это уже перетаскивание. */
   const trackMove = (dx: number, dy: number, timeStamp: number) => {
-    if (Math.abs(dx) + Math.abs(dy) > TAP_SLOP) lastMoveAt.current = timeStamp
+    if (Math.hypot(dx, dy) > MOVE_TOLERANCE) lastMoveAt.current = timeStamp
   }
 
   /** Начинает щипок (два пальца) или перетаскивание (один палец по увеличенному фото); жест — без анимации. */

@@ -2,11 +2,17 @@ import { useEffect, useRef } from 'react'
 import type { Point } from '../utils/PhotoGeometry'
 
 /**
- * Двойное нажатие: второе нажатие на ту же цель — не позже, чем через столько мс после первого. Столько же ждёт
- * одиночное нажатие (`onSingle`), прежде чем сработать: короче — двойное не успеть, длиннее — нажатие кажется
- * неотзывчивым.
+ * Двойное нажатие: второе касание — не позже, чем через столько мс после того, как палец отпустил первое (как
+ * у Android). Столько же после отпускания ждёт одиночное нажатие (`onSingle`): короче — двойное не успеть,
+ * длиннее — нажатие кажется неотзывчивым.
  */
 export const DOUBLE_TAP_MS = 250
+
+/** Второе касание дальше этого (px) от первого — нажатие в другом месте, а не двойное. */
+const DOUBLE_TAP_SLOP = 48
+
+/** Точка нажатия на экране — из события указателя или мыши. */
+type ScreenPoint = Pick<MouseEvent, 'clientX' | 'clientY'>
 
 /** Параметры `useDoubleTap`. */
 export interface DoubleTapOptions<K> {
@@ -16,46 +22,71 @@ export interface DoubleTapOptions<K> {
   onSingle?: (key: K, point: Point) => void
 }
 
-/** Первое нажатие, ждущее второго. */
-interface PendingTap<K> {
+/** Первое нажатие, ждущее второго; `timer: null` — второе касание уже началось вовремя. */
+interface FirstTap<K> {
   key: K
   point: Point
   at: number
-  timer: number
+  timer: number | null
 }
 
+const toPoint = ({ clientX, clientY }: ScreenPoint): Point => ({ x: clientX, y: clientY })
+
 /**
- * Одиночное и двойное нажатие на одну цель (фото в карточке, в просмотре). Возвращает обработчик нажатия — ключ цели
- * (второе нажатие на другую цель — снова первое) и точку нажатия на экране.
+ * Одиночное и двойное нажатие на одну цель (фото в карточке, в просмотре). Ключ — цель: касание другой цели — снова
+ * первое нажатие. Обработчики:
+ * - `onPress` — касание началось (`pointerdown`): если это второе касание вовремя и рядом с первым, одиночное
+ *   нажатие уже не сработает, а отпускание станет двойным;
+ * - `onTap` — нажатие (клик, не жест): первое ждёт второго, второе — двойное.
  */
 export function useDoubleTap<K>({ onDouble, onSingle }: DoubleTapOptions<K>) {
   const handlers = useRef({ onDouble, onSingle })
   useEffect(() => {
     handlers.current = { onDouble, onSingle }
   })
-  const pending = useRef<PendingTap<K> | null>(null)
+  const first = useRef<FirstTap<K> | null>(null)
   // Цель ушла с экрана — отложенное одиночное нажатие уже не к месту.
   useEffect(() => () => {
-    if (pending.current) window.clearTimeout(pending.current.timer)
+    const timer = first.current?.timer
+    if (timer) window.clearTimeout(timer)
   }, [])
 
-  return (key: K, point: Point) => {
-    const now = performance.now()
-    const previous = pending.current
-    pending.current = null
-    if (previous) {
-      window.clearTimeout(previous.timer)
-      if (Object.is(previous.key, key) && now - previous.at <= DOUBLE_TAP_MS) {
-        handlers.current.onDouble(key, point)
-        return
-      }
-      // Второе нажатие — на другую цель: первое было одиночным.
-      handlers.current.onSingle?.(previous.key, previous.point)
+  const onPress = (key: K, event: ScreenPoint) => {
+    const tap = first.current
+    if (!tap) return
+    // Второе касание началось, но нажатием не закончилось (стало жестом): начинаем заново.
+    if (tap.timer === null) {
+      first.current = null
+      return
+    }
+    const point = toPoint(event)
+    const inTime = performance.now() - tap.at <= DOUBLE_TAP_MS
+    const near = Math.hypot(point.x - tap.point.x, point.y - tap.point.y) <= DOUBLE_TAP_SLOP
+    if (inTime && near && Object.is(tap.key, key)) {
+      window.clearTimeout(tap.timer)
+      tap.timer = null
+    }
+  }
+
+  const onTap = (key: K, event: ScreenPoint) => {
+    const point = toPoint(event)
+    const tap = first.current
+    first.current = null
+    if (tap?.timer === null) {
+      handlers.current.onDouble(key, point)
+      return
+    }
+    // Ждавшее первое нажатие было одиночным: это — уже другое.
+    if (tap) {
+      window.clearTimeout(tap.timer)
+      handlers.current.onSingle?.(tap.key, tap.point)
     }
     const timer = window.setTimeout(() => {
-      pending.current = null
+      first.current = null
       handlers.current.onSingle?.(key, point)
     }, DOUBLE_TAP_MS)
-    pending.current = { key, point, at: now, timer }
+    first.current = { key, point, at: performance.now(), timer }
   }
+
+  return { onPress, onTap }
 }

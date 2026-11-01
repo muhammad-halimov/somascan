@@ -69,7 +69,8 @@ export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isCl
       <div
         ref={attachStage}
         className="photo-viewer-stage"
-        onClick={(event) => !wasGesture(event.timeStamp) && tapStage(url, { x: event.clientX, y: event.clientY })}
+        onPointerDownCapture={(event) => tapStage.onPress(url, event)}
+        onClick={(event) => !wasGesture(event.timeStamp) && tapStage.onTap(url, event)}
         {...touchHandlers}
         {...pointerHandlers}
       >
