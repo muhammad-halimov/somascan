@@ -9,49 +9,38 @@
 
 .photo-grid {
   /*
-   * Раскладка «клином» (`gridWedge`): ячейки стоят вплотную — узкие промежутки и поле у краёв карточки; открытая
-   * ячейка чуть крупнее и раздвигает соседей — промежутки вокруг неё (и поле, если она у края) шире, в них
-   * помещаются её обводка и свечение. Дорожки задаёт `PhotoGrid`, ширины — здесь.
+   * Ячейки крупные: промежутки между ними и поле у краёв карточки минимальные. Обводка открытой ячейки (3 px вплотную
+   * к ней) помещается в поле, свечение ложится поверх соседних ячеек.
    */
   --photo-grid-gap: 4px;
-  --photo-grid-wedge: 12px;
-  --photo-grid-active-fr: 1.08fr;
   --photo-grid-radius: 8px;
   /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина и зазор от ячейки. */
   --photo-grid-frame-width: 3px;
   --photo-grid-frame-offset: 0px;
   --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--focus);
   /*
-   * Свечение открытой ячейки: начинается сразу за обводкой (размах тени = зазор + толщина), яркое у неё
-   * и гаснет в пределах раздвинутого промежутка.
+   * Свечение открытой ячейки: снаружи — сразу за обводкой (размах тени = зазор + толщина), поверх соседних ячеек;
+   * внутри — по краю её миниатюры, так что ячейка светится и при узких промежутках.
    */
   --photo-grid-frame-glow-spread: calc(var(--photo-grid-frame-offset) + var(--photo-grid-frame-width));
   --photo-grid-frame-glow:
-    0 0 6px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 90%, transparent),
-    0 0 12px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 45%, transparent);
-  /* Сколько соседи расступаются и рамка переноса переезжает с ячейки на ячейку. */
+    0 0 10px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 90%, transparent),
+    0 0 20px calc(var(--photo-grid-frame-glow-spread) + 3px) color-mix(in srgb, var(--focus) 50%, transparent);
+  --photo-grid-frame-inner-glow: inset 0 0 16px 3px color-mix(in srgb, var(--focus) 60%, transparent);
+  /* Сколько рамка переноса переезжает с ячейки на ячейку. */
   --photo-grid-frame-move: 260ms;
   position: absolute;
   z-index: 4;
   inset: 0;
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: var(--photo-grid-gap);
+  padding: var(--photo-grid-gap);
   background: var(--photo-empty-bg);
   /* Скругление карточки: когда та не обрезает (сетка на экране), углы сетки не торчат. */
   border-radius: inherit;
   transform-origin: 0 0;
-}
-
-/* Сетка на экране: при смене открытой ячейки соседи расступаются плавно. */
-.photo-grid:not([inert]) {
-  transition:
-    grid-template-columns var(--photo-grid-frame-move) cubic-bezier(.2, 0, 0, 1),
-    grid-template-rows var(--photo-grid-frame-move) cubic-bezier(.2, 0, 0, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .photo-grid:not([inert]) {
-    transition: none;
-  }
 }
 
 .photo-grid-cell {
@@ -149,10 +138,12 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
+  /* Кольцо выбранной (акцентное) и свечение открытой — внутри ячейки, поверх миниатюры. */
+  box-shadow: var(--photo-grid-cell-ring, 0 0 #0000), var(--photo-grid-cell-glow, 0 0 #0000);
 }
 
-.photo-grid-cell.is-selected::after {
-  box-shadow: inset 0 0 0 3px var(--accent);
+.photo-grid-cell.is-selected {
+  --photo-grid-cell-ring: inset 0 0 0 3px var(--accent);
 }
 
 /*
@@ -160,8 +151,10 @@
  * Не путается ни с акцентным кольцом выбранных (внутри ячейки),
  * ни с цветами состояний. Та же обводка — у рамки, которую ведёт палец (`.photo-grid-frame`).
  */
+/* Над кольцами соседних ячеек: свечение ложится и на них. */
 .photo-grid-cell.is-active {
-  z-index: 1;
+  --photo-grid-cell-glow: var(--photo-grid-frame-inner-glow);
+  z-index: 4;
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-glow);
@@ -173,16 +166,14 @@
  */
 .photo-grid-frame {
   position: absolute;
-  z-index: 3;
+  z-index: 5;
   inset: 0;
   opacity: 0;
   pointer-events: none;
   border-radius: var(--photo-grid-radius);
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
-  box-shadow: var(--photo-grid-frame-glow);
-  /* Переезд меняет и размер (открытая ячейка крупнее): увеличение — от левого верхнего угла, как сдвиг. */
-  transform-origin: 0 0;
+  box-shadow: var(--photo-grid-frame-glow), var(--photo-grid-frame-inner-glow);
 }
 
 .photo-grid.is-dragging .photo-grid-frame {
@@ -190,6 +181,7 @@
 }
 
 .photo-grid.is-dragging .photo-grid-cell.is-active {
+  --photo-grid-cell-glow: 0 0 #0000;
   outline-color: transparent;
   box-shadow: none;
 }

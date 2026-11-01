@@ -65,17 +65,20 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
 
     /**
      * Область ячейки в сетке (`grid-area`): рамка — абсолютный элемент сетки и встаёт ровно в эту область, тех же
-     * размеров, что ячейка, без округления до пикселя, и вместе с ней следует за раскладкой, когда соседи расступаются.
+     * размеров, что ячейка, без округления до пикселя. Ячейки идут по порядку, рамка в раскладке не участвует.
      * Конечные линии — явно: у абсолютного элемента `auto` означает край сетки, а не следующую линию.
      */
     const cellArea = (cell: HTMLElement) => {
-      const { gridRowStart, gridColumnStart } = getComputedStyle(cell)
-      return `${gridRowStart} / ${gridColumnStart} / span 1 / span 1`
+      const order = Array.from(grid.children).filter((child) => child !== frame).indexOf(cell)
+      const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').length
+      const row = Math.floor(order / columns) + 1
+      const column = (order % columns) + 1
+      return `${row} / ${column} / ${row + 1} / ${column + 1}`
     }
 
     /**
-     * Рамка переезжает на ячейку с того места и того размера, что сейчас (даже посреди прошлого переезда): встаёт
-     * в область ячейки и доезжает до неё сдвигом `translate` и увеличением `scale` (открытая ячейка крупнее других).
+     * Рамка переезжает на ячейку с того места, где она сейчас (даже посреди прошлого переезда): встаёт в область
+     * ячейки и доезжает до неё сдвигом `translate`.
      */
     const slideTo = (cell: HTMLElement) => {
       const from = frame.getBoundingClientRect()
@@ -84,12 +87,10 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
       frame.style.gridArea = cellArea(cell)
       if (prefersReducedMotion()) return
       const to = frame.getBoundingClientRect()
-      if (!to.width || !to.height) return
       // Сдвиг на экране — в единицах сетки: сетка может быть увеличена вместе с карточкой.
       const zoom = grid.getBoundingClientRect().width / grid.offsetWidth || 1
       const shift = `${(from.left - to.left) / zoom}px ${(from.top - to.top) / zoom}px`
-      const size = `${from.width / to.width} ${from.height / to.height}`
-      slide = frame.animate([{ translate: shift, scale: size }, { translate: '0px 0px', scale: '1 1' }], motionTiming(slideMs))
+      slide = frame.animate([{ translate: shift }, { translate: '0px 0px' }], motionTiming(slideMs))
     }
 
     /** Рамка снимается с бирки `from` и переезжает на `to` (та становится открытой). */
