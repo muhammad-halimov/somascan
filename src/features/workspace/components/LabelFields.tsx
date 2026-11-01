@@ -1,4 +1,4 @@
-import type { CSSProperties, InputHTMLAttributes, KeyboardEvent } from 'react'
+import { useRef, type CSSProperties, type InputHTMLAttributes, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DisclosureChevron } from '@/components/ui/Disclosure'
 import { SkeletonLine } from '@/components/ui/SkeletonLine'
@@ -11,6 +11,7 @@ import { isProductForm, PRODUCT_FORM_KEY, PRODUCT_FORMS } from '@/features/recog
 import { useSettings } from '@/features/settings/store/useSettings'
 import { tableCheckStore } from '@/features/uploads/store/TableCheckStore'
 import { useStore } from '@/lib/store/useStore'
+import { useSkeletonFill } from '../hooks/useSkeletonFill'
 import { listedSupplier } from '../utils/producerChoice'
 import type { HeatDuplicate } from '../utils/sendReadiness'
 import { DropdownField } from './DropdownField'
@@ -59,12 +60,6 @@ export interface LabelFieldsSkeletonProps {
   still?: boolean
 }
 
-/**
- * Строк-заполнителей у ровных силуэтов (фото ещё нет) — с запасом: 24 строки по ~46 px выше любой карточки на экране
- * телефона и планшета. Видны только те, что помещаются (см. `.is-still` в LabelFields.css), остальные скрыты.
- */
-const SKELETON_FILL_ROWS = 24
-
 /** Строка-силуэт: название и значение — полосы; у выпадающего списка — ещё место под уголок, как у `DropdownField`. */
 function SkeletonRow({ dropdown = false }: { dropdown?: boolean }) {
   const name = <span className="label-field-name"><SkeletonLine className="label-skeleton" /></span>
@@ -86,20 +81,24 @@ function SkeletonRow({ dropdown = false }: { dropdown?: boolean }) {
 /**
  * Силуэты полей: те же строки, что у `LabelFields` (форма и «Лист» — выпадающие списки, затем остальные включённые
  * поля), с той же разметкой и шрифтом, вместо названий и значений — полосы. Пока бирка распознаётся, полосы
- * переливаются; пока фото нет (`still`) — ровные и заполняют карточку до низа (за полями — строки-заполнители, столько,
- * сколько помещается). Видно, где появятся данные, и при их появлении ничего не сдвигается.
+ * переливаются; пока фото нет (`still`) — ровные и заполняют карточку до низа (`useSkeletonFill`: строки той же высоты,
+ * что у бирки с данными, а свободное место под ними — строки-заполнители). Видно, где появятся данные, и при их
+ * появлении ничего не сдвигается.
  */
 export function LabelFieldsSkeleton({ label, still = false }: LabelFieldsSkeletonProps) {
   const { advanced } = useSettings()
   const fields = enabledLabelFields(advanced.labelFields)
-  // Строк-силуэтов не меньше, чем строк у бирки с данными: форма и включённые поля.
-  const rows = { '--skeleton-rows': 1 + fields.length } as CSSProperties
+  const containerRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const fill = useSkeletonFill(containerRef, listRef, still)
+  // Остаток места (меньше строки) — поровну строкам: прибавка к их высоте.
+  const style = { '--skeleton-row-extra': `${fill.extra}px` } as CSSProperties
   return (
-    <div className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}`} style={rows} role="status" aria-label={label}>
-      <div className="label-fields-list" aria-hidden="true">
+    <div ref={containerRef} className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}`} style={style} role="status" aria-label={label}>
+      <div ref={listRef} className="label-fields-list" aria-hidden="true">
         <SkeletonRow dropdown />
         {fields.map((field) => <SkeletonRow key={field.key} dropdown={field.key === SHEET_KEY} />)}
-        {still && Array.from({ length: SKELETON_FILL_ROWS }, (_, index) => <SkeletonRow key={`fill-${index}`} />)}
+        {Array.from({ length: fill.rows }, (_, index) => <SkeletonRow key={`fill-${index}`} />)}
       </div>
     </div>
   )

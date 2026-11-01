@@ -6,3 +6,13 @@
 export function selectedFirst<T>(items: readonly T[], isSelected: (item: T) => boolean): T[] {
   return [...items.filter(isSelected), ...items.filter((item) => !isSelected(item))]
 }
+
+/**
+ * Пункты в порядке, запомненном раньше (`keys`): пропавшие из списка не остаются, новые — в конце, в своём порядке.
+ * Так список выбора держит порядок, взятый при раскрытии, пока пункты меняются.
+ */
+export function inKeyOrder<T>(items: readonly T[], keys: readonly string[], keyOf: (item: T) => string): T[] {
+  const rank = new Map(keys.map((key, index) => [key, index]))
+  const rankOf = (item: T) => rank.get(keyOf(item)) ?? keys.length
+  return [...items].sort((a, b) => rankOf(a) - rankOf(b))
+}

@@ -10,8 +10,8 @@ import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components
 import { isDefaultLabelFields, type LabelFieldDefinition, type LabelKey } from '@/features/recognition/label/labelFields'
 import { useLabelFieldName } from '@/features/recognition/label/useLabelFieldName'
 import { useListReorder } from '@/hooks/useListReorder'
+import { useOrderOnOpen } from '@/hooks/useOrderOnOpen'
 import { LANGUAGES } from '@/i18n/languages'
-import { selectedFirst } from '@/lib/list/selectedFirst'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { matchesSearch } from '@/lib/text/searchText'
 import { settingsStore } from '../store/SettingsStore'
@@ -32,8 +32,8 @@ type EditTarget = { kind: 'field'; key: LabelKey } | { kind: 'new' } | null
  *
  * Список в шторке: в свёрнутом виде видно, сколько и какие поля выбраны, — длинный список
  * не загораживает остальные настройки. Обычный режим — выбор нескольких полей галочками
- * (последнее включённое снять нельзя); включённые — первыми, снятые возвращаются на свои места — сразу,
- * строки плавно переезжают (`useListReorder`). В правке — порядок настроек.
+ * (последнее включённое снять нельзя); включённые — первыми, порядок берётся при раскрытии шторки: галочка ничего
+ * не переставляет под пальцем. В правке — порядок настроек; смена режима переставляет строки плавно (`useListReorder`).
  * Карандаш включает правку: касание строки открывает форму поля (названия на языках —
  * английское обязательно, остальные по желанию — и пояснение для модели), внизу можно
  * добавить своё поле. Слева от «Готово» — «Вернуть стандартные» и «Отмена» (возврат к набору
@@ -49,10 +49,14 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
   const [target, setTarget] = useState<EditTarget>(null)
   /** Поля на момент начала правки — к ним возвращает «Отмена». */
   const snapshot = useRef(value)
-  /** Поиск по названиям полей (над длинным списком); сбрасывается, когда шторка сворачивается. */
+  /** Поиск по названиям полей (над длинным списком); пустой при каждом раскрытии шторки. */
   const [query, setQuery] = useState('')
-  /** Строки: при выборе включённые — первыми, остальные — на своих местах; в правке — порядок настроек. */
-  const ordered = isEditing ? value : selectedFirst(value, (field) => field.enabled)
+  /**
+   * Строки: при выборе включённые — первыми, остальные — на своих местах, порядок — на момент раскрытия (галочка
+   * ничего не переставляет под пальцем); в правке — порядок настроек. Смена режима переставляет строки плавно.
+   */
+  const choice = useOrderOnOpen(value, (field) => field.enabled, (field) => field.key)
+  const ordered = isEditing ? value : choice.ordered
   const listRef = useRef<HTMLUListElement>(null)
   useListReorder(listRef, ordered.map((field) => field.key).join('|'))
   const hasSearch = value.length >= LIST_SEARCH_MIN_ITEMS
@@ -107,6 +111,8 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
   }
 
   const finishEditing = () => {
+    // Из правки — к выбору: включённые снова первыми.
+    choice.freeze()
     setIsEditing(false)
     setTarget(null)
   }
@@ -140,7 +146,10 @@ export function LabelFieldsPicker({ value }: LabelFieldsPickerProps) {
         className="label-fields-disclosure"
         open={isOpen}
         onToggle={() => {
-          if (isOpen) setQuery('')
+          if (!isOpen) {
+            choice.freeze()
+            setQuery('')
+          }
           setIsOpen(!isOpen)
         }}
         summary={t('advanced.fieldsSummary', { count: enabledCount, total: value.length })}

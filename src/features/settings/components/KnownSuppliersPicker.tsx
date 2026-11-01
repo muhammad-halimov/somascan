@@ -63,7 +63,7 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
   const [target, setTarget] = useState<EditTarget>(null)
   /** Список на момент начала правки — к нему возвращает «Отмена». */
   const snapshot = useRef(value)
-  /** Поиск по названиям (над длинным списком); сбрасывается, когда шторка сворачивается. */
+  /** Поиск по названиям (над длинным списком); пустой при каждом раскрытии шторки. */
   const [query, setQuery] = useState('')
   const hasSearch = value.length >= LIST_SEARCH_MIN_ITEMS
   const shown = hasSearch ? value.filter((name) => matchesSearch(name, query)) : value
@@ -201,7 +201,7 @@ export function KnownSuppliersPicker({ value }: KnownSuppliersPickerProps) {
       <Disclosure
         open={isOpen}
         onToggle={() => {
-          if (isOpen) setQuery('')
+          if (!isOpen) setQuery('')
           setIsOpen(!isOpen)
         }}
         summary={value.length > 0 ? t('advanced.suppliersSummary', { count: value.length }) : t('advanced.suppliersEmpty')}

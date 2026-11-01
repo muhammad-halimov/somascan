@@ -4,8 +4,7 @@ import { DisclosureChevron } from '@/components/ui/Disclosure'
 import { List, ListItem } from '@/components/ui/List'
 import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { useHeightTransition } from '@/hooks/useHeightTransition'
-import { useListReorder } from '@/hooks/useListReorder'
-import { selectedFirst } from '@/lib/list/selectedFirst'
+import { useOrderOnOpen } from '@/hooks/useOrderOnOpen'
 import { matchesSearch } from '@/lib/text/searchText'
 // Меню и уголок — те же, что у шторок настроек (`Disclosure`): поверхность меню Material, список iOS.
 import '@/components/ui/Disclosure.css'
@@ -67,7 +66,8 @@ export interface DropdownFieldProps {
  * список вариантов (галочка у выбранного), выбор сворачивает его. В просмотре — значение строки с уголком
  * справа, в правке — поле во всю ширину. С `own` в поле есть карандаш: текст становится полем ввода
  * прямо на месте (никуда не сдвигается), уход с поля или повторное нажатие карандаша возвращает выбор.
- * С `searchable` первая строка длинного списка — поиск; запрос сбрасывается, когда список сворачивается.
+ * С `searchable` первая строка длинного списка — поиск; при каждом раскрытии он пустой. Выбор пункта сворачивает
+ * список, ничего не переставляя: порядок строк (выбранный — первым) берётся при раскрытии.
  */
 export function DropdownField({ name, value, selected, options, placeholder, isEditing, required = false, className = '', onChange, own, searchable = false }: DropdownFieldProps) {
   const menuId = useId()
@@ -79,21 +79,26 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
   const [query, setQuery] = useState('')
   useHeightTransition(menuRef, isOpen)
   const option = options.find((candidate) => candidate.value === (selected ?? value))
-  // Выбранный — первым, остальные — на своих местах (`selectedFirst`); перестановка — плавная.
-  const listed = selectedFirst(options, (candidate) => candidate.value === option?.value)
-  useListReorder(menuRef, listed.map((candidate) => candidate.value).join('|'))
+  // Выбранный — первым, остальные — на своих местах; порядок берётся при раскрытии и, пока список открыт
+  // и сворачивается, не меняется: выбор ничего не двигает.
+  const { ordered: listed, freeze } = useOrderOnOpen(options, (candidate) => candidate.value === option?.value, (candidate) => candidate.value)
   const hasSearch = searchable && listed.length >= LIST_SEARCH_MIN_ITEMS
   const shown = hasSearch ? listed.filter((candidate) => matchesSearch(candidate.label, query)) : listed
 
   const missing = value.trim() === '' && (!option || option.unset === true)
   const text = option ? option.label : missing ? placeholder : value
 
-  /** Сворачивает список; запрос поиска сбрасывается. */
-  const close = () => {
-    setIsOpen(false)
+  /**
+   * Раскрывает список: порядок строк — на этот момент, поиск — пустой. Запрос сбрасывается здесь, а не при
+   * сворачивании: пока список сворачивается, в нём остаются те же строки, что были видны.
+   */
+  const open = () => {
+    freeze()
     setQuery('')
+    setIsOpen(true)
   }
-  const toggle = () => (isOpen ? close() : setIsOpen(true))
+  const close = () => setIsOpen(false)
+  const toggle = () => (isOpen ? close() : open())
   const select = (next: string) => {
     onChange(next)
     close()
@@ -181,7 +186,6 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
               return (
                 <ListItem
                   key={candidate.value}
-                  reorderKey={candidate.value}
                   itemRole="radio"
                   className={candidate.unset ? 'is-unset' : undefined}
                   primary={candidate.label}
