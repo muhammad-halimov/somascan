@@ -1,15 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { DOUBLE_TAP_MS, DOUBLE_TAP_SLOP } from '@/lib/interaction/gestures'
 import type { Point } from '../utils/PhotoGeometry'
-
-/**
- * Двойное нажатие: второе касание — не позже, чем через столько мс после того, как палец отпустил первое (как
- * у Android). Столько же после отпускания ждёт одиночное нажатие (`onSingle`): короче — двойное не успеть,
- * длиннее — нажатие кажется неотзывчивым.
- */
-export const DOUBLE_TAP_MS = 250
-
-/** Второе касание дальше этого (px) от первого — нажатие в другом месте, а не двойное. */
-const DOUBLE_TAP_SLOP = 48
 
 /** Точка нажатия на экране — из события указателя или мыши. */
 type ScreenPoint = Pick<MouseEvent, 'clientX' | 'clientY'>
@@ -18,7 +9,7 @@ type ScreenPoint = Pick<MouseEvent, 'clientX' | 'clientY'>
 export interface DoubleTapOptions<K> {
   /** Двойное нажатие. */
   onDouble: (key: K, point: Point) => void
-  /** Одиночное нажатие: срабатывает, когда время на второе вышло. Без него одиночное нажатие ничего не делает. */
+  /** Одиночное нажатие: срабатывает, когда время на второе вышло (`DOUBLE_TAP_MS`). Без него одиночное ничего не делает. */
   onSingle?: (key: K, point: Point) => void
 }
 

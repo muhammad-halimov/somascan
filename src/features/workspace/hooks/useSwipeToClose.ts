@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
-import { MOVE_TOLERANCE } from '@/hooks/useLongPress'
+import { TOUCH_SLOP } from '@/lib/interaction/gestures'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 
 /** Свайп длиннее этой доли высоты сцены закрывает просмотр. */
@@ -82,7 +82,7 @@ export function useSwipeToClose({ viewerRef, stageRef, enabled, onClose }: Swipe
       const dx = touch.clientX - start.x
       const dy = touch.clientY - start.y
       if (!swiping) {
-        if (Math.hypot(dx, dy) <= MOVE_TOLERANCE) return
+        if (Math.hypot(dx, dy) <= TOUCH_SLOP) return
         // Сдвиг вбок — не свайп закрытия.
         if (Math.abs(dy) <= Math.abs(dx)) {
           start = null

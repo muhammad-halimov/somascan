@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
-import { MOVE_TOLERANCE } from '@/hooks/useLongPress'
+import { TOUCH_SLOP } from '@/lib/interaction/gestures'
 import { cssDurationMs, motionTiming, prefersReducedMotion } from '../utils/motion'
 
 /** Класс сетки, пока рамку ведёт палец (`PhotoGrid.css`). */
@@ -147,7 +147,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
       const touch = event.touches[0]
       if (!touch) return
       if (armed && !dragging) {
-        if (Math.hypot(touch.clientX - armed.x, touch.clientY - armed.y) <= MOVE_TOLERANCE) return
+        if (Math.hypot(touch.clientX - armed.x, touch.clientY - armed.y) <= TOUCH_SLOP) return
         begin(latest.current.activeIndex, latest.current.activeIndex)
       }
       if (!dragging) return

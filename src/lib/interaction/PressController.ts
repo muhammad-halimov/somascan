@@ -12,6 +12,7 @@
  *   (запасной путь), прокрутка любого контейнера, уход окна из фокуса или в фон,
  *   а также по страховочному таймеру, если ни одно событие так и не пришло.
  */
+import { TOUCH_SLOP } from './gestures'
 import type { PressFeedback } from './PressFeedback'
 import { isDisabledPressable, PRESSABLE_SELECTOR, type PressPoint } from './pressables'
 
@@ -23,8 +24,8 @@ export interface PressControllerOptions {
   slopPx: number
 }
 
-/** Значения по умолчанию: между iOS (150 мс) и Android (100 мс), сдвиг ~8 dp. */
-export const DEFAULT_PRESS_OPTIONS: PressControllerOptions = { showDelayMs: 90, slopPx: 10 }
+/** Значения по умолчанию: задержка — между iOS (150 мс) и Android (100 мс), сдвиг — общий порог касания. */
+export const DEFAULT_PRESS_OPTIONS: PressControllerOptions = { showDelayMs: 90, slopPx: TOUCH_SLOP }
 
 /** Если за это время не пришло ни отпускания, ни отмены — считаем касание потерянным. */
 const LOST_TOUCH_MS = 10_000

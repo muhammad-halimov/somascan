@@ -1,10 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type MouseEvent, type PointerEvent } from 'react'
+import { LONG_PRESS_MS, TOUCH_SLOP } from '@/lib/interaction/gestures'
 
-/** Сколько держать палец, мс: как долгое нажатие Android и iOS. */
-export const LONG_PRESS_MS = 500
-
-/** Палец сдвинулся дальше стольких точек — это прокрутка, а не удержание. */
-export const MOVE_TOLERANCE = 10
 
 /**
  * Долгое нажатие на кнопку: через полсекунды удержания (или по правой кнопке мыши) вызывает `onLongPress`
@@ -44,7 +40,7 @@ export function useLongPress(onLongPress: () => void) {
       timer.current = window.setTimeout(fire, LONG_PRESS_MS)
     },
     onPointerMove: (event: PointerEvent<HTMLElement>) => {
-      if (start.current && Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > MOVE_TOLERANCE) cancel()
+      if (start.current && Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > TOUCH_SLOP) cancel()
     },
     onPointerUp: cancel,
     onPointerCancel: cancel,
