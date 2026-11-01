@@ -56,6 +56,22 @@
   visibility: hidden;
 }
 
+/* Ровные силуэты (фото ещё нет): подсказка — по центру оставшегося места карточки, под силуэтами. */
+.label-fields.is-skeleton.is-still {
+  display: flex;
+  flex-direction: column;
+}
+
+.label-fields-hint {
+  margin: auto 0;
+  padding: 12px 0 4px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  text-wrap: balance;
+}
+
 .label-field:nth-child(3n + 1) .label-skeleton:not(.is-value) { width: 55%; }
 .label-field:nth-child(3n + 2) .label-skeleton:not(.is-value) { width: 80%; }
 .label-field:nth-child(3n + 1) .label-skeleton.is-value { width: 45%; }

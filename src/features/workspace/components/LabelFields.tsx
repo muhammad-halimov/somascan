@@ -53,9 +53,9 @@ export interface LabelFieldsProps {
 
 /** Свойства `LabelFieldsSkeleton`. */
 export interface LabelFieldsSkeletonProps {
-  /** Доступное имя (что сейчас происходит): «Распознавание…». */
+  /** Что сейчас происходит: «Распознавание…» (для диктора) или, у ровных силуэтов, подсказка (видна под ними). */
   label: string
-  /** Ничего не грузится (фото ещё нет): силуэты ровные, без переливания. */
+  /** Ничего не грузится (фото ещё нет): силуэты ровные, без переливания, под ними — подсказка `label`. */
   still?: boolean
 }
 
@@ -80,17 +80,19 @@ function SkeletonRow({ dropdown = false }: { dropdown?: boolean }) {
 /**
  * Силуэты полей: те же строки, что у `LabelFields` (форма и «Лист» — выпадающие списки, затем остальные включённые
  * поля), с той же разметкой и шрифтом, вместо названий и значений — полосы. Пока бирка распознаётся, полосы
- * переливаются; пока фото нет (`still`) — ровные. Видно, где появятся данные, и при их появлении ничего не сдвигается.
+ * переливаются; пока фото нет (`still`) — ровные, с подсказкой под ними. Видно, где появятся данные, и при их появлении
+ * ничего не сдвигается.
  */
 export function LabelFieldsSkeleton({ label, still = false }: LabelFieldsSkeletonProps) {
   const { advanced } = useSettings()
   const fields = enabledLabelFields(advanced.labelFields)
   return (
-    <div className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}`} role="status" aria-label={label}>
+    <div className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}`} role="status" aria-label={still ? undefined : label}>
       <div className="label-fields-list" aria-hidden="true">
         <SkeletonRow dropdown />
         {fields.map((field) => <SkeletonRow key={field.key} dropdown={field.key === SHEET_KEY} />)}
       </div>
+      {still && <p className="label-fields-hint">{label}</p>}
     </div>
   )
 }
