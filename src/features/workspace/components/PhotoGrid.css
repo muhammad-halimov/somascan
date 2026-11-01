@@ -8,21 +8,25 @@
  */
 
 .photo-grid {
-  --photo-grid-gap: 6px;
+  /*
+   * Промежуток между ячейками и поле сетки по краям — одинаковые и с запасом: обводка открытой ячейки (3 px с зазором
+   * 2 px) и её свечение помещаются в них, не наезжая на соседние ячейки и не обрезаясь краем карточки.
+   */
+  --photo-grid-gap: 12px;
   --photo-grid-radius: 8px;
-  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина, зазор от ячейки, увеличение ячейки. */
+  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина и зазор от ячейки. */
   --photo-grid-frame-width: 3px;
-  --photo-grid-frame-offset: 1px;
-  --photo-grid-frame-scale: 1.03;
+  --photo-grid-frame-offset: 2px;
   --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--focus);
   /*
-   * Поле сетки — чуть шире промежутка между ячейками: в нём помещаются обводка открытой ячейки с зазором (4 px)
-   * и её увеличение (меньше 2 px); край карточки обводку не обрезает.
+   * Свечение открытой ячейки: начинается сразу за обводкой (размах тени = зазор + толщина), яркое у неё
+   * и гаснет в пределах промежутка.
    */
-  --photo-grid-frame-reach: 8px;
-  /* Свечение — узкое, гаснет в пределах поля сетки. */
-  --photo-grid-frame-glow: 0 0 6px 1px color-mix(in srgb, var(--focus) 75%, transparent);
-  /* Сколько обводка переезжает с ячейки на ячейку (рамка переноса читает это же значение). */
+  --photo-grid-frame-glow-spread: calc(var(--photo-grid-frame-offset) + var(--photo-grid-frame-width));
+  --photo-grid-frame-glow:
+    0 0 8px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 95%, transparent),
+    0 0 16px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 50%, transparent);
+  /* Сколько рамка переноса переезжает с ячейки на ячейку. */
   --photo-grid-frame-move: 260ms;
   position: absolute;
   z-index: 4;
@@ -31,7 +35,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: var(--photo-grid-gap);
-  padding: var(--photo-grid-frame-reach);
+  padding: var(--photo-grid-gap);
   background: var(--photo-empty-bg);
   /* Скругление карточки: когда та не обрезает (сетка на экране), углы сетки не торчат. */
   border-radius: inherit;
@@ -140,8 +144,8 @@
 }
 
 /*
- * Открытая бирка — фирменный бирюзовый (цвет логотипа): толстая обводка снаружи ячейки, яркое широкое
- * свечение, и ячейка чуть крупнее соседних. Не путается ни с акцентным кольцом выбранных (внутри ячейки),
+ * Открытая бирка — фирменный бирюзовый (цвет логотипа): обводка снаружи ячейки и яркое свечение вокруг неё.
+ * Не путается ни с акцентным кольцом выбранных (внутри ячейки),
  * ни с цветами состояний. Та же обводка — у рамки, которую ведёт палец (`.photo-grid-frame`).
  */
 .photo-grid-cell.is-active {
@@ -149,7 +153,6 @@
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-glow);
-  scale: var(--photo-grid-frame-scale);
 }
 
 /*
@@ -166,7 +169,6 @@
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-glow);
-  scale: var(--photo-grid-frame-scale);
 }
 
 .photo-grid.is-dragging .photo-grid-frame {
@@ -187,7 +189,7 @@
 }
 
 .photo-grid-cell.is-active {
-  transition: box-shadow 200ms ease, scale var(--photo-grid-frame-move) cubic-bezier(.2, 0, 0, 1);
+  transition: box-shadow 200ms ease;
 }
 
 /* Рамка переноса доехала и сменяется обводкой ячейки на том же месте — сразу, без проявления (`useGridDragSelect`). */
@@ -203,7 +205,6 @@
 .photo-card.is-zooming .photo-grid-cell.is-active {
   outline-color: transparent;
   box-shadow: none;
-  scale: 1;
   transition: none;
 }
 
@@ -436,8 +437,7 @@
  * материал UIKit (iOS 18) или стекло с бликом (iOS 26+).
  */
 :root[data-platform='ios'] .photo-grid {
-  --photo-grid-gap: 8px;
-  --photo-grid-radius: calc(var(--ios-radius-card) - var(--photo-grid-frame-reach));
+  --photo-grid-radius: calc(var(--ios-radius-card) - var(--photo-grid-gap));
 }
 
 :root[data-platform='ios'] .photo-grid-cell:not(.is-selected, .is-active) .photo-grid-number {

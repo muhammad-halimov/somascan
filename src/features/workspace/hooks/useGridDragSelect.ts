@@ -8,7 +8,7 @@ const DRAGGING_CLASS = 'is-dragging'
 /** Класс сетки на кадр, когда рамка сменяется обводкой ячейки: без переходов, иначе свечение проявлялось бы заново. */
 const SETTLING_CLASS = 'is-settling'
 
-/** CSS-переменная сетки: сколько рамка переезжает с ячейки на ячейку (так же переезжает обводка ячейки). */
+/** CSS-переменная сетки: сколько рамка переезжает с ячейки на ячейку. */
 const FRAME_MOVE_VAR = '--photo-grid-frame-move'
 
 /** Короткая вибрация в начале переноса, мс (Android; iOS в WebView не вибрирует). */
@@ -59,7 +59,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     let swallowClick = false
     let slide: Animation | null = null
 
-    /** Время переезда рамки, мс — из стилей сетки (одно значение с обводкой ячейки). */
+    /** Время переезда рамки, мс — из стилей сетки. */
     const slideMs = cssDurationMs(getComputedStyle(grid).getPropertyValue(FRAME_MOVE_VAR))
     const cellOf = (index: number | null) => (index === null ? null : grid.querySelector<HTMLElement>(`[data-item-index="${index}"]`))
 
@@ -78,7 +78,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
 
     /**
      * Рамка переезжает на ячейку с того места, где она сейчас (даже посреди прошлого переезда): встаёт в область
-     * ячейки и доезжает до неё сдвигом `translate` — его, в отличие от `transform`, увеличение рамки (`scale`) не умножает.
+     * ячейки и доезжает до неё сдвигом `translate`.
      */
     const slideTo = (cell: HTMLElement) => {
       const from = frame.getBoundingClientRect()
