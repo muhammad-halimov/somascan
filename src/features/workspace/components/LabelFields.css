@@ -7,12 +7,14 @@
 .label-fields {
   /* Разделитель строк полей (и их силуэтов). */
   --label-field-divider: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
-  /* Отступ строки поля сверху и снизу. */
+  /* Отступ строки поля сверху и снизу; отступы списка по бокам и снизу. */
   --label-field-pad: 11px;
+  --label-fields-pad-x: 18px;
+  --label-fields-pad-bottom: 8px;
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
-  padding: 0 18px 8px;
+  padding: 0 var(--label-fields-pad-x) var(--label-fields-pad-bottom);
   /*
    * overscroll-behavior: contain здесь нельзя: в режиме правки список полей сам не прокручивается
    * (карточка растёт по содержимому), и contain не пускал свайп по полям к прокрутке экрана.
@@ -61,11 +63,22 @@
 }
 
 /*
- * Ровные силуэты (фото ещё нет) заполняют карточку до низа (`useSkeletonFill`): остаток места, меньше строки,
- * поровну прибавляется к строкам — сверху и снизу поровну, содержимое остаётся по центру строки.
+ * Ровные силуэты (фото ещё нет) заполняют карточку до низа (`useSkeletonFill`). После замера строки ложатся слоем
+ * поверх блока, а блок держится свободного места карточки (не ниже строк полей — `min-height` из замера): так он
+ * меняет размер вместе с местом, и заполнение считается заново. Остаток места, меньше строки, поровну прибавляется
+ * к строкам — сверху и снизу поровну, содержимое остаётся по центру строки.
  */
-.label-fields.is-skeleton.is-still .label-field {
-  padding-block: calc(var(--label-field-pad) + var(--skeleton-row-extra, 0px) / 2);
+.label-fields.is-skeleton.is-filled {
+  position: relative;
+}
+
+.label-fields.is-skeleton.is-filled > .label-fields-list {
+  position: absolute;
+  inset: 0 var(--label-fields-pad-x) var(--label-fields-pad-bottom);
+}
+
+.label-fields.is-skeleton.is-filled .label-field {
+  padding-block: calc(var(--label-field-pad) + var(--skeleton-row-extra) / 2);
 }
 
 .label-field:nth-child(3n + 1) .label-skeleton:not(.is-value) { width: 55%; }

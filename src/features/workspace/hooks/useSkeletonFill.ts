@@ -1,13 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 
-/** Сколько строк-заполнителей добавить под силуэтами полей и сколько точек прибавить каждой строке. */
+/** Заполнение карточки силуэтами: строки-заполнители, прибавка к высоте строки и высота строк полей. */
 export interface SkeletonFill {
+  /** Сколько строк-заполнителей добавить под строками полей. */
   rows: number
+  /** Сколько точек прибавить каждой строке: остаток места, меньше строки, поровну. */
   extra: number
+  /** Высота строк полей без прибавки (с нижним отступом блока): ниже блок не становится. */
+  minHeight: number
 }
-
-/** Без заполнения: только строки полей, своей высоты. */
-const NO_FILL: SkeletonFill = { rows: 0, extra: 0 }
 
 /**
  * Заполнение карточки силуэтами до низа, без пустого места (`LabelFieldsSkeleton`, пока фото нет). Строки полей —
@@ -15,16 +16,16 @@ const NO_FILL: SkeletonFill = { rows: 0, extra: 0 }
  * есть место — добавляются целые строки-заполнители, сколько помещается, а остаток (меньше строки) поровну делится
  * между строками. Места нет — ничего не добавляется: карточка такая же, как с данными.
  *
- * Мерим без заполнения: сначала строки полей одни, затем — сколько места под ними. Когда карточка меняет размер
- * (поворот экрана, другая шапка), заполнение снимается и считается заново.
+ * Мерим без заполнения (`null`): строки полей стоят в потоке, и видно, сколько места под ними. После замера строки
+ * ложатся слоем поверх блока, а сам блок держится свободного места (но не ниже строк полей): поэтому он меняет
+ * размер вместе с местом — поворот экрана, появилась или ушла панель листания, — и заполнение считается заново.
  * @param containerRef Блок силуэтов (тянется на свободное место карточки).
  * @param listRef Список строк в нём.
- * @param enabled Заполнять (фото нет); иначе — только строки полей.
+ * @param enabled Заполнять (фото нет); иначе — `null`, только строки полей.
  */
-export function useSkeletonFill(containerRef: RefObject<HTMLElement | null>, listRef: RefObject<HTMLElement | null>, enabled: boolean): SkeletonFill {
-  /** `null` — пора мерить (заполнения нет). */
+export function useSkeletonFill(containerRef: RefObject<HTMLElement | null>, listRef: RefObject<HTMLElement | null>, enabled: boolean): SkeletonFill | null {
   const [fill, setFill] = useState<SkeletonFill | null>(null)
-  /** Высота блока при последнем замере: заполнение её не меняет, поэтому другая высота — повод мерить заново. */
+  /** Высота блока при последнем замере: другая высота — свободного места стало больше или меньше. */
   const measuredHeight = useRef(0)
 
   useLayoutEffect(() => {
@@ -38,11 +39,9 @@ export function useSkeletonFill(containerRef: RefObject<HTMLElement | null>, lis
     const rowHeight = content / list.children.length
     const rows = free > 0 ? Math.floor(free / rowHeight) : 0
     const extra = free > 0 ? (free - rows * rowHeight) / (list.children.length + rows) : 0
-    setFill({ rows, extra })
+    setFill({ rows, extra, minHeight: content + padding })
   }, [containerRef, listRef, enabled, fill])
 
-  // Блок стал выше или ниже, чем при замере (раскладка карточки устоялась позже, поворот, другая шапка), —
-  // посчитать заново. Само заполнение высоту не меняет: строк добавляется не больше, чем помещается.
   useEffect(() => {
     const container = containerRef.current
     if (!enabled || !container) return
@@ -50,13 +49,8 @@ export function useSkeletonFill(containerRef: RefObject<HTMLElement | null>, lis
       if (Math.abs(container.getBoundingClientRect().height - measuredHeight.current) >= 1) setFill(null)
     })
     observer.observe(container)
-    const reset = () => setFill(null)
-    window.addEventListener('resize', reset)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', reset)
-    }
+    return () => observer.disconnect()
   }, [containerRef, enabled])
 
-  return enabled && fill ? fill : NO_FILL
+  return enabled ? fill : null
 }

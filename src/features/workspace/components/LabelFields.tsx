@@ -91,14 +91,14 @@ export function LabelFieldsSkeleton({ label, still = false }: LabelFieldsSkeleto
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const fill = useSkeletonFill(containerRef, listRef, still)
-  // Остаток места (меньше строки) — поровну строкам: прибавка к их высоте.
-  const style = { '--skeleton-row-extra': `${fill.extra}px` } as CSSProperties
+  // Заполнено: блок не ниже строк полей, остаток места (меньше строки) — поровну строкам, прибавкой к их высоте.
+  const style = fill ? ({ minHeight: fill.minHeight, '--skeleton-row-extra': `${fill.extra}px` } as CSSProperties) : undefined
   return (
-    <div ref={containerRef} className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}`} style={style} role="status" aria-label={label}>
+    <div ref={containerRef} className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}${fill ? ' is-filled' : ''}`} style={style} role="status" aria-label={label}>
       <div ref={listRef} className="label-fields-list" aria-hidden="true">
         <SkeletonRow dropdown />
         {fields.map((field) => <SkeletonRow key={field.key} dropdown={field.key === SHEET_KEY} />)}
-        {Array.from({ length: fill.rows }, (_, index) => <SkeletonRow key={`fill-${index}`} />)}
+        {fill && Array.from({ length: fill.rows }, (_, index) => <SkeletonRow key={`fill-${index}`} />)}
       </div>
     </div>
   )
