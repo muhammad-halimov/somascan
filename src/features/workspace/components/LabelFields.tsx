@@ -1,7 +1,8 @@
-import { useRef, type CSSProperties, type InputHTMLAttributes, type KeyboardEvent } from 'react'
+import { useRef, useState, type CSSProperties, type InputHTMLAttributes, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DisclosureChevron } from '@/components/ui/Disclosure'
 import { SkeletonLine } from '@/components/ui/SkeletonLine'
+import { usePresence } from '@/hooks/usePresence'
 import { HEAT_KEY } from '@/features/recognition/label/heatNumber'
 import { enabledLabelFields, isEnabledByDefault, isMissingValue, SHEET_KEY, type LabelFieldKind, type LabelKey, type LabelRecord, type LabelValue } from '@/features/recognition/label/labelFields'
 import { sizeInput } from '@/features/recognition/label/measure'
@@ -60,12 +61,15 @@ export interface LabelFieldsSkeletonProps {
   still?: boolean
 }
 
+/** Сколько строка-заполнитель вырастает или сжимается и гаснет, когда места становится больше или меньше, мс. */
+const FILL_ROW_MS = 280
+
 /** Строка-силуэт: название и значение — полосы; у выпадающего списка — ещё место под уголок, как у `DropdownField`. */
-function SkeletonRow({ dropdown = false }: { dropdown?: boolean }) {
+function SkeletonRow({ dropdown = false, className = '' }: { dropdown?: boolean; className?: string }) {
   const name = <span className="label-field-name"><SkeletonLine className="label-skeleton" /></span>
   const value = <SkeletonLine className="label-skeleton is-value" />
   if (!dropdown) {
-    return <div className="label-field">{name}<span className="label-field-value">{value}</span></div>
+    return <div className={`label-field ${className}`.trim()}>{name}<span className="label-field-value">{value}</span></div>
   }
   return (
     <div className="label-field is-dropdown">
@@ -78,27 +82,36 @@ function SkeletonRow({ dropdown = false }: { dropdown?: boolean }) {
   )
 }
 
+/** Строка-заполнитель: вырастает, появляясь, а уходя — сжимается и гаснет (`is-leaving`). */
+function FillerRow({ shown }: { shown: boolean }) {
+  const { mounted, closing } = usePresence(shown, FILL_ROW_MS)
+  return mounted ? <SkeletonRow className={`is-filler${closing ? ' is-leaving' : ''}`} /> : null
+}
+
 /**
  * Силуэты полей: те же строки, что у `LabelFields` (форма и «Лист» — выпадающие списки, затем остальные включённые
  * поля), с той же разметкой и шрифтом, вместо названий и значений — полосы. Пока бирка распознаётся, полосы
  * переливаются; пока фото нет (`still`) — ровные и заполняют карточку до низа (`useSkeletonFill`: строки той же высоты,
- * что у бирки с данными, а свободное место под ними — строки-заполнители). Видно, где появятся данные, и при их
- * появлении ничего не сдвигается.
+ * что у бирки с данными, а свободное место под ними — строки-заполнители; строки делят место поровну и плавно
+ * следуют за ним). Видно, где появятся данные, и при их появлении ничего не сдвигается.
  */
 export function LabelFieldsSkeleton({ label, still = false }: LabelFieldsSkeletonProps) {
   const { advanced } = useSettings()
   const fields = enabledLabelFields(advanced.labelFields)
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
-  const fill = useSkeletonFill(containerRef, listRef, still)
-  // Заполнено: блок не ниже строк полей, остаток места (меньше строки) — поровну строкам, прибавкой к их высоте.
-  const style = fill ? ({ minHeight: fill.minHeight, '--skeleton-row-extra': `${fill.extra}px` } as CSSProperties) : undefined
+  const fill = useSkeletonFill(containerRef, listRef, still, fields.length)
+  // Сколько заполнителей было больше всего: ушедшие ещё доигрывают уход, прежде чем исчезнуть.
+  const [fillerSlots, setFillerSlots] = useState(0)
+  if (fill && fill.rows > fillerSlots) setFillerSlots(fill.rows)
+  // Заполнено: блок не ниже строк полей; длительность появления и ухода строк — одна с `usePresence`.
+  const style = fill ? ({ minHeight: fill.minHeight, '--skeleton-fill-move': `${FILL_ROW_MS}ms` } as CSSProperties) : undefined
   return (
     <div ref={containerRef} className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}${fill ? ' is-filled' : ''}`} style={style} role="status" aria-label={label}>
       <div ref={listRef} className="label-fields-list" aria-hidden="true">
         <SkeletonRow dropdown />
         {fields.map((field) => <SkeletonRow key={field.key} dropdown={field.key === SHEET_KEY} />)}
-        {fill && Array.from({ length: fill.rows }, (_, index) => <SkeletonRow key={`fill-${index}`} />)}
+        {fill && Array.from({ length: fillerSlots }, (_, index) => <FillerRow key={`fill-${index}`} shown={index < fill.rows} />)}
       </div>
     </div>
   )

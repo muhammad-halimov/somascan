@@ -1,56 +1,59 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { useLayoutEffect, useState, type RefObject } from 'react'
 
-/** Заполнение карточки силуэтами: строки-заполнители, прибавка к высоте строки и высота строк полей. */
+/** Настоящая высота строк полей, измеренная на устройстве. */
+interface NaturalRows {
+  /** Высота одной строки. */
+  row: number
+  /** Высота всех строк полей вместе с нижним отступом блока: ниже блок не становится. */
+  fields: number
+}
+
+/** Заполнение карточки силуэтами. */
 export interface SkeletonFill {
-  /** Сколько строк-заполнителей добавить под строками полей. */
+  /** Сколько строк-заполнителей поместится под строками полей. */
   rows: number
-  /** Сколько точек прибавить каждой строке: остаток места, меньше строки, поровну. */
-  extra: number
-  /** Высота строк полей без прибавки (с нижним отступом блока): ниже блок не становится. */
+  /** Высота строк полей с нижним отступом блока: ниже блок не становится. */
   minHeight: number
 }
 
 /**
  * Заполнение карточки силуэтами до низа, без пустого места (`LabelFieldsSkeleton`, пока фото нет). Строки полей —
  * своей, настоящей высоты (её даёт шрифт устройства, поэтому её меряем, а не задаём числом). Если в карточке под ними
- * есть место — добавляются целые строки-заполнители, сколько помещается, а остаток (меньше строки) поровну делится
- * между строками. Места нет — ничего не добавляется: карточка такая же, как с данными.
+ * есть место — добавляются целые строки-заполнители, сколько помещается; строки делят место поровну.
  *
- * Мерим без заполнения (`null`): строки полей стоят в потоке, и видно, сколько места под ними. После замера строки
- * ложатся слоем поверх блока, а сам блок держится свободного места (но не ниже строк полей): поэтому он меняет
- * размер вместе с местом — поворот экрана, появилась или ушла панель листания, — и заполнение считается заново.
+ * Мерим один раз (`null` — ещё не измерено): строки полей стоят в потоке. Дальше строки лежат слоем поверх блока,
+ * а блок держится свободного места карточки (но не ниже строк полей), поэтому меняет размер вместе с местом —
+ * поворот экрана, появилась или ушла панель листания, — и число заполнителей считается по его высоте.
  * @param containerRef Блок силуэтов (тянется на свободное место карточки).
  * @param listRef Список строк в нём.
  * @param enabled Заполнять (фото нет); иначе — `null`, только строки полей.
+ * @param fieldCount Сколько строк полей: другое число — мерим заново.
  */
-export function useSkeletonFill(containerRef: RefObject<HTMLElement | null>, listRef: RefObject<HTMLElement | null>, enabled: boolean): SkeletonFill | null {
-  const [fill, setFill] = useState<SkeletonFill | null>(null)
-  /** Высота блока при последнем замере: другая высота — свободного места стало больше или меньше. */
-  const measuredHeight = useRef(0)
+export function useSkeletonFill(containerRef: RefObject<HTMLElement | null>, listRef: RefObject<HTMLElement | null>, enabled: boolean, fieldCount: number): SkeletonFill | null {
+  const [natural, setNatural] = useState<{ count: number; rows: NaturalRows } | null>(null)
+  const [rows, setRows] = useState(0)
+  const measured = natural && natural.count === fieldCount ? natural.rows : null
 
+  // Замер: строки полей в потоке, своей высоты.
   useLayoutEffect(() => {
     const container = containerRef.current
     const list = listRef.current
-    if (!enabled || fill || !container || !list || list.children.length === 0) return
+    if (!enabled || measured || !container || !list || list.children.length === 0) return
     const content = list.getBoundingClientRect().height
     const padding = Number.parseFloat(getComputedStyle(container).paddingBottom) || 0
-    measuredHeight.current = container.getBoundingClientRect().height
-    const free = measuredHeight.current - padding - content
-    const rowHeight = content / list.children.length
-    const rows = free > 0 ? Math.floor(free / rowHeight) : 0
-    const extra = free > 0 ? (free - rows * rowHeight) / (list.children.length + rows) : 0
-    setFill({ rows, extra, minHeight: content + padding })
-  }, [containerRef, listRef, enabled, fill])
+    setNatural({ count: fieldCount, rows: { row: content / list.children.length, fields: content + padding } })
+  }, [containerRef, listRef, enabled, measured, fieldCount])
 
-  useEffect(() => {
+  // Сколько заполнителей помещается — по высоте блока, и заново, когда она меняется.
+  useLayoutEffect(() => {
     const container = containerRef.current
-    if (!enabled || !container) return
-    const observer = new ResizeObserver(() => {
-      if (Math.abs(container.getBoundingClientRect().height - measuredHeight.current) >= 1) setFill(null)
-    })
+    if (!enabled || !measured || !container) return
+    const count = () => setRows(Math.max(0, Math.floor((container.getBoundingClientRect().height - measured.fields) / measured.row)))
+    count()
+    const observer = new ResizeObserver(count)
     observer.observe(container)
     return () => observer.disconnect()
-  }, [containerRef, enabled])
+  }, [containerRef, enabled, measured])
 
-  return enabled ? fill : null
+  return enabled && measured ? { rows, minHeight: measured.fields } : null
 }

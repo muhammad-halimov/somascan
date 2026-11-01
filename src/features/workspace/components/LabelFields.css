@@ -65,8 +65,9 @@
 /*
  * Ровные силуэты (фото ещё нет) заполняют карточку до низа (`useSkeletonFill`). После замера строки ложатся слоем
  * поверх блока, а блок держится свободного места карточки (не ниже строк полей — `min-height` из замера): так он
- * меняет размер вместе с местом, и заполнение считается заново. Остаток места, меньше строки, поровну прибавляется
- * к строкам — сверху и снизу поровну, содержимое остаётся по центру строки.
+ * меняет размер вместе с местом. Строки делят место поровну и плавно растягиваются или сжимаются вслед за ним;
+ * строка-заполнитель, которой места больше нет, плавно сжимается и гаснет (`is-leaving`), новая — вырастает
+ * и проявляется (`@starting-style`). Содержимое — по центру строки.
  */
 .label-fields.is-skeleton.is-filled {
   position: relative;
@@ -74,11 +75,42 @@
 
 .label-fields.is-skeleton.is-filled > .label-fields-list {
   position: absolute;
+  display: flex;
   inset: 0 var(--label-fields-pad-x) var(--label-fields-pad-bottom);
+  flex-direction: column;
 }
 
 .label-fields.is-skeleton.is-filled .label-field {
-  padding-block: calc(var(--label-field-pad) + var(--skeleton-row-extra) / 2);
+  min-height: 0;
+  flex: 1 1 0;
+  align-content: center;
+  overflow: hidden;
+  padding-block: 0;
+}
+
+.label-fields.is-skeleton.is-filled .label-field.is-filler {
+  transition:
+    flex-grow var(--skeleton-fill-move) cubic-bezier(.2, 0, 0, 1),
+    opacity var(--skeleton-fill-move) ease;
+}
+
+.label-fields.is-skeleton.is-filled .label-field.is-filler.is-leaving {
+  flex-grow: 0;
+  border-bottom-width: 0;
+  opacity: 0;
+}
+
+@starting-style {
+  .label-fields.is-skeleton.is-filled .label-field.is-filler {
+    flex-grow: 0;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .label-fields.is-skeleton.is-filled .label-field.is-filler {
+    transition: none;
+  }
 }
 
 .label-field:nth-child(3n + 1) .label-skeleton:not(.is-value) { width: 55%; }
