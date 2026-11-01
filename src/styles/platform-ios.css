@@ -13,6 +13,8 @@
 /* ---------- Токены стекла ---------- */
 
 :root[data-platform='ios'] {
+  /* Блок фото скруглён, как карточки iOS. */
+  --photo-radius: var(--ios-radius-card);
   /* Поле в фокусе — нейтральный оттенок заливки, без акцентной линии (как текстовые поля UIKit). */
   --field-bg-focus: color-mix(in srgb, var(--text-h) 6%, var(--field-bg));
   /* Подложка сегментированного переключателя и «плашка» выбранного сегмента (цвета UIKit). */
@@ -199,7 +201,6 @@
 
 /* ---------- Карточки ---------- */
 
-:root[data-platform='ios'] .photo-card,
 :root[data-platform='ios'] .notes-card {
   border-radius: var(--ios-radius-card);
 }

@@ -7,10 +7,13 @@
 .label-fields {
   /* Разделитель строк полей (и их силуэтов). */
   --label-field-divider: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  /* Высота строки поля в просмотре: отступы 2 × 11, строка значения 22, разделитель 1 и сдвиг по базовой линии 1. */
+  --label-field-row: 46px;
+  --label-fields-pad-bottom: 8px;
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
-  padding: 0 18px 8px;
+  padding: 0 18px var(--label-fields-pad-bottom);
   /*
    * overscroll-behavior: contain здесь нельзя: в режиме правки список полей сам не прокручивается
    * (карточка растёт по содержимому), и contain не пускал свайп по полям к прокрутке экрана.
@@ -56,6 +59,40 @@
  */
 .label-fields.is-skeleton .label-field-dropdown-chevron {
   visibility: hidden;
+}
+
+/*
+ * Ровные силуэты (фото ещё нет) заполняют карточку до низа, без пустого места. Строк не меньше, чем полей
+ * (`--skeleton-rows`, как у карточки с данными: на низком экране она так же прокручивается), а если место есть —
+ * больше: за полями идут строки-заполнители, столько, сколько помещается целиком. Список — колонка с переносом:
+ * строки, которым нет места, уходят в следующую колонку за край, где их не видно. Видимые строки поровну делят
+ * остаток места, содержимое — по центру строки. Разделители — над строками: под последней видимой линии нет.
+ */
+.label-fields.is-skeleton.is-still {
+  display: flex;
+  min-height: calc(var(--skeleton-rows) * var(--label-field-row) + var(--label-fields-pad-bottom));
+  flex-direction: column;
+}
+
+.label-fields.is-skeleton.is-still > .label-fields-list {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 0;
+  flex-flow: column wrap;
+  align-content: flex-start;
+  overflow: hidden;
+}
+
+.label-fields.is-skeleton.is-still .label-field {
+  width: 100%;
+  flex: 1 0 auto;
+  align-content: center;
+  border-top: var(--label-field-divider);
+  border-bottom: 0;
+}
+
+.label-fields.is-skeleton.is-still .label-field:first-child {
+  border-top: 0;
 }
 
 .label-field:nth-child(3n + 1) .label-skeleton:not(.is-value) { width: 55%; }

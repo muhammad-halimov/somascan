@@ -74,6 +74,8 @@
   --notice-bg: color-mix(in srgb, var(--accent) 9%, var(--bg));
   /* Дорожка спиннера: цвет того, кто его рисует (`currentColor` берётся там, где переменная применена), приглушённый. */
   --spinner-track: color-mix(in srgb, currentColor 30%, transparent);
+  /* Скругление блока фото и карточки фото в нём (iOS — своё, platform-ios.css). */
+  --photo-radius: 12px;
   /* Безопасные зоны (вырез камеры, «домашняя полоска»). */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));

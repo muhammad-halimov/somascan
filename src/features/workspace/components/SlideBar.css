@@ -31,11 +31,6 @@
 .photo-block.has-slide-bar {
   overflow: hidden;
   background: var(--photo-empty-bg);
-  border-radius: 12px;
-}
-
-:root[data-platform='ios'] .photo-block.has-slide-bar {
-  border-radius: var(--ios-radius-card);
 }
 
 /* Сетка на экране: блок, как и карточка, не обрезает свечение открытой ячейки. */

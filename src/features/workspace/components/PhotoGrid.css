@@ -13,7 +13,8 @@
    * к ней) помещается в поле, свечение ложится поверх соседних ячеек.
    */
   --photo-grid-gap: 4px;
-  --photo-grid-radius: 8px;
+  /* Ячейки концентричны блоку фото: его скругление минус поле сетки (на iOS блок круглее — и ячейки тоже). */
+  --photo-grid-radius: calc(var(--photo-radius) - var(--photo-grid-gap));
   /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина и зазор от ячейки. */
   --photo-grid-frame-width: 3px;
   --photo-grid-frame-offset: 0px;
@@ -439,14 +440,7 @@
   --ripple-color: var(--accent);
 }
 
-/*
- * iOS: ячейки концентричны карточке (радиус карточки минус поле сетки), значки на миниатюрах —
- * материал UIKit (iOS 18) или стекло с бликом (iOS 26+).
- */
-:root[data-platform='ios'] .photo-grid {
-  --photo-grid-radius: calc(var(--ios-radius-card) - var(--photo-grid-gap));
-}
-
+/* iOS: значки на миниатюрах — материал UIKit (iOS 18) или стекло с бликом (iOS 26+). */
 :root[data-platform='ios'] .photo-grid-cell:not(.is-selected, .is-active) .photo-grid-number {
   -webkit-backdrop-filter: saturate(180%) blur(12px);
   backdrop-filter: saturate(180%) blur(12px);

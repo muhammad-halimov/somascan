@@ -26,11 +26,29 @@
 
 /* Блок фото: карточка фото и панель листания под ней — одной ширины, одним целым. */
 .photo-block {
+  position: relative;
   display: flex;
   width: min(100%, 380px, calc(44svh * 1.08));
   flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
+  /* Свой слой: граница поверх фото не выходит над шапкой и панелью действий при прокрутке. */
+  isolation: isolate;
+  border-radius: var(--photo-radius);
+}
+
+/*
+ * Граница блока фото — линия, как у карточки результата. Рисуется поверх содержимого по краю блока, поэтому
+ * не меняет ни размеров, ни скруглений фото и панели листания.
+ */
+.photo-block::after {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  border: 1px solid var(--border);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .photo-block > .photo-card {
