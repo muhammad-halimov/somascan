@@ -19,14 +19,15 @@
   --photo-grid-frame-offset: 0px;
   --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--focus);
   /*
-   * Свечение открытой ячейки: снаружи — сразу за обводкой (размах тени = зазор + толщина), поверх соседних ячеек;
-   * внутри — по краю её миниатюры, так что ячейка светится и при узких промежутках.
+   * Свечение открытой ячейки: снаружи — сразу за обводкой (размах тени = зазор + толщина), поверх соседних ячеек
+   * и за края карточки (пока сетка на экране, карточка его не обрезает); внутри — по краю её миниатюры, так что
+   * ячейка светится и при узких промежутках.
    */
   --photo-grid-frame-glow-spread: calc(var(--photo-grid-frame-offset) + var(--photo-grid-frame-width));
   --photo-grid-frame-glow:
-    0 0 10px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 90%, transparent),
-    0 0 20px calc(var(--photo-grid-frame-glow-spread) + 3px) color-mix(in srgb, var(--focus) 50%, transparent);
-  --photo-grid-frame-inner-glow: inset 0 0 16px 3px color-mix(in srgb, var(--focus) 60%, transparent);
+    0 0 10px var(--photo-grid-frame-glow-spread) var(--focus),
+    0 0 26px calc(var(--photo-grid-frame-glow-spread) + 4px) color-mix(in srgb, var(--focus) 60%, transparent);
+  --photo-grid-frame-inner-glow: inset 0 0 18px 4px color-mix(in srgb, var(--focus) 70%, transparent);
   /* Сколько рамка переноса переезжает с ячейки на ячейку. */
   --photo-grid-frame-move: 260ms;
   position: absolute;

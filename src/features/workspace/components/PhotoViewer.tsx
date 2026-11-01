@@ -21,8 +21,6 @@ export interface PhotoViewerProps {
   rotation: number
   /** Новый поворот фото бирки. */
   onRotationChange: (rotation: number) => void
-  /** Когда просмотр открыли нажатием на фото (`performance.now()`): второе нажатие вовремя — двойное. */
-  openedAt?: number
   /** Проигрывается анимация закрытия. */
   isClosing: boolean
   /** Закрыть просмотр. */
@@ -32,11 +30,11 @@ export interface PhotoViewerProps {
 /**
  * Просмотр фото на весь экран: фото — во весь экран, заголовок и кнопки висят поверх него. Щипок, перетаскивание,
  * кнопки масштаба и поворота. Свой масштаб, независимый от карточки; поворот — общий с биркой (его же получит
- * распознавание). Двойное нажатие плавно увеличивает фото к точке нажатия (у увеличенного — исходный вид); первым
- * нажатием может быть то, что открыло просмотр. Свайп вверх или вниз закрывает просмотр (`useSwipeToClose`).
+ * распознавание). Двойное нажатие плавно увеличивает фото к точке нажатия (у увеличенного — исходный вид).
+ * Свайп вверх или вниз закрывает просмотр (`useSwipeToClose`).
  * Закрывается крестиком, клавишей Escape и системным «Назад».
  */
-export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, openedAt, isClosing, onClose }: PhotoViewerProps) {
+export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, isClosing, onClose }: PhotoViewerProps) {
   const { t } = useTranslation(['workspace', 'common'])
   const transform = usePhotoTransform({ naturalSize, enabled: true, rotation, onRotationChange })
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -50,7 +48,7 @@ export function PhotoViewer({ url, naturalSize, rotation, onRotationChange, open
     return attachFrame(element)
   }, [attachFrame])
   /** Двойное нажатие — увеличение к пальцу, у увеличенного фото — исходный масштаб (как в карточке). */
-  const tapStage = useDoubleTap<string>({ onDouble: (_, point) => transform.toggleZoomAt(point), firstTap: openedAt ? { key: url, at: openedAt } : undefined })
+  const tapStage = useDoubleTap<string>({ onDouble: (_, point) => transform.toggleZoomAt(point) })
   useBodyScrollLock(true)
 
   // Escape на компьютере.

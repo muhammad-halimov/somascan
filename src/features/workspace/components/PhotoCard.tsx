@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { BackIcon, GridIcon, ImageIcon, ImageOffIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { usePresence } from '@/hooks/usePresence'
+import { useDoubleTap } from '../hooks/useDoubleTap'
 import type { ScanItem } from '../hooks/useScanSession'
 import type { Size } from '../utils/PhotoGeometry'
 import type { PhotoTransform } from '../hooks/usePhotoTransform'
@@ -85,7 +86,8 @@ export interface PhotoCardProps {
  * Справа вверху — «Сетка»: карточка уменьшает фото в его ячейку, и появляется сетка; нажатие
  * на ячейку (или «Открыть» — в углу сетки и в панели под карточкой) увеличивает её обратно до одной бирки. Слева
  * вверху у бирки, открытой из сетки, — «Назад» к сетке. Переход к соседней бирке — фото въезжает
- * сбоку, как слайд. Нажатие на фото сразу открывает просмотр на весь экран (второе нажатие двойного уже приходится на просмотр и увеличивает фото там). Пока фото грузится и распознаётся —
+ * сбоку, как слайд. Нажатие на фото открывает просмотр на весь экран, двойное нажатие — плавно увеличивает фото
+ * к точке нажатия (у увеличенного — исходный вид). Пока фото грузится и распознаётся —
  * один спиннер с подписью «Распознавание». В правом нижнем углу ячейки без снимка — переключатель «Без фото» /
  * «С фото»: бирка, данные которой вводят вручную (на месте фото — перечёркнутая картинка), и обратно.
  */
@@ -98,6 +100,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   const hasPhoto = Boolean(photoUrl) && !hasError
   const isManual = item?.manual ?? false
   const isBusy = isReceiving || (item !== null && (item.isLoading || item.status.kind === 'recognizing') && !hasError)
+  /** Нажатие на фото открывает просмотр, двойное — увеличивает фото к пальцу (у увеличенного — исходный вид). */
+  const tapPhoto = useDoubleTap<string>({ onSingle: () => onOpen(), onDouble: (_, point) => transform.toggleZoomAt(point) })
   const overlay = usePresence(isBusy)
   const gridSingle = usePresence(view === 'grid')
   /**
@@ -227,7 +231,7 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   }), [])
 
   const isGridShown = view === 'grid' && settledView === 'grid'
-  const classes = ['photo-card', hasPhoto && view === 'single' && 'has-photo', isZoomed && 'is-zoomed'].filter(Boolean).join(' ')
+  const classes = ['photo-card', hasPhoto && view === 'single' && 'has-photo', isZoomed && 'is-zoomed', isGridShown && 'is-grid-shown'].filter(Boolean).join(' ')
 
   return (
     <div ref={cardRef} className={classes} aria-busy={isBusy && view === 'single'} {...touchHandlers}>
@@ -238,8 +242,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
             type="button"
             className="photo-image-action"
             aria-label={t('photo.open')}
-            // Нажатие сразу после перетаскивания или щипка — не «тап», просмотр не открываем.
-            onClick={(event) => !wasGesture(event.timeStamp) && onOpen()}
+            // Нажатие сразу после перетаскивания или щипка — не «тап»: не открываем и не увеличиваем.
+            onClick={(event) => !wasGesture(event.timeStamp) && tapPhoto(photoUrl, { x: event.clientX, y: event.clientY })}
             {...pointerHandlers}
           >
             {placeholder && (
