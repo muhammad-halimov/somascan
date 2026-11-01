@@ -57,7 +57,10 @@ export interface LabelFieldsSkeletonProps {
   label: string
   /** Ничего не грузится (фото ещё нет): силуэты ровные, без переливания. */
   still?: boolean
-  /** Подсказка под силуэтами (видна; диктор читает `label`): она занимает место последней строки. */
+  /**
+   * Подсказка под силуэтами (видна; диктор читает `label`). С ней силуэтов столько, сколько помещается над ней
+   * в карточке: экран не прокручивается.
+   */
   hint?: string
 }
 
@@ -87,9 +90,7 @@ function SkeletonRow({ dropdown = false }: { dropdown?: boolean }) {
  */
 export function LabelFieldsSkeleton({ label, still = false, hint }: LabelFieldsSkeletonProps) {
   const { advanced } = useSettings()
-  const enabled = enabledLabelFields(advanced.labelFields)
-  // С подсказкой — на строку меньше: карточка не выше, чем без неё, и экран не прокручивается.
-  const fields = hint ? enabled.slice(0, -1) : enabled
+  const fields = enabledLabelFields(advanced.labelFields)
   return (
     <div className={`label-fields is-skeleton anim-fade${still ? ' is-still' : ''}${hint ? ' has-hint' : ''}`} role="status" aria-label={label}>
       <div className="label-fields-list" aria-hidden="true">

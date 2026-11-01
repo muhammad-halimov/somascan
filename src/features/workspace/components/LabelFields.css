@@ -5,6 +5,8 @@
  */
 
 .label-fields {
+  /* Разделитель строк полей (и их силуэтов). */
+  --label-field-divider: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
@@ -25,7 +27,7 @@
   align-items: baseline;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-bottom: var(--label-field-divider);
 }
 
 .label-field:last-child {
@@ -56,14 +58,39 @@
   visibility: hidden;
 }
 
-/* Подсказка под силуэтами — по центру оставшегося места карточки. */
+/*
+ * С подсказкой (`hint`): силуэты занимают место карточки над ней, подсказка — внизу. Силуэтов столько, сколько
+ * помещается целиком: список идёт в колонку с переносом, и строки, которым нет места, уходят в следующую колонку —
+ * за край, где их не видно. Карточка поэтому не растёт, и экран не прокручивается. Разделители — над строками,
+ * а не под ними: под последней видимой строкой линии нет.
+ */
 .label-fields.is-skeleton.has-hint {
   display: flex;
   flex-direction: column;
 }
 
+.label-fields.is-skeleton.has-hint > .label-fields-list {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 0;
+  flex-flow: column wrap;
+  align-content: flex-start;
+  overflow: hidden;
+}
+
+.label-fields.is-skeleton.has-hint .label-field {
+  width: 100%;
+  flex: none;
+  border-top: var(--label-field-divider);
+  border-bottom: 0;
+}
+
+.label-fields.is-skeleton.has-hint .label-field:first-child {
+  border-top: 0;
+}
+
 .label-fields-hint {
-  margin: auto 0;
+  margin: 0;
   padding: 12px 0 4px;
   color: var(--text);
   font-size: 14px;

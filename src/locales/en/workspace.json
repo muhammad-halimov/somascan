@@ -25,7 +25,7 @@
   },
   "notes": {
     "label": "Result",
-    "placeholder": "Fields are filled in automatically from the tag photo",
+    "placeholder": "Fields are filled from the tag photo",
     "cancelled": "Recognition cancelled. The photo is kept — tap “Retry” to recognize it again.",
     "checkBeforeSend": "Check the data before sending"
   },

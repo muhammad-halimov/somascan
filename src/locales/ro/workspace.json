@@ -25,7 +25,7 @@
   },
   "notes": {
     "label": "Rezultat",
-    "placeholder": "Câmpurile se completează automat din fotografia etichetei",
+    "placeholder": "Câmpurile se completează din foto",
     "cancelled": "Recunoașterea a fost anulată. Fotografia a rămas — apăsați „Reia” pentru a o recunoaște din nou.",
     "checkBeforeSend": "Verificați datele înainte de trimitere"
   },
