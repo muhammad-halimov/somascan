@@ -9,37 +9,49 @@
 
 .photo-grid {
   /*
-   * Промежуток между ячейками и поле сетки по краям — одинаковые и с запасом: обводка открытой ячейки (3 px с зазором
-   * 2 px) и её свечение помещаются в них, не наезжая на соседние ячейки и не обрезаясь краем карточки.
+   * Раскладка «клином» (`gridWedge`): ячейки стоят вплотную — узкие промежутки и поле у краёв карточки; открытая
+   * ячейка чуть крупнее и раздвигает соседей — промежутки вокруг неё (и поле, если она у края) шире, в них
+   * помещаются её обводка и свечение. Дорожки задаёт `PhotoGrid`, ширины — здесь.
    */
-  --photo-grid-gap: 12px;
+  --photo-grid-gap: 4px;
+  --photo-grid-wedge: 12px;
+  --photo-grid-active-fr: 1.08fr;
   --photo-grid-radius: 8px;
   /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина и зазор от ячейки. */
   --photo-grid-frame-width: 3px;
-  --photo-grid-frame-offset: 2px;
+  --photo-grid-frame-offset: 0px;
   --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--focus);
   /*
    * Свечение открытой ячейки: начинается сразу за обводкой (размах тени = зазор + толщина), яркое у неё
-   * и гаснет в пределах промежутка.
+   * и гаснет в пределах раздвинутого промежутка.
    */
   --photo-grid-frame-glow-spread: calc(var(--photo-grid-frame-offset) + var(--photo-grid-frame-width));
   --photo-grid-frame-glow:
-    0 0 8px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 95%, transparent),
-    0 0 16px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 50%, transparent);
-  /* Сколько рамка переноса переезжает с ячейки на ячейку. */
+    0 0 6px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 90%, transparent),
+    0 0 12px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 45%, transparent);
+  /* Сколько соседи расступаются и рамка переноса переезжает с ячейки на ячейку. */
   --photo-grid-frame-move: 260ms;
   position: absolute;
   z-index: 4;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: var(--photo-grid-gap);
-  padding: var(--photo-grid-gap);
   background: var(--photo-empty-bg);
   /* Скругление карточки: когда та не обрезает (сетка на экране), углы сетки не торчат. */
   border-radius: inherit;
   transform-origin: 0 0;
+}
+
+/* Сетка на экране: при смене открытой ячейки соседи расступаются плавно. */
+.photo-grid:not([inert]) {
+  transition:
+    grid-template-columns var(--photo-grid-frame-move) cubic-bezier(.2, 0, 0, 1),
+    grid-template-rows var(--photo-grid-frame-move) cubic-bezier(.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-grid:not([inert]) {
+    transition: none;
+  }
 }
 
 .photo-grid-cell {
@@ -169,6 +181,8 @@
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-glow);
+  /* Переезд меняет и размер (открытая ячейка крупнее): увеличение — от левого верхнего угла, как сдвиг. */
+  transform-origin: 0 0;
 }
 
 .photo-grid.is-dragging .photo-grid-frame {

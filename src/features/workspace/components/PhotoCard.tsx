@@ -146,8 +146,7 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
       finish()
       return
     }
-    // На время перехода — без размытия под кнопками (дорого для композитора, переход дёргался бы)
-    // и без увеличения открытой ячейки: её размер меряем уже обычным.
+    // На время перехода — без размытия под кнопками (дорого для композитора, переход дёргался бы) и без колец ячеек.
     card.classList.add('is-zooming')
     const box = card.getBoundingClientRect()
     const rect = cell.getBoundingClientRect()

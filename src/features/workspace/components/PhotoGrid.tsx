@@ -1,13 +1,23 @@
-import { useLayoutEffect, useRef, type RefObject } from 'react'
+import { useLayoutEffect, useRef, type CSSProperties, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertIcon, CheckIcon, ExclamationIcon, ImageOffIcon } from '@/components/icons/Icons'
 import { useSettings } from '@/features/settings/store/useSettings'
 import { useGridDragSelect } from '../hooks/useGridDragSelect'
 import { useHeatDuplicates } from '../hooks/useHeatDuplicates'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
+import { wedgeLine, wedgeTracks } from '../utils/gridWedge'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import { tagState } from '../utils/tagState'
 import './PhotoGrid.css'
+
+/** Ячеек в ряду и рядов: сетка квадратная, на все бирки сессии. */
+const GRID_SIDE = Math.round(Math.sqrt(MAX_SCAN_ITEMS))
+
+/** Место ячейки `index` в дорожках сетки «клином» (`gridWedge`). */
+const cellArea = (index: number): CSSProperties => ({
+  gridRow: wedgeLine(Math.floor(index / GRID_SIDE)),
+  gridColumn: wedgeLine(index % GRID_SIDE),
+})
 
 /** Свойства `PhotoGrid`. */
 export interface PhotoGridProps {
@@ -35,6 +45,8 @@ export interface PhotoGridProps {
  * открытой — оба кольца); выбор — «радиокнопка» в левом нижнем углу (кольцо, у выбранной — точка). Состояние — в правом нижнем:
  * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма, не заполнены обязательные поля
  * или плавка повторяется), красный знак (ошибка).
+ * Ячейки стоят вплотную; открытая чуть крупнее и раздвигает соседей клином — в раздвинутых промежутках её обводка
+ * и свечение (`gridWedge`), при смене открытой ячейки соседи плавно расступаются.
  * Нажатие на бирку под рамкой открывает её (карточка увеличивает ячейку до одной бирки), на другую бирку — переносит
  * на неё рамку, не выходя из сетки (карточка результата показывает её данные); «плюс» открывается нажатием. Рамку можно
  * вести пальцем по ячейкам сетки (`useGridDragSelect`). Когда бирки уходят
@@ -70,8 +82,15 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
     cellPositions.current = next
   }, [items, interactive, gridRef])
 
+  // Дорожки «клином» вокруг открытой ячейки (нет её — все промежутки узкие).
+  const hasActive = activeIndex >= 0 && activeIndex < MAX_SCAN_ITEMS
+  const tracks: CSSProperties = {
+    gridTemplateRows: wedgeTracks(GRID_SIDE, hasActive ? Math.floor(activeIndex / GRID_SIDE) : null),
+    gridTemplateColumns: wedgeTracks(GRID_SIDE, hasActive ? activeIndex % GRID_SIDE : null),
+  }
+
   return (
-    <div ref={gridRef} className="photo-grid" role="group" aria-label={t('grid.region')} inert={!interactive || undefined}>
+    <div ref={gridRef} className="photo-grid" style={tracks} role="group" aria-label={t('grid.region')} inert={!interactive || undefined}>
       {Array.from({ length: MAX_SCAN_ITEMS }, (_, index) => {
         const item = items[index]
         const number = index + 1
@@ -79,7 +98,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
         if (!item) {
           const isNext = index === items.length
           return (
-            <div key={`empty-${index}`} className={`photo-grid-cell is-empty ${isNext ? 'is-next' : 'is-locked'}${isActive ? ' is-active' : ''}`}>
+            <div key={`empty-${index}`} className={`photo-grid-cell is-empty ${isNext ? 'is-next' : 'is-locked'}${isActive ? ' is-active' : ''}`} style={cellArea(index)}>
               <button
                 type="button"
                 className="photo-grid-open"
@@ -97,7 +116,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
         const name = item.manual ? `${t('grid.item', { number })}, ${t('grid.manual')}` : t('grid.item', { number })
         const classes = ['photo-grid-cell', 'has-photo', item.manual && 'is-manual', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')
         return (
-          <div key={item.id} className={classes} data-item-id={item.id} data-item-index={index}>
+          <div key={item.id} className={classes} style={cellArea(index)} data-item-id={item.id} data-item-index={index}>
             <button
               type="button"
               className="photo-grid-open"
