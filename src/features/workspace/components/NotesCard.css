@@ -18,11 +18,16 @@
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
-/* Режим правки: карточка на всю высоту видимой области и прилипает к верху. */
+/*
+ * Режим правки: карточка на всю высоту области и прилипает к верху. Не ниже, чем нужно, чтобы прокрутка могла
+ * остановиться на её верхе: высота области (100 %, под клавиатурой тоже) плюс отступ области сверху минус место
+ * остановки прокрутки (`--workspace-pad-top`, `--workspace-snap-top`). Короче — и когда список сворачивается
+ * или уходит клавиатура, прокрутке не хватало места: браузер (особенно iOS) уводил экран к фото.
+ */
 .notes-card.is-text-editing {
   width: 100%;
   max-width: 600px;
-  min-height: calc(var(--visual-viewport-height, 100dvh) - 80px - var(--safe-top));
+  min-height: calc(100% + var(--workspace-pad-top) - var(--workspace-snap-top));
   flex: 0 0 auto;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-tint-strong);

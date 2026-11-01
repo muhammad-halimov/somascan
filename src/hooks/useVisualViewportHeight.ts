@@ -25,7 +25,9 @@ export function useVisualViewportHeight() {
       window.clearTimeout(revealTimer)
       revealTimer = window.setTimeout(() => {
         const focused = document.activeElement
-        if (focused instanceof HTMLElement && focused.matches('input, textarea')) {
+        // Скрытое поле (свёрнутый список, неактивная часть экрана) не показываем: прокрутка к нему уводила экран.
+        const visible = focused instanceof HTMLElement && !focused.closest('[inert]') && focused.getClientRects().length > 0
+        if (visible && focused.matches('input, textarea')) {
           focused.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
         }
       }, 80)

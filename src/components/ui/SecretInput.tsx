@@ -49,7 +49,7 @@ export function SecretInput({ showLabel, hideLabel, kind = 'token', className = 
   }, [visible])
 
   return (
-    <div className="input-with-action secret-input">
+    <div className="input-with-action secret-input" data-input-group>
       <TextInput
         {...inputProps}
         ref={inputRef}

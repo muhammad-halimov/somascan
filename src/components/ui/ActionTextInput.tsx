@@ -36,7 +36,7 @@ export interface ActionTextInputProps extends TextInputProps {
 export function ActionTextInput({ action, locked = false, className = '', ...inputProps }: ActionTextInputProps) {
   const actions = Array.isArray(action) ? action : [action as InputAction]
   return (
-    <div className={`input-with-action${actions.length > 1 ? ' has-actions-2' : ''}`}>
+    <div className={`input-with-action${actions.length > 1 ? ' has-actions-2' : ''}`} data-input-group>
       <TextInput {...inputProps} readOnly={locked || inputProps.readOnly} className={`${className}${locked ? ' is-locked' : ''}`.trim()} />
       <div className="input-actions">
         {actions.map(({ icon, label, onClick, busy = false, disabled = false, tone }) => (

@@ -5,6 +5,7 @@ import { List, ListItem } from '@/components/ui/List'
 import { LIST_SEARCH_MIN_ITEMS, ListSearch, ListSearchEmpty } from '@/components/ui/ListSearch'
 import { useHeightTransition } from '@/hooks/useHeightTransition'
 import { useOrderOnOpen } from '@/hooks/useOrderOnOpen'
+import { keepInPlace } from '@/lib/interaction/keepInPlace'
 import { matchesSearch } from '@/lib/text/searchText'
 // Меню и уголок — те же, что у шторок настроек (`Disclosure`): поверхность меню Material, список iOS.
 import '@/components/ui/Disclosure.css'
@@ -72,6 +73,7 @@ export interface DropdownFieldProps {
 export function DropdownField({ name, value, selected, options, placeholder, isEditing, required = false, className = '', onChange, own, searchable = false }: DropdownFieldProps) {
   const menuId = useId()
   const nameId = useId()
+  const rootRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [isOpen, setIsOpen] = useState(false)
@@ -97,7 +99,17 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
     setQuery('')
     setIsOpen(true)
   }
-  const close = () => setIsOpen(false)
+  /**
+   * Сворачивает список. Поле остаётся на своём месте экрана, пока список сворачивается и уходит клавиатура
+   * (`keepInPlace`); поиск теряет фокус сразу — клавиатура уходит сейчас, а не когда-нибудь потом.
+   */
+  const close = () => {
+    // Место поля — до того, как что-то сдвинется (снятие фокуса на iOS тоже может прокрутить экран).
+    if (rootRef.current) keepInPlace(rootRef.current)
+    const focused = document.activeElement
+    if (focused instanceof HTMLElement && menuRef.current?.contains(focused)) focused.blur()
+    setIsOpen(false)
+  }
   const toggle = () => (isOpen ? close() : open())
   const select = (next: string) => {
     onChange(next)
@@ -123,9 +135,9 @@ export function DropdownField({ name, value, selected, options, placeholder, isE
   ].filter(Boolean).join(' ')
 
   return (
-    <div className={classes}>
+    <div ref={rootRef} className={classes}>
       <span className="label-field-name" id={nameId}>{name}</span>
-      <div className={`label-field-dropdown${isEditing ? ' label-field-input' : ''}`}>
+      <div className={`label-field-dropdown${isEditing ? ' label-field-input' : ''}`} data-input-group>
         {isTyping && own ? (
           <input
             ref={inputRef}

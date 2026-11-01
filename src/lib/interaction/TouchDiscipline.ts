@@ -1,3 +1,5 @@
+import { TOUCH_SLOP } from './gestures'
+
 /**
  * Поведение касаний как в нативном приложении (всё, что не относится к отклику на нажатие):
  *
@@ -7,6 +9,9 @@
  * - кнопки не берут фокус при касании (как нативные кнопки в режиме касаний): иначе Chromium
  *   уводил бы фокус и клавиатуру с поля ввода при тапе по «глазку» или вкладке, а кольцо фокуса
  *   всплывало бы при любой смене режима ввода; если фокус всё же остался — снимаем его после клика;
+ * - касание вне поля ввода прячет клавиатуру, как в нативных приложениях: поле теряет фокус (на iOS касание пустого
+ *   места фокус не снимает, и клавиатура не уходила). Прокрутка — не касание; касание другого поля переводит фокус туда,
+ *   а кнопки самого поля (`data-input-group`: «глазок», очистка поиска, карандаш) клавиатуру не прячут;
  * - долгое нажатие не вызывает контекстное меню ссылок и картинок, выделение текста
  *   и перетаскивание — кроме полей ввода, где выделение и правка нужны. На кнопках и строках
  *   событие contextmenu не отменяем: Android считает отменённый жест «поглощённым» и вибрирует.
@@ -17,6 +22,9 @@ const NAVIGATION_KEYS = new Set(['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'Ar
 
 /** Код, под которым Android передаёт ввод экранной клавиатуры (это не навигация). */
 const IME_KEY_CODE = 229
+
+/** Обёртка поля ввода с его собственными кнопками: касание их — часть работы с полем, клавиатура остаётся. */
+const INPUT_GROUP = '[data-input-group]'
 
 /** Элемент, где текст редактируется: выделение, меню и фокус в нём — нативное поведение. */
 export function isEditable(target: EventTarget | null): boolean {
@@ -68,6 +76,27 @@ export class TouchDiscipline {
     }
     document.addEventListener('pointerup', releaseFocus, { capture: true, passive: true, signal })
     document.addEventListener('pointercancel', releaseFocus, { capture: true, passive: true, signal })
+
+    // Касание вне поля ввода (не прокрутка) прячет клавиатуру. Мышь не трогаем: щелчок мимо поля и так снимает фокус.
+    let tap: { x: number; y: number; target: EventTarget | null } | null = null
+    document.addEventListener('pointerdown', (event) => {
+      tap = event.pointerType === 'mouse' ? null : { x: event.clientX, y: event.clientY, target: event.target }
+    }, { capture: true, passive: true, signal })
+    document.addEventListener('pointermove', (event) => {
+      if (tap && Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > TOUCH_SLOP) tap = null
+    }, { capture: true, passive: true, signal })
+    document.addEventListener('pointercancel', () => {
+      tap = null
+    }, { capture: true, passive: true, signal })
+    document.addEventListener('pointerup', () => {
+      const target = tap?.target
+      tap = null
+      const focused = document.activeElement
+      if (!target || !(focused instanceof HTMLElement) || !isEditable(focused) || isEditable(target)) return
+      if (target instanceof Node && focused.closest(INPUT_GROUP)?.contains(target)) return
+      // После клика, если он будет: нажатая кнопка срабатывает как обычно, клавиатура уходит следом.
+      window.setTimeout(() => focused.blur(), 0)
+    }, { capture: true, passive: true, signal })
 
     document.addEventListener('contextmenu', (event) => {
       const target = event.target as Element | null

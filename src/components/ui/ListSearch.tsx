@@ -59,7 +59,7 @@ export function ListSearch({ value, onChange, label }: ListSearchProps) {
   }, [value])
 
   return (
-    <li ref={rowRef} className="list-search" role="search">
+    <li ref={rowRef} className="list-search" role="search" data-input-group>
       <SearchIcon />
       <input
         type="search"

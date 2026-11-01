@@ -113,8 +113,8 @@
 }
 
 :root[data-platform='ios'] .scan-workspace {
-  padding-top: calc(var(--app-header-height) + 12px);
-  scroll-padding-top: calc(var(--app-header-height) + 8px);
+  --workspace-pad-top: calc(var(--app-header-height) + 12px);
+  --workspace-snap-top: calc(var(--app-header-height) + 8px);
 }
 
 :root[data-platform='ios'] .offline-banner {
