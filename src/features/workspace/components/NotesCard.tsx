@@ -62,6 +62,16 @@ export interface NotesCardProps {
   isUploading?: boolean
 }
 
+/** Узкая плашка-примечание вверху карточки результата: значок ⓘ и текст. */
+function CardNotice({ text }: { text: string }) {
+  return (
+    <p className="notes-check anim-fade">
+      <InfoIcon />
+      <span>{text}</span>
+    </p>
+  )
+}
+
 /** Значок у номера бирки по её состоянию или `null`, если значка нет. */
 function itemMark(state: TagState): ReactNode {
   if (state === 'busy') return <span className="notes-item-mark skeleton" />
@@ -71,8 +81,8 @@ function itemMark(state: TagState): ReactNode {
 }
 
 /**
- * Карточка результата под фото: узкая полоса «Проверьте данные перед отправкой» (у распознанной бирки; во время
- * распознавания — её силуэт),
+ * Карточка результата под фото: узкая полоса «Проверьте данные перед отправкой» (у распознанной бирки; пока фото
+ * нет — «Поля заполнятся по фото бирки»; во время распознавания — её силуэт),
  * шапка с заголовком и кнопками правки, номера бирок (когда их
  * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
  * открытой бирки (пока фото нет — ровные силуэты полей, во время распознавания — переливающиеся, иначе ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
@@ -124,16 +134,16 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
   return (
     <div ref={cardRef} className={`notes-card${isEditing ? ' is-text-editing' : ''}`} aria-busy={isRecognizing}>
       {/*
-        Узкая плашка-примечание вверху карточки: распознанное проверяют перед каждой отправкой. Пока фото нет или
-        бирка распознаётся — её силуэт того же размера: карточка не меняет высоту, когда данные появятся.
+        Узкая плашка-примечание вверху карточки: у распознанной бирки — проверить данные перед отправкой, пока фото
+        нет — что поля заполнятся по фото, пока бирка распознаётся — силуэт плашки. Размер у всех трёх один:
+        карточка не меняет высоту, когда данные появятся.
       */}
       {status.kind === 'done' ? (
-        <p key="check" className="notes-check anim-fade">
-          <InfoIcon />
-          <span>{t('notes.checkBeforeSend')}</span>
-        </p>
-      ) : (isIdle || isRecognizing) && (
-        <p key="check-skeleton" className={`notes-check is-skeleton anim-fade${isIdle ? ' is-still' : ''}`} aria-hidden="true">
+        <CardNotice key="check" text={t('notes.checkBeforeSend')} />
+      ) : isIdle ? (
+        <CardNotice key="hint" text={t('notes.placeholder')} />
+      ) : isRecognizing && (
+        <p key="check-skeleton" className="notes-check is-skeleton anim-fade" aria-hidden="true">
           <span className="notes-check-mark skeleton" />
           <span className="notes-check-text"><SkeletonLine className="notes-check-line" /></span>
         </p>
@@ -183,15 +193,10 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
         // и строки прежнего сообщения оставались поверх нового — новый узел рисуется с нуля.
         <p key="cancelled" className="notes-message is-placeholder anim-fade" role="status">{t('notes.cancelled')}</p>
       ) : (
-        // Силуэты полей на их местах: ровные, пока фото нет, переливаются, пока бирка распознаётся. Один узел
-        // на оба состояния — при выборе фото силуэты не появляются заново, а начинают переливаться. Пока фото нет,
-        // под силуэтами — подсказка, что будет дальше.
-        <LabelFieldsSkeleton
-          key="skeleton"
-          label={isRecognizing ? t('photo.recognizing') : t('notes.placeholder')}
-          still={isIdle}
-          hint={isIdle ? t('notes.placeholder') : undefined}
-        />
+        // Силуэты полей на их местах — столько же строк той же высоты, что у бирки с данными: ровные, пока фото
+        // нет, переливаются, пока бирка распознаётся. Один узел на оба состояния — при выборе фото силуэты
+        // не появляются заново, а начинают переливаться.
+        <LabelFieldsSkeleton key="skeleton" label={isRecognizing ? t('photo.recognizing') : t('notes.placeholder')} still={isIdle} />
       )}
 
       <div ref={actionsRef} className="notes-actions" role="group" aria-label={t('actions.group')}>

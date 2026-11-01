@@ -58,49 +58,6 @@
   visibility: hidden;
 }
 
-/*
- * С подсказкой (`hint`): силуэты занимают место карточки над ней, подсказка — внизу. Силуэтов столько, сколько
- * помещается целиком: список идёт в колонку с переносом, и строки, которым нет места, уходят в следующую колонку —
- * за край, где их не видно. Карточка поэтому не растёт, и экран не прокручивается. Видимые строки поровну делят
- * остаток места (содержимое — по центру строки): пустого места под последней нет. Разделители — над строками,
- * а не под ними: под последней видимой строкой линии нет.
- */
-.label-fields.is-skeleton.has-hint {
-  display: flex;
-  flex-direction: column;
-}
-
-.label-fields.is-skeleton.has-hint > .label-fields-list {
-  display: flex;
-  min-height: 0;
-  flex: 1 1 0;
-  flex-flow: column wrap;
-  align-content: flex-start;
-  overflow: hidden;
-}
-
-.label-fields.is-skeleton.has-hint .label-field {
-  width: 100%;
-  flex: 1 0 auto;
-  align-content: center;
-  border-top: var(--label-field-divider);
-  border-bottom: 0;
-}
-
-.label-fields.is-skeleton.has-hint .label-field:first-child {
-  border-top: 0;
-}
-
-.label-fields-hint {
-  margin: 0;
-  padding: 12px 0 4px;
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.4;
-  text-align: center;
-  text-wrap: balance;
-}
-
 .label-field:nth-child(3n + 1) .label-skeleton:not(.is-value) { width: 55%; }
 .label-field:nth-child(3n + 2) .label-skeleton:not(.is-value) { width: 80%; }
 .label-field:nth-child(3n + 1) .label-skeleton.is-value { width: 45%; }
