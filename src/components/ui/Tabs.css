@@ -37,7 +37,7 @@
 
 /* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
 :root:not([data-press]) .tab:active {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: var(--accent-tint-soft);
 }
 
 .tab.is-active {
@@ -142,7 +142,7 @@
   height: 16px;
   stroke: none;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 25%, transparent);
+  box-shadow: 0 0 0 1px var(--tint-strong);
 }
 
 .tab:not(.is-active) .tab-icon svg.flag {
@@ -153,7 +153,7 @@
 @media (hover: hover) and (pointer: fine) {
   :root:not([data-press]) .tab:hover {
     color: var(--text-h);
-    background: color-mix(in srgb, var(--text) 6%, transparent);
+    background: var(--tint-faint);
   }
 
   :root:not([data-press]) .tab.is-active:hover {

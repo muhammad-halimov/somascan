@@ -21,7 +21,7 @@
   margin-right: 7px;
   vertical-align: -1px;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 25%, transparent);
+  box-shadow: 0 0 0 1px var(--tint-strong);
 }
 
 /* Два поля рядом на широких экранах (например, домен + пользователь). */

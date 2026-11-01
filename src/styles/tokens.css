@@ -50,6 +50,30 @@
   /* Поля ввода в стиле Material 3 (заливка и нижняя линия). */
   --field-bg: #f1f3f4;
   --field-line: #80868b;
+  /*
+   * Нейтральные заливки и обводки — цвет текста с прозрачностью, поэтому годятся обеим темам: слабая — наведение
+   * мыши; мягкая — нажатие и силуэты загружаемого содержимого; плотная — тонкая обводка (флаги) и блик силуэта.
+   */
+  --tint-faint: color-mix(in srgb, var(--text) 6%, transparent);
+  --tint-soft: color-mix(in srgb, var(--text) 12%, transparent);
+  --tint-strong: color-mix(in srgb, var(--text) 25%, transparent);
+  /*
+   * Акцентные оттенки: слабый — наведение на текстовую кнопку и выбранная строка списка; мягкий — нажатие
+   * на вкладку и строку; плотный — нажатие на кнопку и кольцо карточки в правке.
+   */
+  --accent-tint-faint: color-mix(in srgb, var(--accent) 8%, transparent);
+  --accent-tint-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+  --accent-tint-strong: color-mix(in srgb, var(--accent) 14%, transparent);
+  /* Поле ввода (Material 3): линия снизу; в фокусе — акцентная линия потолще и лёгкий оттенок заливки (iOS — свой). */
+  --field-underline: inset 0 -1px 0 var(--field-line);
+  --field-underline-focus: inset 0 -2px 0 var(--accent);
+  --field-bg-focus: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
+  /* Разделитель строк списков и меню. */
+  --divider: color-mix(in srgb, var(--border) 80%, transparent);
+  /* Фон плашки-примечания (`Notice`, «Проверьте данные перед отправкой»). */
+  --notice-bg: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  /* Дорожка спиннера: цвет того, кто его рисует (`currentColor` берётся там, где переменная применена), приглушённый. */
+  --spinner-track: color-mix(in srgb, currentColor 30%, transparent);
   /* Безопасные зоны (вырез камеры, «домашняя полоска»). */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));

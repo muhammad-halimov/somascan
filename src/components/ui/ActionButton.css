@@ -252,7 +252,7 @@
   width: 20px;
   height: 20px;
   box-sizing: border-box;
-  border: 2.5px solid color-mix(in srgb, currentColor 30%, transparent);
+  border: 2.5px solid var(--spinner-track);
   border-top-color: currentColor;
   border-radius: 50%;
   animation: photo-spin 750ms linear infinite;

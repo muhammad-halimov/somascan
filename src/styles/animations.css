@@ -166,10 +166,8 @@
 
 /* Силуэт загружаемого содержимого: полоса или кружок переливается слева направо. Размер и форму задаёт место. */
 .skeleton {
-  /* Цвет силуэта и блик, который по нему пробегает. */
-  --skeleton-base: color-mix(in srgb, var(--text) 12%, transparent);
-  --skeleton-shine: color-mix(in srgb, var(--text) 24%, transparent);
-  background: linear-gradient(90deg, var(--skeleton-base) 0%, var(--skeleton-shine) 50%, var(--skeleton-base) 100%);
+  /* Цвет силуэта — мягкая заливка, по нему пробегает блик — плотная (`tokens.css`). */
+  background: linear-gradient(90deg, var(--tint-soft) 0%, var(--tint-strong) 50%, var(--tint-soft) 100%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
@@ -185,7 +183,7 @@
 
 /* Силуэты места, где содержимое появится позже (`.is-still` у контейнера): ровные, не переливаются — ничего не грузится. */
 .is-still .skeleton {
-  background: var(--skeleton-base);
+  background: var(--tint-soft);
   animation: none;
 }
 

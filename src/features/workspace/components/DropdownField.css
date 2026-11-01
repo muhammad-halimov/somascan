@@ -128,20 +128,20 @@ input.label-field-dropdown-text::placeholder {
 /* Раскрыто или вводится своё — как поле в фокусе (сильнее линии «обязательное»). */
 .label-fields .label-field.is-open .label-field-dropdown.label-field-input,
 .label-fields .label-field-dropdown.label-field-input:focus-within {
-  background: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
-  box-shadow: inset 0 -2px 0 var(--accent);
+  background: var(--field-bg-focus);
+  box-shadow: var(--field-underline-focus);
 }
 
 :root[data-platform='ios'] .label-fields .label-field.is-open .label-field-dropdown.label-field-input,
 :root[data-platform='ios'] .label-fields .label-field-dropdown.label-field-input:focus-within {
-  background: color-mix(in srgb, var(--text-h) 6%, var(--field-bg));
+  background: var(--field-bg-focus);
   box-shadow: none;
 }
 
 /* ---- Меню: между вариантами — линии, чтобы они не сливались с текстом карточки ---- */
 
 :root:not([data-platform='ios']) .label-field-dropdown-menu .disclosure-inner > .list .list-item {
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-bottom: 1px solid var(--divider);
 }
 
 :root:not([data-platform='ios']) .label-field-dropdown-menu .disclosure-inner > .list > li:last-child > .list-item {

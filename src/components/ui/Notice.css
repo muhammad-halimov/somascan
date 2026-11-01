@@ -9,7 +9,7 @@
   margin: 0;
   padding: 10px 12px;
   color: var(--text-h);
-  background: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  background: var(--notice-bg);
   border-radius: 12px;
   font-size: 13px;
   line-height: 1.45;

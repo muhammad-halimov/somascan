@@ -25,7 +25,7 @@
 
 /* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
 :root:not([data-press]) .button:active:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: var(--accent-tint-strong);
 }
 
 .button:disabled {
@@ -114,6 +114,6 @@
 /* Наведение — только на десктопе с мышью (без data-press): на сенсорных платформах отклик ведёт код. */
 @media (hover: hover) and (pointer: fine) {
   :root:not([data-press]) .button.is-text:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    background: var(--accent-tint-faint);
   }
 }

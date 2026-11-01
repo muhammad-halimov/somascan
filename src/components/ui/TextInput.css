@@ -53,7 +53,7 @@
   border: 0;
   border-radius: 8px 8px 0 0;
   /* Линия снизу рисуется тенью, чтобы смена толщины при фокусе не сдвигала текст. */
-  box-shadow: inset 0 -1px 0 var(--field-line);
+  box-shadow: var(--field-underline);
   /* Не меньше 16 px: иначе iOS увеличивает страницу при фокусе на поле. */
   font-size: 16px;
   outline: none;
@@ -66,11 +66,11 @@
 .text-input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--text-h);
   caret-color: var(--accent);
-  box-shadow: inset 0 -1px 0 var(--field-line), inset 0 0 0 1000px var(--field-bg);
+  box-shadow: var(--field-underline), inset 0 0 0 1000px var(--field-bg);
 }
 
 .text-input:-webkit-autofill:focus {
-  box-shadow: inset 0 -2px 0 var(--accent), inset 0 0 0 1000px color-mix(in srgb, var(--accent) 6%, var(--field-bg));
+  box-shadow: var(--field-underline-focus), inset 0 0 0 1000px var(--field-bg-focus);
 }
 
 .text-input::placeholder {
@@ -79,8 +79,8 @@
 }
 
 .text-input:focus {
-  background: color-mix(in srgb, var(--accent) 6%, var(--field-bg));
-  box-shadow: inset 0 -2px 0 var(--accent);
+  background: var(--field-bg-focus);
+  box-shadow: var(--field-underline-focus);
 }
 
 /* Под замком поле не выглядит выбранным, даже если на него нажали. */
@@ -118,7 +118,7 @@
 
 /* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
 :root:not([data-press]) .input-action:active:not(:disabled) {
-  background: color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--tint-soft);
 }
 
 /* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
@@ -152,7 +152,7 @@
   width: 20px;
   height: 20px;
   box-sizing: border-box;
-  border: 2.5px solid color-mix(in srgb, currentColor 30%, transparent);
+  border: 2.5px solid var(--spinner-track);
   border-top-color: currentColor;
   border-radius: 50%;
   animation: photo-spin 750ms linear infinite;
@@ -190,7 +190,7 @@
 .text-input.is-multiline:read-only:focus {
   color: var(--text);
   background: var(--field-bg);
-  box-shadow: inset 0 -1px 0 var(--field-line);
+  box-shadow: var(--field-underline);
 }
 
 :root[data-platform='ios'] .text-input.is-multiline:read-only,

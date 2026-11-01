@@ -13,6 +13,8 @@
 /* ---------- Токены стекла ---------- */
 
 :root[data-platform='ios'] {
+  /* Поле в фокусе — нейтральный оттенок заливки, без акцентной линии (как текстовые поля UIKit). */
+  --field-bg-focus: color-mix(in srgb, var(--text-h) 6%, var(--field-bg));
   /* Подложка сегментированного переключателя и «плашка» выбранного сегмента (цвета UIKit). */
   --ios-segment-track: rgb(118 118 128 / 12%);
   --ios-segment-thumb: #fff;
@@ -356,7 +358,7 @@
 
 :root[data-platform='ios'] .text-input:focus,
 :root[data-platform='ios'] .label-field-input:focus {
-  background: color-mix(in srgb, var(--text-h) 6%, var(--field-bg));
+  background: var(--field-bg-focus);
   box-shadow: none;
 }
 

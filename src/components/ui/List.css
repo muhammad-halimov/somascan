@@ -21,7 +21,7 @@
   color: var(--text-h);
   background: transparent;
   border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-bottom: 1px solid var(--divider);
   font: inherit;
   text-align: left;
 }
@@ -41,7 +41,7 @@
 
 /* Отклик на нажатие в браузере; на сенсорных платформах его рисует код (см. styles/native.css). */
 :root:not([data-press]) .list-item.is-interactive:active:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: var(--accent-tint-soft);
 }
 
 /* Кольцо фокуса — в браузере и при навигации с клавиатуры, но не после тапа. */
@@ -52,7 +52,7 @@
 }
 
 .list-item.is-selected {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  background: var(--accent-tint-faint);
 }
 
 .list-item.is-selected .list-item-primary {
@@ -102,7 +102,7 @@
 /* Наведение — только на десктопе с мышью (без data-press): на сенсорных платформах отклик ведёт код. */
 @media (hover: hover) and (pointer: fine) {
   :root:not([data-press]) .list-item.is-interactive:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--text) 6%, transparent);
+    background: var(--tint-faint);
   }
 }
 
@@ -113,7 +113,7 @@
 .list-item-row {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-bottom: 1px solid var(--divider);
 }
 
 .list > .list-item-row:last-child {
