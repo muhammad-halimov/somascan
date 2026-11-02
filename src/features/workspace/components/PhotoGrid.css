@@ -403,6 +403,11 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
 }
 
+/* Material Design: круги в ячейках — с тенью кнопок главного экрана. */
+:root:not([data-platform='ios']) :is(.photo-grid-manual, .photo-grid-cell.is-next .photo-grid-plus) {
+  box-shadow: var(--button-shadow);
+}
+
 .photo-grid-plus::before,
 .photo-grid-plus::after {
   content: '';

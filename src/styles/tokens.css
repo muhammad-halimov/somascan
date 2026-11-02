@@ -122,8 +122,23 @@
 
 /*
  * Material Design: блок фото (пустая карточка, сетка, полоса под ней) — в оттенках карточки результата под ним:
- * её фон и рамка, ячейки сетки — тональные поверх фона, как поля и плашки карточки.
+ * её фон и рамка, ячейки сетки — тональные поверх фона, как поля и плашки карточки. Блоки, шапка и нижняя панель
+ * того же цвета, что и фон экрана, поэтому приподняты тенью: `--block-shadow` падает вниз (блоки, шапка),
+ * `--block-shadow-up` — вверх (нижняя панель), `--button-shadow` — под кругами кнопок, `--icon-shadow` — под значками
+ * кнопок без подложки (ActionButton.css). В тёмной теме тени плотнее —
+ * иначе их не видно. Тень не шире бокового отступа рабочей области (16 px): та обрезает содержимое по краям.
  */
 :root:not([data-platform='ios']) {
   --photo-empty-bg: var(--bg);
+  --block-shadow: 0 1px 2px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 9%);
+  --block-shadow-up: 0 -1px 2px rgb(0 0 0 / 8%), 0 -4px 12px rgb(0 0 0 / 9%);
+  --icon-shadow: drop-shadow(0 1px 1.5px rgb(0 0 0 / 28%));
+  --button-shadow: 0 1px 2px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 10%);
+}
+
+:root[data-theme='dark']:not([data-platform='ios']) {
+  --block-shadow: 0 1px 3px rgb(0 0 0 / 45%), 0 4px 12px rgb(0 0 0 / 35%);
+  --block-shadow-up: 0 -1px 3px rgb(0 0 0 / 45%), 0 -4px 12px rgb(0 0 0 / 35%);
+  --icon-shadow: drop-shadow(0 1px 2px rgb(0 0 0 / 75%));
+  --button-shadow: 0 1px 2px rgb(0 0 0 / 60%), 0 2px 6px rgb(0 0 0 / 40%);
 }

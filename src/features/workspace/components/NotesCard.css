@@ -18,6 +18,11 @@
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
+/* Material Design: карточка отделена от фона того же цвета тенью (как и блок фото). */
+:root:not([data-platform='ios']) .notes-card:not(.is-text-editing) {
+  box-shadow: var(--block-shadow);
+}
+
 /*
  * Режим правки: карточка на всю высоту области и прилипает к верху. Не ниже, чем нужно, чтобы прокрутка могла
  * остановиться на её верхе: высота области (100 %, под клавиатурой тоже) плюс отступ области сверху минус место
@@ -218,8 +223,12 @@
  * В правке, в горизонтальном положении и в браузере на компьютере — как раньше: панель в карточке.
  */
 @media not all and (orientation: landscape) and (max-height: 600px) {
+  /*
+   * Карточка — по высоте полей: не сжимается (прокручивается экран) и не растягивается до панели внизу — иначе,
+   * когда полей меньше, чем места, под последним полем оставалась пустая полоса.
+   */
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .notes-card {
-    flex: 1 0 auto;
+    flex: 0 0 auto;
   }
 
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) :is(.label-fields, .notes-message) {
@@ -255,9 +264,13 @@
     padding-bottom: max(6px, calc(var(--safe-bottom) - 12px));
   }
 
-  /* Android: панель того же цвета, что и экран, — содержимое под ней не просвечивает; сверху — тонкая линия. */
+  /*
+   * Android: панель того же цвета, что и экран, — содержимое под ней не просвечивает; сверху — тонкая линия
+   * и тень вверх: панель приподнята над содержимым.
+   */
   :root[data-platform='android'] .scan-workspace:not(.is-text-editing) .notes-actions {
     background: var(--bg);
+    box-shadow: var(--block-shadow-up);
   }
 
   /* iOS 26+: «пилюля» по центру, над полоской «Домой». */

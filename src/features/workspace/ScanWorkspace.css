@@ -58,6 +58,11 @@
   pointer-events: none;
 }
 
+/* Material Design: блок отделён от фона того же цвета тенью (как и карточка результата). */
+:root:not([data-platform='ios']) .photo-block {
+  box-shadow: var(--block-shadow);
+}
+
 .photo-block > .photo-card {
   width: 100%;
 }

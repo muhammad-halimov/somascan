@@ -17,6 +17,11 @@
   --brand-logo-height: 32px;
 }
 
+/* Material Design: шапка того же цвета, что и экран, — приподнята тенью над содержимым (значки — ActionButton.css). */
+:root:not([data-platform='ios']) .app-header {
+  box-shadow: var(--block-shadow);
+}
+
 .brand {
   display: inline-flex;
   flex: 0 0 auto;
