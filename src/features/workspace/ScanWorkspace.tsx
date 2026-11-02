@@ -320,6 +320,12 @@ export function ScanWorkspace() {
   /** Повторы плавок: у открытой бирки поле плавки — цветом ошибки, с подсказкой, с чем совпало. */
   const duplicates = useHeatDuplicates(session.items)
 
+  /** Сколько позиций можно листать: бирки и (пока их меньше девяти) следующая пустая ячейка. */
+  const positions = Math.min(session.items.length + 1, MAX_SCAN_ITEMS)
+  /** Соседние позиции — для стрелок панели листания и свайпов по фото; нет соседа — `undefined`. */
+  const goPrevious = activeIndex > 0 ? () => session.select(activeIndex - 1) : undefined
+  const goNext = activeIndex < positions - 1 ? () => session.select(activeIndex + 1) : undefined
+
   /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
   const hasSlideBar = session.items.length > 0 || view === 'grid'
   /** Панель выезжает и уходит плавно: пока она схлопывается, остаётся в DOM. */
@@ -356,6 +362,8 @@ export function ScanWorkspace() {
           onLoad={(size) => item && session.markLoaded(item.id, size)}
           onError={() => item && session.markFailed(item.id)}
           onShowGrid={showGrid}
+          onPrevious={goPrevious}
+          onNext={goNext}
           onSelectCell={selectItem}
           onOpenCell={openCell}
           onOpenActive={closeGrid}
@@ -365,10 +373,10 @@ export function ScanWorkspace() {
           <SlideBar
             isClosing={slideBar.closing}
             activeIndex={activeIndex}
-            positions={Math.min(session.items.length + 1, MAX_SCAN_ITEMS)}
+            positions={positions}
             isGrid={view === 'grid'}
-            onPrevious={() => session.select(activeIndex - 1)}
-            onNext={() => session.select(activeIndex + 1)}
+            onPrevious={() => goPrevious?.()}
+            onNext={() => goNext?.()}
             onOpen={closeGrid}
             onShowGrid={showGrid}
           />

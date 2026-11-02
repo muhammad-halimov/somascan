@@ -1,3 +1,5 @@
+import { scrollParentOf } from './scrollParent'
+
 /**
  * Держит элемент на его месте экрана, пока раскладка вокруг меняется: сворачивается список, прячется клавиатура,
  * карточка меняет высоту. Ближайший прокручиваемый предок докручивается так, чтобы элемент оставался там же, где был.
@@ -12,15 +14,6 @@ const SETTLED_FRAMES = 15
 
 /** Дольше этого не держим: сворачивание списка и уход клавиатуры занимают меньше. */
 const MAX_HOLD_MS = 1500
-
-/** Ближайший предок с вертикальной прокруткой. */
-function scrollParentOf(element: HTMLElement): HTMLElement | null {
-  for (let node = element.parentElement; node; node = node.parentElement) {
-    const { overflowY } = getComputedStyle(node)
-    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) return node
-  }
-  return null
-}
 
 export function keepInPlace(element: HTMLElement): void {
   const scroller = scrollParentOf(element)

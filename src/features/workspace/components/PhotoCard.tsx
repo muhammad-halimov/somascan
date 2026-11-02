@@ -5,6 +5,7 @@ import { BackIcon, GridIcon, ImageIcon, ImageOffIcon } from '@/components/icons/
 import { ActionButton } from '@/components/ui/ActionButton'
 import { usePresence } from '@/hooks/usePresence'
 import { useDoubleTap } from '../hooks/useDoubleTap'
+import { usePhotoSwipe } from '../hooks/usePhotoSwipe'
 import type { ScanItem } from '../hooks/useScanSession'
 import type { Size } from '../utils/PhotoGeometry'
 import type { PhotoTransform } from '../hooks/usePhotoTransform'
@@ -67,8 +68,12 @@ export interface PhotoCardProps {
   onLoad: (size: Size) => void
   /** Фото не загрузилось. */
   onError: () => void
-  /** «Сетка» или «Назад»: показать все бирки. */
+  /** «Сетка» или «Назад»: показать все бирки (и свайп по фото сверху вниз). */
   onShowGrid: () => void
+  /** Предыдущая бирка (свайп по фото вправо); нет — первая открыта. */
+  onPrevious?: () => void
+  /** Следующая бирка (свайп по фото влево); нет — открыта последняя ячейка. */
+  onNext?: () => void
   /** Ячейка сетки, одно нажатие: бирка становится открытой, сетка остаётся. */
   onSelectCell: (index: number) => void
   /** Ячейка сетки, двойное нажатие (у «плюса» — одно): открыть бирку или следующую пустую ячейку. */
@@ -86,12 +91,12 @@ export interface PhotoCardProps {
  * Справа вверху — «Сетка»: карточка уменьшает фото в его ячейку, и появляется сетка; нажатие
  * на ячейку (или «Открыть» — в углу сетки и в панели под карточкой) увеличивает её обратно до одной бирки. Слева
  * вверху у бирки, открытой из сетки, — «Назад» к сетке. Переход к соседней бирке — фото въезжает
- * сбоку, как слайд. Нажатие на фото открывает просмотр на весь экран, двойное нажатие — плавно увеличивает фото
+ * сбоку, как слайд; к соседней бирке листают и свайпом по фото вбок, к сетке — свайпом сверху вниз (`usePhotoSwipe`). Нажатие на фото открывает просмотр на весь экран, двойное нажатие — плавно увеличивает фото
  * к точке нажатия (у увеличенного — исходный вид). Пока фото грузится и распознаётся —
  * один спиннер с подписью «Распознавание». В правом нижнем углу ячейки без снимка — переключатель «Без фото» /
  * «С фото»: бирка, данные которой вводят вручную (на месте фото — перечёркнутая картинка), и обратно.
  */
-export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onSelectCell, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onPrevious, onNext, onSelectCell, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -128,6 +133,9 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   useLayoutEffect(() => {
     activeIndexRef.current = activeIndex
   }, [activeIndex])
+
+  // Свайпы по фото одной бирки: вбок — к соседней, вниз — к сетке (у увеличенного фото палец двигает фото).
+  usePhotoSwipe({ cardRef, stageRef, enabled: view === 'single' && settledView === 'single' && !isZoomed, onPrevious, onNext, onDown: onShowGrid })
 
   // Переход между сеткой и одной биркой — «камера» отъезжает от фото к сетке и наезжает обратно:
   // фото уменьшается в свою ячейку, сетка увеличивается из неё (и наоборот).

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, type PointerEvent, type TouchEvent } from 'react'
-import { TOUCH_SLOP } from '@/lib/interaction/gestures'
+import { TAP_GUARD_MS, TOUCH_SLOP } from '@/lib/interaction/gestures'
 import { PhotoGeometry, touchCenter, touchDistance, type Point, type Size } from '../utils/PhotoGeometry'
 
 /** Начало щипка: расстояние и центр между пальцами, масштаб и сдвиг в этот момент. */
@@ -35,9 +35,6 @@ const NO_OFFSET: Point = { x: 0, y: 0 }
 
 /** Размер рамки до первого замера (совпадает с размером карточки в CSS). */
 const INITIAL_FRAME: Size = { width: 380, height: 352 }
-
-/** Столько миллисекунд после жеста нажатие на фото не считается тапом. */
-const TAP_GUARD_MS = 350
 
 /** Увеличение больше исходного вида на эту долю — уже «увеличено» (дробные погрешности щипка не в счёт). */
 const ZOOM_EPSILON = 0.01
