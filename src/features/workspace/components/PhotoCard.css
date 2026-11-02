@@ -90,7 +90,7 @@
   position: absolute;
   z-index: 4;
   right: var(--corner-inset);
-  bottom: 10px;
+  bottom: calc(10px + var(--photo-bottom-inset, 0px));
   animation: backdrop-enter 200ms ease-out backwards;
 }
 
@@ -296,7 +296,7 @@
   position: absolute;
   z-index: 2;
   right: 10px;
-  bottom: 10px;
+  bottom: calc(10px + var(--photo-bottom-inset, 0px));
   display: flex;
   align-items: flex-start;
   gap: 8px;

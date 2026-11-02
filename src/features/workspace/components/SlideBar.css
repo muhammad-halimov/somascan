@@ -1,10 +1,13 @@
 /*
- * Панель листания — нижняя полоса блока фото (под карточкой фото, в общей рамке цвета сетки):
- * ‹, ›, «Открыть» по центру, по сторонам — кнопки фото (масштаб слева, поворот и «Сброс» справа), все компактные.
- * Android и iOS 18 — кнопки в полосе; iOS 26+ — стеклянные «пилюли».
+ * Панель листания — внизу блока фото: ‹, ›, «Открыть» по центру, по сторонам — кнопки фото (масштаб слева,
+ * поворот и «Сброс» справа), все компактные. У одной бирки кнопки парят над низом фото, в сетке — полоса под ней
+ * (в общей рамке цвета сетки). Android и iOS 18 — круглые кнопки; iOS 26+ — стеклянные «пилюли».
  */
 
 .slide-bar {
+  /* Над фото и его кнопками, пока парит и пока опускается в полосу. */
+  position: relative;
+  z-index: 4;
   display: grid;
   box-sizing: border-box;
   /* листание — точно по центру, кнопки фото — у краёв */
@@ -35,6 +38,25 @@
   transition: opacity 240ms ease, visibility 0s 240ms;
 }
 
+/*
+ * Одна бирка: панель парит над низом фото — поднята на свою высоту (`--slide-bar-height` меряет SlideBar.tsx),
+ * полосы под фото нет. В сетке опускается обратно в полосу, блок растёт (переход — в SlideBar.tsx). Касания мимо
+ * кнопок достаются фото: свайпы, двойное нажатие.
+ */
+.slide-bar.is-floating {
+  margin-top: calc(-1 * var(--slide-bar-height, 0px));
+  pointer-events: none;
+}
+
+.slide-bar.is-floating > * {
+  pointer-events: auto;
+}
+
+/* Кнопки внизу фото («Без фото», масштаб и поворот поверх фото) — над парящей панелью. */
+.photo-block.has-floating-bar {
+  --photo-bottom-inset: var(--slide-bar-height, 0px);
+}
+
 /* Появление и исчезновение (высота анимируется, см. SlideBar.tsx): содержимое не вылезает за панель. */
 .slide-bar.is-revealing {
   overflow: hidden;
@@ -46,7 +68,7 @@
 }
 
 .slide-bar .action-button-icon {
-  transition: transform 120ms ease, background-color 240ms ease, color 240ms ease;
+  transition: transform 120ms ease, background-color 240ms ease, color 240ms ease, box-shadow 240ms ease;
 }
 
 /*
@@ -80,6 +102,11 @@
   box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
 }
 
+/* Парящие кнопки отбрасывают тень на фото — они «в воздухе» над ним. */
+.slide-bar.is-floating .action-button.is-tonal .action-button-icon {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
+}
+
 /* Уголок влево — тот же уголок вправо, развёрнутый. */
 .slide-bar-previous .action-button-icon svg {
   transform: scaleX(-1);
@@ -100,8 +127,8 @@
 }
 
 /*
- * Без размытия фона: под «пилюлями» — ровный фон блока фото, размытие его не меняло, а GPU пересчитывал его
- * на каждом кадре движения (прокрутка, свайп, переход к сетке).
+ * В полосе — без размытия фона: под «пилюлями» ровный фон блока фото, размытие его не меняло, а GPU пересчитывал
+ * его на каждом кадре движения (прокрутка, свайп, переход к сетке). Над фото «пилюли» — настоящее стекло, ниже.
  */
 :root[data-platform='ios'][data-ios-design='glass'] :is(.slide-bar-pill, .slide-bar-tools) {
   gap: 8px;
@@ -110,6 +137,11 @@
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   box-shadow: var(--glass-shadow);
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .slide-bar.is-floating :is(.slide-bar-pill, .slide-bar-tools) {
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
 
 :root[data-platform='ios'][data-ios-design='glass'] .slide-bar .action-button.is-tonal .action-button-icon {

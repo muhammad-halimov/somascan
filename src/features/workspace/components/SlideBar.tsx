@@ -32,9 +32,14 @@ export interface SlideBarProps {
   transform: PhotoTransform
   /** Фото готово (одна бирка, фото есть и не загружается, не распознаётся): кнопки масштаба и поворота видны. */
   toolsShown: boolean
+  /** Одна бирка: панель не полоса под фото, а кнопки поверх его низа; в сетке — снова полоса. */
+  isFloating: boolean
   /** Панель уходит: схлопывается по высоте и гаснет (см. `usePresence`). */
   isClosing?: boolean
 }
+
+/** Свойство CSS блока фото: высота панели — на столько она поднята над низом фото, пока парит (`SlideBar.css`). */
+const BAR_HEIGHT_PROPERTY = '--slide-bar-height'
 
 /**
  * Панель листания — нижняя часть блока фото: листать бирки (уголки влево и вправо) и справа от них
@@ -46,39 +51,79 @@ export interface SlideBarProps {
  * Кнопки компактные, без подписей (доступные имена — для экранных дикторов); на iOS 26+ — стеклянная
  * «пилюля» внутри блока.
  *
- * Появляется и уходит плавно: блок фото растёт и сжимается по высоте (с той же кривой и длительностью,
- * что и переход к сетке, — оба движения идут вместе), кнопки проявляются; карточка результата под блоком
- * съезжает вместе с ним, а не прыгает.
+ * У одной бирки панель парит поверх низа фото — без полосы под ним; в сетке полоса возвращается: блок фото плавно
+ * растёт вниз, и кнопки съезжают в неё (с той же кривой и длительностью, что и переход к сетке, — оба движения
+ * идут вместе).
+ *
+ * Появляется и уходит плавно: полоса растёт и сжимается по высоте (карточка результата под блоком съезжает
+ * вместе с ней, а не прыгает), кнопки проявляются; парящие кнопки только проявляются.
  */
-export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, onOpen, onShowGrid, transform, toolsShown, isClosing = false }: SlideBarProps) {
+export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, onOpen, onShowGrid, transform, toolsShown, isFloating, isClosing = false }: SlideBarProps) {
   const { t } = useTranslation('workspace')
   const { canZoomIn, canZoomOut, isPristine, zoomIn, zoomOut, rotate, reset } = transform
   const barRef = useRef<HTMLDivElement>(null)
+  /** Парит ли панель сейчас (для появления и для перехода между «парит» и «полоса»). */
+  const floatingRef = useRef(isFloating)
+  /** Идущий переход между «парит» и «полоса». */
+  const liftRef = useRef<Animation | null>(null)
+
+  // Высота панели — блоку фото: на столько парящая панель поднята над низом фото, и столько места над ней
+  // оставляют кнопки внизу фото («Без фото», кнопки масштаба поверх фото).
+  useLayoutEffect(() => {
+    const bar = barRef.current
+    const block = bar?.parentElement
+    if (!bar || !block) return
+    const measure = () => block.style.setProperty(BAR_HEIGHT_PROPERTY, `${bar.offsetHeight}px`)
+    measure()
+    const resize = new ResizeObserver(measure)
+    resize.observe(bar)
+    return () => {
+      resize.disconnect()
+      block.style.removeProperty(BAR_HEIGHT_PROPERTY)
+    }
+  }, [])
+
+  // «Парит» ↔ «полоса»: панель опускается под фото (блок растёт) или поднимается на него — вместе с переходом
+  // к сетке и обратно. Новый переход начинается с того места, где панель сейчас.
+  useLayoutEffect(() => {
+    const bar = barRef.current
+    if (!bar || floatingRef.current === isFloating) return
+    floatingRef.current = isFloating
+    const lifted = `${-bar.offsetHeight}px`
+    const running = liftRef.current
+    const from = running ? getComputedStyle(bar).marginTop : isFloating ? '0px' : lifted
+    running?.cancel()
+    liftRef.current = null
+    if (prefersReducedMotion()) return
+    liftRef.current = bar.animate([{ marginTop: from }, { marginTop: isFloating ? lifted : '0px' }], motionTiming())
+  }, [isFloating])
+  useLayoutEffect(() => () => liftRef.current?.cancel(), [])
 
   useLayoutEffect(() => {
     const bar = barRef.current
     if (!bar || prefersReducedMotion()) return
-    // Высота растёт от нуля вместе с отступами: без них панель сразу занимала свои 11 px и замирала
-    // (а уходя — застревала на них и пропадала рывком).
-    const { paddingTop, paddingBottom } = getComputedStyle(bar)
-    const height = bar.getBoundingClientRect().height
-    const frames: Keyframe[] = [
-      { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 },
-      { height: `${height}px`, paddingTop, paddingBottom, opacity: 1 },
-    ]
     const pillFrames: Keyframe[] = [
       { transform: 'translateY(-8px) scale(.92)', opacity: 0 },
       { transform: 'none', opacity: 1 },
     ]
     // Та же кривая и длительность, что у перехода между сеткой и одной биркой: оба движения идут вместе.
     const timing = { ...motionTiming(), fill: 'both' as const }
-    // Пока высота меняется, содержимое обрезается по панели (в покое тень «пилюли» не обрезаем).
-    bar.classList.add('is-revealing')
-    const animations = [
-      bar.animate(isClosing ? [...frames].reverse() : frames, timing),
-      // листание и кнопки фото по сторонам проявляются вместе
-      ...Array.from(bar.children, (child) => child.animate(isClosing ? [...pillFrames].reverse() : pillFrames, timing)),
-    ]
+    // листание и кнопки фото по сторонам проявляются вместе
+    const animations = Array.from(bar.children, (child) => child.animate(isClosing ? [...pillFrames].reverse() : pillFrames, timing))
+    // Полоса растёт по высоте; парящая панель места под фото не занимает — только проявляется.
+    if (!floatingRef.current) {
+      // Высота растёт от нуля вместе с отступами: без них панель сразу занимала свои 11 px и замирала
+      // (а уходя — застревала на них и пропадала рывком).
+      const { paddingTop, paddingBottom } = getComputedStyle(bar)
+      const height = bar.getBoundingClientRect().height
+      const frames: Keyframe[] = [
+        { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 },
+        { height: `${height}px`, paddingTop, paddingBottom, opacity: 1 },
+      ]
+      // Пока высота меняется, содержимое обрезается по панели (в покое тень «пилюли» не обрезаем).
+      bar.classList.add('is-revealing')
+      animations.push(bar.animate(isClosing ? [...frames].reverse() : frames, timing))
+    }
     let cancelled = false
     void Promise.all(animations.map((animation) => animation.finished)).then(() => {
       if (cancelled || isClosing) return
@@ -94,7 +139,7 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
   }, [isClosing])
 
   return (
-    <div ref={barRef} className="slide-bar" role="group" aria-label={t('slides.group')} inert={isClosing || undefined}>
+    <div ref={barRef} className={`slide-bar${isFloating ? ' is-floating' : ''}`} role="group" aria-label={t('slides.group')} inert={isClosing || undefined}>
       <div className={`slide-bar-tools is-start${toolsShown ? '' : ' is-hidden'}`} role="group" aria-label={t('photo.controls')} inert={!toolsShown || undefined}>
         <ActionButton size={32} icon={<ZoomOutIcon />} caption={t('controls.zoomOut')} label={t('photo.zoomOut')} disabled={!canZoomOut} onClick={zoomOut} />
         <ActionButton size={32} icon={<AddIcon />} caption={t('controls.zoomIn')} label={t('photo.zoomIn')} disabled={!canZoomIn} onClick={zoomIn} />

@@ -376,8 +376,8 @@ export function ScanWorkspace() {
       aria-label={t('region')}
     >
       <input className="photo-input" {...picker.inputProps} />
-      {/* Карточка фото и панель листания под ней — один блок. */}
-      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}`}>
+      {/* Карточка фото и панель листания — один блок: у одной бирки панель парит над низом фото, в сетке — полоса под ней. */}
+      <div className={`photo-block${slideBar.mounted ? ' has-slide-bar' : ''}${slideBar.mounted && view === 'single' ? ' has-floating-bar' : ''}`}>
         <PhotoCard
           handleRef={photoCardRef}
           item={item}
@@ -412,6 +412,7 @@ export function ScanWorkspace() {
             onShowGrid={showGrid}
             transform={transform}
             toolsShown={!toolsOnPhoto && view === 'single' && photoReady}
+            isFloating={view === 'single'}
           />
         )}
       </div>
