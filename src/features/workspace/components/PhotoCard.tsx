@@ -135,8 +135,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
     activeIndexRef.current = activeIndex
   }, [activeIndex])
 
-  // Свайпы по фото одной бирки: вбок — к соседней, вниз — к сетке (у увеличенного фото палец двигает фото).
-  const { land: landSwipe } = usePhotoSwipe({ cardRef, stageRef, enabled: view === 'single' && settledView === 'single' && !isZoomed, onPrevious, onNext, onDown: onShowGrid })
+  // Свайпы по фото одной бирки: вбок — к соседней, вниз — к сетке, как кнопка «Сетка» (у увеличенного фото палец двигает фото).
+  const { land: landSwipe } = usePhotoSwipe({ cardRef, enabled: view === 'single' && settledView === 'single' && !isZoomed, onPrevious, onNext, onDown: onShowGrid })
 
   // Переход между сеткой и одной биркой — «камера» отъезжает от фото к сетке и наезжает обратно:
   // фото уменьшается в свою ячейку, сетка увеличивается из неё (и наоборот).
