@@ -128,7 +128,15 @@
   "smb": {
     "noHost": "Introduceți serverul și folderul partajat",
     "unsupported": "Conectați partajarea de rețea din sistem și alegeți fișierele de pe ea",
-    "unreachable": "Folderul {{mount}} nu se deschide: nu există acces"
+    "unreachable": "Folderul {{mount}} nu se deschide: nu există acces",
+    "systemError": "Eroare de sistem {{code}}",
+    "failed": "Folderul partajat nu a putut fi conectat",
+    "timeout": "Serverul nu a răspuns într-un minut",
+    "accessDenied": "Nu există acces la folderul partajat",
+    "notFound": "Serverul sau folderul partajat nu a fost găsit",
+    "badCredentials": "Nume de utilizator sau parolă greșită",
+    "needsAccount": "Sunt necesare numele de utilizator și parola",
+    "accountLocked": "Contul este blocat"
   },
   "scan": {
     "busy": "Citirea este deja în curs",

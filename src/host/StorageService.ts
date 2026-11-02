@@ -17,7 +17,7 @@ import { execFile } from 'node:child_process'
 import fs from 'node:fs'
 import JSZip from 'jszip'
 import { EditorLock } from '@/engine/FileGuard'
-import { message } from '@/shared/messages'
+import { message, type Message, type MessageCode } from '@/shared/messages'
 import type { ActionResult, CheckResult } from '@/shared/protocol'
 import { activeFiles, uncPath, type FileKind, type SmbSettings } from '@/shared/settings'
 import type { DriveService } from './drive/DriveService'
@@ -26,6 +26,30 @@ import type { SettingsStore } from './SettingsStore'
 
 /** Сколько ждать подключения диска, мс. */
 const MOUNT_TIMEOUT_MS = 60_000
+
+/** Системные ошибки Windows, которые `net use` сообщает чаще всего. */
+const NET_ERROR = {
+  accessDenied: 5,
+  pathNotFound: 53,
+  nameNotFound: 67,
+  badPassword: 86,
+  alreadyConnected: 1219,
+  cancelled: 1223,
+  logonFailure: 1326,
+  accountLocked: 1909,
+} as const
+
+/** Понятное сообщение для системной ошибки `net use`. */
+const NET_ERROR_MESSAGES: Partial<Record<number, MessageCode>> = {
+  [NET_ERROR.accessDenied]: 'smb.accessDenied',
+  [NET_ERROR.pathNotFound]: 'smb.notFound',
+  [NET_ERROR.nameNotFound]: 'smb.notFound',
+  [NET_ERROR.badPassword]: 'smb.badCredentials',
+  [NET_ERROR.logonFailure]: 'smb.badCredentials',
+  // ввода нет (`net` спросил имя и пароль): текущей учётной записи системы недостаточно
+  [NET_ERROR.cancelled]: 'smb.needsAccount',
+  [NET_ERROR.accountLocked]: 'smb.accountLocked',
+}
 
 /** Последняя содержательная строка ошибки. */
 const lastLine = (text: string) => text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).pop() ?? text
@@ -106,29 +130,55 @@ export class StorageService {
     return result
   }
 
+  /**
+   * Аргументы `net use`: с учётной записью пароль передаётся всегда (пустой — тоже), иначе `net` спросил бы его
+   * в консоли и ждал ответа; без авторизации — без имени и пароля (под текущей учётной записью системы).
+   */
+  static netUseArgs(smb: SmbSettings, password: string): string[] {
+    const username = smb.anonymous ? '' : smb.username
+    const account = username ? [password, `/user:${smb.domain ? `${smb.domain}\\` : ''}${username}`] : []
+    return ['use', uncPath(smb), ...account, '/persistent:no']
+  }
+
+  /**
+   * Ошибка `net use` по номеру системной ошибки: текст `net` — на языке и в кодировке консоли Windows (в окне читался
+   * бы искажённым), номер — нет. Неизвестный номер — «Системная ошибка N».
+   * @returns `null`, если ошибки нет (1219 — к серверу уже подключены: папка доступна).
+   */
+  static netUseError(output: string): Message | null {
+    const code = Number(output.match(/\b(\d{1,5})\b/)?.[1] ?? NaN)
+    if (code === NET_ERROR.alreadyConnected) return null
+    const known = NET_ERROR_MESSAGES[code]
+    if (known) return message(known)
+    return Number.isFinite(code) ? message('smb.systemError', { code }) : message('smb.failed')
+  }
+
   /** Подключение средствами системы: `net use` в Windows, `mount volume` в macOS. */
   private connect(smb: SmbSettings): Promise<ActionResult & { mount?: string }> {
     const { host, share, domain, anonymous } = smb
     // без авторизации учётная запись не передаётся, даже если заполнена
     const username = anonymous ? '' : smb.username
     const password = username ? this.settings.smbPassword() : ''
-    const failed = (error: string) => ({ ok: false, error: message('error.other', { error }) })
     if (process.platform === 'win32') {
       const unc = uncPath(smb)
-      const args = ['use', unc, ...(username ? [...(password ? [password] : []), `/user:${domain ? `${domain}\\` : ''}${username}`] : []), '/persistent:no']
-      return new Promise((resolve) =>
-        execFile('net', args, { timeout: MOUNT_TIMEOUT_MS, windowsHide: true }, (err, _out, stderr) => {
-          // 1219 — к серверу уже подключены под этим или другим именем: папка доступна
-          if (err && !/\b1219\b/.test(String(stderr))) resolve(failed(lastLine(String(stderr) || err.message)))
-          else resolve({ ok: true, mount: unc })
-        }))
+      return new Promise((resolve) => {
+        const child = execFile('net', StorageService.netUseArgs(smb, password), { timeout: MOUNT_TIMEOUT_MS, windowsHide: true }, (err, out, stderr) => {
+          // текст ошибки — только из вывода `net`: в `err.message` — вся команда, вместе с паролем
+          if (err?.killed) return resolve({ ok: false, error: message('smb.timeout') })
+          const error = err ? StorageService.netUseError(`${stderr}\n${out}`) : null
+          resolve(error ? { ok: false, error } : { ok: true, mount: unc })
+        })
+        // `net` не должен ждать ввода с клавиатуры (имя, пароль): ввода нет — сразу ошибка вместо минуты ожидания
+        child.stdin?.end()
+      })
     }
     if (process.platform !== 'darwin') return Promise.resolve({ ok: false, error: message('smb.unsupported') })
     const credentials = username ? `${domain ? encodeURIComponent(domain) + ';' : ''}${encodeURIComponent(username)}${password ? ':' + encodeURIComponent(password) : ''}@` : ''
     const url = `smb://${credentials}${host}/${encodeURIComponent(share)}`
     return new Promise((resolve) =>
-      execFile('osascript', ['-e', 'on run argv', '-e', 'mount volume (item 1 of argv)', '-e', 'end run', url], { timeout: MOUNT_TIMEOUT_MS }, (err, out) => {
-        if (err) resolve(failed(lastLine(err.message)))
+      execFile('osascript', ['-e', 'on run argv', '-e', 'mount volume (item 1 of argv)', '-e', 'end run', url], { timeout: MOUNT_TIMEOUT_MS }, (err, out, stderr) => {
+        // текст ошибки — только из вывода: в `err.message` — адрес вместе с паролем
+        if (err) resolve({ ok: false, error: err.killed ? message('smb.timeout') : message('error.other', { error: lastLine(String(stderr)) || String(err.code ?? '') }) })
         else resolve({ ok: true, mount: String(out).trim() })
       }))
   }

@@ -14,6 +14,7 @@ import { Field, FieldRow, FormSection, Notice, StatusBadge } from '@/components/
 import { List, ListItem, Switch } from '@/components/ui/List'
 import { Tabs } from '@/components/ui/Tabs'
 import { useLocale, useMessages } from '@/app/i18n'
+import { message } from '@/shared/messages'
 import { api, appInfoStore, runStore, settingsStore, useSettings, useStore } from '@/app/state'
 import type { ActionResult, BridgeState, CheckResult } from '@/shared/protocol'
 import { activeFiles, MAC_VOLUMES, PASSWORD_MASK, TARGETS, uncPath, type AppSettings, type FileKind, type FileSet, type GoogleDriveSettings, type SmbSettings, type StorageTarget } from '@/shared/settings'
@@ -146,7 +147,6 @@ export function StorageScreen() {
  */
 function SmbSection({ smb, windows }: { smb: SmbSettings; windows: boolean }) {
   const { t } = useTranslation('storage')
-  const format = useMessages()
   // пароль хранится только в главном процессе (зашифрованным); окно видит маску, пока пароль не нужен
   const [password, setPassword] = useState(smb.password)
   const [mounting, setMounting] = useState(false)
@@ -160,8 +160,14 @@ function SmbSection({ smb, windows }: { smb: SmbSettings; windows: boolean }) {
   }
   const mount = async () => {
     setMounting(true)
-    setMounted(await api.mountSmb())
-    setMounting(false)
+    setMounted(null)
+    try {
+      setMounted(await api.mountSmb())
+    } catch (error) {
+      setMounted({ ok: false, error: message('error.other', { error: (error as Error).message }) })
+    } finally {
+      setMounting(false)
+    }
   }
 
   return (
@@ -204,11 +210,9 @@ function SmbSection({ smb, windows }: { smb: SmbSettings; windows: boolean }) {
       <Button variant="tonal" icon={<PlugIcon />} busy={mounting} onClick={() => void mount()}>
         {mounting ? t('smb.mounting') : t('smb.mount')}
       </Button>
-      {mounted && (
+      {(mounting || mounted) && (
         <div className="storage-check" role="status">
-          {mounted.ok
-            ? <StatusBadge tone="success">{t('smb.connected', { mount: mounted.mount ?? sharePath(smb, windows) })}</StatusBadge>
-            : mounted.error && <StatusBadge tone="danger">{format(mounted.error)}</StatusBadge>}
+          <MountStatus mounting={mounting} result={mounted} share={sharePath(smb, windows)} />
         </div>
       )}
 
@@ -225,6 +229,16 @@ function SmbSection({ smb, windows }: { smb: SmbSettings; windows: boolean }) {
       </List>
     </>
   )
+}
+
+/** Итог «Проверить подключение»: идёт, подключено или почему нет. */
+function MountStatus({ mounting, result, share }: { mounting: boolean; result: (ActionResult & { mount?: string }) | null; share: string }) {
+  const { t } = useTranslation('storage')
+  const format = useMessages()
+  if (mounting) return <StatusBadge tone="info">{t('smb.mounting')}</StatusBadge>
+  if (result?.ok) return <StatusBadge tone="success">{t('smb.connected', { mount: result.mount ?? share })}</StatusBadge>
+  if (result?.error) return <StatusBadge tone="danger">{format(result.error)}</StatusBadge>
+  return null
 }
 
 /**

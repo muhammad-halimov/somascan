@@ -128,7 +128,15 @@
   "smb": {
     "noHost": "Enter the server and the shared folder",
     "unsupported": "Connect the network share with system tools and choose the files on it",
-    "unreachable": "The folder {{mount}} does not open: no access"
+    "unreachable": "The folder {{mount}} does not open: no access",
+    "systemError": "System error {{code}}",
+    "failed": "The shared folder could not be connected",
+    "timeout": "The server did not respond within a minute",
+    "accessDenied": "No access to the shared folder",
+    "notFound": "The server or the shared folder was not found",
+    "badCredentials": "Wrong user name or password",
+    "needsAccount": "A user name and a password are required",
+    "accountLocked": "The account is locked"
   },
   "scan": {
     "busy": "Reading is already in progress",
