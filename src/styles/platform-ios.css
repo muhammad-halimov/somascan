@@ -73,8 +73,6 @@
     0 10px 30px rgb(0 0 0 / 12%);
   --glass-control: rgb(255 255 255 / 35%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 90%, transparent);
-  /* Окно, пока в нём что-то движется (`useGlassHold`): без размытия — тот же оттенок, плотнее. */
-  --glass-sheet-still: color-mix(in srgb, var(--bg) 98%, transparent);
 }
 
 :root[data-platform='ios'][data-theme='dark'] {
@@ -280,16 +278,6 @@
 
 :root[data-platform='ios'] .settings-modal {
   box-shadow: var(--glass-shadow), 0 24px 80px rgb(0 0 0 / 22%), 0 0 0 100vmax var(--settings-dim);
-}
-
-/*
- * Пока в окне что-то движется (плашка вкладок, смена вкладки, высота окна — `useGlassHold`), стекло не размывает
- * экран: размытие под большим окном пересчитывалось на каждом кадре, и кадры шли вдвое дольше. После — снова стекло.
- */
-:root[data-platform='ios'] :is(.settings-modal, .uploads-popover).is-moving {
-  background: var(--glass-sheet-still);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 
 :root[data-platform='ios'] .panel-header {

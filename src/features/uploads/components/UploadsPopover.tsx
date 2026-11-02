@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { AlertIcon, CheckIcon, ClockIcon, CloseIcon, EmptyInboxIcon, ResetIcon, SyncIcon, TrashIcon } from '@/components/icons/Icons'
@@ -7,7 +7,6 @@ import { List, ListItem } from '@/components/ui/List'
 import { PanelHeader } from '@/components/ui/PanelHeader'
 import { Tabs } from '@/components/ui/Tabs'
 import { useStore } from '@/lib/store/useStore'
-import { useGlassHold } from '@/hooks/useGlassHold'
 import { EXIT_ANIMATION_MS } from '@/hooks/usePresence'
 import { isMissingValue } from '@/features/recognition/label/labelFields'
 import { useLabelFormatter } from '@/features/recognition/label/useLabelFormatter'
@@ -47,9 +46,6 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   const formatter = useLabelFormatter()
   const errorText = useUploadErrorText()
   const popoverRef = useRef<HTMLElement>(null)
-  /** Стекло без размытия, пока окно появляется, уходит или в нём едет плашка вкладок. */
-  const holdGlass = useGlassHold(popoverRef)
-  useLayoutEffect(() => holdGlass(), [holdGlass, isClosing])
   /** Записи, которые сейчас уезжают с анимацией удаления. */
   const [removing, setRemoving] = useState<ReadonlySet<string>>(new Set())
   const queued = records.filter((record) => record.status !== 'completed')
@@ -211,16 +207,7 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
         )}
       />
       <div className="uploads-tabs">
-        <Tabs
-          options={tabOptions}
-          value={tab}
-          onChange={(next) => {
-            // плашка едет, список меняется — стекло без размытия до конца движения
-            holdGlass()
-            setTab(next)
-          }}
-          label={t('tabs.label')}
-        />
+        <Tabs options={tabOptions} value={tab} onChange={setTab} label={t('tabs.label')} />
       </div>
       {notificationsOff && (
         <p className="uploads-strip is-warning" role="alert">
