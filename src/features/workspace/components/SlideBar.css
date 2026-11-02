@@ -99,6 +99,10 @@
   padding: 5px 12px 7px;
 }
 
+/*
+ * Без размытия фона: под «пилюлями» — ровный фон блока фото, размытие его не меняло, а GPU пересчитывал его
+ * на каждом кадре движения (прокрутка, свайп, переход к сетке).
+ */
 :root[data-platform='ios'][data-ios-design='glass'] :is(.slide-bar-pill, .slide-bar-tools) {
   gap: 8px;
   padding: 3px 6px;
@@ -106,8 +110,6 @@
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
 }
 
 :root[data-platform='ios'][data-ios-design='glass'] .slide-bar .action-button.is-tonal .action-button-icon {

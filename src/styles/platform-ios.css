@@ -73,6 +73,8 @@
     0 10px 30px rgb(0 0 0 / 12%);
   --glass-control: rgb(255 255 255 / 35%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 90%, transparent);
+  /* Окно над затемнённым экраном («Настройки»): прозрачнее на затемнение (28%) — экран сквозь стекло виден так же, как у «Загрузок». */
+  --glass-sheet-dimmed-bg: color-mix(in srgb, var(--bg) 86%, transparent);
 }
 
 :root[data-platform='ios'][data-theme='dark'] {
@@ -96,6 +98,7 @@
     0 10px 30px rgb(0 0 0 / 40%);
   --glass-control: rgb(255 255 255 / 10%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 88%, transparent);
+  --glass-sheet-dimmed-bg: color-mix(in srgb, var(--bg) 83%, transparent);
 }
 
 /* ---------- Шапка поверх содержимого ---------- */
@@ -258,12 +261,11 @@
 /* ---------- Окна и панели ---------- */
 
 /*
- * Затемнение вокруг окна настроек — тенью самого окна, а не подложкой под ним: стекло окна размывает экран
- * без затемнения и выглядит так же, как «Загрузки» (у них подложки нет). Тень — сплошная, во весь экран.
+ * Затемнение под окном настроек — неподвижная подложка (не перерисовывается, когда окно меняет высоту). Стекло окна
+ * прозрачнее на это затемнение (`--glass-sheet-dimmed-bg`): экран сквозь него виден так же, как у «Загрузок».
  */
 :root[data-platform='ios'] .settings-backdrop {
-  --settings-dim: rgb(0 0 0 / 28%);
-  background: transparent;
+  background: rgb(0 0 0 / 28%);
 }
 
 :root[data-platform='ios'] .settings-modal,
@@ -277,7 +279,21 @@
 }
 
 :root[data-platform='ios'] .settings-modal {
-  box-shadow: var(--glass-shadow), 0 24px 80px rgb(0 0 0 / 22%), 0 0 0 100vmax var(--settings-dim);
+  background: var(--glass-sheet-dimmed-bg);
+}
+
+/*
+ * Под открытыми «Настройками» стекло главного экрана не видно (оно под затемнением и окном) — не размываем его:
+ * иначе GPU пересчитывал бы и его на каждом кадре движения окна. Стеклянная панель в шапке видна — она остаётся.
+ */
+:root:has(.settings-backdrop) :is(.notes-actions, .action-button.is-overlay .action-button-icon, .retake-hint, .photo-grid-number) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root:has(.settings-backdrop) .app-header::before {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 :root[data-platform='ios'] .panel-header {
