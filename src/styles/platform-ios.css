@@ -257,8 +257,13 @@
 
 /* ---------- Окна и панели ---------- */
 
+/*
+ * Затемнение вокруг окна настроек — тенью самого окна, а не подложкой под ним: стекло окна размывает экран
+ * без затемнения и выглядит так же, как «Загрузки» (у них подложки нет). Тень — сплошная, во весь экран.
+ */
 :root[data-platform='ios'] .settings-backdrop {
-  background: rgb(0 0 0 / 28%);
+  --settings-dim: rgb(0 0 0 / 28%);
+  background: transparent;
 }
 
 :root[data-platform='ios'] .settings-modal,
@@ -269,6 +274,10 @@
   box-shadow: var(--glass-shadow), 0 24px 80px rgb(0 0 0 / 22%);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
+}
+
+:root[data-platform='ios'] .settings-modal {
+  box-shadow: var(--glass-shadow), 0 24px 80px rgb(0 0 0 / 22%), 0 0 0 100vmax var(--settings-dim);
 }
 
 :root[data-platform='ios'] .panel-header {
