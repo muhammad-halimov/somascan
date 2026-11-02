@@ -11,6 +11,9 @@ const SETTLING_CLASS = 'is-settling'
 /** CSS-переменная сетки: сколько рамка переезжает с ячейки на ячейку. */
 const FRAME_MOVE_VAR = '--photo-grid-frame-move'
 
+/** Кружок выбора бирки для отправки в ячейке (PhotoGrid): касание его только отмечает бирку, рамку не переносит. */
+const SELECT_TOGGLE = '.photo-grid-select'
+
 /** Короткая вибрация в начале переноса, мс (Android; iOS в WebView не вибрирует). */
 const DRAG_START_VIBRATION_MS = 10
 
@@ -38,7 +41,8 @@ export interface GridDragSelectOptions {
  * Перенос рамки открытой бирки пальцем. Рамка всегда стоит на ячейке: переезжает с ячейки на ячейку под пальцем
  * (вверх, вниз, влево, вправо), за края бирок не выходит — палец вне бирок оставляет её на последней.
  * Касание другой бирки сразу переносит рамку туда; с открытой бирки перенос начинается со сдвигом пальца,
- * а простое нажатие на неё открывает бирку. Во время переноса экран не прокручивается, а клик при отпускании
+ * а простое нажатие на неё открывает бирку. Кружок выбора любой бирки рамку не трогает — нажатие на него только
+ * отмечает бирку для отправки или снимает отметку. Во время переноса экран не прокручивается, а клик при отпускании
  * гасится (иначе он попал бы в бирку, уже ставшую открытой, и открыл её).
  */
 export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onSelect }: GridDragSelectOptions) {
@@ -134,6 +138,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     const onTouchStart = (event: TouchEvent) => {
       swallowClick = false
       if (event.touches.length !== 1) return stop()
+      if (event.target instanceof Element && event.target.closest(SELECT_TOGGLE)) return
       const touch = event.touches[0]!
       const index = itemIndexAt(touch.clientX, touch.clientY)
       if (index === null) return
