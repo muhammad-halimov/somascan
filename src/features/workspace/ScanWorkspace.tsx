@@ -41,12 +41,6 @@ export function ScanWorkspace() {
   const openViewer = () => setIsViewerOpen(true)
   /** Карточка фото: одна бирка или сетка. */
   const [view, setView] = useState<PhotoCardView>('single')
-  /**
-   * Из сетки уже возвращались: у бирки есть «Назад» к сетке. Ставится при возврате, а не при открытии
-   * сетки — кнопка приезжает вместе с биркой, а не появляется на миг перед уходом в сетку.
-   */
-  const [usedGrid, setUsedGrid] = useState(false)
-
   const workspaceRef = useRef<HTMLElement>(null)
   const notesCardRef = useRef<HTMLDivElement>(null)
   const photoCardRef = useRef<PhotoCardHandle>(null)
@@ -69,7 +63,6 @@ export function ScanWorkspace() {
   /** Сетка закрывается системным «Назад» (жест iOS, кнопка Android) — открывается выбранная бирка. */
   const closeGrid = useHistoryLayer(view === 'grid', () => {
     setView('single')
-    setUsedGrid(true)
   }, 'grid')
 
   // Другая бирка — исходный масштаб (поворот у каждой бирки свой).
@@ -325,7 +318,7 @@ export function ScanWorkspace() {
     if (index !== activeIndex) session.select(index)
   }
 
-  /** «Сетка» и «Назад»: фото уменьшается в свою ячейку, появляется сетка. Правка закрывается. */
+  /** «Сетка» (панель листания, свайп вниз): фото уменьшается в свою ячейку, появляется сетка. Правка закрывается. */
   const pendingGrid = useRef(false)
   const showGrid = () => {
     // Правка — свой слой истории: сначала закрываем его, сетку открываем, когда он снят (см. эффект ниже).
@@ -389,7 +382,6 @@ export function ScanWorkspace() {
           items={session.items}
           activeIndex={activeIndex}
           view={view}
-          showBack={usedGrid}
           isReceiving={picker.isReceiving}
           toolsOnPhoto={toolsOnPhoto}
           transform={transform}
@@ -404,7 +396,6 @@ export function ScanWorkspace() {
           onNext={goNext}
           onSelectCell={selectItem}
           onOpenCell={openCell}
-          onOpenActive={closeGrid}
           onToggleSelected={session.toggleSelected}
         />
         {slideBar.mounted && (

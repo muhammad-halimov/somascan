@@ -1,7 +1,7 @@
 import { useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { BackIcon, GridIcon, ImageIcon, ImageOffIcon } from '@/components/icons/Icons'
+import { ImageIcon, ImageOffIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { usePresence } from '@/hooks/usePresence'
 import { useDoubleTap } from '../hooks/useDoubleTap'
@@ -51,15 +51,13 @@ export interface PhotoCardProps {
   activeIndex: number
   /** Одна бирка или сетка. */
   view: PhotoCardView
-  /** Показывать «Назад» (к сетке): бирку открыли из сетки. */
-  showBack: boolean
   /** Пользователь вернулся из системного выбора фото, а оно ещё готовится. */
   isReceiving: boolean
   /** Масштаб, сдвиг, поворот и обработчики жестов открытого фото. */
   transform: PhotoTransform
   /** Кнопки масштаба и поворота — поверх фото (иначе они в панели листания, см. «Расширенные» → «Оформление»). */
   toolsOnPhoto: boolean
-  /** Бирка распознана не полностью: между «Назад» и «Сеткой» — подсказка, что мешает (`retakeHintReason`); `null` — без неё. */
+  /** Бирка распознана не полностью: сверху на фото — подсказка, что мешает (`retakeHintReason`); `null` — без неё. */
   retakeHint: RetakeHintReason | null
   /** Открывает источник фото (пустая ячейка). */
   onPick: () => void
@@ -71,7 +69,7 @@ export interface PhotoCardProps {
   onLoad: (size: Size) => void
   /** Фото не загрузилось. */
   onError: () => void
-  /** «Сетка» или «Назад»: показать все бирки (и свайп по фото сверху вниз). */
+  /** Показать все бирки: свайп по фото сверху вниз (как «Сетка» в панели листания). */
   onShowGrid: () => void
   /** Предыдущая бирка (свайп по фото вправо); нет — первая открыта. */
   onPrevious?: () => void
@@ -81,8 +79,6 @@ export interface PhotoCardProps {
   onSelectCell: (index: number) => void
   /** Ячейка сетки, двойное нажатие (у «плюса» — одно): открыть бирку или следующую пустую ячейку. */
   onOpenCell: (index: number) => void
-  /** Кнопка в углу сетки: открыть выбранную бирку (та же, что «Открыть» в панели листания). */
-  onOpenActive: () => void
   /** Значок выбора в ячейке: отправлять бирку или нет. */
   onToggleSelected: (index: number) => void
 }
@@ -91,15 +87,14 @@ export interface PhotoCardProps {
  * Карточка фото: открытая бирка (пустая кнопка «Добавить фото» или фото с жестами — щипок,
  * перетаскивание, — кнопками масштаба и поворота) или сетка 3 × 3 всех бирок.
  *
- * Справа вверху — «Сетка»: карточка уменьшает фото в его ячейку, и появляется сетка; нажатие
- * на ячейку (или «Открыть» — в углу сетки и в панели под карточкой) увеличивает её обратно до одной бирки. Слева
- * вверху у бирки, открытой из сетки, — «Назад» к сетке. Переход к соседней бирке — фото въезжает
+ * «Сетка» в панели листания (или свайп сверху вниз): карточка уменьшает фото в его ячейку, и появляется сетка;
+ * нажатие на ячейку (или «Открыть» в панели) увеличивает её обратно до одной бирки. Переход к соседней бирке — фото въезжает
  * сбоку, как слайд; к соседней бирке листают и свайпом по фото вбок, к сетке — свайпом сверху вниз (`usePhotoSwipe`). Нажатие на фото открывает просмотр на весь экран, двойное нажатие — плавно увеличивает фото
  * к точке нажатия (у увеличенного — исходный вид). Пока фото грузится и распознаётся —
  * один спиннер с подписью «Распознавание». В правом нижнем углу ячейки без снимка — переключатель «Без фото» /
  * «С фото»: бирка, данные которой вводят вручную (на месте фото — перечёркнутая картинка), и обратно.
  */
-export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, toolsOnPhoto, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onPrevious, onNext, onSelectCell, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ handleRef, item, items, activeIndex, view, isReceiving, transform, toolsOnPhoto, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onPrevious, onNext, onSelectCell, onOpenCell, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -110,7 +105,6 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   /** Нажатие на фото открывает просмотр, двойное — увеличивает фото к пальцу (у увеличенного — исходный вид). */
   const tapPhoto = useDoubleTap<string>({ onSingle: () => onOpen(), onDouble: (_, point) => transform.toggleZoomAt(point) })
   const overlay = usePresence(isBusy)
-  const gridSingle = usePresence(view === 'grid')
   /**
    * Бирка, чьё фото уже показано в карточке: до этого на его месте — миниатюра (фото с телефона декодируется
    * не сразу). Миниатюра уходит, когда фото проявилось поверх неё, — между ними нет пустой рамки.
@@ -314,17 +308,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
         )}
 
 
-        {/*
-          Переходы: «Назад» к сетке слева, «Сетка» справа — над фото и над спиннером распознавания; между ними —
-          подсказка повернуть или переснять (в слое фото: при переходе к сетке уходит вместе с ним).
-        */}
-        <div className="photo-nav">
-          {showBack && (
-            <ActionButton variant="overlay" size={44} icon={<BackIcon />} caption={t('grid.back')} label={t('grid.backLabel')} onClick={onShowGrid} />
-          )}
-          {hint.mounted && hintReason && <RetakeHint reason={hintReason} isClosing={hint.closing} />}
-          <ActionButton className="photo-nav-grid" variant="overlay" size={44} icon={<GridIcon />} caption={t('grid.open')} label={t('grid.openLabel')} onClick={onShowGrid} />
-        </div>
+        {/* Подсказка повернуть или переснять — сверху по центру фото (в слое фото: при переходе к сетке уходит с ним). */}
+        {hint.mounted && hintReason && <RetakeHint reason={hintReason} isClosing={hint.closing} />}
       </div>
 
       {/*
@@ -332,19 +317,6 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
       */}
       <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} hidden={view === 'single' && settledView === 'single'} interactive={view === 'grid'} onSelect={onSelectCell} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
 
-      {/* В сетке — «Открыть» выбранную бирку на месте «Сетки», с подписью (дублирует кнопку панели листания); уходит, растворяясь. */}
-      {gridSingle.mounted && (
-        <ActionButton
-          className={`photo-grid-single anim-fade${gridSingle.closing ? ' is-closing' : ''}`}
-          inert={gridSingle.closing || undefined}
-          variant="overlay"
-          size={44}
-          icon={<ImageIcon />}
-          caption={t('grid.single')}
-          label={t('slides.openLabel')}
-          onClick={onOpenActive}
-        />
-      )}
 
     </div>
   )

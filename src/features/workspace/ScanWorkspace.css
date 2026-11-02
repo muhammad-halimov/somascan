@@ -22,7 +22,7 @@
   overscroll-behavior: contain;
   /*
    * Своя стопка слоёв: кнопки в углах карточки фото (z-index) рисуются внутри области и обрезаются
-   * ею. Без этого WebKit на iOS рисовал уехавшие при прокрутке «Сетку» и «С фото» поверх шапки и статус-бара.
+   * ею. Без этого WebKit на iOS рисовал уехавшую при прокрутке «С фото» поверх шапки и статус-бара.
    */
   isolation: isolate;
 }
@@ -75,6 +75,14 @@
  */
 :root[data-platform='ios'] {
   --notes-toolbar-inset: max(8px, calc(var(--safe-bottom) - 14px));
+}
+
+/*
+ * Liquid Glass на Android: полоска жестов выше полоски «Домой» у iPhone — «пилюля» встаёт над ней целиком,
+ * с тем же зазором, что и у края экрана.
+ */
+:root[data-platform='ios'][data-device='android'] {
+  --notes-toolbar-inset: calc(var(--safe-bottom) + 8px);
 }
 
 @media not all and (orientation: landscape) and (max-height: 600px) {

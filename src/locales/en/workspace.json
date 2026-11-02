@@ -156,10 +156,6 @@
   },
   "grid": {
     "region": "Tags on screen",
-    "open": "Grid",
-    "openLabel": "Show all tags",
-    "back": "Back",
-    "backLabel": "Back to the grid",
     "items": "Tags",
     "item": "Tag {{number}}",
     "add": "Add tag {{number}}",
@@ -173,7 +169,6 @@
       "incomplete": "required fields are empty",
       "noPhoto": "no photo"
     },
-    "single": "Photo",
     "manual": "no photo"
   },
   "slides": {

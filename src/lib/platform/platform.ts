@@ -4,7 +4,9 @@
  * На `<html>` ставятся атрибуты, к которым привязаны платформенные стили (`styles/platform-ios.css`):
  * - `data-platform` — `ios` | `android` | `web`: оформление (iOS — стили Apple, Android — Material Design);
  * - `data-ios-design` — `glass` (iOS 26+, Liquid Glass) или `classic` (iOS 18 и раньше: материалы с размытием);
- * - `data-native` — приложение запущено нативно (Capacitor).
+ * - `data-native` — приложение запущено нативно (Capacitor);
+ * - `data-device` — само устройство (`ios` | `android` | `web`), независимо от оформления: для размеров,
+ *   которые задаёт система (полоска «Домой» у iPhone ниже полоски жестов Android).
  * Оформление можно выбрать в «Расширенных» (`applyDesign`): Liquid Glass или Material Design на любом устройстве.
  * От атрибутов зависит только вид; поведение, зависящее от устройства (клавиатура, «Назад»), смотрит
  * на `Capacitor.getPlatform()`.
@@ -72,6 +74,7 @@ function applyAttributes() {
   const root = document.documentElement
   const platform = chosenDesign ? DESIGN_PLATFORMS[chosenDesign] : device.platform
   root.dataset.platform = platform
+  root.dataset.device = device.platform
   if (Capacitor.isNativePlatform()) root.dataset.native = 'true'
   // Liquid Glass по выбору — на любой версии; иначе — по версии iOS
   const glass = chosenDesign === 'glass' || (device.iosMajor ?? 0) >= LIQUID_GLASS_MIN_IOS

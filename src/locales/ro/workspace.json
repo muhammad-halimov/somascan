@@ -156,10 +156,6 @@
   },
   "grid": {
     "region": "Etichete pe ecran",
-    "open": "Grilă",
-    "openLabel": "Arată toate etichetele",
-    "back": "Înapoi",
-    "backLabel": "Înapoi la grilă",
     "items": "Etichete",
     "item": "Eticheta {{number}}",
     "add": "Adaugă eticheta {{number}}",
@@ -173,7 +169,6 @@
       "incomplete": "câmpuri obligatorii necompletate",
       "noPhoto": "fără fotografie"
     },
-    "single": "Foto",
     "manual": "fără fotografie"
   },
   "slides": {

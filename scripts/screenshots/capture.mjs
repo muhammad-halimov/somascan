@@ -84,7 +84,7 @@ function interfaceText(language) {
     edit: workspace.editing.editCaption,
     done: workspace.editing.closeCaption,
     noPhoto: workspace.photo.noPhoto,
-    grid: workspace.grid.open,
+    grid: workspace.slides.grid,
     general: settings.tabs.general,
     storage: settings.tabs.storage,
     advanced: settings.tabs.advanced,
@@ -342,7 +342,7 @@ async function capture(platform, language, port) {
     await sleep(1500)
     await shot('04-no-photo')
 
-    await click('.action-button', text.grid)
+    await click('.slide-bar .action-button', text.grid)
     await sleep(1800)
     await shot('05-grid')
 
