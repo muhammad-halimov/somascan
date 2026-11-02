@@ -59,7 +59,7 @@ function settings(language, target) {
     },
     locked: { consum: true, sarjele: true, probe: true, folder: true },
     sheet: '',
-    smb: { host: '192.168.1.20', share: 'Atelier', domain: '', username: 'operator', password: '••••••••' },
+    smb: { host: '192.168.1.20', share: 'Atelier', anonymous: false, domain: '', username: 'operator', password: '••••••••' },
     googleDrive: { account: 'user@example.com', folder: '', token: '' },
     projects: PROJECTS.map((name) => ({ name, aliases: [], sheet: name, prefix: '', create: true, enabled: true, locked: true })),
     intervalSec: 10, settleSec: 3, backupDays: 30, rule: 'latest',
@@ -156,13 +156,13 @@ function stub(language, target) {
     const noop = () => () => {}
     const sheets = ['2025', '2026']
     window.api = {
-      init: async () => ({ settings: data.settings, run: { status: 'watching', busy: null, nextCheckAt: Date.now() + 7400, lastCheckAt: Date.now(), lastRunAt: ${AT}, pending: [], bridge: { syncedAt: ${AT} + 1263000, waiting: false, problem: null, bell: null, bellError: null } }, journal: data.journal, version: '1.0.0', year: 2026, platform: 'win32' }),
+      init: async () => ({ settings: data.settings, run: { status: 'watching', busy: null, nextCheckAt: Date.now() + 7400, lastCheckAt: Date.now(), lastRunAt: ${AT}, pending: [], bridge: { syncedAt: ${AT} + 1263000, waiting: false, problem: null, bell: null, bellError: null } }, journal: data.journal, version: '1.0.0', year: 2026, platform: 'win32', documents: 'C:\\\\Users\\\\operator\\\\Documents' }),
       setSettings: async (patch) => Object.assign(data.settings, patch),
       start: async () => ({ ok: true }), stop: async () => {}, pick: async () => null,
       check: async (kind) => ({ ok: true, msg: { code: 'check.ok', params: { n: kind === 'probe' ? 2 : 3, date: ${AT} } }, sheets: kind === 'probe' ? sheets : ['PETRA DATE', 'NORD INFRA', 'LACUL VERDE'] }),
       scan: async () => data.scan, setLink: async () => ({}), createSheets: async () => ({ ok: true }),
       action: async () => ({ ok: true }), backups: async () => [], restore: async () => ({ ok: true }), confirm: async () => false,
-      mountSmb: async () => ({ ok: true }), smbPassword: async () => '', driveSignIn: async () => ({ ok: true }), driveSignOut: async () => {}, bridgeBell: async () => {},
+      mountSmb: async () => ({ ok: true, mount: '\\\\\\\\192.168.1.20\\\\Atelier' }), smbPassword: async () => '', driveSignIn: async () => ({ ok: true }), driveSignOut: async () => {}, bridgeBell: async () => {},
       clearJournal: async () => {}, open: async () => {},
       onJournal: noop, onNavigate: noop, onRun: noop, onSettings: noop,
     }

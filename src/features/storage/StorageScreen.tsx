@@ -14,8 +14,8 @@ import { List, ListItem, Switch } from '@/components/ui/List'
 import { Tabs } from '@/components/ui/Tabs'
 import { useLocale, useMessages } from '@/app/i18n'
 import { api, appInfoStore, runStore, settingsStore, useSettings, useStore } from '@/app/state'
-import type { BridgeState, CheckResult } from '@/shared/protocol'
-import { activeFiles, PASSWORD_MASK, TARGETS, type AppSettings, type FileKind, type FileSet, type GoogleDriveSettings, type SmbSettings, type StorageTarget } from '@/shared/settings'
+import type { ActionResult, BridgeState, CheckResult } from '@/shared/protocol'
+import { activeFiles, MAC_VOLUMES, PASSWORD_MASK, TARGETS, uncPath, type AppSettings, type FileKind, type FileSet, type GoogleDriveSettings, type SmbSettings, type StorageTarget } from '@/shared/settings'
 import './storage.css'
 
 /** Поле файла. */
@@ -36,6 +36,19 @@ const CHECK_DELAY_MS = 450
 
 /** Имена файлов в подсказке пути. */
 const FILE_NAMES: Record<FileKind, string> = { consum: '09-Consum Otel ….xlsx', sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx' }
+
+/** Пример сервера и общей папки в путях, пока они не заданы. */
+const EXAMPLE_HOST = 'server'
+const EXAMPLE_SHARE = 'Atelier'
+
+/** Пропущенная часть пути в примере. */
+const ELLIPSIS = '…'
+
+/** Общая папка сетевого диска: `\\сервер\папка` в Windows, `/Volumes/папка` в macOS (туда её подключает система). */
+const sharePath = (smb: Pick<SmbSettings, 'host' | 'share'>, windows: boolean) => {
+  const example = { host: smb.host || EXAMPLE_HOST, share: smb.share || EXAMPLE_SHARE }
+  return windows ? uncPath(example) : `${MAC_VOLUMES}/${example.share}`
+}
 
 /** Значки мест хранения — как в мобильном приложении. */
 const TARGET_ICONS: Record<StorageTarget, ReactNode> = { local: <FolderIcon />, smb: <WindowsLogo />, googleDrive: <GoogleDriveLogo /> }
@@ -76,7 +89,7 @@ function useFileChecks(rows: FileRow[], extraKey: string) {
 export function StorageScreen() {
   const { t } = useTranslation('storage')
   const settings = useSettings()
-  const { platform } = useStore(appInfoStore)
+  const { platform, documents } = useStore(appInfoStore)
   const files = activeFiles(settings)
   const drive = settings.target === 'googleDrive'
   const rows: FileRow[] = [
@@ -100,9 +113,9 @@ export function StorageScreen() {
 
       {/* `key` по месту хранения: при переключении формы появляются анимацией. */}
       <div key={settings.target} className="storage-stack anim-enter">
-        {settings.target === 'smb' && <SmbSection smb={settings.smb} />}
+        {settings.target === 'smb' && <SmbSection smb={settings.smb} windows={platform === 'win32'} />}
         {drive && <DriveAccountSection drive={settings.googleDrive} />}
-        <FilesSection settings={settings} rows={rows} checks={checks} recheck={(r) => void run(r)} windows={platform === 'win32'} />
+        <FilesSection settings={settings} rows={rows} checks={checks} recheck={(r) => void run(r)} windows={platform === 'win32'} documents={documents} />
         {!drive && <PhonesSection settings={settings} />}
       </div>
 
@@ -112,24 +125,34 @@ export function StorageScreen() {
   )
 }
 
-/** Сетевой диск: сначала учётная запись, затем расположение и «Подключить диск». */
-function SmbSection({ smb }: { smb: SmbSettings }) {
+/**
+ * Сетевой диск: учётная запись (нет при «Без авторизации»), расположение, «Проверить подключение» с итогом под ней
+ * и переключатель «Без авторизации» — подключение без имени и пароля: в Windows под учётной записью системы,
+ * как в Проводнике, в macOS гостем.
+ */
+function SmbSection({ smb, windows }: { smb: SmbSettings; windows: boolean }) {
   const { t } = useTranslation('storage')
+  const format = useMessages()
   // пароль хранится только в главном процессе (зашифрованным); окно видит маску, пока пароль не нужен
   const [password, setPassword] = useState(smb.password)
   const [mounting, setMounting] = useState(false)
-  const set = (patch: Partial<SmbSettings>) => settingsStore.update({ smb: patch })
+  const [mounted, setMounted] = useState<(ActionResult & { mount?: string }) | null>(null)
+  const set = (patch: Partial<SmbSettings>) => {
+    setMounted(null)
+    settingsStore.update({ smb: patch })
+  }
   const reveal = async () => {
     if (password === PASSWORD_MASK) setPassword(await api.smbPassword())
   }
   const mount = async () => {
     setMounting(true)
-    await api.mountSmb()
+    setMounted(await api.mountSmb())
     setMounting(false)
   }
 
   return (
     <>
+      {!smb.anonymous && (
       <FormSection title={t('smb.account')} icon={<UserIcon />}>
         <FieldRow>
           <Field label={t('smb.domain')}>
@@ -153,6 +176,7 @@ function SmbSection({ smb }: { smb: SmbSettings }) {
           />
         </Field>
       </FormSection>
+      )}
 
       <FormSection title={t('smb.location')} icon={<FolderIcon />} hint={t('smb.hint')}>
         <Field label={t('smb.host')}>
@@ -166,6 +190,25 @@ function SmbSection({ smb }: { smb: SmbSettings }) {
       <Button variant="tonal" icon={<PlugIcon />} busy={mounting} onClick={() => void mount()}>
         {mounting ? t('smb.mounting') : t('smb.mount')}
       </Button>
+      {mounted && (
+        <div className="storage-check" role="status">
+          {mounted.ok
+            ? <StatusBadge tone="success">{t('smb.connected', { mount: mounted.mount ?? sharePath(smb, windows) })}</StatusBadge>
+            : mounted.error && <StatusBadge tone="danger">{format(mounted.error)}</StatusBadge>}
+        </div>
+      )}
+
+      <List label={t('smb.anonymous')}>
+        <ListItem
+          itemRole="checkbox"
+          leading={<UserIcon />}
+          primary={t('smb.anonymous')}
+          secondary={windows ? t('smb.anonymousHintWindows') : t('smb.anonymousHintMac')}
+          selected={smb.anonymous}
+          trailing={<Switch on={smb.anonymous} />}
+          onClick={() => set({ anonymous: !smb.anonymous })}
+        />
+      </List>
     </>
   )
 }
@@ -356,13 +399,15 @@ interface FilesSectionProps {
   recheck: (row: FileRow) => void
   /** Окно в Windows (другие примеры путей). */
   windows: boolean
+  /** Папка «Документы» этого компьютера — пример локального пути. */
+  documents: string
 }
 
 /**
  * Таблицы: у Google Drive — папка и имена файлов в ней, у остальных — пути к Consum, Sarjele и Probe; у каждой —
  * замок от случайной правки, выбор файла и проверка, итог — строкой под полем; в конце — лист Probe.
  */
-function FilesSection({ settings, rows, checks, recheck, windows }: FilesSectionProps) {
+function FilesSection({ settings, rows, checks, recheck, windows, documents }: FilesSectionProps) {
   const { t } = useTranslation('storage')
   const format = useMessages()
   const { year } = useStore(appInfoStore)
@@ -380,7 +425,12 @@ function FilesSection({ settings, rows, checks, recheck, windows }: FilesSection
     if (f) setPath(r, f)
   }
   const label = (r: FileRow) => (r.kind === 'consum' ? (files.consums.length > 1 ? t('files.consumN', { n: r.index + 1 }) : t('files.consum')) : t(`files.${r.kind}`))
-  const placeholder = (kind: FileKind) => (drive ? FILE_NAMES[kind] : windows ? `\\\\server\\share\\…\\${FILE_NAMES[kind]}` : `/Volumes/…/${FILE_NAMES[kind]}`)
+  /** Пример пути: в Google Drive — имя файла, на сетевом диске — в общей папке, на этом компьютере — в «Документах». */
+  const placeholder = (kind: FileKind) => {
+    if (drive) return FILE_NAMES[kind]
+    const folder = settings.target === 'smb' ? sharePath(settings.smb, windows) : documents || ELLIPSIS
+    return [folder, ELLIPSIS, FILE_NAMES[kind]].join(windows ? '\\' : '/')
+  }
   const lockAction = (key: FileKind | 'folder') => {
     const locked = settings.locked[key]
     return {

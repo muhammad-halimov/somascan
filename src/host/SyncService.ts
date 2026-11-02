@@ -39,6 +39,14 @@ export interface RemoteStorage {
   release(): Promise<void>
 }
 
+/** Сетевой диск: подключается перед работой, если таблицы на нём недоступны. */
+export interface NetworkShare {
+  /** Место хранения — сетевой диск. */
+  active(): boolean
+  /** Подключить общую папку (итог — в журнале). */
+  mount(): Promise<ActionResult>
+}
+
 /** Параметры прогона синхронизации. */
 export interface SyncRequest {
   apply: boolean
@@ -58,6 +66,7 @@ export class SyncService extends Store<RunState> {
   private readonly runner: EngineRunner
   /** Удалённое хранилище таблиц (задаёт `HostServices`). */
   remote: RemoteStorage | null = null
+  share: NetworkShare | null = null
 
   constructor(settings: SettingsStore, journal: Journal, runner: EngineRunner) {
     super(IDLE)
@@ -90,7 +99,9 @@ export class SyncService extends Store<RunState> {
   }
 
   /**
-   * Готовы ли файлы к чтению (вкладка «Связи», начало слежения): у Google Drive — скачивает свежие таблицы.
+   * Готовы ли файлы к чтению (вкладка «Связи», начало слежения): у Google Drive — скачивает свежие таблицы,
+   * у сетевого диска — подключает общую папку, если таблицы на ней недоступны (после перезапуска системы
+   * подключение без сохранённых учётных данных теряется).
    * @returns Причина, по которой читать нельзя, или `null`.
    */
   async readyToRead(): Promise<Message | null> {
@@ -100,6 +111,7 @@ export class SyncService extends Store<RunState> {
       await remote.release()
       if (problem) return problem.msg
     }
+    if (this.share?.active() && this.pathsProblem()) await this.share.mount()
     return this.pathsProblem()
   }
 

@@ -8,6 +8,10 @@
  * Подключение:
  *   macOS   — `osascript … mount volume smb://…`: диск появляется в /Volumes, пути к таблицам берутся оттуда;
  *   Windows — `net use \\сервер\папка`: пути к таблицам — прямо `\\сервер\папка\…` (букву диска можно не назначать).
+ * Таблицы читаются средствами системы, как обычные файлы: если у Windows уже есть доступ к папке (вход в домен,
+ * сохранённые учётные данные, доступ открыт всем), подключение не нужно. Учётная запись нужна, когда папка требует
+ * другого входа; без авторизации — подключение под учётной записью Windows (как в Проводнике) или гостем в macOS.
+ * Перед работой программа подключает папку сама, если таблицы на ней недоступны (`SyncService.readyToRead`).
  */
 import { execFile } from 'node:child_process'
 import fs from 'node:fs'
@@ -15,12 +19,16 @@ import JSZip from 'jszip'
 import { EditorLock } from '@/engine/FileGuard'
 import { message } from '@/shared/messages'
 import type { ActionResult, CheckResult } from '@/shared/protocol'
-import { activeFiles, type FileKind, type SmbSettings } from '@/shared/settings'
+import { activeFiles, uncPath, type FileKind, type SmbSettings } from '@/shared/settings'
 import type { DriveService } from './drive/DriveService'
+import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 
 /** Сколько ждать подключения диска, мс. */
 const MOUNT_TIMEOUT_MS = 60_000
+
+/** Имя гостя SMB: вход без авторизации в macOS. */
+const GUEST = 'guest'
 
 /** Последняя содержательная строка ошибки. */
 const lastLine = (text: string) => text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).pop() ?? text
@@ -29,15 +37,12 @@ const lastLine = (text: string) => text.split(/\r?\n/).map((l) => l.trim()).filt
 export class StorageService {
   private readonly settings: SettingsStore
   private readonly drive: DriveService
+  private readonly journal: Journal
 
-  constructor(settings: SettingsStore, drive: DriveService) {
+  constructor(settings: SettingsStore, drive: DriveService, journal: Journal) {
     this.settings = settings
     this.drive = drive
-  }
-
-  /** Сетевой путь общей папки в Windows: `\\сервер\папка`. */
-  static uncPath(smb: Pick<SmbSettings, 'host' | 'share'>): string {
-    return `\\\\${smb.host}\\${smb.share}`
+    this.journal = journal
   }
 
   /** Видимые листы книги. */
@@ -82,15 +87,37 @@ export class StorageService {
     }
   }
 
-  /** Подключает общую папку средствами системы. @returns Куда подключено (`mount`) или ошибка. */
-  mount(): Promise<ActionResult & { mount?: string }> {
+  /** Таблицы на сетевом диске: выбран ли он местом хранения. */
+  active(): boolean {
+    return this.settings.getSnapshot().target === 'smb'
+  }
+
+  /**
+   * Подключает общую папку средствами системы и проверяет, что она открывается; итог — в журнал.
+   * @returns Куда подключено (`mount`) или ошибка.
+   */
+  async mount(): Promise<ActionResult & { mount?: string }> {
     const smb = this.settings.getSnapshot().smb
-    const password = this.settings.smbPassword()
-    const { host, share, domain, username } = smb
-    if (!host || !share) return Promise.resolve({ ok: false, error: message('smb.noHost') })
+    if (!smb.host || !smb.share) return { ok: false, error: message('smb.noHost') }
+    const connected = await this.connect(smb)
+    // подключение прошло, но папка не открывается (нет прав на неё) — это тоже ошибка
+    const result = connected.ok && connected.mount && !fs.existsSync(connected.mount)
+      ? { ok: false, error: message('smb.unreachable', { mount: connected.mount }) }
+      : connected
+    if (result.ok) this.journal.event('ok', message('event.smbMounted', { mount: result.mount || smb.share }))
+    else if (result.error) this.journal.event('err', message('event.smbFailed', { error: result.error }))
+    return result
+  }
+
+  /** Подключение средствами системы: `net use` в Windows, `mount volume` в macOS. */
+  private connect(smb: SmbSettings): Promise<ActionResult & { mount?: string }> {
+    const { host, share, domain, anonymous } = smb
+    // без авторизации учётная запись не передаётся, даже если заполнена
+    const username = anonymous ? '' : smb.username
+    const password = username ? this.settings.smbPassword() : ''
     const failed = (error: string) => ({ ok: false, error: message('error.other', { error }) })
     if (process.platform === 'win32') {
-      const unc = StorageService.uncPath(smb)
+      const unc = uncPath(smb)
       const args = ['use', unc, ...(username ? [...(password ? [password] : []), `/user:${domain ? `${domain}\\` : ''}${username}`] : []), '/persistent:no']
       return new Promise((resolve) =>
         execFile('net', args, { timeout: MOUNT_TIMEOUT_MS, windowsHide: true }, (err, _out, stderr) => {
@@ -100,8 +127,10 @@ export class StorageService {
         }))
     }
     if (process.platform !== 'darwin') return Promise.resolve({ ok: false, error: message('smb.unsupported') })
-    const user = username ? `${domain ? encodeURIComponent(domain) + ';' : ''}${encodeURIComponent(username)}${password ? ':' + encodeURIComponent(password) : ''}@` : ''
-    const url = `smb://${user}${host}/${encodeURIComponent(share)}`
+    const credentials = anonymous
+      ? `${GUEST}:@`
+      : username ? `${domain ? encodeURIComponent(domain) + ';' : ''}${encodeURIComponent(username)}${password ? ':' + encodeURIComponent(password) : ''}@` : ''
+    const url = `smb://${credentials}${host}/${encodeURIComponent(share)}`
     return new Promise((resolve) =>
       execFile('osascript', ['-e', 'on run argv', '-e', 'mount volume (item 1 of argv)', '-e', 'end run', url], { timeout: MOUNT_TIMEOUT_MS }, (err, out) => {
         if (err) resolve(failed(lastLine(err.message)))

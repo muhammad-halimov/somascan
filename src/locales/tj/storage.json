@@ -21,7 +21,11 @@
     "showPassword": "Нишон додани парол",
     "hidePassword": "Пинҳон кардани парол",
     "mount": "Санҷиши пайваст",
-    "mounting": "Пайвастшавӣ…"
+    "mounting": "Пайвастшавӣ…",
+    "anonymous": "Бидуни авторизатсия",
+    "anonymousHintWindows": "Бо ҳисоби Windows, мисли File Explorer",
+    "anonymousHintMac": "Ворид ҳамчун меҳмон",
+    "connected": "Пайваст шуд: {{mount}}"
   },
   "googleDrive": {
     "account": "Ҳисоби Google",

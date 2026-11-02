@@ -21,7 +21,11 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "mount": "Test connection",
-    "mounting": "Connecting…"
+    "mounting": "Connecting…",
+    "anonymous": "Without authorization",
+    "anonymousHintWindows": "With the Windows account, as in File Explorer",
+    "anonymousHintMac": "Guest access",
+    "connected": "Connected: {{mount}}"
   },
   "googleDrive": {
     "account": "Google account",

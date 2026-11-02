@@ -127,7 +127,8 @@
   },
   "smb": {
     "noHost": "Introduceți serverul și folderul partajat",
-    "unsupported": "Conectați partajarea de rețea din sistem și alegeți fișierele de pe ea"
+    "unsupported": "Conectați partajarea de rețea din sistem și alegeți fișierele de pe ea",
+    "unreachable": "Folderul {{mount}} nu se deschide: nu există acces"
   },
   "scan": {
     "busy": "Citirea este deja în curs",

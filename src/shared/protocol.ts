@@ -373,6 +373,8 @@ export interface InitData {
   year: number
   /** Платформа главного процесса (`darwin`, `win32`, `linux`). */
   platform: string
+  /** Папка «Документы» этого компьютера: пример локального пути к таблице. */
+  documents: string
 }
 
 /** Итог действия, которое может не удаться. */
@@ -396,7 +398,7 @@ export interface Api {
   backups(): Promise<string[]>
   restore(stamp: string): Promise<ActionResult>
   confirm(options: { title: string; message: string; ok?: string; cancel?: string }): Promise<boolean>
-  mountSmb(): Promise<ActionResult>
+  mountSmb(): Promise<ActionResult & { mount?: string }>
   /** Сохранённый пароль сетевого диска (по нажатию на «глазок»). */
   smbPassword(): Promise<string>
   /** Вход в Google в браузере системы (доступ к Drive); почта аккаунта приходит в настройках. */

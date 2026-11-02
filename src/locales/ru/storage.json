@@ -21,7 +21,11 @@
     "showPassword": "Показать пароль",
     "hidePassword": "Скрыть пароль",
     "mount": "Проверить подключение",
-    "mounting": "Подключение…"
+    "mounting": "Подключение…",
+    "anonymous": "Без авторизации",
+    "anonymousHintWindows": "Под учётной записью Windows, как в Проводнике",
+    "anonymousHintMac": "Вход гостем",
+    "connected": "Подключено: {{mount}}"
   },
   "googleDrive": {
     "account": "Аккаунт Google",

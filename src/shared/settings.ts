@@ -88,10 +88,21 @@ export const PASSWORD_MASK = '••••••••'
 export interface SmbSettings {
   host: string
   share: string
+  /**
+   * Без авторизации: подключение без имени и пароля — в Windows под учётной записью системы (как в Проводнике),
+   * в macOS гостем. Учётная запись ниже тогда не используется.
+   */
+  anonymous: boolean
   domain: string
   username: string
   password: string
 }
+
+/** Куда macOS подключает сетевые диски. */
+export const MAC_VOLUMES = '/Volumes'
+
+/** Сетевой путь общей папки в Windows: `\\\\сервер\\папка`. */
+export const uncPath = (smb: Pick<SmbSettings, 'host' | 'share'>): string => `\\\\${smb.host}\\${smb.share}`
 
 /**
  * Google Drive: вошедший аккаунт, папка таблиц (ссылка или id; пусто — «Мой диск») и ключ доступа.
@@ -181,7 +192,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   locked: { consum: false, sarjele: false, probe: false, folder: false },
   sheet: '',
-  smb: { host: '', share: '', domain: '', username: '', password: '' },
+  smb: { host: '', share: '', anonymous: false, domain: '', username: '', password: '' },
   googleDrive: { account: '', folder: '', token: '' },
   projects: [],
   intervalSec: 10,
@@ -257,6 +268,7 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
     smb: {
       host: readString(smb, 'host', ''),
       share: readString(smb, 'share', ''),
+      anonymous: readBoolean(smb, 'anonymous', false),
       domain: readString(smb, 'domain', ''),
       username: readString(smb, 'username', ''),
       password: readString(smb, 'password', ''),

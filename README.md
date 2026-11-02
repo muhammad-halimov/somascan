@@ -66,6 +66,9 @@ The tables must already exist; the app does not create them. Each storage has it
 
 - **This computer** — paths to the tables.
 - **Network drive** (SMB) — account (domain, user, password) and location (server, shared folder). “Test connection” connects the share with system tools: Windows — `net use \\server\share` (paths `\\server\share\…`), macOS — `mount volume smb://…` (the share appears in `/Volumes`); then the tables are picked with the folder icon. The password is stored encrypted (DPAPI / Keychain).
+  - The tables are read with system tools, as ordinary files. If Windows already has access to the share (domain sign-in, saved credentials, open access), no account is needed in the program.
+  - “Without authorization” — connection without a user name and password: Windows — with the system account, as in File Explorer; macOS — as a guest.
+  - Before watching starts, the program connects the share itself if the tables on it are unavailable (for example, after a system restart).
 - **Google Drive** — Google account sign-in in the system browser (OAuth for desktop apps: the answer returns to `http://127.0.0.1:<port>`, PKCE), a folder link and table names. Without an OAuth client, “Sign in with Google” reports that Google Drive is not set up. The tables are processed in a local copy (`<app data>/drive/<folder id>/`): only changed tables are downloaded, the same `<table>.lock` locks as in the mobile app are used, the previous version is saved to `backups` on the server. A table changed in Drive during a run is not overwritten.
 
 Google Cloud setup (one-time; the project and the consent screen are the same as for the mobile app, see its [build guide](https://github.com/muhammad-halimov/somascan/blob/main/guides/BUILD.md#google-drive-oauth-clients)):

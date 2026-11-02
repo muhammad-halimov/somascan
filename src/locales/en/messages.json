@@ -127,7 +127,8 @@
   },
   "smb": {
     "noHost": "Enter the server and the shared folder",
-    "unsupported": "Connect the network share with system tools and choose the files on it"
+    "unsupported": "Connect the network share with system tools and choose the files on it",
+    "unreachable": "The folder {{mount}} does not open: no access"
   },
   "scan": {
     "busy": "Reading is already in progress",

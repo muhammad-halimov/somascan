@@ -63,12 +63,14 @@ export interface AppInfo {
   year: number
   /** Платформа (`darwin`, `win32`, `linux`). */
   platform: string
+  /** Папка «Документы» этого компьютера. */
+  documents: string
 }
 
 /** Сведения о программе. */
 class AppInfoStore extends Store<AppInfo> {
   constructor() {
-    super({ version: '', year: new Date().getFullYear(), platform: 'darwin' })
+    super({ version: '', year: new Date().getFullYear(), platform: 'darwin', documents: '' })
   }
 
   hydrate(info: AppInfo): void {
@@ -119,7 +121,7 @@ export async function startSession(): Promise<void> {
   settingsStore.hydrate(d.settings)
   runStore.hydrate(d.run)
   journalStore.hydrate(d.journal)
-  appInfoStore.hydrate({ version: d.version, year: d.year, platform: d.platform })
+  appInfoStore.hydrate({ version: d.version, year: d.year, platform: d.platform, documents: d.documents })
   // отступ заголовка под кнопки окна macOS — только на macOS (см. App.css)
   document.documentElement.dataset.platform = d.platform
   api.onSettings((s) => settingsStore.hydrate(s))

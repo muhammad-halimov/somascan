@@ -7,7 +7,7 @@
  *   ConsumWatcher  слежение за Consum
  *   EngineRunner   запуск движка
  *   LinksService   вкладка «Связи»: чтение связей, ручные привязки (`links.json`)
- *   StorageService вкладка «Хранилище»: проверка файлов, сетевой диск
+ *   StorageService вкладка «Хранилище»: проверка файлов, сетевой диск (и его подключение перед работой)
  *   DriveService   Google Drive: вход, скачивание таблиц перед прогоном и выгрузка после
  *   PhoneBridge    мост с телефонами: бирки из копии Probe в Google Drive — в Probe, Probe — на место копии
  *   MainWindow, TrayMenu
@@ -38,7 +38,7 @@ export class HostServices {
   readonly watcher = new ConsumWatcher(this.settings, this.journal, this.sync)
   readonly links = new LinksService(this.paths.linksFile, this.settings, this.runner, this.sync, this.journal)
   readonly drive = new DriveService(this.paths, this.settings, this.journal, (url) => void shell.openExternal(url))
-  readonly storage = new StorageService(this.settings, this.drive)
+  readonly storage = new StorageService(this.settings, this.drive, this.journal)
   readonly bridge = new PhoneBridge(this.paths, this.settings, this.journal, this.sync, this.drive)
   readonly window = new MainWindow(this.paths, this.settings)
   readonly tray = new TrayMenu(this.paths, this.settings, this.sync, this.journal, this.window, {
@@ -51,6 +51,7 @@ export class HostServices {
     this.journal.language = () => this.settings.getSnapshot().language
     this.settings.resolveDrive = (folder, names) => this.drive.mirror.resolve(folder, names)
     this.sync.remote = this.drive
+    this.sync.share = this.storage
     this.watcher.remote = this.drive
     this.watcher.bridge = this.bridge
     this.bridge.wake = () => this.watcher.wake()

@@ -5,9 +5,8 @@ import path from 'node:path'
 import { app, dialog, ipcMain, nativeTheme, shell } from 'electron'
 import { message } from '@/shared/messages'
 import { IPC, type ActionName, type BellEvent, type InitData, type OpenTarget } from '@/shared/protocol'
-import type { FileKind, SettingsPatch } from '@/shared/settings'
+import { MAC_VOLUMES, uncPath, type FileKind, type SettingsPatch } from '@/shared/settings'
 import type { HostServices } from './HostServices'
-import { StorageService } from './StorageService'
 
 /** Сколько записей журнала отдавать окну при открытии. */
 const INIT_ENTRIES = 300
@@ -28,6 +27,7 @@ export function registerIpc(h: HostServices): void {
     version: app.getVersion(),
     year: new Date().getFullYear(),
     platform: process.platform,
+    documents: app.getPath('documents'),
   }))
 
   ipcMain.handle(IPC.setSettings, (_e, patch: SettingsPatch) => {
@@ -46,7 +46,7 @@ export function registerIpc(h: HostServices): void {
     const s = settings.getSnapshot()
     const f = settings.files()
     const cur = current || (kind === 'consum' ? '' : f[kind]) || settings.consumFiles()[0] || f.sarjele || ''
-    const smbDir = process.platform === 'win32' ? (s.smb.host && s.smb.share ? StorageService.uncPath(s.smb) : '') : '/Volumes'
+    const smbDir = process.platform === 'win32' ? (s.smb.host && s.smb.share ? uncPath(s.smb) : '') : MAC_VOLUMES
     const startDir = cur ? path.dirname(cur) : s.target === 'smb' && smbDir ? smbDir : app.getPath('documents')
     const options = { properties: ['openFile' as const], defaultPath: startDir, filters: [{ name: 'Excel', extensions: ['xlsx', 'xlsm'] }] }
     const r = window.win ? await dialog.showOpenDialog(window.win, options) : await dialog.showOpenDialog(options)
@@ -80,12 +80,7 @@ export function registerIpc(h: HostServices): void {
     return r.response === 0
   })
 
-  ipcMain.handle(IPC.mountSmb, async () => {
-    const r = await storage.mount()
-    if (r.ok) journal.event('ok', message('event.smbMounted', { mount: r.mount || settings.getSnapshot().smb.share }))
-    else if (r.error) journal.event('err', message('event.smbFailed', { error: r.error }))
-    return { ok: r.ok, error: r.error }
-  })
+  ipcMain.handle(IPC.mountSmb, () => storage.mount())
 
   ipcMain.handle(IPC.smbPassword, () => settings.smbPassword())
 

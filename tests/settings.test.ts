@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { activeFiles, DEFAULT_SETTINGS, mergeSettings, parseSettings } from '../src/shared/settings'
+import { activeFiles, DEFAULT_SETTINGS, mergeSettings, parseSettings, uncPath } from '../src/shared/settings'
 
 test('пустой или испорченный файл — значения по умолчанию', () => {
   assert.deepEqual(parseSettings(null), DEFAULT_SETTINGS)
@@ -57,4 +57,15 @@ test('телефоны и «звонок» Firestore: по умолчанию в
   assert.equal(s.bridge, true)
   assert.deepEqual(s.firestore, { enabled: true, projectId: 'somascan-test', apiKey: 'AIzaKey' })
   assert.deepEqual(parseSettings({ firestore: 'мусор' }).firestore, DEFAULT_SETTINGS.firestore)
+})
+
+test('сетевой диск: «Без авторизации» по умолчанию выключено; сохранённое разбирается, испорченное — по умолчанию', () => {
+  assert.equal(DEFAULT_SETTINGS.smb.anonymous, false)
+  assert.equal(parseSettings({ smb: { host: 'srv', share: 'Atelier', anonymous: true } }).smb.anonymous, true)
+  assert.equal(parseSettings({ smb: { anonymous: 'да' } }).smb.anonymous, false)
+  assert.equal(mergeSettings(DEFAULT_SETTINGS, { smb: { anonymous: true } }).smb.anonymous, true)
+})
+
+test('сетевой путь общей папки в Windows: \\\\сервер\\папка', () => {
+  assert.equal(uncPath({ host: '10.0.0.5', share: 'Atelier' }), '\\\\10.0.0.5\\Atelier')
 })

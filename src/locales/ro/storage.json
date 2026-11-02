@@ -21,7 +21,11 @@
     "showPassword": "Arată parola",
     "hidePassword": "Ascunde parola",
     "mount": "Testează conexiunea",
-    "mounting": "Se conectează…"
+    "mounting": "Se conectează…",
+    "anonymous": "Fără autentificare",
+    "anonymousHintWindows": "Cu contul Windows, ca în File Explorer",
+    "anonymousHintMac": "Acces ca invitat",
+    "connected": "Conectat: {{mount}}"
   },
   "googleDrive": {
     "account": "Cont Google",
