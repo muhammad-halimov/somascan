@@ -64,7 +64,7 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
   const barRef = useRef<HTMLDivElement>(null)
   /** Парит ли панель сейчас (для появления и для перехода между «парит» и «полоса»). */
   const floatingRef = useRef(isFloating)
-  /** Идущий переход между «парит» и «полоса». */
+  /** Идущий переход между «парит» и «полоса» (null — панель на месте). */
   const liftRef = useRef<Animation | null>(null)
 
   // Высота панели — блоку фото: на столько парящая панель поднята над низом фото, и столько места над ней
@@ -84,7 +84,8 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
   }, [])
 
   // «Парит» ↔ «полоса»: панель опускается под фото (блок растёт) или поднимается на него — вместе с переходом
-  // к сетке и обратно. Новый переход начинается с того места, где панель сейчас.
+  // к сетке и обратно. Переход, начатый посреди другого, начинается с того места, где панель сейчас. Пока панель
+  // едет (`is-moving`), стекло «пилюль» размывает фото под ними и в полосе: оно не пропадает и не появляется рывком.
   useLayoutEffect(() => {
     const bar = barRef.current
     if (!bar || floatingRef.current === isFloating) return
@@ -95,7 +96,13 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
     running?.cancel()
     liftRef.current = null
     if (prefersReducedMotion()) return
-    liftRef.current = bar.animate([{ marginTop: from }, { marginTop: isFloating ? lifted : '0px' }], motionTiming())
+    const lift = bar.animate([{ marginTop: from }, { marginTop: isFloating ? lifted : '0px' }], motionTiming())
+    liftRef.current = lift
+    bar.classList.add('is-moving')
+    void lift.finished.then(() => {
+      liftRef.current = null
+      bar.classList.remove('is-moving')
+    }, () => undefined)
   }, [isFloating])
   useLayoutEffect(() => () => liftRef.current?.cancel(), [])
 
