@@ -1,41 +1,24 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
-import { flushSync } from 'react-dom'
+import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
 import { TAP_GUARD_MS, TOUCH_SLOP } from '@/lib/interaction/gestures'
 import { scrollParentOf } from '@/lib/interaction/scrollParent'
-import { prefersReducedMotion, settleTiming } from '../utils/motion'
 
-/** Свайп вбок длиннее этой доли ширины карточки — переход к соседней бирке. */
-const COMMIT_DISTANCE = 0.2
+/**
+ * Пока палец не ушёл дальше этого, px, направление свайпа ещё уточняется: первые пиксели касания шумят — большой
+ * палец идёт дугой, и свайп вниз часто начинается вкось (читался бы как свайп вбок, и наоборот).
+ */
+const AXIS_SETTLE_DISTANCE = 4 * TOUCH_SLOP
 
-/** Или быстрый взмах в ту же сторону: скорость пальца, px/мс. */
-const COMMIT_VELOCITY = 0.3
+/** Свайп засчитывается, если палец прошёл в его сторону столько, px, или взмахнул (`FLICK_VELOCITY`). */
+const SWIPE_DISTANCE = AXIS_SETTLE_DISTANCE
+
+/** Скорость взмаха, px/мс: быстрее — свайп даже короткий; обратно в конце — передумали. */
+const FLICK_VELOCITY = 0.3
 
 /** Скорость пальца — по последним столько мс движения: по одному шагу она скачет. */
 const VELOCITY_WINDOW_MS = 80
 
-/** Соседней бирки нет — фото тянется за пальцем с сопротивлением, во столько раз слабее. */
-const EDGE_RESISTANCE = 0.3
-
-/**
- * Пока палец не ушёл дальше этого, px, направление свайпа ещё уточняется: первые пиксели касания шумят — большой
- * палец идёт дугой, и свайп вниз часто начинается вкось (читался бы как свайп вбок и не открывал сетку).
- */
-const AXIS_SETTLE_DISTANCE = 4 * TOUCH_SLOP
-
-/** Свайп вниз открывает сетку, если палец прошёл столько, px, или взмахнул вниз (`COMMIT_VELOCITY`). */
-const DOWN_DISTANCE = AXIS_SETTLE_DISTANCE
-
 /** Экран прокручен к началу — с допуском на дробную прокрутку, px. */
 const SCROLL_TOP_TOLERANCE = 1
-
-/** Класс карточки, пока фото листают вбок: соседние бирки видны (PhotoCard.css). */
-const SWIPING_CLASS = 'is-swiping'
-
-/** Слои, которые едут при свайпе вбок: фото (и то, что на нём: заглушки, спиннер) и соседние бирки; кнопки стоят. */
-const SLIDING_LAYERS = '.photo-stage > :is(.photo-image-action, .photo-empty, .photo-manual, .photo-loading), .photo-pager'
-
-/** CSS-переменная карточки: зазор между фото и соседней биркой. */
-const PAGE_GAP_VAR = '--photo-page-gap'
 
 /** Направление свайпа: пока не ясно, вбок, вниз или чужой жест (прокрутка, щипок). */
 type Axis = 'pending' | 'x' | 'down' | 'none'
@@ -47,68 +30,34 @@ interface Sample {
   at: number
 }
 
-/** Доехавшее перелистывание: слои стоят на месте соседней бирки, пока бирка не сменится. */
-interface Landing {
-  layers: HTMLElement[]
-  animations: Animation[]
-}
-
-/** Сдвиг слоёв вбок, px. */
-function shiftLayers(layers: readonly HTMLElement[], px: number) {
-  for (const layer of layers) layer.style.translate = `${px}px 0`
-}
-
-/** Палец ведёт слои: каждый — своим слоем композитора (сдвиг без перерисовки). */
-function startSwipe(card: HTMLElement, layers: readonly HTMLElement[]) {
-  card.classList.add(SWIPING_CLASS)
-  for (const layer of layers) layer.style.willChange = 'translate'
-}
-
-/** Карточка без сдвига вбок: соседние бирки скрыты, слои на месте. */
-function clearSwipe(card: HTMLElement | null, layers: readonly HTMLElement[]) {
-  card?.classList.remove(SWIPING_CLASS)
-  for (const layer of layers) {
-    layer.style.translate = ''
-    layer.style.willChange = ''
-  }
-}
-
 /** Параметры `usePhotoSwipe`. */
 export interface PhotoSwipeOptions {
   /** Карточка фото: на ней ловим касания. */
   cardRef: RefObject<HTMLElement | null>
   /** Свайпы разрешены (одна бирка, фото не увеличено: тогда палец двигает фото). */
   enabled: boolean
-  /** Свайп вправо — предыдущая бирка (нет — фото только тянется и возвращается). */
+  /** Свайп вправо — предыдущая бирка: то же, что стрелка «назад» (нет — свайп ничего не делает). */
   onPrevious?: () => void
-  /** Свайп влево — следующая бирка. */
+  /** Свайп влево — следующая бирка: то же, что стрелка «вперёд». */
   onNext?: () => void
   /** Свайп вниз — сетка: то же, что кнопка «Сетка». */
   onDown: () => void
 }
 
 /**
- * Свайпы по карточке фото одной бирки: влево и вправо — к соседней бирке, сверху вниз — к сетке.
- *
- * Вбок — как галерея: фото едет за пальцем, соседняя бирка (`PhotoPeek`) въезжает рядом, без пустого места; кнопки
- * поверх фото стоят. Слои двигает `translate` (композитор, без пересчёта стилей карточки на каждый кадр).
- * Отпустили дальше `COMMIT_DISTANCE` или взмахом — фото доезжает с той скоростью, с какой его вёл палец, соседняя
- * бирка встаёт на его место, и бирка сменяется (`land` — без своего слайда); иначе фото так же плавно возвращается.
- * Касание, пока фото ещё доезжает, довершает перелистывание сразу — листать можно быстро, подряд.
- * Вниз — сетка, как по кнопке «Сетка»: тот же переход, фото за пальцем не тянется. Только когда экран прокручен
+ * Свайпы по карточке фото одной бирки — те же действия, что у кнопок, с их же анимацией: влево и вправо — стрелки
+ * (к соседней бирке), сверху вниз — «Сетка». Фото за пальцем не тянется: свайп засчитывается при отпускании —
+ * дальше `SWIPE_DISTANCE` или взмахом (взмах обратно в конце — передумали). Вниз — только когда экран прокручен
  * к началу, иначе это прокрутка.
  * Жест, который может оказаться свайпом, браузер не забирает себе (своя прокрутка и оттяжка края) с первого сдвига;
  * направление уточняется на первых `AXIS_SETTLE_DISTANCE`. Второй палец (щипок) и прокрутка свайпом не считаются;
  * клик сразу после свайпа гасится: конец свайпа не нажимает ни фото, ни кнопки карточки.
- * @returns `land()` — вызвать, когда открытая бирка сменилась: снимает доехавший сдвиг до кадра; `true` — бирку
- * сменил свайп, и её фото уже на месте (свой слайд не нужен).
  */
 export function usePhotoSwipe({ cardRef, enabled, onPrevious, onNext, onDown }: PhotoSwipeOptions) {
   const actions = useRef({ onPrevious, onNext, onDown })
   useLayoutEffect(() => {
     actions.current = { onPrevious, onNext, onDown }
   })
-  const landing = useRef<Landing | null>(null)
 
   useEffect(() => {
     const card = cardRef.current
@@ -119,83 +68,29 @@ export function usePhotoSwipe({ cardRef, enabled, onPrevious, onNext, onDown }: 
     let lastSwipeAt = -Infinity
     /** Экран прокручен к началу: свайп вниз — к сетке, а не прокрутка. */
     let atTop = true
-    /** Слои, которые ведёт палец, и их сдвиг, px. */
-    let layers: HTMLElement[] = []
-    let offset = 0
-    /** Где палец подхватил фото (оно ещё возвращалось на место), px. */
-    let caught = 0
-    /** Сдвиг, который ещё едет. */
-    let moving: Animation[] = []
-    /** Идёт доезд до соседней бирки: довершить его сразу (бирка сменится тут же); `null` — не идёт. */
-    let finishCommit: (() => void) | null = null
-
-    const setOffset = (px: number) => {
-      offset = px
-      shiftLayers(layers, px)
-    }
-    const stopSwiping = () => {
-      clearSwipe(card, layers)
-      offset = 0
-    }
-    const stopMoving = () => {
-      moving.forEach((animation) => animation.cancel())
-      moving = []
-      finishCommit = null
-    }
-    /** Сдвиг сейчас, px (и посреди анимации). */
-    const currentOffset = () => (layers[0] ? Number.parseFloat(getComputedStyle(layers[0]).translate) || 0 : 0)
-    /**
-     * Сдвиг доезжает до `to` (и держится там, пока его не снимут); по окончании — `done`. `speedX` — скорость пальца
-     * вбок, px/мс: фото отрывается от пальца с его скоростью и плавно останавливается (`settleTiming`).
-     */
-    const slideTo = (to: number, speedX: number, done: (animations: Animation[]) => void, commit = false) => {
-      stopMoving()
-      const from = offset
-      setOffset(to)
-      if (prefersReducedMotion() || from === to) return done([])
-      const timing: KeyframeAnimationOptions = { ...settleTiming(to - from, speedX * Math.sign(to - from)), fill: 'forwards' }
-      const animations = layers.map((layer) => layer.animate([{ translate: `${from}px 0` }, { translate: `${to}px 0` }], timing))
-      moving = animations
-      const settle = () => {
-        if (moving !== animations) return
-        moving = []
-        finishCommit = null
-        done(animations)
-      }
-      // Довершается синхронно, не по `finished`: обещание после `finish()` разрешается только к следующему кадру,
-      // и первый сдвиг нового касания успевал бы отменить перелистывание.
-      if (commit) finishCommit = () => {
-        animations.forEach((animation) => animation.finish())
-        settle()
-      }
-      void Promise.all(animations.map((animation) => animation.finished)).then(settle, () => {})
-    }
 
     /** Направление по сдвигу пальца от начала касания. */
     const axisOf = (dx: number, dy: number): Exclude<Axis, 'pending'> => (Math.abs(dx) > Math.abs(dy) ? 'x' : dy > 0 && atTop ? 'down' : 'none')
-    /** Палец ведёт жест в направлении `next`: вбок или вниз (направление могло уточниться — прежнее снимается). */
-    const follow = (next: 'x' | 'down') => {
-      if (next === 'x') {
-        layers = Array.from(card.querySelectorAll<HTMLElement>(SLIDING_LAYERS))
-        // Фото ещё возвращалось — палец подхватывает его там, где оно сейчас.
-        caught = moving.length > 0 ? currentOffset() : 0
-        stopMoving()
-        startSwipe(card, layers)
-      } else if (axis === 'x') {
-        stopSwiping()
-      }
-      axis = next
+
+    /** Скорость пальца по последним `VELOCITY_WINDOW_MS`. */
+    const velocity = () => {
+      const last = samples[samples.length - 1]
+      const first = last && samples.find((sample) => last.at - sample.at <= VELOCITY_WINDOW_MS)
+      if (!last || !first || last.at === first.at) return { x: 0, y: 0 }
+      return { x: (last.x - first.x) / (last.at - first.at), y: (last.y - first.y) / (last.at - first.at) }
     }
-    /** Жест — не свайп (второй палец, система забрала касание): фото возвращается на место. */
-    const abandon = () => {
-      if (axis === 'x') slideTo(0, 0, stopSwiping)
-      axis = 'none'
+
+    /** Свайп на `shift` px (знак — направление) со скоростью пальца `speed` по той же оси засчитан. */
+    const isSwipe = (shift: number, speed: number) => {
+      const direction = Math.sign(shift)
+      const flick = Math.sign(speed) === direction && Math.abs(speed) > FLICK_VELOCITY
+      const thrownBack = Math.sign(speed) === -direction && Math.abs(speed) > FLICK_VELOCITY
+      return direction !== 0 && !thrownBack && (flick || Math.abs(shift) > SWIPE_DISTANCE)
     }
 
     /**
-     * Узел, которого коснулся палец: браузер шлёт ему всё касание до конца — даже если бирка сменилась (касание
-     * довершило перелистывание) и узла уже нет в DOM; тогда до карточки события не всплывают. Поэтому движение
-     * и отпускание слушаем на нём.
+     * Узел, которого коснулся палец: браузер шлёт ему всё касание до конца — даже если бирка сменилась и узла уже нет
+     * в DOM; тогда до карточки события не всплывают. Поэтому движение и отпускание слушаем на нём.
      */
     let touched: GlobalEventHandlers | null = null
     const track = (node: EventTarget | null) => {
@@ -211,23 +106,12 @@ export function usePhotoSwipe({ cardRef, enabled, onPrevious, onNext, onDown }: 
       touched?.removeEventListener('touchcancel', onTouchCancel)
       touched = null
     }
-    const onTouchCancel = () => {
-      untrack()
-      abandon()
-    }
-
-    /** Скорость пальца по последним `VELOCITY_WINDOW_MS`. */
-    const velocity = () => {
-      const last = samples[samples.length - 1]
-      const first = last && samples.find((sample) => last.at - sample.at <= VELOCITY_WINDOW_MS)
-      if (!last || !first || last.at === first.at) return { x: 0, y: 0 }
-      return { x: (last.x - first.x) / (last.at - first.at), y: (last.y - first.y) / (last.at - first.at) }
-    }
 
     const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) return abandon()
-      // Перелистывание ещё доезжает — касание довершает его сразу: следующий свайп — уже от новой бирки.
-      finishCommit?.()
+      if (event.touches.length !== 1) {
+        axis = 'none'
+        return
+      }
       track(event.target)
       const touch = event.touches[0]!
       start = { x: touch.clientX, y: touch.clientY, at: event.timeStamp }
@@ -238,7 +122,11 @@ export function usePhotoSwipe({ cardRef, enabled, onPrevious, onNext, onDown }: 
 
     const onTouchMove = (event: TouchEvent) => {
       if (axis === 'none') return
-      if (event.touches.length !== 1) return abandon()
+      // Второй палец — щипок: не свайп.
+      if (event.touches.length !== 1) {
+        axis = 'none'
+        return
+      }
       const touch = event.touches[0]!
       const dx = touch.clientX - start.x
       const dy = touch.clientY - start.y
@@ -256,17 +144,12 @@ export function usePhotoSwipe({ cardRef, enabled, onPrevious, onNext, onDown }: 
           axis = 'none'
           return
         }
-        if (next !== 'none' && next !== axis) follow(next)
+        if (next !== 'none') axis = next
       }
-      // Палец ведёт фото, а не экран.
+      // Свайп — не прокрутка экрана.
       if (event.cancelable) event.preventDefault()
       samples.push({ x: touch.clientX, y: touch.clientY, at: event.timeStamp })
       samples = samples.filter((sample) => event.timeStamp - sample.at <= VELOCITY_WINDOW_MS * 2)
-      if (axis === 'x') {
-        const shift = caught + dx
-        const hasTarget = shift > 0 ? actions.current.onPrevious : actions.current.onNext
-        setOffset(hasTarget ? shift : shift * EDGE_RESISTANCE)
-      }
     }
 
     const onTouchEnd = (event: TouchEvent) => {
@@ -276,39 +159,24 @@ export function usePhotoSwipe({ cardRef, enabled, onPrevious, onNext, onDown }: 
       axis = 'none'
       if (current === 'none' || current === 'pending') return
       lastSwipeAt = event.timeStamp
+      const last = samples[samples.length - 1] ?? start
       const speed = velocity()
       if (current === 'down') {
-        // Как по кнопке «Сетка»: тот же переход. Взмах вверх в конце — передумали.
-        const dy = (samples[samples.length - 1]?.y ?? start.y) - start.y
-        if ((dy > DOWN_DISTANCE || speed.y > COMMIT_VELOCITY) && speed.y > -COMMIT_VELOCITY) actions.current.onDown()
+        // Как кнопка «Сетка».
+        const dy = last.y - start.y
+        if (dy > 0 && isSwipe(dy, speed.y)) actions.current.onDown()
         return
       }
-      const direction = Math.sign(offset)
-      const go = direction > 0 ? actions.current.onPrevious : actions.current.onNext
-      const far = Math.abs(offset) > card.clientWidth * COMMIT_DISTANCE
-      const flick = Math.sign(speed.x) === direction && Math.abs(speed.x) > COMMIT_VELOCITY
-      const thrownBack = Math.sign(speed.x) === -direction && Math.abs(speed.x) > COMMIT_VELOCITY
-      if (!go || direction === 0 || !(flick || (far && !thrownBack))) {
-        slideTo(0, speed.x, stopSwiping)
-        return
-      }
-      // Фото доезжает, соседняя бирка встаёт на его место — и бирка сменяется.
-      const gap = Number.parseFloat(getComputedStyle(card).getPropertyValue(PAGE_GAP_VAR)) || 0
-      const gestureLayers = layers
-      slideTo(direction * (card.clientWidth + gap), speed.x, (animations) => {
-        // Доехавший сдвиг держат анимации, пока бирка не сменится (`land`); следующий свайп — с нуля.
-        offset = 0
-        layers = []
-        landing.current = { layers: gestureLayers, animations }
-        // Сразу в DOM: следующее касание и кадр — уже с новой биркой и её соседями.
-        flushSync(go)
-        // Бирка не сменилась — сдвиг снимается здесь, иначе фото так и стояло бы за краем.
-        if (landing.current) {
-          landing.current.animations.forEach((animation) => animation.cancel())
-          landing.current = null
-          clearSwipe(card, gestureLayers)
-        }
-      }, true)
+      // Как стрелки: вправо — предыдущая бирка, влево — следующая.
+      const dx = last.x - start.x
+      if (!isSwipe(dx, speed.x)) return
+      if (dx > 0) actions.current.onPrevious?.()
+      else actions.current.onNext?.()
+    }
+
+    const onTouchCancel = () => {
+      untrack()
+      axis = 'none'
     }
 
     const onClick = (event: MouseEvent) => {
@@ -321,23 +189,8 @@ export function usePhotoSwipe({ cardRef, enabled, onPrevious, onNext, onDown }: 
     card.addEventListener('click', onClick, { capture: true })
     return () => {
       untrack()
-      stopMoving()
-      stopSwiping()
       card.removeEventListener('touchstart', onTouchStart)
       card.removeEventListener('click', onClick, { capture: true })
     }
   }, [cardRef, enabled])
-
-  /** Открытая бирка сменилась: снять доехавший сдвиг; `true` — её сменил свайп, фото уже на месте. */
-  const land = useCallback(() => {
-    const card = cardRef.current
-    const current = landing.current
-    const swiped = current !== null || Boolean(card?.classList.contains(SWIPING_CLASS))
-    landing.current = null
-    current?.animations.forEach((animation) => animation.cancel())
-    clearSwipe(card, current?.layers ?? [])
-    return swiped
-  }, [cardRef])
-
-  return { land }
 }

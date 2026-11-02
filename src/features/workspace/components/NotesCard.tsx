@@ -90,7 +90,7 @@ function itemMark(state: TagState): ReactNode {
  * шапка с заголовком и кнопками правки, номера бирок (когда их
  * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
  * открытой бирки (пока фото нет — ровные силуэты полей, во время распознавания — переливающиеся, иначе ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
- * прерывает его; удержание — сбросить все бирки), «Повтор» (удержание — распознать все бирки заново), «Далее».
+ * прерывает его; удержание — сбросить все бирки), «Повтор» (удержание — повторить все бирки), «Далее».
  * У всех кнопок — подписи.
  */
 export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, retryAllCount, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onRetryAll, onNext, sendCount, isUploading = false }: NotesCardProps) {
@@ -220,7 +220,7 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
           {...clearAllPress}
         />
         {/*
-          «Повтор»: распознать фото открытой бирки заново. Удержание — «Распознать все» (все бирки с фото);
+          «Повтор»: распознать фото открытой бирки заново. Удержание — «Повторить все» (все бирки с фото);
           когда у открытой бирки фото нет (пустая ячейка, «без фото»), а у других есть, — сразу оно.
         */}
         <ActionButton
