@@ -11,7 +11,7 @@ import type { Size } from '../utils/PhotoGeometry'
 import type { PhotoTransform } from '../hooks/usePhotoTransform'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import type { RetakeHintReason } from '../utils/retakeHint'
-import { PhotoControls } from './PhotoControls'
+import { photoState } from '../utils/photoState'
 import { PhotoFrame } from './PhotoFrame'
 import { PhotoGrid } from './PhotoGrid'
 import { RetakeHint } from './RetakeHint'
@@ -102,9 +102,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
   const photoUrl = item?.photoUrl ?? null
   const hasError = item?.hasError ?? false
-  const hasPhoto = Boolean(photoUrl) && !hasError
+  const { hasPhoto, isBusy } = photoState(item, isReceiving)
   const isManual = item?.manual ?? false
-  const isBusy = isReceiving || (item !== null && (item.isLoading || item.status.kind === 'recognizing') && !hasError)
   /** Нажатие на фото открывает просмотр, двойное — увеличивает фото к пальцу (у увеличенного — исходный вид). */
   const tapPhoto = useDoubleTap<string>({ onSingle: () => onOpen(), onDouble: (_, point) => transform.toggleZoomAt(point) })
   const overlay = usePresence(isBusy)
@@ -219,9 +218,9 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
       }
       const stage = stageRef.current
       if (!stage || !ids.has(itemIdRef.current ?? '')) return { fly: [], hide: [] }
-      // Улетает фото (у бирки без фото — её заглушка), кнопки масштаба и поворота над ним гаснут.
+      // Улетает фото (у бирки без фото — её заглушка).
       const photo = stage.querySelector<HTMLElement>('.photo-image-action, .photo-manual')
-      return { fly: photo ? [photo] : [], hide: Array.from(stage.querySelectorAll<HTMLElement>('.photo-controls')) }
+      return { fly: photo ? [photo] : [], hide: [] }
     },
   }), [])
 
@@ -308,7 +307,6 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
           </div>
         )}
 
-        {hasPhoto && !isBusy && <PhotoControls className="photo-controls anim-enter" transform={transform} showReset />}
 
         {/*
           Переходы: «Назад» к сетке слева, «Сетка» справа — над фото и над спиннером распознавания; между ними —

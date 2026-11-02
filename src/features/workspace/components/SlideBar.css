@@ -1,13 +1,38 @@
 /*
  * Панель листания — нижняя полоса блока фото (под карточкой фото, в общей рамке цвета сетки):
- * ‹, ›, «Открыть», компактные. Android и iOS 18 — кнопки в полосе; iOS 26+ — стеклянная «пилюля».
+ * ‹, ›, «Открыть» по центру, по сторонам — кнопки фото (масштаб слева, поворот и «Сброс» справа), все компактные.
+ * Android и iOS 18 — кнопки в полосе; iOS 26+ — стеклянные «пилюли».
  */
 
 .slide-bar {
-  display: flex;
+  display: grid;
   box-sizing: border-box;
-  justify-content: center;
+  /* листание — точно по центру, кнопки фото — у краёв */
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   padding: 5px 12px 6px;
+}
+
+.slide-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 240ms ease, visibility 0s;
+}
+
+.slide-bar-tools.is-start {
+  justify-self: start;
+}
+
+.slide-bar-tools.is-end {
+  justify-self: end;
+}
+
+/* Нет готового фото (сетка, пустая ячейка, загрузка, распознавание): кнопки гаснут, место за ними остаётся. */
+.slide-bar-tools.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms ease, visibility 0s 240ms;
 }
 
 /* Появление и исчезновение (высота анимируется, см. SlideBar.tsx): содержимое не вылезает за панель. */
@@ -74,7 +99,7 @@
   padding: 5px 12px 7px;
 }
 
-:root[data-platform='ios'][data-ios-design='glass'] .slide-bar-pill {
+:root[data-platform='ios'][data-ios-design='glass'] :is(.slide-bar-pill, .slide-bar-tools) {
   gap: 8px;
   padding: 3px 6px;
   background: var(--glass-bg);

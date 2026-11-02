@@ -1,7 +1,8 @@
 import { useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronRightIcon, GridIcon, ImageIcon } from '@/components/icons/Icons'
+import { AddIcon, ChevronRightIcon, GridIcon, ImageIcon, ResetIcon, RotateClockwiseIcon, ZoomOutIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
+import type { PhotoTransform } from '../hooks/usePhotoTransform'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import './SlideBar.css'
 
@@ -27,6 +28,10 @@ export interface SlideBarProps {
   onOpen: () => void
   /** Показать все бирки сеткой (у одной бирки). */
   onShowGrid: () => void
+  /** Масштаб и поворот фото открытой бирки: кнопки по сторонам от листания. */
+  transform: PhotoTransform
+  /** Фото готово (одна бирка, фото есть и не загружается, не распознаётся): кнопки масштаба и поворота видны. */
+  toolsShown: boolean
   /** Панель уходит: схлопывается по высоте и гаснет (см. `usePresence`). */
   isClosing?: boolean
 }
@@ -35,7 +40,9 @@ export interface SlideBarProps {
  * Панель листания — нижняя часть блока фото: листать бирки (уголки влево и вправо) и справа от них
  * переключатель вида: в сетке — «Открыть» (тот же значок фото, что и в углу сетки) увеличивает выбранную
  * ячейку до одной бирки, у одной бирки — «Сетка» показывает все; в сетке уголки передвигают выбор
- * по ячейкам, у одной бирки — листают бирки как слайды.
+ * по ячейкам, у одной бирки — листают бирки как слайды. По сторонам от них — кнопки фото (только у готового
+ * фото одной бирки, иначе гаснут, не сдвигая листание): слева масштаб («меньше», «больше»), справа поворот
+ * и «Сброс» (исходный масштаб и поворот).
  * Кнопки компактные, без подписей (доступные имена — для экранных дикторов); на iOS 26+ — стеклянная
  * «пилюля» внутри блока.
  *
@@ -43,8 +50,9 @@ export interface SlideBarProps {
  * что и переход к сетке, — оба движения идут вместе), кнопки проявляются; карточка результата под блоком
  * съезжает вместе с ним, а не прыгает.
  */
-export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, onOpen, onShowGrid, isClosing = false }: SlideBarProps) {
+export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, onOpen, onShowGrid, transform, toolsShown, isClosing = false }: SlideBarProps) {
   const { t } = useTranslation('workspace')
+  const { canZoomIn, canZoomOut, isPristine, zoomIn, zoomOut, rotate, reset } = transform
   const barRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
@@ -68,8 +76,9 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
     bar.classList.add('is-revealing')
     const animations = [
       bar.animate(isClosing ? [...frames].reverse() : frames, timing),
-      bar.firstElementChild?.animate(isClosing ? [...pillFrames].reverse() : pillFrames, timing),
-    ].filter((animation) => animation !== undefined)
+      // листание и кнопки фото по сторонам проявляются вместе
+      ...Array.from(bar.children, (child) => child.animate(isClosing ? [...pillFrames].reverse() : pillFrames, timing)),
+    ]
     let cancelled = false
     void Promise.all(animations.map((animation) => animation.finished)).then(() => {
       if (cancelled || isClosing) return
@@ -86,6 +95,10 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
 
   return (
     <div ref={barRef} className="slide-bar" role="group" aria-label={t('slides.group')} inert={isClosing || undefined}>
+      <div className={`slide-bar-tools is-start${toolsShown ? '' : ' is-hidden'}`} role="group" aria-label={t('photo.controls')} inert={!toolsShown || undefined}>
+        <ActionButton size={32} icon={<ZoomOutIcon />} caption={t('controls.zoomOut')} label={t('photo.zoomOut')} disabled={!canZoomOut} onClick={zoomOut} />
+        <ActionButton size={32} icon={<AddIcon />} caption={t('controls.zoomIn')} label={t('photo.zoomIn')} disabled={!canZoomIn} onClick={zoomIn} />
+      </div>
       <div className="slide-bar-pill">
         <ActionButton
           className="slide-bar-previous"
@@ -110,6 +123,10 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
         ) : (
           <ActionButton key="grid" className="slide-bar-toggle" size={32} icon={<GridIcon />} caption={t('slides.grid')} label={t('slides.gridLabel')} onClick={onShowGrid} />
         )}
+      </div>
+      <div className={`slide-bar-tools is-end${toolsShown ? '' : ' is-hidden'}`} role="group" aria-label={t('photo.controls')} inert={!toolsShown || undefined}>
+        <ActionButton size={32} icon={<RotateClockwiseIcon />} caption={t('controls.rotate')} label={t('photo.rotate')} onClick={rotate} />
+        <ActionButton size={32} icon={<ResetIcon />} caption={t('controls.reset')} label={t('controls.resetLabel')} disabled={isPristine} onClick={reset} />
       </div>
     </div>
   )

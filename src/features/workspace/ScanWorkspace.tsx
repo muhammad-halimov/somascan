@@ -17,6 +17,7 @@ import { useSendSelected } from './hooks/useSendSelected'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
 import { IDLE, isRecognizable, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
+import { photoState } from './utils/photoState'
 import { retakeHintReason } from './utils/retakeHint'
 import { tagState } from './utils/tagState'
 import './ScanWorkspace.css'
@@ -359,6 +360,9 @@ export function ScanWorkspace() {
 
   /** Панель листания — когда есть что листать или открыта сетка (из неё надо выйти и в пустом списке). */
   const hasSlideBar = session.items.length > 0 || view === 'grid'
+  /** Фото открытой бирки готово (есть, не загружается и не распознаётся): кнопки масштаба и поворота — в панели листания. */
+  const { hasPhoto: photoShown, isBusy: photoBusy } = photoState(item, picker.isReceiving)
+  const photoReady = photoShown && !photoBusy
   /** Панель выезжает и уходит плавно: пока она схлопывается, остаётся в DOM. */
   const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
 
@@ -410,6 +414,8 @@ export function ScanWorkspace() {
             onNext={() => goNext?.()}
             onOpen={closeGrid}
             onShowGrid={showGrid}
+            transform={transform}
+            toolsShown={view === 'single' && photoReady}
           />
         )}
       </div>
