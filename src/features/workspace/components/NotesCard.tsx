@@ -34,6 +34,8 @@ export interface NotesCardProps {
   hasPhoto: boolean
   /** «Повтор» доступен: у бирки есть фото (бирку без фото распознавать нечего). */
   canRetry: boolean
+  /** Сколько бирок распознает заново удержание «Повтора». */
+  retryAllCount: number
   /** Бирка без фото: поля заполняют вручную, поля по умолчанию обязательны. */
   isManual: boolean
   /** Плавка открытой бирки повторяется (`heatDuplicates`). */
@@ -54,6 +56,8 @@ export interface NotesCardProps {
   onCancel: () => void
   /** «Повтор»: распознать то же фото заново. */
   onRetry: () => void
+  /** Удержание «Повтора» (или нажатие, когда у открытой бирки фото нет): распознать заново все бирки. */
+  onRetryAll: () => void
   /** «Далее»: поставить выбранные бирки в очередь выгрузки в таблицу. */
   onNext: () => void
   /** Сколько бирок выбрано для отправки (на «Далее» — счётчик, если их больше одной). */
@@ -86,11 +90,13 @@ function itemMark(state: TagState): ReactNode {
  * шапка с заголовком и кнопками правки, номера бирок (когда их
  * несколько — переход к любой: вкладки Material на Android, сегменты на iOS), распознанные поля
  * открытой бирки (пока фото нет — ровные силуэты полей, во время распознавания — переливающиеся, иначе ошибка) и панель действий «Фото», «Сброс» (во время распознавания —
- * прерывает его), «Повтор», «Далее». У всех кнопок — подписи.
+ * прерывает его; удержание — сбросить все бирки), «Повтор» (удержание — распознать все бирки заново), «Далее».
+ * У всех кнопок — подписи.
  */
-export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onNext, sendCount, isUploading = false }: NotesCardProps) {
+export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex, onSelectItem, isEditing, status, hasPhoto, canRetry, retryAllCount, isManual, heatDuplicate = null, onFieldChange, onToggleEdit, onCloseEdit, onAddPhoto, onClear, onClearAll, onCancel, onRetry, onRetryAll, onNext, sendCount, isUploading = false }: NotesCardProps) {
   const { t } = useTranslation(['workspace', 'errors', 'label'])
   const clearAllPress = useLongPress(onClearAll)
+  const retryAllPress = useLongPress(onRetryAll)
   const isRecognizing = status.kind === 'recognizing'
   // Фото ещё нет: на местах плашки и полей — ровные силуэты (при распознавании они же переливаются).
   const isIdle = status.kind === 'idle'
@@ -213,7 +219,18 @@ export function NotesCard({ cardRef, itemKey, itemCount, itemStates, activeIndex
           onClick={!hasPhoto ? onClearAll : isRecognizing ? onCancel : onClear}
           {...clearAllPress}
         />
-        <ActionButton icon={<ResetIcon />} caption={t('actions.retry')} label={t('actions.retryLabel')} disabled={!canRetry || isRecognizing} onClick={onRetry} />
+        {/*
+          «Повтор»: распознать фото открытой бирки заново. Удержание — «Распознать все» (все бирки с фото);
+          когда у открытой бирки фото нет (пустая ячейка, «без фото»), а у других есть, — сразу оно.
+        */}
+        <ActionButton
+          icon={<ResetIcon />}
+          caption={t('actions.retry')}
+          label={canRetry ? t('actions.retryLabel') : t('actions.retryAllLabel')}
+          disabled={isRecognizing || (!canRetry && retryAllCount === 0)}
+          onClick={canRetry ? onRetry : onRetryAll}
+          {...retryAllPress}
+        />
         <ActionButton
           variant="accent"
           icon={<NextIcon />}

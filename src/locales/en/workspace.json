@@ -64,6 +64,7 @@
     "clearAllLabel": "Reset all tags",
     "retry": "Retry",
     "retryLabel": "Recognize again",
+    "retryAllLabel": "Recognize all tags again",
     "next": "Next",
     "nextLabel": "Send to the table",
     "uploading": "Sending…",
@@ -80,6 +81,12 @@
     "title": "Reset all tags?",
     "message": "The photos and data of all tags on screen ({{count}}) will be deleted.",
     "confirm": "Reset all"
+  },
+  "retryAllDialog": {
+    "sheetTitle": "Tags with photos: {{count}}",
+    "title": "Recognize all tags again?",
+    "message": "The recognized data of the tags ({{count}}) will be replaced with new results.",
+    "confirm": "Recognize all"
   },
   "removeDialog": {
     "title": "Remove this tag?",

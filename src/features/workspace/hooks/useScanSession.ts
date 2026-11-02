@@ -64,6 +64,9 @@ export interface ScanItem {
   manual: boolean
 }
 
+/** У бирки есть фото, которое можно распознать заново (бирка не «без фото»). */
+export const isRecognizable = (item: ScanItem) => !item.manual && item.photoUrl !== ''
+
 /** Значения, которые выбирают вручную (форма поставки, лист журнала): переживают новое распознавание. */
 const CHOSEN_KEYS: readonly LabelKey[] = [PRODUCT_FORM_KEY, ...MANUAL_FIELD_KEYS]
 
@@ -312,7 +315,12 @@ export function useScanSession() {
   const retry = useCallback((index: number) => {
     const item = itemsRef.current[index]
     // Без фото распознавать нечего.
-    if (item && !item.manual) schedule(item.id)
+    if (item && isRecognizable(item)) schedule(item.id)
+  }, [schedule])
+
+  /** Распознаёт заново фото всех бирок — по очереди, как новые; уже распознаваемые не начинаются с начала. */
+  const retryAll = useCallback(() => {
+    for (const item of itemsRef.current) if (isRecognizable(item) && item.status.kind !== 'recognizing') schedule(item.id)
   }, [schedule])
 
   /** Отменяет распознавание бирки `index` по просьбе пользователя: фото остаётся, результат — «отменено». */
@@ -374,6 +382,7 @@ export function useScanSession() {
     select,
     setRotation,
     retry,
+    retryAll,
     abort,
     updateField,
     restoreLabel,

@@ -16,7 +16,7 @@ import { useHeatDuplicates } from './hooks/useHeatDuplicates'
 import { useSendSelected } from './hooks/useSendSelected'
 import { usePhotoPicker } from './hooks/usePhotoPicker'
 import { usePhotoTransform } from './hooks/usePhotoTransform'
-import { IDLE, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
+import { IDLE, isRecognizable, MAX_SCAN_ITEMS, useScanSession } from './hooks/useScanSession'
 import { retakeHintReason } from './utils/retakeHint'
 import { tagState } from './utils/tagState'
 import './ScanWorkspace.css'
@@ -288,6 +288,37 @@ export function ScanWorkspace() {
     session.retry(activeIndex)
   }
 
+  /** Бирки, которые «Повтор всех» распознает заново: с фото и не распознаваемые прямо сейчас. */
+  const retryable = session.items.filter((candidate) => isRecognizable(candidate) && candidate.status.kind !== 'recognizing')
+
+  /**
+   * Удержание «Повтора»: распознать заново все бирки. Как у «Сброса»: панель действий с одним пунктом
+   * «Распознать все» (без «Отмены»: закрывается касанием мимо или «Назад»); если распознанные данные
+   * заменятся, затем подтверждение.
+   */
+  const retryAll = async () => {
+    const count = retryable.length
+    if (count === 0) return
+    const choice = await NativeDialogs.showActions({
+      title: t('retryAllDialog.sheetTitle', { count }),
+      cancelable: true,
+      options: [{ title: t('retryAllDialog.confirm') }],
+    })
+    if (choice?.index !== 0) return
+    const replaced = retryable.filter((candidate) => candidate.status.kind === 'done').length
+    if (replaced > 0) {
+      const confirmed = await NativeDialogs.confirm({
+        title: t('retryAllDialog.title'),
+        message: t('retryAllDialog.message', { count: replaced }),
+        okButtonTitle: t('retryAllDialog.confirm'),
+        cancelButtonTitle: t('common:cancel'),
+      })
+      if (!confirmed) return
+    }
+    editMode.exit()
+    session.retryAll()
+  }
+
   /** Делает бирку `index` открытой: номера бирок в карточке результата, одно нажатие на ячейку сетки. */
   const selectItem = (index: number) => {
     if (index !== activeIndex) session.select(index)
@@ -392,7 +423,8 @@ export function ScanWorkspace() {
         isEditing={editMode.isEditing}
         status={status}
         hasPhoto={item !== null}
-        canRetry={item !== null && !item.manual && item.photoUrl !== ''}
+        canRetry={item !== null && isRecognizable(item)}
+        retryAllCount={retryable.length}
         isManual={item?.manual ?? false}
         heatDuplicate={item ? duplicates.get(item.id) ?? null : null}
         onFieldChange={changeField}
@@ -403,6 +435,7 @@ export function ScanWorkspace() {
         onClearAll={() => void clearAll()}
         onCancel={() => session.abort(activeIndex)}
         onRetry={retry}
+        onRetryAll={() => void retryAll()}
         onNext={() => void sender.send()}
         sendCount={selectedCount}
         isUploading={sender.isHandingOff}

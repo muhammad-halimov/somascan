@@ -64,6 +64,7 @@
     "clearAllLabel": "Resetează toate etichetele",
     "retry": "Reia",
     "retryLabel": "Recunoaște din nou",
+    "retryAllLabel": "Recunoaște din nou toate etichetele",
     "next": "Înainte",
     "nextLabel": "Trimite în tabel",
     "uploading": "Se trimite…",
@@ -80,6 +81,12 @@
     "title": "Resetați toate etichetele?",
     "message": "Fotografiile și datele tuturor etichetelor de pe ecran ({{count}}) vor fi șterse.",
     "confirm": "Resetează tot"
+  },
+  "retryAllDialog": {
+    "sheetTitle": "Etichete cu fotografie: {{count}}",
+    "title": "Recunoașteți din nou toate etichetele?",
+    "message": "Datele recunoscute ale etichetelor ({{count}}) vor fi înlocuite cu rezultate noi.",
+    "confirm": "Recunoaște tot"
   },
   "removeDialog": {
     "title": "Eliminați eticheta?",
