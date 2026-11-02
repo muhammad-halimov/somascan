@@ -41,6 +41,8 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  /* Скругление карточки: в переходе к сетке фото уменьшается вместе с ним, анимировать радиус не нужно. */
+  border-radius: inherit;
   background: var(--photo-empty-bg);
   transform-origin: 0 0;
 }
@@ -413,7 +415,11 @@
   backdrop-filter: none !important;
 }
 
-.photo-card.is-zooming :is(.photo-stage, .photo-grid) {
+/*
+ * Фото и сетка — всегда своими слоями GPU: переход между ними только двигает и проявляет готовые слои
+ * (композитор), не создаёт и не растеризует их заново в первые кадры — иначе начало перехода подёргивалось.
+ */
+:is(.photo-stage, .photo-grid) {
   will-change: transform, opacity;
 }
 

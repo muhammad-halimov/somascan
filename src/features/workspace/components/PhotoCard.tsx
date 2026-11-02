@@ -123,9 +123,6 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   const cardRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
-  /** Сетка в DOM: с начала перехода к ней и до конца перехода обратно. */
-  const [gridMounted, setGridMounted] = useState(view === 'grid')
-  if (view === 'grid' && !gridMounted) setGridMounted(true)
   /** Вид после окончания перехода: пока переход идёт, видны оба слоя. */
   const [settledView, setSettledView] = useState(view)
   const shownView = useRef(view)
@@ -146,10 +143,7 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
     const finish = () => {
       // Сразу в DOM: иначе между концом анимации и отрисовкой React мелькнул бы прежний слой
       // (например, сетка целиком — в конце перехода к одной бирке).
-      flushSync(() => {
-        setSettledView(view)
-        if (view === 'single') setGridMounted(false)
-      })
+      flushSync(() => setSettledView(view))
     }
     const card = cardRef.current
     const stage = stageRef.current
@@ -160,6 +154,8 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
       return
     }
     // На время перехода — без размытия под кнопками (дорого для композитора, переход дёргался бы) и без колец ячеек.
+    // Анимируются только `transform` и `opacity`: их целиком ведёт GPU (композитор), без работы основного потока
+    // на каждый кадр. Скругление фото — постоянное (PhotoCard.css) и уменьшается вместе с ним.
     card.classList.add('is-zooming')
     const box = card.getBoundingClientRect()
     const rect = cell.getBoundingClientRect()
@@ -169,24 +165,14 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
     // Фото в ячейке и сетка, увеличенная так, что ячейка закрывает карточку (transform-origin — левый верхний угол).
     const stageInCell = `translate(${cx - (box.width / 2) * scale}px, ${cy - (box.height / 2) * scale}px) scale(${scale})`
     const gridAtCell = `translate(${box.width / 2 - cx / scale}px, ${box.height / 2 - cy / scale}px) scale(${1 / scale})`
-    // Фото в ячейке скруглено, как ячейка (радиус — в масштабе уменьшенного фото).
-    const cellRadius = `${Number.parseFloat(getComputedStyle(cell).borderTopLeftRadius) / scale || 0}px`
     const timing = { ...motionTiming(), fill: 'both' as const }
     const animations = view === 'grid'
       ? [
-          stage.animate([
-            { transform: 'none', opacity: 1, borderRadius: '0px' },
-            { opacity: 0, offset: 0.5 },
-            { transform: stageInCell, opacity: 0, borderRadius: cellRadius },
-          ], timing),
+          stage.animate([{ transform: 'none', opacity: 1 }, { opacity: 0, offset: 0.5 }, { transform: stageInCell, opacity: 0 }], timing),
           grid.animate([{ transform: gridAtCell, opacity: 0 }, { opacity: 1, offset: 0.35 }, { transform: 'none', opacity: 1 }], timing),
         ]
       : [
-          stage.animate([
-            { transform: stageInCell, opacity: 0, borderRadius: cellRadius },
-            { opacity: 1, offset: 0.55 },
-            { transform: 'none', opacity: 1, borderRadius: '0px' },
-          ], timing),
+          stage.animate([{ transform: stageInCell, opacity: 0 }, { opacity: 1, offset: 0.55 }, { transform: 'none', opacity: 1 }], timing),
           grid.animate([{ transform: 'none', opacity: 1 }, { opacity: 1, offset: 0.4 }, { transform: gridAtCell, opacity: 0 }], timing),
         ]
     let cancelled = false
@@ -337,9 +323,10 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
         </div>
       </div>
 
-      {gridMounted && (
-        <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onSelect={onSelectCell} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
-      )}
+      {/*
+        Сетка в DOM всегда (у одной бирки — прозрачна): переход к ней не ждёт её сборки и отрисовки — только анимацию.
+      */}
+      <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} hidden={view === 'single' && settledView === 'single'} interactive={view === 'grid'} onSelect={onSelectCell} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
 
       {/* В сетке — «Открыть» выбранную бирку на месте «Сетки», с подписью (дублирует кнопку панели листания); уходит, растворяясь. */}
       {gridSingle.mounted && (

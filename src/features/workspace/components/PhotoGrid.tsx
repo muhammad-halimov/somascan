@@ -17,6 +17,8 @@ export interface PhotoGridProps {
   items: readonly ScanItem[]
   /** Открытая бирка (`items.length` — следующая пустая ячейка). */
   activeIndex: number
+  /** Открыта одна бирка: сетка прозрачна (но собрана и отрисована — переход к ней не ждёт ни сборки, ни отрисовки). */
+  hidden: boolean
   /** Сетка на экране (во время перехода к одной бирке нажатия не принимаются). */
   interactive: boolean
   /** Перенести рамку на бирку, не выходя из сетки (нажатие на другую бирку, перенос рамки пальцем). */
@@ -40,7 +42,7 @@ export interface PhotoGridProps {
  * вести пальцем по ячейкам сетки (`useGridDragSelect`). Когда бирки уходят
  * (отправка, «Сброс»), оставшиеся плавно переезжают на освободившиеся места.
  */
-export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, onOpen, onToggleSelected }: PhotoGridProps) {
+export function PhotoGrid({ gridRef, items, activeIndex, hidden, interactive, onSelect, onOpen, onToggleSelected }: PhotoGridProps) {
   const { t } = useTranslation('workspace')
   const { advanced } = useSettings()
   const duplicates = useHeatDuplicates(items)
@@ -71,7 +73,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, interactive, onSelect, 
   }, [items, interactive, gridRef])
 
   return (
-    <div ref={gridRef} className="photo-grid" role="group" aria-label={t('grid.region')} inert={!interactive || undefined}>
+    <div ref={gridRef} className={`photo-grid${hidden ? ' is-hidden' : ''}`} role="group" aria-label={t('grid.region')} inert={!interactive || undefined}>
       {Array.from({ length: MAX_SCAN_ITEMS }, (_, index) => {
         const item = items[index]
         const number = index + 1

@@ -45,6 +45,15 @@
   transform-origin: 0 0;
 }
 
+/*
+ * Открыта одна бирка: сетка прозрачна и неактивна (`inert`), но собрана и отрисована своим слоем — переход к ней
+ * сразу начинается, без сборки, раскладки и растеризации миниатюр.
+ */
+.photo-grid.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .photo-grid-cell {
   position: relative;
   min-width: 0;
