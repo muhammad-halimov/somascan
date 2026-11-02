@@ -11,6 +11,7 @@ import { NotesCard } from './components/NotesCard'
 import { PhotoCard, type PhotoCardHandle, type PhotoCardView } from './components/PhotoCard'
 import { PhotoViewer } from './components/PhotoViewer'
 import { SLIDE_BAR_EXIT_MS, SlideBar } from './components/SlideBar'
+import { useContentUnderHeader } from './hooks/useContentUnderHeader'
 import { useEditMode } from './hooks/useEditMode'
 import { useHeatDuplicates } from './hooks/useHeatDuplicates'
 import { useSendSelected } from './hooks/useSendSelected'
@@ -42,6 +43,7 @@ export function ScanWorkspace() {
   /** Карточка фото: одна бирка или сетка. */
   const [view, setView] = useState<PhotoCardView>('single')
   const workspaceRef = useRef<HTMLElement>(null)
+  useContentUnderHeader(workspaceRef)
   const notesCardRef = useRef<HTMLDivElement>(null)
   const photoCardRef = useRef<PhotoCardHandle>(null)
 

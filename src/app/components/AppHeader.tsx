@@ -14,13 +14,15 @@ export interface AppHeaderProps {
   openPanel: AppPanel | null
   /** Открывает или закрывает панель. */
   onTogglePanel: (panel: AppPanel) => void
+  /** Касание кнопки панели: панель, скорее всего, сейчас откроется. */
+  onPreparePanel: () => void
 }
 
 /**
  * Шапка: логотип и рядом название приложения, кнопки «Загрузки» (со счётчиком очереди) и «Настройки»
  * с подписями. Название — шрифтом высотой с логотип; если до кнопок места меньше, оно уменьшается само.
  */
-export function AppHeader({ openPanel, onTogglePanel }: AppHeaderProps) {
+export function AppHeader({ openPanel, onTogglePanel, onPreparePanel }: AppHeaderProps) {
   const { t } = useTranslation(['common', 'uploads', 'settings'])
   const appName = t('appName')
   const uploads = useStore(uploadStore)
@@ -46,6 +48,7 @@ export function AppHeader({ openPanel, onTogglePanel }: AppHeaderProps) {
           badgeTone={failed ? 'danger' : 'accent'}
           active={openPanel === 'uploads'}
           aria-expanded={openPanel === 'uploads'}
+          onPointerDown={onPreparePanel}
           onClick={() => onTogglePanel('uploads')}
           // Сюда прилетают фото отправленных бирок (см. workspace/utils/sendFlight.ts).
           data-fly-target="uploads"
@@ -57,6 +60,7 @@ export function AppHeader({ openPanel, onTogglePanel }: AppHeaderProps) {
           active={openPanel === 'settings'}
           aria-haspopup="dialog"
           aria-expanded={openPanel === 'settings'}
+          onPointerDown={onPreparePanel}
           onClick={() => onTogglePanel('settings')}
         />
       </nav>

@@ -9,6 +9,8 @@ import { Tabs } from '@/components/ui/Tabs'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { HEIGHT_EASING, heightDurationFor } from '@/hooks/useHeightTransition'
 import { useResolvedTheme } from '@/hooks/useTheme'
+import { useFrozenGlass, type FrozenGlass } from '@/lib/glass/frozenGlass'
+import { FrozenGlassLayer } from '@/lib/glass/FrozenGlassLayer'
 import { modelCatalog } from '@/features/recognition/catalog/ModelCatalog'
 import { settingsStore } from './store/SettingsStore'
 import { useSettings } from './store/useSettings'
@@ -40,6 +42,8 @@ export interface SettingsSheetProps {
   isClosing: boolean
   /** Просьба закрыть: нажатие вне окна, крестик, системное «Назад». */
   onClose: () => void
+  /** Стекло окна — размытый снимок экрана (null — живое размытие). */
+  glass: FrozenGlass | null
 }
 
 /**
@@ -48,7 +52,7 @@ export interface SettingsSheetProps {
  * Закрывается только нажатием вне окна или крестиком: свайпы внутри окна
  * прокручивают содержимое и окно не закрывают.
  */
-export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
+export function SettingsSheet({ isClosing, onClose, glass }: SettingsSheetProps) {
   const { t } = useTranslation(['settings', 'common'])
   const { general } = useSettings()
   const theme = useResolvedTheme(general.theme)
@@ -73,6 +77,7 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
   useBodyScrollLock(true)
 
   const modalRef = useRef<HTMLElement>(null)
+  const frozenGlass = useFrozenGlass(modalRef, glass)
   /**
    * Высота окна до смены вкладки или содержимого вкладки (`useSheetResize`): от неё окно плавно переходит к новой
    * высоте, а с ней и к новому положению (оно стоит в свободном месте по пропорции, см. `SettingsSheet.css`).
@@ -144,7 +149,9 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-title"
+        data-frozen-glass={frozenGlass ? '' : undefined}
       >
+        <FrozenGlassLayer glass={frozenGlass} />
         <PanelHeader
           titleId="settings-title"
           title={t('title')}

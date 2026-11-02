@@ -18,6 +18,7 @@
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		64B60DB2A9E541F3B3CBACF9 /* SomascanBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BF57231BA3D45A2B3A2BADE /* SomascanBridgeViewController.swift */; };
 		4E78A83DDC3F4721A1EF9968 /* NativeThemePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49953009BE9C451CA388DF3D /* NativeThemePlugin.swift */; };
+		88F3D9D2FB0532261F94F588 /* ScreenSnapshotPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04A515BFDAA0F16BCAD9B92B /* ScreenSnapshotPlugin.swift */; };
 		68A33DFE00F3209F455E1485 /* SmbShareClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5292DA4344030A8D9E3721EE /* SmbShareClient.swift */; };
 		4509D23B78F7E73B919E3918 /* SmbSharePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = E644384EEB2C1395EE9AA672 /* SmbSharePlugin.swift */; };
 		66AB3C8A17CD63AC81FD3AF8 /* AMSMB2 in Frameworks */ = {isa = PBXBuildFile; productRef = 55089DC9749F9AD079742346 /* AMSMB2 */; };
@@ -50,6 +51,7 @@
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		5BF57231BA3D45A2B3A2BADE /* SomascanBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SomascanBridgeViewController.swift; sourceTree = "<group>"; };
 		49953009BE9C451CA388DF3D /* NativeThemePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeThemePlugin.swift; sourceTree = "<group>"; };
+		04A515BFDAA0F16BCAD9B92B /* ScreenSnapshotPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSnapshotPlugin.swift; sourceTree = "<group>"; };
 		5292DA4344030A8D9E3721EE /* SmbShareClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmbShareClient.swift; sourceTree = "<group>"; };
 		E644384EEB2C1395EE9AA672 /* SmbSharePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmbSharePlugin.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -151,6 +153,7 @@
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				5BF57231BA3D45A2B3A2BADE /* SomascanBridgeViewController.swift */,
 				49953009BE9C451CA388DF3D /* NativeThemePlugin.swift */,
+				04A515BFDAA0F16BCAD9B92B /* ScreenSnapshotPlugin.swift */,
 				5292DA4344030A8D9E3721EE /* SmbShareClient.swift */,
 				E644384EEB2C1395EE9AA672 /* SmbSharePlugin.swift */,
 				E8FBE714201AF0C1C979E31F /* GoogleDriveAuthPlugin.swift */,
@@ -307,6 +310,7 @@
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				64B60DB2A9E541F3B3CBACF9 /* SomascanBridgeViewController.swift in Sources */,
 				4E78A83DDC3F4721A1EF9968 /* NativeThemePlugin.swift in Sources */,
+				88F3D9D2FB0532261F94F588 /* ScreenSnapshotPlugin.swift in Sources */,
 				68A33DFE00F3209F455E1485 /* SmbShareClient.swift in Sources */,
 				4509D23B78F7E73B919E3918 /* SmbSharePlugin.swift in Sources */,
 				DDB230B26D8276B886E1424B /* GoogleDriveAuthPlugin.swift in Sources */,

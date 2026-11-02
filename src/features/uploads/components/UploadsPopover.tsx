@@ -6,6 +6,8 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { List, ListItem } from '@/components/ui/List'
 import { PanelHeader } from '@/components/ui/PanelHeader'
 import { Tabs } from '@/components/ui/Tabs'
+import { useFrozenGlass, type FrozenGlass } from '@/lib/glass/frozenGlass'
+import { FrozenGlassLayer } from '@/lib/glass/FrozenGlassLayer'
 import { useStore } from '@/lib/store/useStore'
 import { EXIT_ANIMATION_MS } from '@/hooks/usePresence'
 import { isMissingValue } from '@/features/recognition/label/labelFields'
@@ -22,6 +24,8 @@ export interface UploadsPopoverProps {
   isClosing: boolean
   /** Просьба закрыть: нажатие вне панели, Escape, крестик. */
   onClose: () => void
+  /** Стекло панели — размытый снимок экрана (null — живое размытие). */
+  glass: FrozenGlass | null
 }
 
 /** Иконка состояния записи. */
@@ -40,12 +44,13 @@ type UploadsTab = 'queue' | 'done'
  * повторить или отменить) и «История» (записанные: лист, строка, номер элемента; их можно удалить
  * из истории); под вкладками — узкая лента: сколько бирок и что с ними. У каждой записи — состояние и причина сбоя. Закрывается нажатием вне панели или крестиком.
  */
-export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
+export function UploadsPopover({ isClosing, onClose, glass }: UploadsPopoverProps) {
   const { t, i18n } = useTranslation(['uploads', 'label', 'common'])
   const records = useStore(uploadStore)
   const formatter = useLabelFormatter()
   const errorText = useUploadErrorText()
   const popoverRef = useRef<HTMLElement>(null)
+  const frozenGlass = useFrozenGlass(popoverRef, glass)
   /** Записи, которые сейчас уезжают с анимацией удаления. */
   const [removing, setRemoving] = useState<ReadonlySet<string>>(new Set())
   const queued = records.filter((record) => record.status !== 'completed')
@@ -190,7 +195,13 @@ export function UploadsPopover({ isClosing, onClose }: UploadsPopoverProps) {
   }
 
   return (
-    <section ref={popoverRef} className={`uploads-popover${isClosing ? ' is-closing' : ''}`} aria-labelledby="uploads-title">
+    <section
+      ref={popoverRef}
+      className={`uploads-popover${isClosing ? ' is-closing' : ''}`}
+      aria-labelledby="uploads-title"
+      data-frozen-glass={frozenGlass ? '' : undefined}
+    >
+      <FrozenGlassLayer glass={frozenGlass} />
       <PanelHeader
         titleId="uploads-title"
         title={t('title')}

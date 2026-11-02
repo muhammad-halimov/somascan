@@ -24,6 +24,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(UploadEnginePlugin.class);
         // Распознавание бирки на устройстве: ML Kit читает текст и коды без сети.
         registerPlugin(TagOcrPlugin.class);
+        // Стекло окон «Настройки» и «Загрузки»: снимок экрана под окном, размытый один раз.
+        registerPlugin(ScreenSnapshotPlugin.class);
         super.onCreate(savedInstanceState);
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

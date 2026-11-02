@@ -19,6 +19,8 @@ final class SomascanBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(UploadEnginePlugin())
         // Распознавание бирки на устройстве: Vision читает текст и коды без сети.
         bridge?.registerPluginInstance(TagOcrPlugin())
+        // Стекло окон «Настройки» и «Загрузки»: снимок экрана под окном, размытый один раз.
+        bridge?.registerPluginInstance(ScreenSnapshotPlugin())
 
         guard let webView = bridge?.webView else { return }
         let scrollView = webView.scrollView

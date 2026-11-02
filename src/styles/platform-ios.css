@@ -48,6 +48,8 @@
   --glass-control: color-mix(in srgb, var(--text-h) 8%, transparent);
   /* Окна с текстом плотнее панелей: содержимое под ними не должно мешать читать. */
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 92%, transparent);
+  /* Размытие стекла iOS 27 — и окон «Настройки» и «Загрузки» на любой версии: неподвижное стекло окон (снимок экрана) размывается им же. */
+  --glass-window-blur: saturate(190%) blur(26px);
 }
 
 /* Окна «Настройки» и «Загрузки» — чуть круглее главного экрана: поля, списки и кнопки 18, окно 30, сегменты 16/14. */
@@ -65,7 +67,7 @@
 :root[data-platform='ios'] :is(.settings-modal, .uploads-popover) {
   /* glass: прозрачнее, сильнее размытие, светлый блик по верхней кромке и мягкая тень. */
   --glass-bg: color-mix(in srgb, var(--bg) 58%, transparent);
-  --glass-blur: saturate(190%) blur(26px);
+  --glass-blur: var(--glass-window-blur);
   --glass-border: rgb(255 255 255 / 55%);
   --glass-shadow:
     inset 0 1px 0 rgb(255 255 255 / 70%),
@@ -151,6 +153,16 @@
   pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
   mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+/*
+ * Экран в начале — под шапкой ровный фон: размытие его не меняет, а GPU пересчитывал бы край (и стеклянную панель
+ * над ним) на каждом кадре движения фото у верхней кромки. Край размывает, только когда под шапку заехало
+ * содержимое (`useContentUnderHeader`) или под ней полоса «Нет сети».
+ */
+:root[data-platform='ios'][data-ios-design='glass']:not([data-content-under-header], :has(.offline-banner)) .app-header::before {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Подписи «Загрузки» и «Настройки» помещаются целиком: кнопки в шапке шире круга-пилюли. */
@@ -265,12 +277,15 @@
  * прозрачнее на это затемнение (`--glass-sheet-dimmed-bg`): экран сквозь него виден так же, как у «Загрузок».
  */
 :root[data-platform='ios'] .settings-backdrop {
-  background: rgb(0 0 0 / 28%);
+  --window-dim: rgb(0 0 0 / 28%);
+  background: var(--window-dim);
 }
 
 :root[data-platform='ios'] .settings-modal,
 :root[data-platform='ios'] .uploads-popover {
-  background: var(--glass-sheet-bg);
+  /* Тон стекла окна. */
+  --window-tint: var(--glass-sheet-bg);
+  background: var(--window-tint);
   border: 1px solid var(--glass-border);
   border-radius: var(--ios-radius-sheet);
   box-shadow: var(--glass-shadow), 0 24px 80px rgb(0 0 0 / 22%);
@@ -279,7 +294,41 @@
 }
 
 :root[data-platform='ios'] .settings-modal {
-  background: var(--glass-sheet-dimmed-bg);
+  --window-tint: var(--glass-sheet-dimmed-bg);
+}
+
+/*
+ * Неподвижное стекло окна (`lib/glass/frozenGlass.ts`): под открытым окном экран не движется, поэтому вместо живого
+ * размытия — снимок экрана перед открытием, размытый тем же фильтром (`--glass-window-blur`). На вид то же стекло,
+ * но GPU не пересчитывает размытие всей площади окна на каждом кадре прокрутки, смены вкладки, нажатия.
+ */
+:root[data-platform='ios'] :is(.settings-modal, .uploads-popover)[data-frozen-glass] {
+  /* Слой снимка — под содержимым окна, но над его фоном. */
+  isolation: isolate;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-platform='ios'] .settings-modal[data-frozen-glass] {
+  position: relative;
+}
+
+/*
+ * Слой снимка (`FrozenGlassLayer`): снимок во весь экран, сдвинут так, что совпадает с экраном; сверху — затемнение
+ * под окном (у «Настроек») и тон окна, как у живого стекла. Свой слой композитора: растрируется один раз, а смена
+ * высоты окна меняет только обрезку.
+ */
+:root[data-platform='ios'] .frozen-glass {
+  position: absolute;
+  z-index: -1;
+  top: var(--frozen-glass-y);
+  left: var(--frozen-glass-x);
+  background:
+    linear-gradient(var(--window-tint), var(--window-tint)),
+    linear-gradient(var(--window-dim, transparent), var(--window-dim, transparent)),
+    var(--frozen-glass-image) 0 0 / 100% 100% no-repeat;
+  pointer-events: none;
+  will-change: transform;
 }
 
 /*
