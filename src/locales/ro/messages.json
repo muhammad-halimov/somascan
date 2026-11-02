@@ -257,7 +257,7 @@
     "probeChanged": "„{{file}}” a fost salvat în timpul transferului — transferul se va repeta",
     "integrity": "Verificarea înainte de scrierea în Probe nu a trecut (celula {{cell}}) — Probe nu a fost modificat",
     "created": "Copia {{file}} creată în Google Drive",
-    "failed": "Telefoane (Google Drive): {{error}}",
+    "failed": "Dispozitive (Google Drive): {{error}}",
     "bellFailed": "Firestore indisponibil: {{error}}. Transfer — la verificarea copiei"
   }
 }

@@ -11,7 +11,7 @@
 
 Демо-данные: проекты, элементы и плавки вымышлены.
 
-<img src="docs/screenshots/overview.ru.webp" alt="Главная с журналом, сетевой диск, Телефоны, Google Drive, Связи, «Расширенные»">
+<img src="docs/screenshots/overview.ru.webp" alt="Главная с журналом, сетевой диск, Устройства, Google Drive, Связи, «Расширенные»">
 
 ```bash
 npm run build && node scripts/screenshots/capture.mjs   # переснять скриншоты
@@ -21,7 +21,7 @@ npm run build && node scripts/screenshots/capture.mjs   # переснять с�
 
 - [Как это работает](#как-это-работает)
 - [Хранение таблиц](#хранение-таблиц)
-- [Телефоны](#телефоны)
+- [Устройства](#устройства)
 - [Правила работы](#правила-работы)
 - [Ручные привязки: links.json](#ручные-привязки-linksjson)
 - [Разработка](#разработка)
@@ -78,9 +78,9 @@ flowchart LR
 3. Google Auth Platform → Clients → Create client → тип **Desktop app** → Create → Download JSON.
 4. JSON помещается в папку данных программы как `google-oauth.json`, либо сборка получает `SOMASYNC_GOOGLE_CLIENT_ID` и `SOMASYNC_GOOGLE_CLIENT_SECRET`: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`.
 
-## Телефоны
+## Устройства
 
-Если таблицы находятся на этом компьютере или сетевом диске, а у телефонов нет доступа к сети компании, мобильное приложение записывает бирки в **копию Probe в Google Drive**, а Somasync переносит их в Probe («Хранилище → Телефоны»; код — `host/PhoneBridge.ts`, `engine/ProbeBridge.ts`).
+Если таблицы находятся на этом компьютере или сетевом диске, а у телефонов нет доступа к сети компании, мобильное приложение записывает бирки в **копию Probe в Google Drive**, а Somasync переносит их в Probe («Хранилище → Устройства»; код — `host/PhoneBridge.ts`, `engine/ProbeBridge.ts`).
 
 - «Бирки с Google Drive» включены по умолчанию; переключатель, папка и имя копии закрыты замками от случайной правки.
 - Копия проверяется раз в 15 с во время слежения с записью (по MD5).
@@ -95,7 +95,7 @@ flowchart LR
 1. [Консоль Firebase](https://console.firebase.google.com/) → добавить Firebase в проект Google Cloud или создать новый.
 2. Firestore Database → создать базу (Standard) → Rules: правила ниже → Publish.
 3. Project settings → General: ID проекта и Web API key (если ключа нет — Add app → Web). Web API key не является секретом: доступ задают правила.
-4. ID и ключ вводятся на компьютере («Хранилище → Телефоны → Уведомления Firebase Firestore») и на телефонах («Настройки → Хранилище → Google Drive → Firebase Firestore»).
+4. ID и ключ вводятся на компьютере («Хранилище → Устройства → Уведомления Firebase Firestore») и на телефонах («Настройки → Хранилище → Google Drive → Firebase Firestore»).
 
 Бесплатной квоты (50 000 чтений и 20 000 записей в день) достаточно с запасом.
 

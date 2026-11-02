@@ -59,7 +59,7 @@
     "missing": "{{sheet}} — nu există în tabel"
   },
   "phones": {
-    "title": "Telefoane",
+    "title": "Dispozitive",
     "enable": "Etichete din Google Drive",
     "enableHint": "Sincronizarea etichetelor scanate",
     "enableUnlock": "Deblocați comutatorul pentru modificare",

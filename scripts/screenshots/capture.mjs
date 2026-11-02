@@ -32,7 +32,7 @@ const LANGUAGES = ['en', 'ru']
 const SHOTS = [
   { name: 'run', tab: 0, target: 'smb', en: 'Home', ru: 'Главная' },
   { name: 'storage', tab: 1, target: 'smb', en: 'Network drive', ru: 'Сетевой диск' },
-  { name: 'phones', tab: 1, target: 'smb', end: true, en: 'Phones', ru: 'Телефоны' },
+  { name: 'phones', tab: 1, target: 'smb', end: true, en: 'Devices', ru: 'Устройства' },
   { name: 'drive', tab: 1, target: 'googleDrive', en: 'Google Drive', ru: 'Google Drive' },
   { name: 'links', tab: 2, target: 'smb', en: 'Links', ru: 'Связи' },
   { name: 'advanced', tab: 3, target: 'smb', en: '“Advanced”', ru: '«Расширенные»' },
@@ -247,7 +247,7 @@ async function capture(language, port) {
       for (const shot of SHOTS.filter((s) => s.target === target)) {
         await evaluate(`document.querySelectorAll('[role="tab"]')[${shot.tab}].click()`)
         await sleep(900)
-        // кадр конца вкладки (раздел «Телефоны» в «Хранилище»)
+        // кадр конца вкладки (раздел «Устройства» в «Хранилище»)
         if (shot.end) {
           await evaluate(`document.querySelector('.storage-stack > :last-child').scrollIntoView({ block: 'end' })`)
           await sleep(400)

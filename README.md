@@ -11,7 +11,7 @@ A desktop app (Windows and macOS) for **Somaco (Holcim), Romania** — accountin
 
 Demo data: projects, elements and heats are fictitious.
 
-<img src="docs/screenshots/overview.en.webp" alt="Home with the journal, network drive, Phones, Google Drive, Links, Advanced">
+<img src="docs/screenshots/overview.en.webp" alt="Home with the journal, network drive, Devices, Google Drive, Links, Advanced">
 
 ```bash
 npm run build && node scripts/screenshots/capture.mjs   # retake the screenshots
@@ -21,7 +21,7 @@ npm run build && node scripts/screenshots/capture.mjs   # retake the screenshots
 
 - [How it works](#how-it-works)
 - [Table storage](#table-storage)
-- [Phones](#phones)
+- [Devices](#devices)
 - [Rules of operation](#rules-of-operation)
 - [Manual links: links.json](#manual-links-linksjson)
 - [Development](#development)
@@ -78,9 +78,9 @@ Google Cloud setup (one-time; the project and the consent screen are the same as
 3. Google Auth Platform → Clients → Create client → type **Desktop app** → Create → Download JSON.
 4. The JSON is placed into the app data folder as `google-oauth.json`, or the build receives `SOMASYNC_GOOGLE_CLIENT_ID` and `SOMASYNC_GOOGLE_CLIENT_SECRET`: `SOMASYNC_GOOGLE_CLIENT_ID=… SOMASYNC_GOOGLE_CLIENT_SECRET=… npm run dist:win`.
 
-## Phones
+## Devices
 
-If the tables are on this computer or a network drive and the phones have no access to the company network, the mobile app writes tags into a **copy of Probe in Google Drive**, and Somasync transfers them into Probe (“Storage → Phones”; code — `host/PhoneBridge.ts`, `engine/ProbeBridge.ts`).
+If the tables are on this computer or a network drive and the phones have no access to the company network, the mobile app writes tags into a **copy of Probe in Google Drive**, and Somasync transfers them into Probe (“Storage → Devices”; code — `host/PhoneBridge.ts`, `engine/ProbeBridge.ts`).
 
 - “Tags from Google Drive” is on by default; the switch, the folder and the copy name are locked against accidental changes.
 - The copy is checked every 15 s during watching with writing (by MD5).
@@ -95,7 +95,7 @@ Setup (one-time; details with screens — in the [build guide of the mobile app]
 1. [Firebase console](https://console.firebase.google.com/) → add Firebase to the Google Cloud project or create a new one.
 2. Firestore Database → create a database (Standard) → Rules: the rules below → Publish.
 3. Project settings → General: project ID and Web API key (without a key — Add app → Web). The Web API key is not a secret: access is defined by the rules.
-4. The ID and the key are entered on the computer (“Storage → Phones → Firebase Firestore notifications”) and on the phones (“Settings → Storage → Google Drive → Firebase Firestore”).
+4. The ID and the key are entered on the computer (“Storage → Devices → Firebase Firestore notifications”) and on the phones (“Settings → Storage → Google Drive → Firebase Firestore”).
 
 The free quota (50,000 reads and 20,000 writes a day) is more than sufficient.
 

@@ -59,7 +59,7 @@
     "missing": "{{sheet}} — not in the table"
   },
   "phones": {
-    "title": "Phones",
+    "title": "Devices",
     "enable": "Tags from Google Drive",
     "enableHint": "Synchronization of scanned tags",
     "enableUnlock": "Unlock the switch for changes",
