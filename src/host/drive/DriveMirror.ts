@@ -233,7 +233,8 @@ export class DriveMirror {
     const dir = this.dir(folder)
     fs.mkdirSync(dir, { recursive: true })
     const meta = this.readMeta(dir)
-    const bytes = fs.readFileSync(source)
+    // источник — Probe, возможно на сетевом диске: чтение не должно останавливать главный процесс
+    const bytes = await fs.promises.readFile(source)
     const md5 = md5Of(bytes)
     const [file] = await drive.find(folderId, name)
     let saved: DriveFile

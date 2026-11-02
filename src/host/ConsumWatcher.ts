@@ -11,14 +11,15 @@
  * В конце каждой проверки — мост с телефонами (`bridge`, см. `PhoneBridge`): в том же цикле, чтобы его прогон
  * не совпал с прогоном по Consum.
  *
+ * Файлы проверяются асинхронно (`./files`): медленный сетевой диск не останавливает программу.
+ *
  * РИСК: на медленном сетевом диске `settleSec` может не хватить — движок прочтёт недописанный Consum.
  * Прогон запускают только изменения Consum: правки Sarjele или Probe сами прогон не запускают.
  */
-import fs from 'node:fs'
 import path from 'node:path'
-import { EditorLock } from '@/engine/FileGuard'
 import { message } from '@/shared/messages'
 import type { ActionResult } from '@/shared/protocol'
+import { fileStamp, openInEditor } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 import type { SyncService } from './SyncService'
@@ -37,16 +38,6 @@ export interface BridgeTick {
 
 /** Пауза. */
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
-
-/** «время:размер» файла или `null`, если файл недоступен. */
-function snapOf(file: string): string | null {
-  try {
-    const s = fs.statSync(file)
-    return `${s.mtimeMs}:${s.size}`
-  } catch {
-    return null
-  }
-}
 
 /** Слежение за Consum. */
 export class ConsumWatcher {
@@ -79,8 +70,8 @@ export class ConsumWatcher {
   }
 
   /** Запоминает текущее состояние файлов (после отката, чтобы он не считался изменением). */
-  resnapshot(): void {
-    this.lastSnap = this.snapAll()
+  async resnapshot(): Promise<void> {
+    this.lastSnap = await this.snapAll()
   }
 
   /** Включает слежение. */
@@ -97,7 +88,7 @@ export class ConsumWatcher {
     this.settings.update({ running: true })
     this.sync.patch({ status: 'watching', nextCheckAt: null })
     this.journal.event('info', message(s.write ? 'event.watchWrite' : 'event.watchDry', { seconds: s.intervalSec }))
-    this.lastSnap = this.snapAll()
+    this.lastSnap = await this.snapAll()
     await this.sync.syncOnce({ apply: s.write, trigger: 'first' })
     if (this.watching) this.scheduleNext()
     else this.finishStop() // «Стоп» нажали во время первого прогона
@@ -150,9 +141,11 @@ export class ConsumWatcher {
     if (this.timer) clearTimeout(this.timer)
   }
 
-  /** Снимок всех Consum. */
-  private snapAll(): Record<string, string | null> {
-    return Object.fromEntries(this.settings.consumFiles().map((f) => [f, snapOf(f)]))
+  /** Снимок всех Consum: файл → «время:размер» (`null` — недоступен). */
+  private async snapAll(): Promise<Record<string, string | null>> {
+    const files = this.settings.consumFiles()
+    const stamps = await Promise.all(files.map(fileStamp))
+    return Object.fromEntries(files.map((f, i) => [f, stamps[i] ?? null]))
   }
 
   /** Одна проверка. */
@@ -173,7 +166,7 @@ export class ConsumWatcher {
     this.sync.patch({ lastCheckAt: Date.now() })
     if (this.remote?.active() && !this.sync.getSnapshot().busy) await this.remote.refreshConsums()
     if (!this.watching) return
-    const cur = this.snapAll()
+    const cur = await this.snapAll()
     const changed: string[] = []
     for (const [f, v] of Object.entries(cur)) {
       const file = path.basename(f)
@@ -193,20 +186,21 @@ export class ConsumWatcher {
     const write = () => this.settings.getSnapshot().write
     if (changed.length) {
       await sleep(this.settings.getSnapshot().settleSec * 1000)
-      Object.assign(this.lastSnap, this.snapAll())
+      Object.assign(this.lastSnap, await this.snapAll())
       if (this.watching) await this.sync.syncOnce({ apply: write(), trigger: 'changed', only: changed })
     }
     const pending = this.sync.getSnapshot().pending.filter((f) => !changed.includes(f))
-    if (this.watching && pending.length && write() && this.editorsClosed(pending)) {
+    if (this.watching && pending.length && write() && (await this.editorsClosed(pending))) {
       await this.sync.syncOnce({ apply: true, trigger: 'retry', only: pending })
     }
     if (this.watching && this.bridge) await this.bridge.tick()
   }
 
   /** Закрыты ли Sarjele, Probe и эти Consum во всех редакторах. */
-  private editorsClosed(consums: readonly string[]): boolean {
+  private async editorsClosed(consums: readonly string[]): Promise<boolean> {
     const f = this.settings.files()
-    return [f.sarjele, f.probe, ...consums].every((x) => !x || !EditorLock.find(x))
+    const open = await Promise.all([f.sarjele, f.probe, ...consums].filter(Boolean).map(openInEditor))
+    return !open.includes(true)
   }
 
   /** Завершение остановки (после прогона, который шёл в момент «Стоп»). */

@@ -69,7 +69,7 @@ export function registerIpc(h: HostServices): void {
 
   ipcMain.handle(IPC.restore, async (_e, stamp: string) => {
     const r = await sync.restore(stamp)
-    watcher.resnapshot()
+    await watcher.resnapshot()
     return r
   })
 

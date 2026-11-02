@@ -26,12 +26,13 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { Backups, EditorLock } from '@/engine/FileGuard'
+import { Backups } from '@/engine/FileGuard'
 import { message, type Message } from '@/shared/messages'
 import { ENGINE_EXIT, type BellConfig, type BellEvent, type BridgeState } from '@/shared/protocol'
 import type { AppPaths } from './AppPaths'
 import { DriveMirror, parseDriveFolder } from './drive/DriveMirror'
 import { driveMessage, type DriveService } from './drive/DriveService'
+import { exists, fileStamp, openInEditor } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 import type { SyncService } from './SyncService'
@@ -64,16 +65,6 @@ interface Hold {
   probe: string
   /** Probe открыт в редакторе (иначе — ошибка переноса). */
   editor: boolean
-}
-
-/** «Время:размер» файла или `null`. */
-function stampOf(file: string): string | null {
-  try {
-    const st = fs.statSync(file)
-    return `${st.mtimeMs}:${st.size}`
-  } catch {
-    return null
-  }
 }
 
 /** Мост с телефонами. */
@@ -150,7 +141,7 @@ export class PhoneBridge {
     this.lastPoll = this.now()
     const s = this.settings.getSnapshot()
     const probe = this.settings.files().probe.trim()
-    if (!probe || !fs.existsSync(probe)) return
+    if (!probe || !(await exists(probe))) return
     const folder = s.googleDrive.folder
     const name = xlsxName(path.basename(s.files.googleDrive.probe.trim()) || DEFAULT_NAME)
     const where = `${folder}|${name}`
@@ -161,9 +152,9 @@ export class PhoneBridge {
       if (copy === null) await this.locked(folder, name, () => this.publish(folder, name, probe, where, true))
       else if (copy !== synced?.copy) {
         const hold = this.hold?.copy === copy ? this.hold : null
-        if (hold && (hold.editor ? this.editorOpen(probe) : hold.probe === stampOf(probe))) return
+        if (hold && (hold.editor ? await this.editorOpen(probe) : hold.probe === (await fileStamp(probe)))) return
         await this.transfer(folder, name, probe, where, copy)
-      } else if (stampOf(probe) !== synced.probe) await this.locked(folder, name, () => this.publish(folder, name, probe, where))
+      } else if ((await fileStamp(probe)) !== synced.probe) await this.locked(folder, name, () => this.publish(folder, name, probe, where))
       this.problem(null)
     } catch (error) {
       // телефон пишет копию прямо сейчас или копию изменили между проверкой и выкладкой — следующая проверка
@@ -178,7 +169,7 @@ export class PhoneBridge {
     await this.sync.bridge((engine) => this.locked(folder, name, async () => {
       const missing = await this.mirror.pull(folder, [name])
       if (missing.length) return
-      const before = stampOf(probe) ?? ''
+      const before = (await fileStamp(probe)) ?? ''
       const { code, summary } = await engine(name, ['--bridge', '--apply', path.join(this.mirror.dir(folder), name), probe])
       if (code === ENGINE_EXIT.deferred) {
         const editor = summary?.deferred.some((d) => d.lockFile !== null) ?? false
@@ -187,7 +178,7 @@ export class PhoneBridge {
         return
       }
       if (code !== ENGINE_EXIT.ok) {
-        this.hold = { copy, probe: stampOf(probe) ?? '', editor: false }
+        this.hold = { copy, probe: (await fileStamp(probe)) ?? '', editor: false }
         return
       }
       this.hold = null
@@ -200,7 +191,7 @@ export class PhoneBridge {
    * @param create Копии нет — она создаётся.
    */
   private async publish(folder: string, name: string, probe: string, where: string, create = false): Promise<void> {
-    const probeStamp = stampOf(probe) ?? ''
+    const probeStamp = (await fileStamp(probe)) ?? ''
     const copy = await this.mirror.publish(folder, name, probe, Backups.stamp(), this.settings.getSnapshot().backupDays)
     this.synced = { where, copy, probe: probeStamp }
     this.writeSynced()
@@ -219,8 +210,8 @@ export class PhoneBridge {
   }
 
   /** Probe открыт в редакторе (и запись в открытые файлы запрещена). */
-  private editorOpen(probe: string): boolean {
-    return this.settings.getSnapshot().guardOpenFiles && EditorLock.find(probe) !== null
+  private async editorOpen(probe: string): Promise<boolean> {
+    return this.settings.getSnapshot().guardOpenFiles && (await openInEditor(probe))
   }
 
   /** Что мешает мосту: в состояние окна, в журнал — один раз (без перебоев связи). */

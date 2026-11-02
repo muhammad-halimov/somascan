@@ -13,11 +13,11 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { Backups } from '@/engine/FileGuard'
 import { Store } from '@/shared/Store'
 import { message, triggerMessage, type Message } from '@/shared/messages'
 import { ENGINE_EXIT, runOutcome, type ActionResult, type RunState, type RunSummary, type RunTrigger } from '@/shared/protocol'
 import type { EngineRunner } from './EngineRunner'
+import { backupStamps, exists } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 
@@ -80,22 +80,20 @@ export class SyncService extends Store<RunState> {
     this.setState((s) => ({ ...s, ...patch }))
   }
 
-  /** Почему прогон невозможен (не найдены файлы) или `null`. */
-  pathsProblem(): Message | null {
+  /** Почему прогон невозможен (не найдены файлы) или `null`. Файлы проверяются асинхронно (`./files`). */
+  async pathsProblem(): Promise<Message | null> {
     const f = this.settings.files()
     const consums = this.settings.consumFiles()
-    const bad: string[] = []
-    if (!consums.length) bad.push('Consum')
-    for (const c of consums) if (!fs.existsSync(c)) bad.push(`Consum «${path.basename(c)}»`)
-    if (!f.sarjele || !fs.existsSync(f.sarjele)) bad.push('Sarjele')
-    if (!f.probe || !fs.existsSync(f.probe)) bad.push('Probe')
+    const files = [...consums.map((c) => ({ file: c, name: `Consum «${path.basename(c)}»` })), { file: f.sarjele, name: 'Sarjele' }, { file: f.probe, name: 'Probe' }]
+    const found = await Promise.all(files.map(({ file }) => (file ? exists(file) : false)))
+    const bad = [...(consums.length ? [] : ['Consum']), ...files.filter((_, i) => !found[i]).map(({ name }) => name)]
     return bad.length ? message('event.missingFiles', { files: bad.join(', ') }) : null
   }
 
   /** Метки бэкапов рядом с Sarjele, новые сверху. */
-  backups(): string[] {
+  async backups(): Promise<string[]> {
     const file = this.settings.files().sarjele
-    return file ? Backups.stamps(file, MAX_STAMPS) : []
+    return file ? backupStamps(file, MAX_STAMPS) : []
   }
 
   /**
@@ -111,7 +109,7 @@ export class SyncService extends Store<RunState> {
       await remote.release()
       if (problem) return problem.msg
     }
-    if (this.share?.active() && this.pathsProblem()) await this.share.mount()
+    if (this.share?.active() && (await this.pathsProblem())) await this.share.mount()
     return this.pathsProblem()
   }
 
@@ -175,7 +173,7 @@ export class SyncService extends Store<RunState> {
   private async exclusive(trigger: RunTrigger, apply: boolean, consums: readonly string[], fn: () => Promise<boolean>): Promise<ActionResult> {
     const remote = this.remote?.active() ? this.remote : null
     if (!remote) {
-      const bad = this.pathsProblem()
+      const bad = await this.pathsProblem()
       if (bad) {
         this.journal.event('err', bad)
         return { ok: false, error: bad }
@@ -191,7 +189,7 @@ export class SyncService extends Store<RunState> {
     try {
       if (remote) {
         const problem = await remote.prepare(apply)
-        const bad = problem?.msg ?? this.pathsProblem()
+        const bad = problem?.msg ?? (await this.pathsProblem())
         if (bad) {
           this.journal.event(problem?.retry ? 'warn' : 'err', bad)
           if (problem?.retry && consums.length) this.patch({ pending: [...new Set([...this.getSnapshot().pending, ...consums])] })

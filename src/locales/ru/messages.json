@@ -123,7 +123,8 @@
     "noConsumSheet": "Нет листа «Decont Lunar»",
     "noYearSheet": "Нет листа {{year}} — выберите лист вручную",
     "noProjectSheets": "Нет листов проектов: {{sheets}}",
-    "unreadable": "Не удалось прочитать: {{error}}"
+    "unreadable": "Не удалось прочитать: {{error}}",
+    "timeout": "Нет ответа за {{seconds}} с — диск недоступен"
   },
   "smb": {
     "noHost": "Укажите сервер и общую папку",

@@ -166,11 +166,16 @@ export class EditorLock {
     this.lockFile = lockFile
   }
 
-  /** Замок редактора рядом с `file` или `null` (файл не открыт). */
-  static find(file: string): EditorLock | null {
+  /** Где лежал бы замок редактора, если `file` открыт: LibreOffice и Excel (полное и укороченное имя). */
+  static candidates(file: string): string[] {
     const dir = path.dirname(file)
     const name = path.basename(file)
-    const found = [`.~lock.${name}#`, `~$${name}`, `~$${name.slice(2)}`].map((x) => path.join(dir, x)).find((x) => fs.existsSync(x))
+    return [`.~lock.${name}#`, `~$${name}`, `~$${name.slice(2)}`].map((x) => path.join(dir, x))
+  }
+
+  /** Замок редактора рядом с `file` или `null` (файл не открыт). */
+  static find(file: string): EditorLock | null {
+    const found = EditorLock.candidates(file).find((x) => fs.existsSync(x))
     return found ? new EditorLock(found) : null
   }
 
@@ -220,7 +225,12 @@ export class Backups {
   static stamps(file: string, limit = 30): string[] {
     const dir = Backups.dir(file)
     if (!fs.existsSync(dir)) return []
-    return [...new Set(fs.readdirSync(dir).map((x) => x.split('_')[0]!))].filter((s) => /^(\d{4}-|before-restore)/.test(s)).sort().reverse().slice(0, limit)
+    return Backups.stampsOf(fs.readdirSync(dir), limit)
+  }
+
+  /** Метки бэкапов по именам файлов в папке бэкапов, новые сверху. */
+  static stampsOf(names: readonly string[], limit = 30): string[] {
+    return [...new Set(names.map((x) => x.split('_')[0]!))].filter((s) => /^(\d{4}-|before-restore)/.test(s)).sort().reverse().slice(0, limit)
   }
 
   /**
@@ -253,7 +263,7 @@ export class Backups {
   }
 
   /** Папка бэкапов для файла. */
-  private static dir(file: string): string {
+  static dir(file: string): string {
     return path.join(path.dirname(file), Backups.FOLDER)
   }
 

@@ -123,7 +123,8 @@
     "noConsumSheet": "Lipsește foaia „Decont Lunar”",
     "noYearSheet": "Lipsește foaia {{year}} — alegeți foaia manual",
     "noProjectSheets": "Lipsesc foile proiectelor: {{sheets}}",
-    "unreadable": "Nu s-a putut citi: {{error}}"
+    "unreadable": "Nu s-a putut citi: {{error}}",
+    "timeout": "Niciun răspuns în {{seconds}} s — unitatea nu este disponibilă"
   },
   "smb": {
     "noHost": "Introduceți serverul și folderul partajat",

@@ -123,7 +123,8 @@
     "noConsumSheet": "No “Decont Lunar” sheet",
     "noYearSheet": "No {{year}} sheet — choose the sheet by hand",
     "noProjectSheets": "Project sheets missing: {{sheets}}",
-    "unreadable": "Could not read: {{error}}"
+    "unreadable": "Could not read: {{error}}",
+    "timeout": "No answer within {{seconds}} s — the drive is unavailable"
   },
   "smb": {
     "noHost": "Enter the server and the shared folder",

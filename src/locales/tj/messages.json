@@ -123,7 +123,8 @@
     "noConsumSheet": "Варақи «Decont Lunar» нест",
     "noYearSheet": "Варақи {{year}} нест — варақро дастӣ интихоб кунед",
     "noProjectSheets": "Варақҳои лоиҳаҳо нестанд: {{sheets}}",
-    "unreadable": "Хондан нашуд: {{error}}"
+    "unreadable": "Хондан нашуд: {{error}}",
+    "timeout": "Дар {{seconds}} с ҷавоб нест — диск дастрас нест"
   },
   "smb": {
     "noHost": "Сервер ва ҷузвдони умумиро ворид кунед",

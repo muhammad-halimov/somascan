@@ -3,7 +3,8 @@
  * проверяет `DriveService` (есть ли в папке), листы — эта же проверка по скачанной копии.
  *
  * Проверка: есть ли файл, какие в нём листы, нужные ли. Листы читаются из `xl/workbook.xml` без разбора всей
- * книги — быстро даже для большого файла на сетевом диске.
+ * книги — быстро даже для большого файла на сетевом диске. Файлы читаются асинхронно (`./files`): медленный
+ * сетевой диск не останавливает программу; не ответил за `CHECK_TIMEOUT_MS` — проверка сообщает об этом.
  *
  * Подключение:
  *   macOS   — `osascript … mount volume smb://…`: диск появляется в /Volumes, пути к таблицам берутся оттуда;
@@ -16,16 +17,19 @@
 import { execFile } from 'node:child_process'
 import fs from 'node:fs'
 import JSZip from 'jszip'
-import { EditorLock } from '@/engine/FileGuard'
 import { message, type Message, type MessageCode } from '@/shared/messages'
 import type { ActionResult, CheckResult } from '@/shared/protocol'
 import { activeFiles, uncPath, type FileKind, type SmbSettings } from '@/shared/settings'
 import type { DriveService } from './drive/DriveService'
+import { exists, openInEditor, withTimeout } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 
 /** Сколько ждать подключения диска, мс. */
 const MOUNT_TIMEOUT_MS = 60_000
+
+/** Сколько ждать проверки таблицы, мс: дольше — сетевой диск не отвечает. */
+const CHECK_TIMEOUT_MS = 20_000
 
 /** Системные ошибки Windows, которые `net use` сообщает чаще всего. */
 const NET_ERROR = {
@@ -68,7 +72,7 @@ export class StorageService {
 
   /** Видимые листы книги. */
   static async visibleSheets(file: string): Promise<string[]> {
-    const zip = await JSZip.loadAsync(fs.readFileSync(file))
+    const zip = await JSZip.loadAsync(await fs.promises.readFile(file))
     const xml = await zip.file('xl/workbook.xml')!.async('string')
     const hidden = (tag: string) => /state="(hidden|veryHidden)"/.test(tag)
     return [...xml.matchAll(/<sheet\b[^>]*>/g)]
@@ -86,12 +90,18 @@ export class StorageService {
   }
 
   /** Проверяет файл на этом компьютере (или на подключённом диске): есть ли, какие листы, нужные ли. */
-  async checkFile(kind: FileKind, file: string): Promise<CheckResult> {
+  checkFile(kind: FileKind, file: string): Promise<CheckResult> {
+    if (!file) return Promise.resolve({ ok: false, msg: message('check.noPath') })
+    const timeout = (): CheckResult => ({ ok: false, msg: message('check.timeout', { seconds: CHECK_TIMEOUT_MS / 1000 }) })
+    return withTimeout(this.readCheck(kind, file), CHECK_TIMEOUT_MS, timeout)
+  }
+
+  /** Проверка файла: чтение листов и сверка с настройками. */
+  private async readCheck(kind: FileKind, file: string): Promise<CheckResult> {
     const settings = this.settings.getSnapshot()
-    if (!file) return { ok: false, msg: message('check.noPath') }
-    if (!fs.existsSync(file)) return { ok: false, msg: message('check.notFound') }
+    const st = await fs.promises.stat(file).catch(() => null)
+    if (!st) return { ok: false, msg: message('check.notFound') }
     try {
-      const st = fs.statSync(file)
       const sheets = await StorageService.visibleSheets(file)
       if (kind === 'consum' && !sheets.includes('Decont Lunar')) return { ok: false, msg: message('check.noConsumSheet'), sheets }
       if (kind === 'probe') {
@@ -102,7 +112,7 @@ export class StorageService {
         const missing = settings.projects.filter((p) => p.enabled !== false && p.sheet && !p.create && !sheets.includes(p.sheet)).map((p) => p.sheet)
         if (missing.length) return { ok: false, msg: message('check.noProjectSheets', { sheets: missing.join(', ') }), sheets }
       }
-      return { ok: true, msg: message(EditorLock.find(file) ? 'check.okOpen' : 'check.ok', { n: sheets.length, date: st.mtimeMs }), sheets }
+      return { ok: true, msg: message((await openInEditor(file)) ? 'check.okOpen' : 'check.ok', { n: sheets.length, date: st.mtimeMs }), sheets }
     } catch (e) {
       return { ok: false, msg: message('check.unreadable', { error: (e as Error).message }) }
     }
@@ -122,7 +132,7 @@ export class StorageService {
     if (!smb.host || !smb.share) return { ok: false, error: message('smb.noHost') }
     const connected = await this.connect(smb)
     // подключение прошло, но папка не открывается (нет прав на неё) — это тоже ошибка
-    const result = connected.ok && connected.mount && !fs.existsSync(connected.mount)
+    const result = connected.ok && connected.mount && !(await exists(connected.mount))
       ? { ok: false, error: message('smb.unreachable', { mount: connected.mount }) }
       : connected
     if (result.ok) this.journal.event('ok', message('event.smbMounted', { mount: result.mount || smb.share }))
