@@ -312,6 +312,17 @@
   -webkit-user-drag: none;
 }
 
+/* Кнопки масштаба и поворота поверх фото — в правом нижнем углу (если выбраны «Над фото»). */
+.photo-controls {
+  position: absolute;
+  z-index: 2;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 /* Один оверлей на всё ожидание: загрузка фото и распознавание. */
 .photo-loading {
   position: absolute;

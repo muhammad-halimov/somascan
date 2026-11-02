@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarIcon, ClockIcon, ExportIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, RefreshIcon, ScanTextIcon } from '@/components/icons/Icons'
+import { CalendarIcon, ClockIcon, ExportIcon, ImageIcon, InfinityIcon, InfoIcon, LayersIcon, ListIcon, MaximizeIcon, PaletteIcon, RefreshIcon, ScanTextIcon, SlidersIcon, SparklesIcon } from '@/components/icons/Icons'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormSection } from '@/components/ui/FormSection'
 import { List, ListItem } from '@/components/ui/List'
@@ -8,6 +8,7 @@ import { Notice } from '@/components/ui/Notice'
 import { Tabs } from '@/components/ui/Tabs'
 import { NativeDialogs } from '@/lib/platform/NativeDialogs'
 import { shareTextFile } from '@/lib/platform/files'
+import { DESIGNS, deviceDesign, type Design } from '@/lib/platform/platform'
 import { useStore } from '@/lib/store/useStore'
 import { modelCatalog } from '@/features/recognition/catalog/ModelCatalog'
 import { MODEL_AGE_LIMITS } from '@/features/recognition/catalog/ModelFilter'
@@ -17,7 +18,7 @@ import { useErrorText } from '@/features/recognition/useErrorText'
 import { BACKUP_RETENTION_OPTIONS } from '@/features/uploads/xlsx/BackupPolicy'
 import { getProviderAccess } from '../store/providerAccess'
 import { settingsStore } from '../store/SettingsStore'
-import { IMAGE_SIZE_LIMITS } from '../store/settingsSchema'
+import { IMAGE_SIZE_LIMITS, PHOTO_TOOLS_PLACES, type PhotoToolsPlace } from '../store/settingsSchema'
 import { useSettings } from '../store/useSettings'
 import { KnownSuppliersPicker } from '../components/KnownSuppliersPicker'
 import { LabelFieldsPicker } from '../components/LabelFieldsPicker'
@@ -26,11 +27,20 @@ import { RecognitionRulesPicker } from '../components/RecognitionRulesPicker'
 import { PROVIDER_ICONS } from '../components/providerIcons'
 import './AdvancedTab.css'
 
+/** Подписи и значки оформлений. */
+const DESIGN_LABELS = { glass: 'advanced.designGlass', material: 'advanced.designMaterial' } as const satisfies Record<Design, string>
+const DESIGN_ICONS: Record<Design, ReactNode> = { glass: <SparklesIcon />, material: <LayersIcon /> }
+
+/** Подписи и значки мест кнопок фото. */
+const PHOTO_TOOLS_LABELS = { overlay: 'advanced.photoToolsOverlay', bar: 'advanced.photoToolsBar' } as const satisfies Record<PhotoToolsPlace, string>
+const PHOTO_TOOLS_ICONS: Record<PhotoToolsPlace, ReactNode> = { overlay: <ImageIcon />, bar: <SlidersIcon /> }
+
 /**
  * Вкладка «Расширенные»: сначала то, что определяет распознавание, — промпт (для ИИ-моделей) и правила
  * (для распознавания на устройстве; действует одно из двух — по выбору в «Основных»), поля бирки и поставщики;
  * затем срок хранения резервных копий таблицы, фильтр возраста моделей, состояние списков моделей с обновлением,
- * размер фото для распознавания, текст последнего распознавания на устройстве (для отладки правил) и версия приложения.
+ * размер фото для распознавания, оформление (Liquid Glass или Material Design, место кнопок масштаба и поворота фото),
+ * текст последнего распознавания на устройстве (для отладки правил) и версия приложения.
  */
 export function AdvancedTab() {
   const { t, i18n } = useTranslation(['settings', 'common'])
@@ -154,6 +164,24 @@ export function AdvancedTab() {
         />
         <span className="form-section-hint">{t('advanced.imageSizeHint')}</span>
         <Notice>{t('advanced.imageSizeAnthropic')}</Notice>
+      </FormSection>
+
+      {/* Оформление меняется сразу, без перезапуска; пока не выбрано — как у устройства. */}
+      <FormSection title={t('advanced.appearance')} icon={<PaletteIcon />}>
+        <span className="form-section-hint">{t('advanced.design')}</span>
+        <Tabs
+          label={t('advanced.design')}
+          value={advanced.design ?? deviceDesign()}
+          options={DESIGNS.map((design) => ({ value: design, label: t(DESIGN_LABELS[design]), icon: DESIGN_ICONS[design] }))}
+          onChange={(design) => settingsStore.updateAdvanced({ design })}
+        />
+        <span className="form-section-hint">{t('advanced.photoTools')}</span>
+        <Tabs
+          label={t('advanced.photoTools')}
+          value={advanced.photoTools}
+          options={PHOTO_TOOLS_PLACES.map((place) => ({ value: place, label: t(PHOTO_TOOLS_LABELS[place]), icon: PHOTO_TOOLS_ICONS[place] }))}
+          onChange={(photoTools) => settingsStore.updateAdvanced({ photoTools })}
+        />
       </FormSection>
 
       {general.provider === 'device' && (

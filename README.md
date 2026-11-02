@@ -62,7 +62,7 @@ flowchart LR
 - **On-device.** The tag text is recognized on the phone; rules in `recognition/ocr/` identify the fields by their captions in different languages (Heat, Șarjă, Adag, Плавка…) and by the shape of the value. The captions are configured in “Advanced → Rules”. The rules are tested on real recognition data of tags from 11 mills (`tests/fixtures/ocr/`).
 - **AI models** are behind a lock in “General → Recognition”. Model lists are loaded from the provider's API or from [models.dev](https://models.dev). LM Studio is a server shared by all phones: a model switch is performed when no phone is recognizing.
 - **Photo quality.** Blur, glare, poor lighting and a missing tag are detected automatically; a one-line hint is shown on the photo (“Rotate the photo”, “Move closer to the tag”).
-- **Advanced:** prompt, rules, fields to read, known suppliers (export and import as JSON), backup period, photo size.
+- **Advanced:** prompt, rules, fields to read, known suppliers (export and import as JSON), backup period, photo size, appearance (Liquid Glass or Material Design on any device; zoom and rotate buttons on the photo or on the panel).
 
 ## Steel sample log
 

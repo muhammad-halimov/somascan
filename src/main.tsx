@@ -10,14 +10,22 @@ import { uploadQueue } from '@/features/uploads/queue/appQueue'
 import { initI18n } from '@/i18n/i18n'
 import { initInteraction } from '@/lib/interaction/interaction'
 import { initKeyboard } from '@/lib/platform/keyboard'
-import { initPlatform } from '@/lib/platform/platform'
+import { applyDesign, initPlatform } from '@/lib/platform/platform'
 import '@/styles/index.css'
 
 // Переводы готовы до первого рендера, на языке, сохранённом в настройках.
 initI18n(settingsStore.getSnapshot().general.language)
 
-// Платформенные стили (iOS: Liquid Glass или классические материалы) — тоже до первого рендера.
-initPlatform()
+// Оформление (Liquid Glass или Material Design: выбранное в настройках или как у устройства) — тоже до первого рендера.
+initPlatform(settingsStore.getSnapshot().advanced.design)
+// Выбор в «Расширенных» меняет оформление сразу — до перерисовки, чтобы она уже шла в новом стиле.
+let design = settingsStore.getSnapshot().advanced.design
+settingsStore.subscribe(() => {
+  const next = settingsStore.getSnapshot().advanced.design
+  if (next === design) return
+  design = next
+  applyDesign(design)
+})
 
 // Касания как в нативном приложении: отклик на нажатие ведёт код, а не браузерные :active/:hover.
 initInteraction()

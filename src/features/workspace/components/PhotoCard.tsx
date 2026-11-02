@@ -12,6 +12,7 @@ import type { PhotoTransform } from '../hooks/usePhotoTransform'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
 import type { RetakeHintReason } from '../utils/retakeHint'
 import { photoState } from '../utils/photoState'
+import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
 import { PhotoGrid } from './PhotoGrid'
 import { RetakeHint } from './RetakeHint'
@@ -56,6 +57,8 @@ export interface PhotoCardProps {
   isReceiving: boolean
   /** Масштаб, сдвиг, поворот и обработчики жестов открытого фото. */
   transform: PhotoTransform
+  /** Кнопки масштаба и поворота — поверх фото (иначе они в панели листания, см. «Расширенные» → «Оформление»). */
+  toolsOnPhoto: boolean
   /** Бирка распознана не полностью: между «Назад» и «Сеткой» — подсказка, что мешает (`retakeHintReason`); `null` — без неё. */
   retakeHint: RetakeHintReason | null
   /** Открывает источник фото (пустая ячейка). */
@@ -96,7 +99,7 @@ export interface PhotoCardProps {
  * один спиннер с подписью «Распознавание». В правом нижнем углу ячейки без снимка — переключатель «Без фото» /
  * «С фото»: бирка, данные которой вводят вручную (на месте фото — перечёркнутая картинка), и обратно.
  */
-export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onPrevious, onNext, onSelectCell, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
+export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack, isReceiving, transform, toolsOnPhoto, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onPrevious, onNext, onSelectCell, onOpenCell, onOpenActive, onToggleSelected }: PhotoCardProps) {
   const { t } = useTranslation('workspace')
   // Деструктурируем отдельно: callback-ref не должен смешиваться с данными для рендера.
   const { attachFrame, isZoomed, wasGesture, touchHandlers, pointerHandlers } = transform
@@ -218,9 +221,9 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
       }
       const stage = stageRef.current
       if (!stage || !ids.has(itemIdRef.current ?? '')) return { fly: [], hide: [] }
-      // Улетает фото (у бирки без фото — её заглушка).
+      // Улетает фото (у бирки без фото — её заглушка), кнопки масштаба и поворота над ним (если они там) гаснут.
       const photo = stage.querySelector<HTMLElement>('.photo-image-action, .photo-manual')
-      return { fly: photo ? [photo] : [], hide: [] }
+      return { fly: photo ? [photo] : [], hide: Array.from(stage.querySelectorAll<HTMLElement>('.photo-controls')) }
     },
   }), [])
 
@@ -297,6 +300,9 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
           Ячейка без снимка (пустая, «без фото» или ждущая фото): в правом нижнем углу — переключатель
           «Без фото» ↔ «С фото», туда и обратно.
         */}
+        {/* Кнопки масштаба и поворота поверх фото (если они не в панели листания). */}
+        {toolsOnPhoto && hasPhoto && !isBusy && <PhotoControls className="photo-controls anim-enter" transform={transform} showReset />}
+
         {!hasPhoto && !isBusy && (
           <div className="photo-corner">
             {isManual ? (

@@ -145,3 +145,29 @@ export class RippleFeedback extends PressFeedback {
     }, wait)
   }
 }
+
+/**
+ * Отклик по текущему оформлению (`<html data-platform>`): подсветка у стилей Apple, волна у Material Design.
+ * Оформление выбирается в настройках и меняется без перезапуска — отклик выбирается при каждом нажатии.
+ */
+export class DesignFeedback extends PressFeedback {
+  private readonly highlight = new HighlightFeedback()
+  private readonly ripple = new RippleFeedback()
+  /** Отклик текущего нажатия. */
+  private current: PressFeedback | null = null
+
+  begin(pressable: HTMLElement, point: PressPoint): void {
+    this.current = document.documentElement.dataset.platform === 'ios' ? this.highlight : this.ripple
+    this.current.begin(pressable, point)
+  }
+
+  end(): void {
+    this.current?.end()
+    this.current = null
+  }
+
+  cancel(): void {
+    this.current?.cancel()
+    this.current = null
+  }
+}

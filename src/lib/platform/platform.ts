@@ -1,10 +1,13 @@
 /**
- * Платформа и поколение дизайна iOS.
+ * Платформа и оформление.
  *
  * На `<html>` ставятся атрибуты, к которым привязаны платформенные стили (`styles/platform-ios.css`):
- * - `data-platform` — `ios` | `android` | `web`;
+ * - `data-platform` — `ios` | `android` | `web`: оформление (iOS — стили Apple, Android — Material Design);
  * - `data-ios-design` — `glass` (iOS 26+, Liquid Glass) или `classic` (iOS 18 и раньше: материалы с размытием);
  * - `data-native` — приложение запущено нативно (Capacitor).
+ * Оформление можно выбрать в «Расширенных» (`applyDesign`): Liquid Glass или Material Design на любом устройстве.
+ * От атрибутов зависит только вид; поведение, зависящее от устройства (клавиатура, «Назад»), смотрит
+ * на `Capacitor.getPlatform()`.
  *
  * Отклик на касания (атрибуты `data-press`, `data-keyboard`) ставит `lib/interaction`.
  */
@@ -16,6 +19,21 @@ export type StylePlatform = 'ios' | 'android' | 'web'
 
 /** Первая версия iOS с дизайном Liquid Glass. */
 const LIQUID_GLASS_MIN_IOS = 26
+
+/** Оформление на выбор: Liquid Glass (как iOS 26) или Material Design (как Android). */
+export const DESIGNS = ['glass', 'material'] as const
+
+/** Оформление. */
+export type Design = (typeof DESIGNS)[number]
+
+/** Стиль каждого оформления. */
+const DESIGN_PLATFORMS: Record<Design, StylePlatform> = { glass: 'ios', material: 'android' }
+
+/** Устройство: платформа для стилей и версия iOS. */
+const device: { platform: StylePlatform; iosMajor: number | null } = { platform: 'web', iosMajor: null }
+
+/** Выбранное оформление; `null` — как у устройства. */
+let chosenDesign: Design | null = null
 
 /** Устройство Apple с сенсорным экраном (в том числе iPad, который представляется «Macintosh»). */
 const isAppleTouchDevice = () =>
@@ -49,24 +67,42 @@ function stylePlatform(): StylePlatform {
   return /Android/i.test(navigator.userAgent) ? 'android' : 'web'
 }
 
-/** Ставит атрибуты на `<html>`. */
-function applyAttributes(platform: StylePlatform, iosMajor: number | null) {
+/** Ставит атрибуты на `<html>`: стиль выбранного оформления или устройства. */
+function applyAttributes() {
   const root = document.documentElement
+  const platform = chosenDesign ? DESIGN_PLATFORMS[chosenDesign] : device.platform
   root.dataset.platform = platform
   if (Capacitor.isNativePlatform()) root.dataset.native = 'true'
-  if (platform === 'ios') root.dataset.iosDesign = (iosMajor ?? 0) >= LIQUID_GLASS_MIN_IOS ? 'glass' : 'classic'
+  // Liquid Glass по выбору — на любой версии; иначе — по версии iOS
+  const glass = chosenDesign === 'glass' || (device.iosMajor ?? 0) >= LIQUID_GLASS_MIN_IOS
+  if (platform === 'ios') root.dataset.iosDesign = glass ? 'glass' : 'classic'
   else delete root.dataset.iosDesign
+}
+
+/** Оформление устройства (по умолчанию): у iOS — Liquid Glass, у остальных — Material Design. */
+export const deviceDesign = (): Design => (device.platform === 'ios' ? 'glass' : 'material')
+
+/** Меняет оформление сразу, без перезапуска; `null` — как у устройства. */
+export function applyDesign(design: Design | null) {
+  chosenDesign = design
+  applyAttributes()
 }
 
 /**
  * Определяет платформу и поколение дизайна. Сначала сразу (по user-agent), чтобы первый кадр
  * был в нужном стиле, затем уточняет точную версию iOS через плагин Device в нативном приложении.
+ * @param design Оформление из настроек (`null` — как у устройства).
  */
-export function initPlatform() {
-  const platform = stylePlatform()
-  applyAttributes(platform, guessIosMajor())
-  if (platform !== 'ios' || !Capacitor.isNativePlatform()) return
+export function initPlatform(design: Design | null) {
+  device.platform = stylePlatform()
+  device.iosMajor = guessIosMajor()
+  chosenDesign = design
+  applyAttributes()
+  if (device.platform !== 'ios' || !Capacitor.isNativePlatform()) return
   void Device.getInfo()
-    .then((info) => applyAttributes('ios', Number.parseInt(info.osVersion, 10) || null))
+    .then((info) => {
+      device.iosMajor = Number.parseInt(info.osVersion, 10) || null
+      applyAttributes()
+    })
     .catch(() => undefined)
 }

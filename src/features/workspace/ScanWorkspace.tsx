@@ -363,6 +363,8 @@ export function ScanWorkspace() {
   /** Фото открытой бирки готово (есть, не загружается и не распознаётся): кнопки масштаба и поворота — в панели листания. */
   const { hasPhoto: photoShown, isBusy: photoBusy } = photoState(item, picker.isReceiving)
   const photoReady = photoShown && !photoBusy
+  /** Кнопки масштаба и поворота — поверх фото или в панели листания («Расширенные» → «Оформление»). */
+  const toolsOnPhoto = advanced.photoTools === 'overlay'
   /** Панель выезжает и уходит плавно: пока она схлопывается, остаётся в DOM. */
   const slideBar = usePresence(hasSlideBar, SLIDE_BAR_EXIT_MS)
 
@@ -389,6 +391,7 @@ export function ScanWorkspace() {
           view={view}
           showBack={usedGrid}
           isReceiving={picker.isReceiving}
+          toolsOnPhoto={toolsOnPhoto}
           transform={transform}
           retakeHint={retakeHint}
           onPick={() => void addPhotos()}
@@ -415,7 +418,7 @@ export function ScanWorkspace() {
             onOpen={closeGrid}
             onShowGrid={showGrid}
             transform={transform}
-            toolsShown={view === 'single' && photoReady}
+            toolsShown={!toolsOnPhoto && view === 'single' && photoReady}
           />
         )}
       </div>

@@ -109,12 +109,14 @@ export function Tabs<T extends string | number | null>({ options, value, onChang
   const [isHoldingActive, setIsHoldingActive] = useState(false)
   /** Подписи одной строкой: при смене языка индикатор и сегменты пересчитываются. */
   const labelsKey = options.map((option) => option.label).join('\u0000')
+  /** Вид по оформлению — при каждой перерисовке: оформление меняется в настройках без перезапуска. */
+  const segmented = isSegmentedStyle()
 
   // Плотность сегментов (iOS) зависит только от подписей и ширины ряда, а не от выбора:
-  // подбираем её при смене подписей и изменении размеров, а не при каждом нажатии.
+  // подбираем её при смене подписей, оформления и изменении размеров, а не при каждом нажатии.
   useLayoutEffect(() => {
     const row = rowRef.current
-    if (!row || !isSegmentedStyle()) return
+    if (!row || !segmented) return
     fitSegments(row)
     let width = row.clientWidth
     const observer = new ResizeObserver(() => {
@@ -123,15 +125,18 @@ export function Tabs<T extends string | number | null>({ options, value, onChang
       fitSegments(row)
     })
     observer.observe(row)
-    return () => observer.disconnect()
-  }, [labelsKey])
+    return () => {
+      observer.disconnect()
+      // вкладки Material плотности сегментов не знают
+      row.removeAttribute('data-density')
+    }
+  }, [labelsKey, segmented])
 
   // Положение индикатора: по ширине содержимого активной вкладки (на iOS — по всей вкладке).
-  // Пересчитываем при выборе, смене подписей и изменении размеров (поворот экрана, смена плотности).
+  // Пересчитываем при выборе, смене подписей и оформления, изменении размеров (поворот экрана, смена плотности).
   useLayoutEffect(() => {
     const row = rowRef.current
     const tab = activeRef.current
-    const segmented = isSegmentedStyle()
     const content = segmented ? tab : tab?.querySelector<HTMLElement>('.tab-content')
     if (!row || !content) return
     const measure = () => {
@@ -153,7 +158,7 @@ export function Tabs<T extends string | number | null>({ options, value, onChang
     observer.observe(row)
     observer.observe(content)
     return () => observer.disconnect()
-  }, [value, labelsKey])
+  }, [value, labelsKey, segmented])
 
   useEffect(() => {
     if (!indicator || animated) return

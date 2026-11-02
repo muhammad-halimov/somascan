@@ -276,7 +276,14 @@
     "suppliersImportInvalid": "В файле нет списка поставщиков. Нужен JSON, как при экспорте: {\"suppliers\": [\"…\", \"…\"]}, или просто массив названий.",
     "suppliersImportNotJson": "Выберите файл .json — список, сохранённый «Экспортом».",
     "suppliersImportTooLarge": "Файл слишком большой для списка поставщиков (больше {{size}} МБ).",
-    "suppliersExportFailedTitle": "Не удалось экспортировать"
+    "suppliersExportFailedTitle": "Не удалось экспортировать",
+    "appearance": "Оформление",
+    "design": "Стиль",
+    "designGlass": "Liquid Glass",
+    "designMaterial": "Material Design",
+    "photoTools": "Кнопки масштаба и поворота",
+    "photoToolsOverlay": "Над фото",
+    "photoToolsBar": "На панели"
   },
   "theme": {
     "caption": "Тема",

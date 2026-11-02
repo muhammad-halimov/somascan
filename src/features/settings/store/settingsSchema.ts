@@ -7,6 +7,7 @@ import { LANGUAGES } from '@/i18n/languages'
 import type { ProviderRegistry } from '@/features/recognition/providers/ProviderRegistry'
 import { isModelProviderId, isProviderId, PROVIDER_IDS, type ModelProviderId, type ProviderId } from '@/features/recognition/types'
 import { BACKUP_RETENTION_DAYS, BACKUP_RETENTION_OPTIONS, type BackupRetentionDays } from '@/features/uploads/xlsx/BackupPolicy'
+import { DESIGNS, type Design } from '@/lib/platform/platform'
 import { THEME_PREFERENCES, type ThemePreference } from '@/lib/theme/theme'
 import { isOneOf, isRecord, isString, readField } from '@/lib/validation/guards'
 
@@ -134,6 +135,12 @@ export const IMAGE_SIZE_LIMITS = [1024, 1600, 2048, null] as const
 /** Ограничение размера фото. */
 export type ImageSizeLimit = (typeof IMAGE_SIZE_LIMITS)[number]
 
+/** Где кнопки масштаба и поворота фото: поверх фото или в панели листания под ним. */
+export const PHOTO_TOOLS_PLACES = ['overlay', 'bar'] as const
+
+/** Место кнопок фото. */
+export type PhotoToolsPlace = (typeof PHOTO_TOOLS_PLACES)[number]
+
 /** Вкладка «Расширенные». */
 export interface AdvancedSettings {
   /** Инструкция для модели (промпт); пустая строка — инструкция по умолчанию. JSON с полями добавляется автоматически. */
@@ -152,6 +159,10 @@ export interface AdvancedSettings {
   modelMaxAgeMonths: ModelAgeLimit
   /** Уменьшать фото до этого размера перед отправкой. */
   maxImageSide: ImageSizeLimit
+  /** Оформление: Liquid Glass или Material Design; `null` — как у устройства. */
+  design: Design | null
+  /** Кнопки масштаба и поворота фото: поверх фото или в панели листания. */
+  photoTools: PhotoToolsPlace
 }
 
 /** Все сохраняемые настройки. */
@@ -199,6 +210,8 @@ export function createDefaultSettings(registry: ProviderRegistry): AppSettings {
       ruleLabels: {},
       modelMaxAgeMonths: DEFAULT_MODEL_AGE_LIMIT,
       maxImageSide: 2048,
+      design: null,
+      photoTools: 'bar',
     },
   }
 }
@@ -366,6 +379,8 @@ export function parseSettings(data: unknown, defaults: AppSettings): AppSettings
       ruleLabels: compactRuleLabels(isRecord(advanced) ? advanced.ruleLabels : undefined),
       modelMaxAgeMonths: readField(advanced, 'modelMaxAgeMonths', isOneOf(MODEL_AGE_LIMITS), defaults.advanced.modelMaxAgeMonths),
       maxImageSide: readField(advanced, 'maxImageSide', isOneOf(IMAGE_SIZE_LIMITS), defaults.advanced.maxImageSide),
+      design: readField(advanced, 'design', (value): value is Design | null => value === null || isOneOf(DESIGNS)(value), defaults.advanced.design),
+      photoTools: readField(advanced, 'photoTools', isOneOf(PHOTO_TOOLS_PLACES), defaults.advanced.photoTools),
     },
   }
 }

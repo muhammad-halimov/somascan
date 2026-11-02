@@ -7,7 +7,7 @@
  * подсветка UIKit). Признак режима — атрибут `<html data-press="js">`, на который
  * опираются стили. На десктопе остаются обычные `:hover`/`:active`.
  */
-import { HighlightFeedback, RippleFeedback } from './PressFeedback'
+import { DesignFeedback } from './PressFeedback'
 import { PressController } from './PressController'
 import { TouchDiscipline } from './TouchDiscipline'
 
@@ -15,8 +15,8 @@ import { TouchDiscipline } from './TouchDiscipline'
 export function initInteraction() {
   const root = document.documentElement
   if (root.dataset.platform === 'web') return
-  const feedback = root.dataset.platform === 'ios' ? new HighlightFeedback() : new RippleFeedback()
-  new PressController(feedback).attach()
+  // подсветка или волна — по оформлению в момент нажатия (оформление меняется в настройках без перезапуска)
+  new PressController(new DesignFeedback()).attach()
   new TouchDiscipline().attach()
   root.dataset.press = 'js'
 }
