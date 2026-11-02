@@ -7,6 +7,7 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { PanelHeader } from '@/components/ui/PanelHeader'
 import { Tabs } from '@/components/ui/Tabs'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useGlassHold } from '@/hooks/useGlassHold'
 import { HEIGHT_EASING, heightDurationFor } from '@/hooks/useHeightTransition'
 import { useResolvedTheme } from '@/hooks/useTheme'
 import { modelCatalog } from '@/features/recognition/catalog/ModelCatalog'
@@ -78,6 +79,9 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
    * высоте, а с ней и к новому положению (оно стоит в свободном месте по пропорции, см. `SettingsSheet.css`).
    */
   const heightBeforeRef = useRef<number | null>(null)
+  /** Стекло окна без размытия, пока в окне что-то движется (появление и уход окна, смена вкладки, высота). */
+  const holdGlass = useGlassHold(modalRef)
+  useLayoutEffect(() => holdGlass(), [holdGlass, isClosing])
   /** Счётчик смен содержимого вкладки: после отрисовки новой высоты запускает переход. */
   const [resizes, setResizes] = useState(0)
   /** Запоминает высоту окна перед сменой содержимого вкладки (идущий переход продолжается с текущей высоты). */
@@ -90,6 +94,8 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
     const from = heightBeforeRef.current
     heightBeforeRef.current = null
     if (!modal || from === null) return
+    // новая вкладка проявляется, окно меняет высоту — стекло ждёт конца движения
+    holdGlass()
     modal.style.transition = ''
     modal.style.height = ''
     const to = modal.getBoundingClientRect().height
@@ -114,11 +120,13 @@ export function SettingsSheet({ isClosing, onClose }: SettingsSheetProps) {
       modal.removeEventListener('transitionend', onEnd)
       window.clearTimeout(timer)
     }
-  }, [panelTab, resizes])
+  }, [panelTab, resizes, holdGlass])
 
   /** Переключает вкладку; новая панель монтируется заново и начинается сверху, окно плавно меняет высоту под неё. */
   const selectTab = (next: SettingsTab) => {
     if (next !== tab) heightBeforeRef.current = modalRef.current?.getBoundingClientRect().height ?? null
+    // плашка вкладок уже едет
+    holdGlass()
     setTab(next)
   }
 
