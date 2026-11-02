@@ -89,8 +89,8 @@ export interface SmbSettings {
   host: string
   share: string
   /**
-   * Без авторизации: подключение без имени и пароля — в Windows под учётной записью системы (как в Проводнике),
-   * в macOS гостем. Учётная запись ниже тогда не используется.
+   * Без авторизации: подключение без имени и пароля, под текущей учётной записью системы. Учётная запись ниже
+   * тогда не используется.
    */
   anonymous: boolean
   domain: string
@@ -146,8 +146,8 @@ export interface AppSettings {
   target: StorageTarget
   /** Файлы — свои у каждого места хранения; работает набор текущего. */
   files: Record<StorageTarget, FileSet>
-  /** Замки на путях (и на папке Google Drive) от случайной правки. */
-  locked: Record<FileKind | 'folder', boolean>
+  /** Замки на путях (и на папке Google Drive, и на копии Probe для телефонов) от случайной правки. */
+  locked: Record<FileKind | 'folder' | 'copy', boolean>
   /** Лист Probe; пусто — лист текущего года. */
   sheet: string
   smb: SmbSettings
@@ -172,6 +172,7 @@ export interface AppSettings {
   /**
    * Мост с телефонами: телефоны пишут бирки в копию Probe в Google Drive (папка и имя файла — как у места хранения
    * Google Drive), программа переносит их в Probe (`host/PhoneBridge`). Только когда таблицы не в Google Drive.
+   * Включён по умолчанию (переключатель — под замком в «Телефонах»).
    */
   bridge: boolean
   /** «Звонок» телефонов через Firestore (под замком в «Телефонах»). */
@@ -190,7 +191,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     smb: { consums: [''], sarjele: '', probe: '' },
     googleDrive: { consums: [''], sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx' },
   },
-  locked: { consum: false, sarjele: false, probe: false, folder: false },
+  locked: { consum: false, sarjele: false, probe: false, folder: false, copy: false },
   sheet: '',
   smb: { host: '', share: '', anonymous: false, domain: '', username: '', password: '' },
   googleDrive: { account: '', folder: '', token: '' },
@@ -204,7 +205,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   trayMinimize: true,
   startMinimized: false,
   guardOpenFiles: true,
-  bridge: false,
+  bridge: true,
   firestore: { enabled: false, projectId: '', apiKey: '' },
 }
 
@@ -263,6 +264,7 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
       sarjele: readBoolean(locked, 'sarjele', defaults.locked.sarjele),
       probe: readBoolean(locked, 'probe', defaults.locked.probe),
       folder: readBoolean(locked, 'folder', defaults.locked.folder),
+      copy: readBoolean(locked, 'copy', defaults.locked.copy),
     },
     sheet: readString(src, 'sheet', defaults.sheet),
     smb: {

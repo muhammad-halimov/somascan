@@ -23,8 +23,7 @@
     "mount": "Проверить подключение",
     "mounting": "Подключение…",
     "anonymous": "Без авторизации",
-    "anonymousHintWindows": "Под учётной записью Windows, как в Проводнике",
-    "anonymousHintMac": "Вход гостем",
+    "anonymousHint": "Вход под текущей учётной записью системы",
     "connected": "Подключено: {{mount}}"
   },
   "googleDrive": {
@@ -61,8 +60,10 @@
   },
   "phones": {
     "title": "Телефоны",
-    "enable": "Бирки с телефонов через Google Drive",
-    "enableHint": "Для телефонов без доступа к сети компании",
+    "enable": "Бирки с Google Drive",
+    "enableHint": "Синхронизация отсканированных бирок",
+    "enableUnlock": "Открыть переключатель для изменения",
+    "enableLock": "Закрыть переключатель",
     "copy": "Копия Probe в Google Drive",
     "hint": "Перенос в Probe — во время слежения с записью.",
     "waiting": "Перенос отложен: Probe открыт",

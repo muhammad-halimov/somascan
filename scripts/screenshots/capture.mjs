@@ -57,7 +57,7 @@ function settings(language, target) {
       smb: { consums: [unc(CONSUM)], sarjele: unc('Sarjele din elemente.xlsx'), probe: unc('Probe otel.xlsx') },
       googleDrive: { consums: [CONSUM], sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx' },
     },
-    locked: { consum: true, sarjele: true, probe: true, folder: true },
+    locked: { consum: true, sarjele: true, probe: true, folder: true, copy: true },
     sheet: '',
     smb: { host: '192.168.1.20', share: 'Atelier', anonymous: false, domain: '', username: 'operator', password: '••••••••' },
     googleDrive: { account: 'user@example.com', folder: '', token: '' },

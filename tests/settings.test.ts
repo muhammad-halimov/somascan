@@ -50,8 +50,9 @@ test('прежний общий набор файлов переходит к м
   assert.equal(s.files.local.sarjele, '')
 })
 
-test('телефоны и «звонок» Firestore: по умолчанию выключены; сохранённые разбираются, испорченные — по умолчанию', () => {
-  assert.equal(DEFAULT_SETTINGS.bridge, false)
+test('телефоны включены по умолчанию, «звонок» Firestore выключен; сохранённые разбираются, испорченные — по умолчанию', () => {
+  assert.equal(DEFAULT_SETTINGS.bridge, true)
+  assert.equal(parseSettings({ bridge: false }).bridge, false, 'сохранённое выключение остаётся')
   assert.deepEqual(DEFAULT_SETTINGS.firestore, { enabled: false, projectId: '', apiKey: '' })
   const s = parseSettings({ bridge: true, firestore: { enabled: true, projectId: ' somascan-test ', apiKey: 'AIzaKey', extra: 1 } })
   assert.equal(s.bridge, true)
@@ -68,4 +69,10 @@ test('сетевой диск: «Без авторизации» по умолч
 
 test('сетевой путь общей папки в Windows: \\\\сервер\\папка', () => {
   assert.equal(uncPath({ host: '10.0.0.5', share: 'Atelier' }), '\\\\10.0.0.5\\Atelier')
+})
+
+test('замок на копии Probe для телефонов: по умолчанию открыт, сохранённый разбирается', () => {
+  assert.equal(DEFAULT_SETTINGS.locked.copy, false)
+  assert.equal(parseSettings({ locked: { copy: true } }).locked.copy, true)
+  assert.equal(parseSettings({ locked: { folder: true } }).locked.copy, false)
 })

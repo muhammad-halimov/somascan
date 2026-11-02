@@ -23,8 +23,7 @@
     "mount": "Санҷиши пайваст",
     "mounting": "Пайвастшавӣ…",
     "anonymous": "Бидуни авторизатсия",
-    "anonymousHintWindows": "Бо ҳисоби Windows, мисли File Explorer",
-    "anonymousHintMac": "Ворид ҳамчун меҳмон",
+    "anonymousHint": "Ворид бо ҳисоби ҷории система",
     "connected": "Пайваст шуд: {{mount}}"
   },
   "googleDrive": {
@@ -61,8 +60,10 @@
   },
   "phones": {
     "title": "Телефонҳо",
-    "enable": "Барчаспҳо аз телефонҳо тавассути Google Drive",
-    "enableHint": "Барои телефонҳое, ки ба шабакаи ширкат дастрасӣ надоранд",
+    "enable": "Барчаспҳо аз Google Drive",
+    "enableHint": "Ҳамоҳангсозии барчаспҳои сканшуда",
+    "enableUnlock": "Кушодани калид барои тағйир",
+    "enableLock": "Бастани калид",
     "copy": "Нусхаи Probe дар Google Drive",
     "hint": "Интиқол ба Probe — ҳангоми назорат бо сабт.",
     "waiting": "Интиқол ба таъхир афтод: Probe кушода аст",

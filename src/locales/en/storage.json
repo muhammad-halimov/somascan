@@ -23,8 +23,7 @@
     "mount": "Test connection",
     "mounting": "Connecting…",
     "anonymous": "Without authorization",
-    "anonymousHintWindows": "With the Windows account, as in File Explorer",
-    "anonymousHintMac": "Guest access",
+    "anonymousHint": "Sign-in with the current system account",
     "connected": "Connected: {{mount}}"
   },
   "googleDrive": {
@@ -61,8 +60,10 @@
   },
   "phones": {
     "title": "Phones",
-    "enable": "Tags from phones via Google Drive",
-    "enableHint": "For phones without access to the company network",
+    "enable": "Tags from Google Drive",
+    "enableHint": "Synchronization of scanned tags",
+    "enableUnlock": "Unlock the switch for changes",
+    "enableLock": "Lock the switch",
     "copy": "Probe copy in Google Drive",
     "hint": "Transfer to Probe — while watching with writing.",
     "waiting": "Transfer postponed: Probe is open",

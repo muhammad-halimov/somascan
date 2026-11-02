@@ -10,7 +10,7 @@
  *   Windows — `net use \\сервер\папка`: пути к таблицам — прямо `\\сервер\папка\…` (букву диска можно не назначать).
  * Таблицы читаются средствами системы, как обычные файлы: если у Windows уже есть доступ к папке (вход в домен,
  * сохранённые учётные данные, доступ открыт всем), подключение не нужно. Учётная запись нужна, когда папка требует
- * другого входа; без авторизации — подключение под учётной записью Windows (как в Проводнике) или гостем в macOS.
+ * другого входа; без авторизации — подключение без имени и пароля, под текущей учётной записью системы.
  * Перед работой программа подключает папку сама, если таблицы на ней недоступны (`SyncService.readyToRead`).
  */
 import { execFile } from 'node:child_process'
@@ -26,9 +26,6 @@ import type { SettingsStore } from './SettingsStore'
 
 /** Сколько ждать подключения диска, мс. */
 const MOUNT_TIMEOUT_MS = 60_000
-
-/** Имя гостя SMB: вход без авторизации в macOS. */
-const GUEST = 'guest'
 
 /** Последняя содержательная строка ошибки. */
 const lastLine = (text: string) => text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).pop() ?? text
@@ -127,9 +124,7 @@ export class StorageService {
         }))
     }
     if (process.platform !== 'darwin') return Promise.resolve({ ok: false, error: message('smb.unsupported') })
-    const credentials = anonymous
-      ? `${GUEST}:@`
-      : username ? `${domain ? encodeURIComponent(domain) + ';' : ''}${encodeURIComponent(username)}${password ? ':' + encodeURIComponent(password) : ''}@` : ''
+    const credentials = username ? `${domain ? encodeURIComponent(domain) + ';' : ''}${encodeURIComponent(username)}${password ? ':' + encodeURIComponent(password) : ''}@` : ''
     const url = `smb://${credentials}${host}/${encodeURIComponent(share)}`
     return new Promise((resolve) =>
       execFile('osascript', ['-e', 'on run argv', '-e', 'mount volume (item 1 of argv)', '-e', 'end run', url], { timeout: MOUNT_TIMEOUT_MS }, (err, out) => {

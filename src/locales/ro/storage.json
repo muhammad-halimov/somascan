@@ -23,8 +23,7 @@
     "mount": "Testează conexiunea",
     "mounting": "Se conectează…",
     "anonymous": "Fără autentificare",
-    "anonymousHintWindows": "Cu contul Windows, ca în File Explorer",
-    "anonymousHintMac": "Acces ca invitat",
+    "anonymousHint": "Conectare cu contul curent al sistemului",
     "connected": "Conectat: {{mount}}"
   },
   "googleDrive": {
@@ -61,8 +60,10 @@
   },
   "phones": {
     "title": "Telefoane",
-    "enable": "Etichete de pe telefoane prin Google Drive",
-    "enableHint": "Pentru telefoane fără acces la rețeaua companiei",
+    "enable": "Etichete din Google Drive",
+    "enableHint": "Sincronizarea etichetelor scanate",
+    "enableUnlock": "Deblocați comutatorul pentru modificare",
+    "enableLock": "Blocați comutatorul",
     "copy": "Copia Probe în Google Drive",
     "hint": "Transfer în Probe — în timpul urmăririi cu scriere.",
     "waiting": "Transfer amânat: Probe este deschis",

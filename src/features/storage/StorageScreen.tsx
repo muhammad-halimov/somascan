@@ -5,6 +5,7 @@
  * в Google Drive), пояснение — в конце. У каждого места хранения свои файлы.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { BellIcon, DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, LogoutIcon, PhoneIcon, PlugIcon, TableIcon, TrashIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
 import { Button, LockButton } from '@/components/ui/Button'
@@ -52,6 +53,20 @@ const sharePath = (smb: Pick<SmbSettings, 'host' | 'share'>, windows: boolean) =
 
 /** Значки мест хранения — как в мобильном приложении. */
 const TARGET_ICONS: Record<StorageTarget, ReactNode> = { local: <FolderIcon />, smb: <WindowsLogo />, googleDrive: <GoogleDriveLogo /> }
+
+/** Поле под замком: путь к таблице, папка Google Drive или копия Probe для телефонов. */
+type LockKey = keyof AppSettings['locked']
+
+/** Кнопка замка поля пути: закрыт — правка недоступна; состояние хранится в настройках. */
+function lockAction(settings: AppSettings, key: LockKey, t: TFunction<'storage'>) {
+  const locked = settings.locked[key]
+  return {
+    icon: locked ? <LockIcon /> : <LockOpenIcon />,
+    label: locked ? t('files.unlock') : t('files.lock'),
+    tone: locked ? undefined : ('accent' as const),
+    onClick: () => settingsStore.update({ locked: { [key]: !locked } }),
+  }
+}
 
 /** Путь без кавычек (Finder и Проводник копируют путь в кавычках). */
 const cleanPath = (v: string) => v.trim().replace(/^['"]|['"]$/g, '')
@@ -127,8 +142,7 @@ export function StorageScreen() {
 
 /**
  * Сетевой диск: учётная запись (нет при «Без авторизации»), расположение, «Проверить подключение» с итогом под ней
- * и переключатель «Без авторизации» — подключение без имени и пароля: в Windows под учётной записью системы,
- * как в Проводнике, в macOS гостем.
+ * и переключатель «Без авторизации» — подключение без имени и пароля, под текущей учётной записью системы.
  */
 function SmbSection({ smb, windows }: { smb: SmbSettings; windows: boolean }) {
   const { t } = useTranslation('storage')
@@ -203,7 +217,7 @@ function SmbSection({ smb, windows }: { smb: SmbSettings; windows: boolean }) {
           itemRole="checkbox"
           leading={<UserIcon />}
           primary={t('smb.anonymous')}
-          secondary={windows ? t('smb.anonymousHintWindows') : t('smb.anonymousHintMac')}
+          secondary={t('smb.anonymousHint')}
           selected={smb.anonymous}
           trailing={<Switch on={smb.anonymous} />}
           onClick={() => set({ anonymous: !smb.anonymous })}
@@ -289,7 +303,9 @@ function PhonesSection({ settings }: { settings: AppSettings }) {
   const drive = settings.googleDrive
   const signOut = useDriveSignOut(drive)
   const copyName = settings.files.googleDrive.probe
-  const folderLocked = settings.locked.folder
+  // переключатель — под замком (закрывается снова при уходе с вкладки), как «Уведомления Firebase Firestore»
+  const [locked, setLocked] = useState(true)
+  const toggle = () => settingsStore.update({ bridge: !settings.bridge })
   return (
     <FormSection
       title={t('phones.title')}
@@ -304,8 +320,17 @@ function PhonesSection({ settings }: { settings: AppSettings }) {
           primary={t('phones.enable')}
           secondary={t('phones.enableHint')}
           selected={settings.bridge}
-          trailing={<Switch on={settings.bridge} />}
-          onClick={() => settingsStore.update({ bridge: !settings.bridge })}
+          disabled={locked}
+          aside={
+            <>
+              <LockButton locked={locked} label={locked ? t('phones.enableUnlock') : t('phones.enableLock')} onToggle={() => setLocked(!locked)} />
+              {/* переключатель справа от замка — отдельной кнопкой (строку тоже можно нажать) */}
+              <button type="button" className="switch-btn" tabIndex={-1} aria-hidden="true" disabled={locked} onClick={toggle}>
+                <Switch on={settings.bridge} />
+              </button>
+            </>
+          }
+          onClick={toggle}
         />
       </List>
       {settings.bridge && (
@@ -316,17 +341,18 @@ function PhonesSection({ settings }: { settings: AppSettings }) {
               placeholder={t('googleDrive.folderPlaceholder')}
               value={drive.folder}
               onChange={(folder) => settingsStore.update({ googleDrive: { folder: folder.trim() } })}
-              locked={folderLocked}
-              action={[{
-                icon: folderLocked ? <LockIcon /> : <LockOpenIcon />,
-                label: folderLocked ? t('files.unlock') : t('files.lock'),
-                tone: folderLocked ? undefined : ('accent' as const),
-                onClick: () => settingsStore.update({ locked: { folder: !folderLocked } }),
-              }]}
+              locked={settings.locked.folder}
+              action={[lockAction(settings, 'folder', t)]}
             />
           </Field>
           <Field label={t('phones.copy')}>
-            <TextInput placeholder={FILE_NAMES.probe} value={copyName} onChange={(probe) => settingsStore.update({ files: { googleDrive: { ...settings.files.googleDrive, probe: probe.trim() } } })} />
+            <ActionTextInput
+              placeholder={FILE_NAMES.probe}
+              value={copyName}
+              onChange={(probe) => settingsStore.update({ files: { googleDrive: { ...settings.files.googleDrive, probe: probe.trim() } } })}
+              locked={settings.locked.copy}
+              action={[lockAction(settings, 'copy', t)]}
+            />
           </Field>
           <div className="storage-check" role="status">
             <BridgeStatus bridge={run.bridge} />
@@ -431,15 +457,6 @@ function FilesSection({ settings, rows, checks, recheck, windows, documents }: F
     const folder = settings.target === 'smb' ? sharePath(settings.smb, windows) : documents || ELLIPSIS
     return [folder, ELLIPSIS, FILE_NAMES[kind]].join(windows ? '\\' : '/')
   }
-  const lockAction = (key: FileKind | 'folder') => {
-    const locked = settings.locked[key]
-    return {
-      icon: locked ? <LockIcon /> : <LockOpenIcon />,
-      label: locked ? t('files.unlock') : t('files.lock'),
-      tone: locked ? undefined : ('accent' as const),
-      onClick: () => settingsStore.update({ locked: { [key]: !locked } }),
-    }
-  }
 
   const probeCheck = checks[`${settings.target}:probe`]
   const probeSheets = (probeCheck && probeCheck !== 'busy' ? probeCheck.sheets : undefined) ?? []
@@ -458,7 +475,7 @@ function FilesSection({ settings, rows, checks, recheck, windows, documents }: F
             value={settings.googleDrive.folder}
             onChange={(folder) => settingsStore.update({ googleDrive: { folder: folder.trim() } })}
             locked={settings.locked.folder}
-            action={[lockAction('folder')]}
+            action={[lockAction(settings, 'folder', t)]}
           />
         </Field>
       )}
@@ -484,7 +501,7 @@ function FilesSection({ settings, rows, checks, recheck, windows, documents }: F
                 onChange={(v) => setPath(r, cleanPath(v))}
                 locked={locked}
                 action={[
-                  lockAction(r.kind),
+                  lockAction(settings, r.kind, t),
                   // в Google Drive файл задаётся именем в папке — выбора файла на этом компьютере нет
                   ...(drive ? [] : [{ icon: <FolderIcon />, label: t('files.pick'), disabled: locked, onClick: () => void pick(r) }]),
                   removable ? remove : check,
