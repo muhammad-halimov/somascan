@@ -14,6 +14,7 @@ import type { RetakeHintReason } from '../utils/retakeHint'
 import { PhotoControls } from './PhotoControls'
 import { PhotoFrame } from './PhotoFrame'
 import { PhotoGrid } from './PhotoGrid'
+import { PhotoPeek } from './PhotoPeek'
 import { RetakeHint } from './RetakeHint'
 import './PhotoCard.css'
 
@@ -135,7 +136,7 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
   }, [activeIndex])
 
   // Свайпы по фото одной бирки: вбок — к соседней, вниз — к сетке (у увеличенного фото палец двигает фото).
-  usePhotoSwipe({ cardRef, stageRef, enabled: view === 'single' && settledView === 'single' && !isZoomed, onPrevious, onNext, onDown: onShowGrid })
+  const { land: landSwipe } = usePhotoSwipe({ cardRef, stageRef, enabled: view === 'single' && settledView === 'single' && !isZoomed, onPrevious, onNext, onDown: onShowGrid })
 
   // Переход между сеткой и одной биркой — «камера» отъезжает от фото к сетке и наезжает обратно:
   // фото уменьшается в свою ячейку, сетка увеличивается из неё (и наоборот).
@@ -210,15 +211,17 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
     const previous = shownSlide.current
     shownSlide.current = { id: item?.id ?? null, index: activeIndex }
     const stage = stageRef.current
-    if (!stage || view !== 'single' || settledView !== 'single' || previous.id === (item?.id ?? null) && previous.index === activeIndex) return
-    if (prefersReducedMotion()) return
+    if (previous.id === (item?.id ?? null) && previous.index === activeIndex) return
+    // Бирку сменил свайп: её фото уже доехало на место (соседняя бирка), свой слайд не нужен.
+    if (landSwipe()) return
+    if (!stage || view !== 'single' || settledView !== 'single' || prefersReducedMotion()) return
     const direction = Math.sign(activeIndex - previous.index)
     const animation = stage.animate(
       [{ transform: `translateX(${direction * 28}px)`, opacity: direction === 0 ? 0.6 : 0.5 }, { transform: 'none', opacity: 1 }],
       { duration: 280, easing: motionTiming().easing },
     )
     return () => animation.cancel()
-  }, [item?.id, activeIndex, view, settledView])
+  }, [item?.id, activeIndex, view, settledView, landSwipe])
 
   const itemIdRef = useRef(item?.id ?? null)
   useLayoutEffect(() => {
@@ -335,6 +338,14 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, showBack,
           <ActionButton className="photo-nav-grid" variant="overlay" size={44} icon={<GridIcon />} caption={t('grid.open')} label={t('grid.openLabel')} onClick={onShowGrid} />
         </div>
       </div>
+
+      {/* Соседние бирки — видны, только пока фото листают свайпом: въезжают рядом с ним (`usePhotoSwipe`). */}
+      {view === 'single' && (
+        <div className="photo-pager" aria-hidden="true">
+          {onPrevious && <PhotoPeek side="previous" item={items[activeIndex - 1] ?? null} />}
+          {onNext && <PhotoPeek side="next" item={items[activeIndex + 1] ?? null} />}
+        </div>
+      )}
 
       {gridMounted && (
         <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} interactive={view === 'grid'} onSelect={onSelectCell} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />

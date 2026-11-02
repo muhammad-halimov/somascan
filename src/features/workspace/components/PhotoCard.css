@@ -408,13 +408,71 @@
 }
 
 /* Во время перехода между сеткой и одной биркой — без размытия под кнопками и значками. */
-.photo-card.is-zooming :is(.action-button-icon, .action-button-caption, .photo-grid-number) {
+.photo-card:is(.is-zooming, .is-swiping) :is(.action-button-icon, .action-button-caption, .photo-grid-number) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 
 .photo-card.is-zooming :is(.photo-stage, .photo-grid) {
   will-change: transform, opacity;
+}
+
+/*
+ * Свайп вбок (`usePhotoSwipe`) — как галерея: едут само фото (и то, что на нём: заглушки, спиннер) и соседние бирки
+ * (`PhotoPeek`), кнопки поверх фото стоят. Сдвиг — одна переменная карточки; зарегистрирована (`@property`), чтобы
+ * её можно было плавно анимировать: доехать до соседней бирки или вернуться. Пока листают — без размытия под
+ * кнопками (см. выше): под ними едет фото, и размытие пересчитывалось бы каждый кадр.
+ */
+@property --photo-swipe {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+.photo-card {
+  /* Зазор между фото и соседней биркой, пока листают. */
+  --photo-page-gap: 12px;
+}
+
+.photo-card.is-swiping .photo-stage > :is(.photo-image-action, .photo-empty, .photo-manual, .photo-loading),
+.photo-card.is-swiping .photo-pager {
+  translate: var(--photo-swipe) 0;
+  will-change: translate;
+}
+
+/* Соседние бирки лежат за краями этого слоя: обрезает их сама карточка, не он. */
+.photo-pager {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.photo-card.is-swiping .photo-pager {
+  visibility: visible;
+}
+
+/* Соседняя бирка — за краем карточки, через зазор: слева предыдущая, справа следующая. */
+.photo-peek {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* Единицы контейнера для повёрнутой миниатюры (`.photo-placeholder.is-sideways`). */
+  container-type: size;
+  background: var(--photo-empty-bg);
+  border-radius: inherit;
+}
+
+.photo-peek.has-photo {
+  background: var(--photo-backdrop);
+}
+
+.photo-peek.is-previous {
+  translate: calc(-100% - var(--photo-page-gap)) 0;
+}
+
+.photo-peek.is-next {
+  translate: calc(100% + var(--photo-page-gap)) 0;
 }
 
 /* В сетке — «Открыть» выбранную бирку: на месте «Сетки», того же размера и с подписью. */
