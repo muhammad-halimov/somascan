@@ -31,7 +31,11 @@
     max(var(--settings-gap), var(--safe-left));
   background: rgb(15 18 24 / 48%);
   overscroll-behavior: contain;
-  animation: backdrop-enter 180ms ease-out both;
+  /*
+   * Без заливки после проявления (`backwards`, а не `both`): анимация прозрачности, оставшаяся на подложке, делала
+   * её корнем размытия — стекло окна размывало только саму подложку, а не экран под ней (как у «Загрузок»).
+   */
+  animation: backdrop-enter 180ms ease-out backwards;
 }
 
 /* Свободное место над окном и под ним. */
