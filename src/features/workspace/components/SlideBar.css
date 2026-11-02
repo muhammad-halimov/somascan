@@ -111,24 +111,26 @@
 /*
  * Material Design: каждая группа кнопок — в своей «пилюле», как стеклянные в Liquid Glass, но по-материальному:
  * полупрозрачный контейнер без размытия, с тенью подъёма (плавающая панель инструментов Material 3); у каждой
- * кнопки — свой тональный круг с тонким ободком, чтобы кнопки не сливались с контейнером. Над фото тень глубже —
- * панель парит; в полосе сетки — мягкая.
+ * кнопки — свой тональный круг с тонким ободком и своей тенью, чтобы кнопки не сливались ни с контейнером, ни
+ * с фото. Над фото тень глубже — панель парит; в полосе сетки — мягкая.
  */
 :root:not([data-platform='ios']) :is(.slide-bar-pill, .slide-bar-tools) {
   gap: 4px;
   padding: 4px;
-  background: color-mix(in srgb, var(--photo-empty-plus-bg) 72%, transparent);
+  background: color-mix(in srgb, var(--photo-empty-plus-bg) 86%, transparent);
   border-radius: 999px;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 16%);
 }
 
 :root:not([data-platform='ios']) .slide-bar.is-floating :is(.slide-bar-pill, .slide-bar-tools) {
-  box-shadow: 0 3px 10px rgb(0 0 0 / 30%), 0 1px 3px rgb(0 0 0 / 20%);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 38%), 0 1px 4px rgb(0 0 0 / 28%);
 }
 
 :root:not([data-platform='ios']) .slide-bar .action-button.is-tonal .action-button-icon {
   background: color-mix(in srgb, var(--photo-empty-plus) 14%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 16%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 16%, transparent),
+    0 1px 3px rgb(0 0 0 / 28%);
 }
 
 /* Уголок влево — тот же уголок вправо, развёрнутый. */
