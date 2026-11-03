@@ -69,10 +69,12 @@
   --glass-bg: color-mix(in srgb, var(--bg) 58%, transparent);
   --glass-blur: var(--glass-window-blur);
   --glass-border: rgb(255 255 255 / 55%);
+  /* Тень под стеклом; `--glass-shadow` — она же с бликом по верхнему и нижнему краю. */
+  --glass-drop: 0 10px 30px rgb(0 0 0 / 12%);
   --glass-shadow:
     inset 0 1px 0 rgb(255 255 255 / 70%),
     inset 0 -1px 0 rgb(255 255 255 / 18%),
-    0 10px 30px rgb(0 0 0 / 12%);
+    var(--glass-drop);
   --glass-control: rgb(255 255 255 / 35%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 90%, transparent);
   /* Окно над затемнённым экраном («Настройки»): прозрачнее на затемнение (28%) — экран сквозь стекло виден так же, как у «Загрузок». */
@@ -88,10 +90,11 @@
 :root[data-platform='ios'][data-ios-design='glass']:not([data-theme='dark']) {
   --glass-bg: color-mix(in srgb, var(--bg) 62%, transparent);
   --glass-border: rgb(0 0 0 / 8%);
+  --glass-drop: 0 10px 30px rgb(0 0 0 / 10%);
   --glass-shadow:
     inset 0 1px 0 rgb(255 255 255 / 80%),
     inset 0 -1px 0 rgb(0 0 0 / 3%),
-    0 10px 30px rgb(0 0 0 / 10%);
+    var(--glass-drop);
   /*
    * Блоки главного экрана (фото, результат) — та же кромка и блик, тень короче: шире бокового отступа рабочей
    * области (16 px) её бы обрезало.
@@ -118,10 +121,11 @@
 :root[data-platform='ios'][data-theme='dark'] :is(.settings-modal, .uploads-popover) {
   --glass-bg: color-mix(in srgb, var(--bg) 52%, transparent);
   --glass-border: rgb(255 255 255 / 16%);
+  --glass-drop: 0 10px 30px rgb(0 0 0 / 40%);
   --glass-shadow:
     inset 0 1px 0 rgb(255 255 255 / 22%),
     inset 0 -1px 0 rgb(255 255 255 / 6%),
-    0 10px 30px rgb(0 0 0 / 40%);
+    var(--glass-drop);
   --glass-block-shadow:
     inset 0 1px 0 rgb(255 255 255 / 22%),
     inset 0 -1px 0 rgb(255 255 255 / 6%),
@@ -403,14 +407,22 @@
 }
 
 /*
- * Кнопки-круги и «пилюли» (тональные и главная) — стекло с кромкой, бликом и мягкой тенью, как «таблетки» окна:
- * в Liquid Glass — везде (полоса листания, панель действий, шапка карточки), в строках «Загрузок» — в обоих
- * оформлениях iOS (окно стеклянное всегда). Отделены и от стеклянной панели, и от фона под ней.
+ * Тональные кнопки-круги и «пилюли» — стекло с кромкой, бликом и мягкой тенью, как «таблетки» окна: в Liquid Glass —
+ * везде (полоса листания, панель действий, шапка карточки), в строках «Загрузок» — в обоих оформлениях iOS (окно
+ * стеклянное всегда). Отделены и от стеклянной панели, и от фона под ней.
  */
-:root[data-platform='ios'][data-ios-design='glass'] .action-button:is(.is-tonal, .is-accent) .action-button-icon,
+:root[data-platform='ios'][data-ios-design='glass'] .action-button.is-tonal .action-button-icon,
 :root[data-platform='ios'] .uploads-list .action-button.is-tonal .action-button-icon {
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
+}
+
+/*
+ * Главная (акцентная) кнопка — только тень стекла, без кромки и блика: на цветной заливке блик виден лишь
+ * по верхнему краю, и круг казался сдвинутым вниз внутри своей обводки.
+ */
+:root[data-platform='ios'][data-ios-design='glass'] .action-button.is-accent .action-button-icon {
+  box-shadow: var(--glass-drop);
 }
 
 /* Круги строк «Загрузок» — полупрозрачные: сплошной тональный круг того же тона, что подложка списка, сливался с ней. */
