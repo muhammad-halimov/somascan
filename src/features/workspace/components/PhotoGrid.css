@@ -9,15 +9,20 @@
 
 .photo-grid {
   /*
-   * Ячейки крупные: промежутки между ними и поле у краёв карточки минимальные. Обводка открытой ячейки (2,5 px
-   * с зазором 1 px) помещается в поле.
+   * Ячейки крупные: промежутки между ними и поле у краёв карточки минимальные. Обводка открытой ячейки — внутри
+   * неё, по краю: на соседние ячейки и за поле не выходит.
    */
   --photo-grid-gap: 4px;
   /* Ячейки концентричны блоку фото: его скругление минус поле сетки (на iOS блок круглее — и ячейки тоже). */
   --photo-grid-radius: calc(var(--photo-radius) - var(--photo-grid-gap));
-  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина, зазор от ячейки и тень, приподнимающая её. */
+  /*
+   * Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): по краю ячейки, внутри неё, и тень, приподнимающая
+   * ячейку. Фото открытой ячейки отступает от обводки на `--photo-grid-frame-gap`: между ними полоска фона ячейки,
+   * и обводка видна на любом фото — и на тёмном крае, и на светлом.
+   */
   --photo-grid-frame-width: 2.5px;
-  --photo-grid-frame-offset: 1px;
+  --photo-grid-frame-offset: calc(-1 * var(--photo-grid-frame-width));
+  --photo-grid-frame-gap: 3px;
   --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--text-h);
   --photo-grid-frame-shadow: 0 4px 14px rgb(0 0 0 / 30%);
   /* Сколько рамка переноса переезжает с ячейки на ячейку. */
@@ -82,7 +87,9 @@
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  transition: opacity 160ms ease;
+  /* Без обрезки: к открытой ячейке края фото плавно отступают от обводки (ниже). */
+  clip-path: inset(0);
+  transition: opacity 160ms ease, clip-path 200ms ease;
   animation: backdrop-enter 200ms ease-out backwards;
 }
 
@@ -142,6 +149,14 @@
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-shadow);
+}
+
+/* Фото открытой ячейки отступает от обводки — края фото обрезаются, ячейка и соседи не двигаются. */
+.photo-grid-cell.is-active .photo-grid-thumb {
+  clip-path: inset(
+    calc(var(--photo-grid-frame-width) + var(--photo-grid-frame-gap))
+    round max(0px, calc(var(--photo-grid-radius) - var(--photo-grid-frame-width) - var(--photo-grid-frame-gap)))
+  );
 }
 
 /*
