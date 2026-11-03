@@ -15,6 +15,9 @@
   --photo-grid-gap: 4px;
   /* Отступ значков в нижних углах ячейки (выбор слева, состояние справа) от её краёв: почти в самом углу. */
   --photo-grid-corner-inset: 3px;
+  /* Значок выбора: зона нажатия в левом нижнем углу ячейки и радиокнопка в ней. */
+  --photo-grid-select-size: 44px;
+  --photo-grid-radio-size: 22px;
   /* Ячейки концентричны блоку фото: его скругление минус поле сетки (на iOS блок круглее — и ячейки тоже). */
   --photo-grid-radius: calc(var(--photo-radius) - var(--photo-grid-gap));
   /*
@@ -296,8 +299,8 @@
   bottom: 0;
   left: 0;
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: var(--photo-grid-select-size);
+  height: var(--photo-grid-select-size);
   place-items: end start;
   padding: 0 0 var(--photo-grid-corner-inset) var(--photo-grid-corner-inset);
   background: transparent;
@@ -318,8 +321,8 @@
   --radio-dot: #536dfe;
   position: relative;
   display: block;
-  width: 22px;
-  height: 22px;
+  width: var(--photo-grid-radio-size);
+  height: var(--photo-grid-radio-size);
   background: var(--radio-bg);
   border-radius: 50%;
   box-shadow: inset 0 0 0 1.5px var(--radio-ring), 0 1px 3px rgb(0 0 0 / 30%);
@@ -347,6 +350,21 @@
 
 .photo-grid-cell.is-selected .photo-grid-radio::after {
   transform: scale(1);
+}
+
+/*
+ * Где расходится волна Material (`resolveFeedbackHost`): квадрат размером с зону нажатия с радиокнопкой в центре.
+ * Радиокнопка стоит в углу зоны нажатия, а волна растёт к центру своего элемента — так она сходится к радиокнопке
+ * и накрывает её, как когда та стояла в центре зоны; за краем ячейки волну обрезает ячейка.
+ */
+.photo-grid-select-ink {
+  --ink-offset: calc(var(--photo-grid-corner-inset) + (var(--photo-grid-radio-size) - var(--photo-grid-select-size)) / 2);
+  position: absolute;
+  bottom: var(--ink-offset);
+  left: var(--ink-offset);
+  width: var(--photo-grid-select-size);
+  height: var(--photo-grid-select-size);
+  pointer-events: none;
 }
 
 /* Пустые ячейки: следующая свободная — тональная с «плюсом», дальше — недоступные. */

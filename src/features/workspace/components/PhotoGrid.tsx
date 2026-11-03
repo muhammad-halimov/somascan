@@ -141,6 +141,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, hidden, interactive, on
               onClick={() => onToggleSelected(index)}
             >
               <span className="photo-grid-radio" aria-hidden="true" />
+              <span className="photo-grid-select-ink" aria-hidden="true" />
             </button>
           </div>
         )

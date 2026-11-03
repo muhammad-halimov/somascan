@@ -22,8 +22,9 @@ export function isDisabledPressable(element: HTMLElement): boolean {
 
 /**
  * Элемент, внутри которого рисуется отклик. У кнопки-иконки с подписью (`ActionButton`)
- * это круг иконки, а не вся кнопка с подписью; у остальных — сам элемент.
+ * это круг иконки, а не вся кнопка с подписью; у значка выбора в сетке — квадрат с радиокнопкой в центре
+ * (она стоит в углу зоны нажатия, см. `PhotoGrid.css`); у остальных — сам элемент.
  */
 export function resolveFeedbackHost(pressable: HTMLElement): HTMLElement {
-  return pressable.querySelector<HTMLElement>(':scope > .action-button-icon') ?? pressable
+  return pressable.querySelector<HTMLElement>(':scope > :is(.action-button-icon, .photo-grid-select-ink)') ?? pressable
 }
