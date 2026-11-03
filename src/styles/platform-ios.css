@@ -393,6 +393,16 @@
   padding: 12px 10px 12px 14px;
 }
 
+/*
+ * Круги кнопок строки («Повтор», «Отмена», «Удалить») — стекло на подложке списка, как «таблетки» окна: сплошной
+ * тональный круг того же тона, что подложка (`--social-bg`), сливался с ней.
+ */
+:root[data-platform='ios'] .uploads-list .action-button.is-tonal .action-button-icon {
+  background: var(--glass-control);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
 /* ---------- Списки и поля в стиле iOS ---------- */
 
 /* Сгруппированный список: строки в скруглённом блоке, разделители с отступом слева.
