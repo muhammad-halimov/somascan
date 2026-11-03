@@ -77,6 +77,8 @@
 :root[data-platform='ios'] {
   /* Строка списка под пальцем — systemGray4 (UITableViewCell.selectedBackgroundView). */
   --ios-row-pressed: #d1d1d6;
+  /* Подсветка нажатия гаснет плавно (появляется мгновенно, см. ниже). */
+  --ios-press-fade: opacity 200ms ease-out;
 }
 
 :root[data-platform='ios'][data-theme='dark'] {
@@ -94,15 +96,15 @@
  * Подсветка появляется мгновенно, а гаснет плавно: transition действует только при снятии.
  */
 :root[data-platform='ios'] :is(.action-button, .input-action, .photo-empty) {
-  transition: opacity 200ms ease-out;
+  transition: var(--ios-press-fade);
 }
 
 :root[data-platform='ios'] .tab {
-  transition: opacity 200ms ease-out, color 140ms ease, background-color 140ms ease;
+  transition: var(--ios-press-fade), color 140ms ease, background-color 140ms ease;
 }
 
 :root[data-platform='ios'] .button {
-  transition: opacity 200ms ease-out, background-color 140ms ease, color 140ms ease;
+  transition: var(--ios-press-fade), background-color 140ms ease, color 140ms ease;
 }
 
 :root[data-platform='ios'] :is(.tab, .button, .action-button, .input-action)[data-pressed] {

@@ -39,7 +39,7 @@
 
 /* Фото при открытии слегка «вырастает», при закрытии — наоборот. */
 .photo-viewer-stage {
-  animation: modal-enter 160ms cubic-bezier(.2, .75, .25, 1) both;
+  animation: modal-enter 160ms var(--ease-enter) both;
 }
 
 .photo-viewer.is-closing {

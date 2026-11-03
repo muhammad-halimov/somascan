@@ -18,7 +18,7 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 12px 36px rgb(0 0 0 / 18%);
-  animation: popover-enter 180ms cubic-bezier(.2, .75, .25, 1) both;
+  animation: popover-enter 180ms var(--ease-enter) both;
 }
 
 /* Вкладки «Очередь» и «Готово» под заголовком: Material — на всю ширину, iOS — сегменты с отступами. */
@@ -218,5 +218,5 @@
 }
 
 .uploads-empty-state {
-  animation: content-enter 240ms cubic-bezier(.2, .75, .25, 1) both;
+  animation: content-enter 240ms var(--ease-enter) both;
 }

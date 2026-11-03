@@ -9,7 +9,8 @@
    * Отступ содержимого сверху и место, где останавливается прокрутка к карточке (`scroll-padding-top`). На iOS шапка
    * полупрозрачная и содержимое прокручивается под ней — оба больше (platform-ios.css).
    */
-  --workspace-pad-top: 12px;
+  --workspace-gap-top: 12px;
+  --workspace-pad-top: var(--workspace-gap-top);
   --workspace-snap-top: 0px;
   display: flex;
   min-height: 0;

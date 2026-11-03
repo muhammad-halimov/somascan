@@ -10,6 +10,10 @@
   background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  /* Появление окон, панелей и содержимого: быстрый разгон и мягкое торможение. */
+  --ease-enter: cubic-bezier(.2, .75, .25, 1);
+  /* Тень окон «Настройки» и «Загрузки» над экраном (в Liquid Glass — вместе с тенью стекла). */
+  --window-shadow: 0 24px 80px rgb(0 0 0 / 22%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
@@ -47,7 +51,7 @@
   --photo-empty-bg: var(--bg);
   --photo-empty-plus-bg: #ffffff;
   --photo-empty-plus: #3c4043;
-  --photo-empty-text: #5f6368;
+  --photo-empty-text: var(--text);
   --photo-backdrop: #e6e8ec;
   /* Поля ввода в стиле Material 3 (заливка и нижняя линия). */
   --field-bg: #f1f3f4;
@@ -113,7 +117,6 @@
   --offline-bg: #462719;
   --photo-empty-plus-bg: #393b42;
   --photo-empty-plus: #f1f3f4;
-  --photo-empty-text: #bdc1c6;
   --photo-backdrop: #111216;
   --field-bg: #24262c;
   --field-line: #9aa0a6;

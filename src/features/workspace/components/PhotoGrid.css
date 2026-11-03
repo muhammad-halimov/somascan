@@ -461,7 +461,7 @@
 }
 
 :root[data-platform='ios'] :is(.photo-grid-open, .photo-grid-select) {
-  transition: opacity 200ms ease-out;
+  transition: var(--ios-press-fade);
 }
 
 :root[data-platform='ios'] :is(.photo-grid-open, .photo-grid-select)[data-pressed] {

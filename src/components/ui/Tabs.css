@@ -80,7 +80,7 @@
 }
 
 .tabs-indicator.is-animated {
-  transition: translate 280ms cubic-bezier(.2, .75, .25, 1), width 280ms cubic-bezier(.2, .75, .25, 1);
+  transition: translate 280ms var(--ease-enter), width 280ms var(--ease-enter);
 }
 
 .tab-icon {

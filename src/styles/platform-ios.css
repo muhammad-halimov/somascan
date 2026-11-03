@@ -37,8 +37,13 @@
   --ios-radius-sheet: 28px;
   --ios-radius-segment: 15px;
   --ios-radius-thumb: 13px;
-  /* Высота сегмента: 30 + 2×2 отступа дорожки. */
+  /* Сегмент: высота 30 и отступ дорожки 2 вокруг плашки (высота переключателя — 30 + 2×2). */
   --ios-segment-height: 30px;
+  --ios-segment-inset: 2px;
+  /* Переезд плашки: плавное торможение без рывка на первом кадре, как у UISegmentedControl. */
+  --ios-segment-ease: cubic-bezier(.3, .7, .2, 1);
+  /* Отступ строки списка от края группы — он же начало разделителя. */
+  --ios-row-inset: 14px;
 
   /* classic: плотный материал, тонкий разделитель, без бликов. */
   --glass-bg: color-mix(in srgb, var(--bg) 80%, transparent);
@@ -60,6 +65,8 @@
   --ios-radius-sheet: 30px;
   --ios-radius-segment: 16px;
   --ios-radius-thumb: 14px;
+  /* Поле окна вокруг списка: скругление окна (30) — это скругление группы (18) плюс это поле. */
+  --ios-window-inset: 12px;
 }
 
 /* Окна «Настройки» и «Загрузки» — стекло iOS 27 на всех версиях iOS (в том числе iOS 18). */
@@ -69,12 +76,11 @@
   --glass-bg: color-mix(in srgb, var(--bg) 58%, transparent);
   --glass-blur: var(--glass-window-blur);
   --glass-border: rgb(255 255 255 / 55%);
-  /* Тень под стеклом; `--glass-shadow` — она же с бликом по верхнему и нижнему краю. */
+  /* Блик по верхнему и нижнему краю стекла, тень под ним; `--glass-shadow` — то и другое вместе. */
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 70%), inset 0 -1px 0 rgb(255 255 255 / 18%);
   --glass-drop: 0 10px 30px rgb(0 0 0 / 12%);
-  --glass-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 70%),
-    inset 0 -1px 0 rgb(255 255 255 / 18%),
-    var(--glass-drop);
+  --glass-shadow: var(--glass-highlight), var(--glass-drop);
+  /* Кромка и блик главной кнопки: светлее её заливки. */
   --glass-accent-rim: color-mix(in srgb, #fff 28%, var(--accent));
   --glass-accent-highlight: rgb(255 255 255 / 40%);
   --glass-control: rgb(255 255 255 / 35%);
@@ -92,22 +98,14 @@
 :root[data-platform='ios'][data-ios-design='glass']:not([data-theme='dark']) {
   --glass-bg: color-mix(in srgb, var(--bg) 62%, transparent);
   --glass-border: rgb(0 0 0 / 8%);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 80%), inset 0 -1px 0 rgb(0 0 0 / 3%);
   --glass-drop: 0 10px 30px rgb(0 0 0 / 10%);
-  --glass-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 80%),
-    inset 0 -1px 0 rgb(0 0 0 / 3%),
-    var(--glass-drop);
-  /* Кромка и блик главной кнопки: светлее её заливки. */
-  --glass-accent-rim: color-mix(in srgb, #fff 28%, var(--accent));
-  --glass-accent-highlight: rgb(255 255 255 / 40%);
+  --glass-shadow: var(--glass-highlight), var(--glass-drop);
   /*
-   * Блоки главного экрана (фото, результат) — та же кромка и блик, тень короче: шире бокового отступа рабочей
-   * области (16 px) её бы обрезало.
+   * Блоки главного экрана (фото, результат) — тот же блик, тень короче: шире бокового отступа рабочей области
+   * (16 px) её бы обрезало.
    */
-  --glass-block-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 80%),
-    inset 0 -1px 0 rgb(0 0 0 / 3%),
-    0 4px 12px rgb(0 0 0 / 10%);
+  --glass-block-shadow: var(--glass-highlight), 0 4px 12px rgb(0 0 0 / 10%);
   --glass-control: rgb(0 0 0 / 5%);
 }
 
@@ -126,17 +124,12 @@
 :root[data-platform='ios'][data-theme='dark'] :is(.settings-modal, .uploads-popover) {
   --glass-bg: color-mix(in srgb, var(--bg) 52%, transparent);
   --glass-border: rgb(255 255 255 / 16%);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 22%), inset 0 -1px 0 rgb(255 255 255 / 6%);
   --glass-drop: 0 10px 30px rgb(0 0 0 / 40%);
-  --glass-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 22%),
-    inset 0 -1px 0 rgb(255 255 255 / 6%),
-    var(--glass-drop);
+  --glass-shadow: var(--glass-highlight), var(--glass-drop);
   --glass-accent-rim: color-mix(in srgb, #fff 35%, var(--accent));
   --glass-accent-highlight: rgb(255 255 255 / 55%);
-  --glass-block-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 22%),
-    inset 0 -1px 0 rgb(255 255 255 / 6%),
-    0 4px 12px rgb(0 0 0 / 40%);
+  --glass-block-shadow: var(--glass-highlight), 0 4px 12px rgb(0 0 0 / 40%);
   --glass-control: rgb(255 255 255 / 10%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 88%, transparent);
   --glass-sheet-dimmed-bg: color-mix(in srgb, var(--bg) 83%, transparent);
@@ -157,7 +150,7 @@
 }
 
 :root[data-platform='ios'] .scan-workspace {
-  --workspace-pad-top: calc(var(--app-header-height) + 12px);
+  --workspace-pad-top: calc(var(--app-header-height) + var(--workspace-gap-top));
   --workspace-snap-top: calc(var(--app-header-height) + 8px);
 }
 
@@ -277,8 +270,11 @@
   box-shadow: var(--glass-shadow);
 }
 
-/* Тональные кнопки на стекле — полупрозрачные, а не сплошные. */
-:root[data-platform='ios'] .notes-actions .action-button.is-tonal .action-button-icon {
+/*
+ * Тональные кнопки на стекле (панель действий, строки «Загрузок») — полупрозрачные, а не сплошные: сплошной круг
+ * того же тона, что подложка списка, сливался с ней.
+ */
+:root[data-platform='ios'] :is(.notes-actions, .uploads-list) .action-button.is-tonal .action-button-icon {
   background: var(--glass-control);
 }
 
@@ -324,7 +320,7 @@
   background: var(--window-tint);
   border: 1px solid var(--glass-border);
   border-radius: var(--ios-radius-sheet);
-  box-shadow: var(--glass-shadow), 0 24px 80px rgb(0 0 0 / 22%);
+  box-shadow: var(--glass-shadow), var(--window-shadow);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
@@ -399,8 +395,8 @@
 }
 
 :root[data-platform='ios'] .uploads-content {
-  padding: 0 12px 12px;
-  scroll-padding-bottom: 12px;
+  padding: 0 var(--ios-window-inset) var(--ios-window-inset);
+  scroll-padding-bottom: var(--ios-window-inset);
 }
 
 :root[data-platform='ios'] .uploads-list {
@@ -410,7 +406,7 @@
 /* Значок состояния и кнопки строки — по центру строки, без лишнего отступа слева. */
 :root[data-platform='ios'] .uploads-list .list-item {
   gap: 12px;
-  padding: 12px 10px 12px 14px;
+  padding: 12px 10px 12px var(--ios-row-inset);
 }
 
 /*
@@ -437,11 +433,6 @@
     var(--glass-drop);
 }
 
-/* Круги строк «Загрузок» — полупрозрачные: сплошной тональный круг того же тона, что подложка списка, сливался с ней. */
-:root[data-platform='ios'] .uploads-list .action-button.is-tonal .action-button-icon {
-  background: var(--glass-control);
-}
-
 /* ---------- Списки и поля в стиле iOS ---------- */
 
 /* Сгруппированный список: строки в скруглённом блоке, разделители с отступом слева.
@@ -454,7 +445,7 @@
 
 :root[data-platform='ios'] .list-item {
   position: relative;
-  padding: 10px 14px;
+  padding: 10px var(--ios-row-inset);
   border-bottom: 0;
   border-radius: 0;
 }
@@ -464,7 +455,7 @@
   position: absolute;
   right: 0;
   bottom: 0;
-  left: 14px;
+  left: var(--ios-row-inset);
   height: .5px;
   background: var(--border);
 }
@@ -522,7 +513,7 @@
  */
 :root[data-platform='ios'] .tabs {
   overflow: hidden;
-  padding: 2px;
+  padding: var(--ios-segment-inset);
   background: var(--ios-segment-track);
   border-bottom: 0;
   border-radius: var(--ios-radius-segment);
@@ -662,8 +653,8 @@
    * её обратно в общий слой с другим округлением — и она на долю секунды «отскакивала» на 1–2 точки.
    */
   will-change: translate, transform;
-  top: 2px;
-  bottom: 2px;
+  top: var(--ios-segment-inset);
+  bottom: var(--ios-segment-inset);
   height: auto;
   background: var(--ios-segment-thumb);
   border-radius: var(--ios-radius-thumb);
@@ -671,8 +662,7 @@
 }
 
 :root[data-platform='ios'] .tabs-indicator.is-animated {
-  /* Плавное торможение без рывка на первом кадре, как у UISegmentedControl. */
-  transition: translate 300ms cubic-bezier(.3, .7, .2, 1), width 300ms cubic-bezier(.3, .7, .2, 1), scale 160ms ease-out;
+  transition: translate 300ms var(--ios-segment-ease), width 300ms var(--ios-segment-ease), scale 160ms ease-out;
 }
 
 /* Разделы настроек: переключатель с отступами под заголовком окна. */
