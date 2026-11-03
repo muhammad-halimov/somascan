@@ -58,6 +58,19 @@
   pointer-events: none;
 }
 
+/*
+ * Сетка на экране: свечение открытой ячейки выходит за край блока, и граница резала его тёмной (в светлой теме —
+ * серой) линией. Граница смешивается с тем, что под ней: в тёмной теме видна, только где она светлее (на фоне),
+ * в светлой — только где темнее; поверх свечения её нет.
+ */
+.photo-block:has(> .photo-card.is-grid-shown)::after {
+  mix-blend-mode: darken;
+}
+
+:root[data-theme='dark'] .photo-block:has(> .photo-card.is-grid-shown)::after {
+  mix-blend-mode: lighten;
+}
+
 /* Material Design: блок отделён от фона того же цвета тенью (как и карточка результата). */
 :root:not([data-platform='ios']) .photo-block {
   box-shadow: var(--block-shadow);
