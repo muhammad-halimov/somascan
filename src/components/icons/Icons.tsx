@@ -650,15 +650,6 @@ export function CollapseIcon() {
   )
 }
 
-/** Два уголка вверх и вниз: значок всплывающего меню выбора iOS (chevron.up.chevron.down). */
-export function ChevronUpDownIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="chevron-up-down-icon">
-      <path d="m7 9 5-5 5 5M7 15l5 5 5-5" />
-    </svg>
-  )
-}
-
 /** Залитый треугольник вниз: значок выпадающего списка Material (arrow_drop_down). */
 export function ArrowDropDownIcon() {
   return (
