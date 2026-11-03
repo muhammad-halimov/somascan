@@ -51,6 +51,11 @@
   --glass-border: color-mix(in srgb, var(--border) 90%, transparent);
   --glass-shadow: 0 1px 0 color-mix(in srgb, var(--border) 60%, transparent);
   --glass-control: color-mix(in srgb, var(--text-h) 8%, transparent);
+  /*
+   * Поля ввода и группы списков на стекле — оттенок цвета текста, а не непрозрачная заливка (`--field-bg`):
+   * чуть темнее стекла в светлой теме, чуть светлее в тёмной — видны при любом экране под окном.
+   */
+  --glass-field: color-mix(in srgb, var(--text-h) 5%, transparent);
   /* Окна с текстом плотнее панелей: содержимое под ними не должно мешать читать. */
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 92%, transparent);
   /* Размытие стекла iOS 27 — и окон «Настройки» и «Загрузки» на любой версии: неподвижное стекло окон (снимок экрана) размывается им же. */
@@ -67,6 +72,8 @@
   --ios-radius-thumb: 14px;
   /* Поле окна вокруг списка: скругление окна (30) — это скругление группы (18) плюс это поле. */
   --ios-window-inset: 12px;
+  /* Поля ввода в окне — на стекле (см. `--glass-field`), иначе светло-серая заливка сливается со светлым окном. */
+  --field-bg: var(--glass-field);
 }
 
 /* Окна «Настройки» и «Загрузки» — стекло iOS 27 на всех версиях iOS (в том числе iOS 18). */
@@ -84,6 +91,7 @@
   --glass-accent-rim: color-mix(in srgb, #fff 28%, var(--accent));
   --glass-accent-highlight: rgb(255 255 255 / 40%);
   --glass-control: rgb(255 255 255 / 35%);
+  --glass-field: rgb(0 0 0 / 5%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 90%, transparent);
   /* Окно над затемнённым экраном («Настройки»): прозрачнее на затемнение (28%) — экран сквозь стекло виден так же, как у «Загрузок». */
   --glass-sheet-dimmed-bg: color-mix(in srgb, var(--bg) 86%, transparent);
@@ -131,6 +139,7 @@
   --glass-accent-highlight: rgb(255 255 255 / 55%);
   --glass-block-shadow: var(--glass-highlight), 0 4px 12px rgb(0 0 0 / 40%);
   --glass-control: rgb(255 255 255 / 10%);
+  --glass-field: rgb(255 255 255 / 6%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 88%, transparent);
   --glass-sheet-dimmed-bg: color-mix(in srgb, var(--bg) 83%, transparent);
 }
@@ -439,7 +448,7 @@
    Углы режет clip-path, а не overflow: hidden — так не появляется лишняя область прокрутки. */
 :root[data-platform='ios'] .list {
   clip-path: inset(0 round var(--ios-radius-group));
-  background: color-mix(in srgb, var(--social-bg) 70%, transparent);
+  background: var(--glass-field);
   border-radius: var(--ios-radius-group);
 }
 
