@@ -103,7 +103,7 @@
  * Нажатая кнопка приглушается целиком — иконка и подпись, как UIButton с image + title.
  * Подсветка появляется мгновенно, а гаснет плавно: transition действует только при снятии.
  */
-:root[data-platform='ios'] :is(.action-button, .input-action, .photo-empty) {
+:root[data-platform='ios'] :is(.action-button, .input-action, .photo-empty, .photo-grid-open, .photo-grid-select) {
   transition: var(--ios-press-fade);
 }
 
@@ -120,7 +120,8 @@
   transition: none;
 }
 
-:root[data-platform='ios'] .photo-empty[data-pressed] {
+/* Пустая карточка и ячейки сетки (фото под пальцем) гаснут меньше кнопок. */
+:root[data-platform='ios'] :is(.photo-empty, .photo-grid-open, .photo-grid-select)[data-pressed] {
   opacity: .6;
   transition: none;
 }

@@ -36,7 +36,7 @@
 .photo-block {
   position: relative;
   display: flex;
-  width: min(100%, 380px, calc(44svh * 1.08));
+  width: min(100%, var(--card-width), calc(44svh * var(--photo-aspect)));
   flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
@@ -92,7 +92,7 @@
 
 /* Фото в правке — той же ширины, что и карточка результата (см. .notes-card.is-text-editing). */
 .scan-workspace.is-text-editing .photo-block {
-  width: min(100%, 600px);
+  width: min(100%, var(--card-width-edit));
 }
 
 /*
@@ -161,7 +161,7 @@
 
   .photo-block,
   .scan-workspace.is-text-editing .photo-block {
-    width: min(50cqw, calc((100cqh - var(--slide-bar-space)) * 1.08));
+    width: min(50cqw, calc((100cqh - var(--slide-bar-space)) * var(--photo-aspect)));
   }
 }
 
@@ -198,11 +198,7 @@
  */
 ::view-transition-group(notes-card) {
   overflow: hidden;
-  border-radius: 16px;
-}
-
-:root[data-platform='ios']::view-transition-group(notes-card) {
-  border-radius: var(--ios-radius-card);
+  border-radius: var(--card-radius);
 }
 
 /* Строки просмотра и поля правки не просвечивают друг через друга: старое гаснет быстро, новое проявляется следом. */

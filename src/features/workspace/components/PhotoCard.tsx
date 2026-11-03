@@ -20,6 +20,8 @@ import './PhotoCard.css'
 
 /** Сколько проявляется показанное фото (`.photo-pan-layer.is-loaded` в PhotoCard.css, 260 мс), с запасом на кадр. */
 const PHOTO_FADE_MS = 300
+/** Переход к соседней бирке: фото въезжает сбоку, мс. */
+const SLIDE_MS = 280
 
 /** Что показывает карточка: одну бирку или сетку всех. */
 export type PhotoCardView = 'single' | 'grid'
@@ -91,7 +93,7 @@ export interface PhotoCardProps {
  * нажатие на ячейку (или «Открыть» в панели) увеличивает её обратно до одной бирки. Переход к соседней бирке — фото въезжает
  * сбоку, как слайд; к соседней бирке листают и свайпом по фото вбок, к сетке — свайпом сверху вниз (`usePhotoSwipe`). Нажатие на фото открывает просмотр на весь экран, двойное нажатие — плавно увеличивает фото
  * к точке нажатия (у увеличенного — исходный вид). Пока фото грузится и распознаётся —
- * один спиннер с подписью «Распознавание». В правом нижнем углу ячейки без снимка — переключатель «Без фото» /
+ * один спиннер с подписью «Распознавание». В правом верхнем углу ячейки без снимка — переключатель «Без фото» /
  * «С фото»: бирка, данные которой вводят вручную (на месте фото — перечёркнутая картинка), и обратно.
  */
 export function PhotoCard({ handleRef, item, items, activeIndex, view, isReceiving, transform, toolsOnPhoto, retakeHint, onPick, onToggleManual, onOpen, onLoad, onError, onShowGrid, onPrevious, onNext, onSelectCell, onOpenCell, onToggleSelected }: PhotoCardProps) {
@@ -198,7 +200,7 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, isReceivi
     const direction = Math.sign(activeIndex - previous.index)
     const animation = stage.animate(
       [{ transform: `translateX(${direction * 28}px)`, opacity: direction === 0 ? 0.6 : 0.5 }, { transform: 'none', opacity: 1 }],
-      { duration: 280, easing: motionTiming().easing },
+      motionTiming(SLIDE_MS),
     )
     return () => animation.cancel()
   }, [item?.id, activeIndex, view, settledView])
@@ -290,13 +292,13 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, isReceivi
           </div>
         )}
 
-        {/*
-          Ячейка без снимка (пустая, «без фото» или ждущая фото): в правом нижнем углу — переключатель
-          «Без фото» ↔ «С фото», туда и обратно.
-        */}
         {/* Кнопки масштаба и поворота поверх фото (если они не в панели листания). */}
         {toolsOnPhoto && hasPhoto && !isBusy && <PhotoControls className="photo-controls anim-enter" transform={transform} showReset />}
 
+        {/*
+          Ячейка без снимка (пустая, «без фото» или ждущая фото): в правом верхнем углу — переключатель
+          «Без фото» ↔ «С фото», туда и обратно.
+        */}
         {!hasPhoto && !isBusy && (
           <div className="photo-corner">
             {isManual ? (
@@ -307,7 +309,6 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, isReceivi
           </div>
         )}
 
-
         {/* Подсказка повернуть или переснять — сверху по центру фото (в слое фото: при переходе к сетке уходит с ним). */}
         {hint.mounted && hintReason && <RetakeHint reason={hintReason} isClosing={hint.closing} />}
       </div>
@@ -316,8 +317,6 @@ export function PhotoCard({ handleRef, item, items, activeIndex, view, isReceivi
         Сетка в DOM всегда (у одной бирки — прозрачна): переход к ней не ждёт её сборки и отрисовки — только анимацию.
       */}
       <PhotoGrid gridRef={gridRef} items={items} activeIndex={activeIndex} hidden={view === 'single' && settledView === 'single'} interactive={view === 'grid'} onSelect={onSelectCell} onOpen={onOpenCell} onToggleSelected={onToggleSelected} />
-
-
     </div>
   )
 }

@@ -5,7 +5,7 @@
 
 .notes-card {
   display: flex;
-  width: min(100%, 380px);
+  width: min(100%, var(--card-width));
   min-height: 104px;
   flex: 1 1 auto;
   flex-direction: column;
@@ -13,7 +13,7 @@
   margin-top: 12px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--card-radius);
   /* Размеры не анимируются: иначе при входе в правку контент съезжает во время анимации. */
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
@@ -37,7 +37,7 @@
  */
 .notes-card.is-text-editing {
   width: 100%;
-  max-width: 600px;
+  max-width: var(--card-width-edit);
   min-height: calc(100% + var(--workspace-pad-top) - var(--workspace-snap-top));
   flex: 0 0 auto;
   border-color: var(--accent);
@@ -296,21 +296,18 @@
     padding-top: 6px;
   }
 
+  /*
+   * Android: панель до низа экрана, того же цвета, что и экран, — содержимое под ней не просвечивает; сверху —
+   * тонкая линия и тень вверх: панель приподнята над содержимым.
+   */
   :root[data-platform='android'] .scan-workspace:not(.is-text-editing) .notes-actions {
     padding-bottom: max(8px, var(--safe-bottom));
+    background: var(--bg);
+    box-shadow: var(--block-shadow-up);
   }
 
   :root[data-ios-design='classic'] .scan-workspace:not(.is-text-editing) .notes-actions {
     padding-bottom: max(6px, calc(var(--safe-bottom) - 12px));
-  }
-
-  /*
-   * Android: панель того же цвета, что и экран, — содержимое под ней не просвечивает; сверху — тонкая линия
-   * и тень вверх: панель приподнята над содержимым.
-   */
-  :root[data-platform='android'] .scan-workspace:not(.is-text-editing) .notes-actions {
-    background: var(--bg);
-    box-shadow: var(--block-shadow-up);
   }
 
   /* iOS 26+: «пилюля» по центру, над полоской «Домой». */
@@ -351,8 +348,8 @@
 }
 
 /*
- * Значок у номера бирки — как в углу её ячейки в сетке: зелёная галочка у готовой, оранжевый «!» у той,
- * что ждёт действий (нет формы, обязательных полей или фото, плавка повторяется).
+ * Значок у номера бирки — как в углу её ячейки в сетке: зелёная галочка у готовой, красный или жёлтый «!» у той,
+ * что ждёт действий (нет формы; нет обязательных полей или фото, плавка повторяется).
  */
 .notes-item-mark {
   display: grid;

@@ -13,8 +13,9 @@
 /* ---------- Токены стекла ---------- */
 
 :root[data-platform='ios'] {
-  /* Блок фото скруглён, как карточки iOS. */
+  /* Блок фото и карточка результата скруглены, как карточки iOS. */
   --photo-radius: var(--ios-radius-card);
+  --card-radius: var(--ios-radius-card);
   /* Поле в фокусе — нейтральный оттенок заливки, без акцентной линии (как текстовые поля UIKit). */
   --field-bg-focus: color-mix(in srgb, var(--text-h) 6%, var(--field-bg));
   /* Подложка сегментированного переключателя и «плашка» выбранного сегмента (цвета UIKit). */
@@ -256,10 +257,6 @@
 }
 
 /* ---------- Карточки ---------- */
-
-:root[data-platform='ios'] .notes-card {
-  border-radius: var(--ios-radius-card);
-}
 
 /* Панель действий: classic — полоса материала, glass — парящая стеклянная панель. */
 :root[data-platform='ios'] .notes-actions {

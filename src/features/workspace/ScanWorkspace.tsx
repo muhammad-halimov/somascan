@@ -38,7 +38,7 @@ export function ScanWorkspace() {
   const activeIndex = session.activeIndex
   const status = item?.status ?? IDLE
   const [isViewerOpen, setIsViewerOpen] = useState(false)
-  /** Когда нажатием на фото открыли просмотр: второе нажатие вовремя — двойное, оно увеличивает фото в просмотре. */
+  /** Открывает просмотр на весь экран (одиночное нажатие на фото; двойное от одиночного отличает карточка, `useDoubleTap`). */
   const openViewer = () => setIsViewerOpen(true)
   /** Карточка фото: одна бирка или сетка. */
   const [view, setView] = useState<PhotoCardView>('single')

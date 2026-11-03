@@ -8,7 +8,7 @@
   z-index: 20;
   inset: 0;
   overflow: hidden;
-  color: #f1f3f4;
+  color: var(--overlay-text);
   /* Свайп закрытия (`useSwipeToClose`) гасит фон и кнопки: `--viewer-dismiss` от 0 до 1. */
   background: rgb(11 12 15 / calc(1 - var(--viewer-dismiss, 0) * .85));
   transition: background-color 200ms ease;

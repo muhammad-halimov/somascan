@@ -14,6 +14,19 @@
   --ease-enter: cubic-bezier(.2, .75, .25, 1);
   /* Тень окон «Настройки» и «Загрузки» над экраном (в Liquid Glass — вместе с тенью стекла). */
   --window-shadow: 0 24px 80px rgb(0 0 0 / 22%);
+  /* Блок фото и карточка результата: ширина, ширина карточки в правке, пропорция фото, скругление карточки (iOS — своё). */
+  --card-width: 380px;
+  --card-width-edit: 600px;
+  --photo-aspect: 1.08;
+  --card-radius: 16px;
+  /*
+   * Поверх фото (кнопки, подсказка, номер ячейки, просмотр): светлый текст, тёмная полупрозрачная подложка
+   * (`rgb(var(--overlay-base) / …)`), светлая кромка и дорожка спиннера — одни и те же в обеих темах.
+   */
+  --overlay-text: #f1f3f4;
+  --overlay-base: 24 26 31;
+  --overlay-border: rgb(255 255 255 / 16%);
+  --overlay-spinner-track: rgb(255 255 255 / 35%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
@@ -26,8 +39,9 @@
   --bg: #fff;
   /* Линии и рамки. */
   --border: #e5e7eb;
-  /* Акцент: активные вкладки, выбранные пункты, главная кнопка. */
+  /* Акцент: активные вкладки, выбранные пункты, главная кнопка. Акцент тёмной темы — и на тёмных плашках поверх фото. */
   --accent: #536dfe;
+  --accent-dark: #a7b4ff;
   /* Текст и иконки на акцентном фоне. */
   --on-accent: #fff;
   /* Приглушённый фон: поля ввода, тональные кнопки. */
@@ -106,7 +120,7 @@
   --text-h: #e8eaed;
   --bg: #17181c;
   --border: #34363d;
-  --accent: #a7b4ff;
+  --accent: var(--accent-dark);
   --on-accent: #10131f;
   --social-bg: #292b31;
   --danger: #f28b82;
@@ -142,6 +156,8 @@
    */
   --button-tonal-bg: color-mix(in srgb, var(--photo-empty-plus) 14%, transparent);
   --button-ring: inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 16%, transparent);
+  /* «Пилюля» вокруг кнопок (панель листания, «Без фото»): полупрозрачный оттенок плашки-примечания. */
+  --pill-bg: color-mix(in srgb, var(--notice-bg) 86%, transparent);
 }
 
 :root[data-theme='dark']:not([data-platform='ios']) {

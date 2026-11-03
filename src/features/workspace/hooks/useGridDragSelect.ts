@@ -78,8 +78,10 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     /** Время переезда рамки, мс — из стилей сетки. */
     const slideMs = cssDurationMs(getComputedStyle(grid).getPropertyValue(FRAME_MOVE_VAR))
     const cellOf = (index: number | null) => (index === null ? null : grid.querySelector<HTMLElement>(`[data-item-index="${index}"]`))
-    /** Ячейка позиции — бирки или пустая («плюс»): ячейки идут по порядку. */
-    const cellAt = (index: number) => Array.from(grid.children).filter((child) => child !== frame)[index] as HTMLElement | undefined
+    /** Ячейки сетки по порядку — бирки и пустые («плюс»); рамка в раскладке не участвует. */
+    const cells = () => Array.from(grid.children).filter((child) => child !== frame) as HTMLElement[]
+    /** Ячейка позиции — бирки или пустая. */
+    const cellAt = (index: number): HTMLElement | undefined => cells()[index]
 
     /**
      * Область ячейки в сетке (`grid-area`): рамка — абсолютный элемент сетки и встаёт ровно в эту область, тех же
@@ -87,7 +89,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
      * Конечные линии — явно: у абсолютного элемента `auto` означает край сетки, а не следующую линию.
      */
     const cellArea = (cell: HTMLElement) => {
-      const order = Array.from(grid.children).filter((child) => child !== frame).indexOf(cell)
+      const order = cells().indexOf(cell)
       const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').length
       const row = Math.floor(order / columns) + 1
       const column = (order % columns) + 1

@@ -23,9 +23,9 @@
   gap: 6px;
   margin: 0;
   padding: 6px 12px 6px 9px;
-  color: #f1f3f4;
-  background: rgb(24 26 31 / 52%);
-  border: 1px solid rgb(255 255 255 / 16%);
+  color: var(--overlay-text);
+  background: rgb(var(--overlay-base) / 52%);
+  border: 1px solid var(--overlay-border);
   border-radius: 999px;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -49,7 +49,7 @@
   flex: 0 0 16px;
   translate: 0 -1px;
   fill: none;
-  stroke: #a7b4ff;
+  stroke: var(--accent-dark);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;

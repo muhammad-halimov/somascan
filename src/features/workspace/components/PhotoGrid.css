@@ -15,9 +15,10 @@
   --photo-grid-gap: 4px;
   /* Отступ значков в нижних углах ячейки (выбор слева, состояние справа) от её краёв: почти в самом углу. */
   --photo-grid-corner-inset: 3px;
-  /* Значок выбора: зона нажатия в левом нижнем углу ячейки и радиокнопка в ней. */
+  /* Отметки в нижних углах ячейки — радиокнопка выбора слева и значок состояния справа — одного размера. */
+  --photo-grid-mark-size: 22px;
+  /* Зона нажатия радиокнопки — левый нижний угол ячейки. */
   --photo-grid-select-size: 44px;
-  --photo-grid-radio-size: 22px;
   /* Ячейки концентричны блоку фото: его скругление минус поле сетки (на iOS блок круглее — и ячейки тоже). */
   --photo-grid-radius: calc(var(--photo-radius) - var(--photo-grid-gap));
   /*
@@ -108,7 +109,6 @@
   color: var(--photo-empty-plus);
   background: var(--photo-empty-plus-bg);
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
   transition: opacity 160ms ease;
 }
 
@@ -126,7 +126,6 @@
   opacity: .45;
 }
 
-/* Не выбранная для отправки — миниатюра приглушена. */
 /* Повёрнутая на 90° или 270° миниатюра: стороны меняются местами, чтобы после поворота она снова заполняла ячейку. */
 .photo-grid-thumb.is-sideways {
   inset: auto;
@@ -137,6 +136,7 @@
   translate: -50% -50%;
 }
 
+/* Не выбранная для отправки — миниатюра приглушена. */
 .photo-grid-cell.has-photo:not(.is-selected) .photo-grid-thumb {
   opacity: .45;
 }
@@ -144,13 +144,15 @@
 /*
  * Открытая бирка — сплошная акцентная обводка снаружи ячейки, без свечения, и тень под ней: ячейка приподнята
  * над соседними. От отметки выбранных отличается формой, от цветов состояний — цветом. Та же обводка — у рамки,
- * которую ведёт палец (`.photo-grid-frame`).
+ * которую ведёт палец (`.photo-grid-frame`). Тень проявляется плавно: во время перехода между сеткой и одной биркой
+ * обводки и тени нет (ниже), после него тень возвращается.
  */
 .photo-grid-cell.is-active {
   z-index: 4;
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
   box-shadow: var(--photo-grid-frame-shadow);
+  transition: box-shadow 200ms ease;
 }
 
 /*
@@ -179,19 +181,15 @@
   box-shadow: none;
 }
 
-/*
- * Во время перехода между сеткой и одной биркой обводки нет: увеличенная вместе с ячейкой втрое, она
- * выглядела бы толстой рамкой по краю карточки. После перехода обводка проявляется.
- */
-.photo-grid-cell.is-active {
-  transition: box-shadow 200ms ease;
-}
-
 /* Рамка переноса доехала и сменяется обводкой ячейки на том же месте — сразу, без проявления (`useGridDragSelect`). */
 .photo-grid.is-settling .photo-grid-cell.is-active {
   transition: none;
 }
 
+/*
+ * Во время перехода между сеткой и одной биркой обводки нет: увеличенная вместе с ячейкой втрое, она
+ * выглядела бы толстой рамкой по краю карточки.
+ */
 .photo-card.is-zooming .photo-grid-cell.is-active {
   outline-color: transparent;
   box-shadow: none;
@@ -210,7 +208,7 @@
   place-items: center;
   padding: 0 6px;
   color: #fff;
-  background: rgb(24 26 31 / 64%);
+  background: rgb(var(--overlay-base) / 64%);
   border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
@@ -237,7 +235,7 @@
   z-index: 2;
   width: 26px;
   height: 26px;
-  border: 3px solid rgb(255 255 255 / 35%);
+  border: 3px solid var(--overlay-spinner-track);
   border-top-color: #fff;
   border-radius: 50%;
   animation: photo-spin 750ms linear infinite;
@@ -250,8 +248,8 @@
   right: var(--photo-grid-corner-inset);
   bottom: var(--photo-grid-corner-inset);
   display: grid;
-  width: 22px;
-  height: 22px;
+  width: var(--photo-grid-mark-size);
+  height: var(--photo-grid-mark-size);
   place-items: center;
   color: var(--on-accent);
   border-radius: 50%;
@@ -262,18 +260,14 @@
   background: var(--success);
 }
 
-/* «!»: красный — не выбрана форма, жёлтый — не распознаны обязательные поля (плавка повторяется, нет фото). */
-.photo-grid-badge.is-danger {
+/* «!»: красный — не выбрана форма, жёлтый — не распознаны обязательные поля (плавка повторяется, нет фото); знак ошибки — красный. */
+.photo-grid-badge:is(.is-danger, .is-failed) {
   background: var(--danger);
 }
 
 .photo-grid-badge.is-warning {
   color: var(--on-warning);
   background: var(--warning);
-}
-
-.photo-grid-badge.is-failed {
-  background: var(--danger);
 }
 
 .photo-grid-badge svg {
@@ -318,11 +312,11 @@
 .photo-grid-radio {
   --radio-bg: #fff;
   --radio-ring: rgb(0 0 0 / 28%);
-  --radio-dot: #536dfe;
+  --radio-dot: var(--accent);
   position: relative;
   display: block;
-  width: var(--photo-grid-radio-size);
-  height: var(--photo-grid-radio-size);
+  width: var(--photo-grid-mark-size);
+  height: var(--photo-grid-mark-size);
   background: var(--radio-bg);
   border-radius: 50%;
   box-shadow: inset 0 0 0 1.5px var(--radio-ring), 0 1px 3px rgb(0 0 0 / 30%);
@@ -331,7 +325,6 @@
 :root[data-theme='dark'] .photo-grid-radio {
   --radio-bg: #26282e;
   --radio-ring: rgb(255 255 255 / 45%);
-  --radio-dot: var(--accent);
 }
 
 .photo-grid-radio::after {
@@ -358,7 +351,7 @@
  * и накрывает её, как когда та стояла в центре зоны; за краем ячейки волну обрезает ячейка.
  */
 .photo-grid-select-ink {
-  --ink-offset: calc(var(--photo-grid-corner-inset) + (var(--photo-grid-radio-size) - var(--photo-grid-select-size)) / 2);
+  --ink-offset: calc(var(--photo-grid-corner-inset) + (var(--photo-grid-mark-size) - var(--photo-grid-select-size)) / 2);
   position: absolute;
   bottom: var(--ink-offset);
   left: var(--ink-offset);
@@ -389,7 +382,11 @@
 
 .photo-grid-cell.is-next .photo-grid-plus {
   background: var(--photo-empty-plus-bg);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+/* Круги в ячейках (бирка без фото, «плюс») — с мягкой тенью светлых кругов карточки. */
+:is(.photo-grid-manual, .photo-grid-cell.is-next .photo-grid-plus) {
+  box-shadow: var(--photo-circle-drop);
 }
 
 /* Material Design: круги в ячейках — с тенью кнопок главного экрана. */
@@ -443,6 +440,7 @@
   --ripple-color: var(--accent);
 }
 
+/* iOS 26+: скругление ячеек 16 px — своё, а не концентричное блоку (20 px). */
 :root[data-platform='ios'][data-ios-design='glass'] .photo-grid {
   --photo-grid-radius: 16px;
 }
@@ -458,13 +456,4 @@
 
 :root[data-platform='ios'][data-ios-design='glass'] .photo-grid-cell.is-next .photo-grid-plus {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%), 0 4px 12px rgb(0 0 0 / 10%);
-}
-
-:root[data-platform='ios'] :is(.photo-grid-open, .photo-grid-select) {
-  transition: var(--ios-press-fade);
-}
-
-:root[data-platform='ios'] :is(.photo-grid-open, .photo-grid-select)[data-pressed] {
-  opacity: .6;
-  transition: none;
 }

@@ -6,9 +6,8 @@
 .photo-card {
   position: relative;
   display: grid;
-  width: min(100%, 380px, calc(44svh * 1.08));
   flex: 0 0 auto;
-  aspect-ratio: 1.08 / 1;
+  aspect-ratio: var(--photo-aspect) / 1;
   place-items: center;
   overflow: hidden;
   padding: 0;
@@ -60,15 +59,18 @@
  * «Fără foto»); круг по центру, от края карточки до круга — 10 px.
  */
 .photo-card {
-  /* Светлые круги пустой карточки («плюс», «Без фото»): мягкая тень и тонкий ободок. */
-  --photo-circle-shadow: 0 1px 3px rgb(0 0 0 / 12%), inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 12%, transparent);
+  /* Светлые круги пустой карточки («плюс», «Без фото», бирка без фото, круги в ячейках сетки): размер, мягкая тень и тонкий ободок. */
+  --photo-circle-size: 58px;
+  --photo-circle-drop: 0 1px 3px rgb(0 0 0 / 12%);
+  --photo-circle-ring: inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 12%, transparent);
+  --photo-circle-shadow: var(--photo-circle-drop), var(--photo-circle-ring);
   --corner-button: 60px;
   --corner-inset: calc(10px - (var(--corner-button) - 44px) / 2);
 }
 
 /* Material Design: светлые круги — с тенью кнопок главного экрана и тем же ободком. */
 :root:not([data-platform='ios']) .photo-card {
-  --photo-circle-shadow: var(--button-shadow), inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 12%, transparent);
+  --photo-circle-shadow: var(--button-shadow), var(--photo-circle-ring);
 }
 
 /* Liquid Glass: светлые круги — с кромкой, бликом и тенью стекла, как кнопки. */
@@ -119,8 +121,8 @@
 
 .photo-manual-icon {
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: var(--photo-circle-size);
+  height: var(--photo-circle-size);
   place-items: center;
   margin-bottom: 14px;
   color: var(--photo-empty-plus);
@@ -210,8 +212,8 @@
 /* Круглый «плюс», нарисованный псевдоэлементами. */
 .photo-plus {
   position: relative;
-  width: 58px;
-  height: 58px;
+  width: var(--photo-circle-size);
+  height: var(--photo-circle-size);
   border-radius: 50%;
   background: var(--photo-empty-plus-bg);
   box-shadow: var(--photo-circle-shadow);
@@ -338,7 +340,7 @@
 .photo-spinner {
   width: 52px;
   height: 52px;
-  border: 5px solid rgb(255 255 255 / 35%);
+  border: 5px solid var(--overlay-spinner-track);
   border-top-color: #fff;
   border-radius: 50%;
   animation: photo-spin 750ms linear infinite;
@@ -373,13 +375,12 @@
   background: color-mix(in srgb, var(--photo-empty-plus) 14%, var(--notice-bg));
   box-shadow:
     var(--button-ring),
-    0 0 0 4px color-mix(in srgb, var(--notice-bg) 86%, transparent),
+    0 0 0 4px var(--pill-bg),
     var(--floating-shadow);
 }
 
 /* iOS 26+: без фото кнопки — светлое стекло с кромкой, бликом и тенью, как «плюс» пустой карточки. */
 :root[data-platform='ios'][data-ios-design='glass'] .photo-card:not(.has-photo) .photo-corner .action-button.is-overlay .action-button-icon {
-  color: var(--photo-empty-plus);
   background: color-mix(in srgb, var(--photo-empty-plus-bg) 72%, transparent);
   border-color: var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -411,8 +412,8 @@
   translate: -50% -50%;
 }
 
-/* Во время перехода между сеткой и одной биркой — без размытия под кнопками и значками. */
-.photo-card.is-zooming :is(.action-button-icon, .action-button-caption, .photo-grid-number) {
+/* Во время перехода между сеткой и одной биркой — без размытия под кнопками поверх фото. */
+.photo-card.is-zooming .action-button-icon {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }

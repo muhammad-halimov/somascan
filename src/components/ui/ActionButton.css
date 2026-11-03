@@ -164,9 +164,9 @@
 
 /* overlay: поверх фото — тёмный полупрозрачный круг, светлая подпись с тенью. */
 .action-button.is-overlay .action-button-icon {
-  color: #f1f3f4;
-  background: rgb(24 26 31 / 76%);
-  border: 1px solid rgb(255 255 255 / 16%);
+  color: var(--overlay-text);
+  background: rgb(var(--overlay-base) / 76%);
+  border: 1px solid var(--overlay-border);
   backdrop-filter: blur(8px);
   font-size: 20px;
   line-height: 1;
@@ -174,8 +174,8 @@
 
 .action-button.is-overlay .action-button-caption {
   padding: 0 3px;
-  color: #f1f3f4;
-  background: rgb(24 26 31 / 72%);
+  color: var(--overlay-text);
+  background: rgb(var(--overlay-base) / 72%);
   border-radius: 6px;
 }
 
