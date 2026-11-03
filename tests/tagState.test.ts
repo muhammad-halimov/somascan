@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { createDefaultLabelFields } from '../src/features/recognition/label/labelFields'
 import type { ScanItem } from '../src/features/workspace/hooks/useScanSession'
 import type { HeatDuplicate } from '../src/features/workspace/utils/sendReadiness'
-import { needsAttention, tagState } from '../src/features/workspace/utils/tagState'
+import { attentionTone, tagState } from '../src/features/workspace/utils/tagState'
 
 const fields = createDefaultLabelFields()
 const full = { producer: 'Sovel', size: '8 mm', heat: '5800', weight_kg: 1990, product_form: 'bara' }
@@ -29,10 +29,10 @@ const item = (patch: Partial<ScanItem> = {}): ScanItem => ({
 
 test('готовая бирка — без «!»', () => {
   assert.equal(tagState(item(), fields, none), 'done')
-  assert.equal(needsAttention('done'), false)
+  assert.equal(attentionTone('done'), null)
 })
 
-test('нет формы, пусто обязательное поле, повтор плавки, нет фото — «!»', () => {
+test('нет формы — красный «!»; пусто обязательное поле, повтор плавки, нет фото — жёлтый', () => {
   const done = (label: Record<string, unknown>) => ({ kind: 'done' as const, label, photo: { retake: false, issues: [] } })
   const states = [
     tagState(item({ status: done({ ...full, product_form: null }) }), fields, none),
@@ -41,10 +41,10 @@ test('нет формы, пусто обязательное поле, повт�
     tagState(item({ photoUrl: '' }), fields, none),
   ]
   assert.deepEqual(states, ['noForm', 'incomplete', 'incomplete', 'noPhoto'])
-  assert.ok(states.every(needsAttention))
+  assert.deepEqual(states.map(attentionTone), ['danger', 'warning', 'warning', 'warning'])
 })
 
 test('распознаётся или ошибка — не «!»', () => {
-  assert.equal(needsAttention(tagState(item({ status: { kind: 'recognizing' } }), fields, none)), false)
-  assert.equal(needsAttention(tagState(item({ hasError: true }), fields, none)), false)
+  assert.equal(attentionTone(tagState(item({ status: { kind: 'recognizing' } }), fields, none)), null)
+  assert.equal(attentionTone(tagState(item({ hasError: true }), fields, none)), null)
 })

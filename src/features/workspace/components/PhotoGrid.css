@@ -149,8 +149,9 @@
 }
 
 /*
- * Рамка переноса (`useGridDragSelect`): видна только во время переноса и переезжает с ячейки на ячейку под пальцем;
- * обводка открытой ячейки на это время скрыта — рамка одна. Стоит в области ячейки (`grid-area`) и занимает её целиком.
+ * Рамка переноса (`useGridDragSelect`): видна, только пока переезжает с ячейки на ячейку — под пальцем или когда
+ * открытая бирка сменилась стрелками или номером; обводка открытой ячейки на это время скрыта — рамка одна. Стоит
+ * в области ячейки (`grid-area`) и занимает её целиком.
  */
 .photo-grid-frame {
   position: absolute;
@@ -164,11 +165,11 @@
   box-shadow: var(--photo-grid-frame-shadow);
 }
 
-.photo-grid.is-dragging .photo-grid-frame {
+.photo-grid.is-frame-moving .photo-grid-frame {
   opacity: 1;
 }
 
-.photo-grid.is-dragging .photo-grid-cell.is-active {
+.photo-grid.is-frame-moving .photo-grid-cell.is-active {
   outline-color: transparent;
   box-shadow: none;
 }
@@ -237,7 +238,7 @@
   animation: photo-spin 750ms linear infinite;
 }
 
-/* Состояние — в правом нижнем углу: галочка, оранжевый «!» (нет формы) или знак ошибки. */
+/* Состояние — в правом нижнем углу: галочка, красный или жёлтый «!» или знак ошибки. */
 .photo-grid-badge {
   position: absolute;
   z-index: 2;
@@ -256,9 +257,14 @@
   background: var(--success);
 }
 
-.photo-grid-badge.is-noForm {
-  color: #fff;
-  background: var(--attention);
+/* «!»: красный — не выбрана форма, жёлтый — не распознаны обязательные поля (плавка повторяется, нет фото). */
+.photo-grid-badge.is-danger {
+  background: var(--danger);
+}
+
+.photo-grid-badge.is-warning {
+  color: var(--on-warning);
+  background: var(--warning);
 }
 
 .photo-grid-badge.is-failed {
@@ -275,7 +281,7 @@
   stroke-linejoin: round;
 }
 
-.photo-grid-badge.is-noForm svg {
+.photo-grid-badge:is(.is-danger, .is-warning) svg {
   width: 16px;
   height: 16px;
   stroke-width: 3;

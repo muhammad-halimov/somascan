@@ -351,9 +351,15 @@
   border-radius: 50%;
 }
 
-.notes-item-mark.is-attention {
-  color: #fff;
-  background: var(--attention);
+/* «!» у номера бирки: красный — не выбрана форма, жёлтый — не распознаны поля (как в углу ячейки сетки). */
+.notes-item-mark.is-danger {
+  color: var(--on-accent);
+  background: var(--danger);
+}
+
+.notes-item-mark.is-warning {
+  color: var(--on-warning);
+  background: var(--warning);
 }
 
 .notes-item-mark.is-done {

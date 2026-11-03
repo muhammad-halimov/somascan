@@ -2,8 +2,8 @@ import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react'
 import { TOUCH_SLOP } from '@/lib/interaction/gestures'
 import { cssDurationMs, motionTiming, prefersReducedMotion } from '../utils/motion'
 
-/** Класс сетки, пока рамку ведёт палец (`PhotoGrid.css`). */
-const DRAGGING_CLASS = 'is-dragging'
+/** Класс сетки, пока рамка переезжает — её ведёт палец или открытая бирка сменилась (`PhotoGrid.css`). */
+const MOVING_CLASS = 'is-frame-moving'
 
 /** Класс сетки на кадр, когда рамка сменяется обводкой ячейки: без переходов, иначе свечение проявлялось бы заново. */
 const SETTLING_CLASS = 'is-settling'
@@ -40,6 +40,8 @@ export interface GridDragSelectOptions {
 /**
  * Перенос рамки открытой бирки пальцем. Рамка всегда стоит на ячейке: переезжает с ячейки на ячейку под пальцем
  * (вверх, вниз, влево, вправо), за края бирок не выходит — палец вне бирок оставляет её на последней.
+ * Открытая бирка сменилась не пальцем (стрелки панели листания, номер в карточке результата) — рамка так же плавно
+ * переезжает со старой ячейки на новую, а не перескакивает.
  * Касание другой бирки сразу переносит рамку туда; с открытой бирки перенос начинается со сдвигом пальца,
  * а простое нажатие на неё открывает бирку. Кружок выбора любой бирки рамку не трогает — нажатие на него только
  * отмечает бирку для отправки или снимает отметку. Во время переноса экран не прокручивается, а клик при отпускании
@@ -50,6 +52,16 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
   useLayoutEffect(() => {
     latest.current = { activeIndex, onSelect }
   })
+  /** Переезд рамки с ячейки на ячейку, пока сетка на экране (иначе null). */
+  const glideRef = useRef<((from: number, to: number) => void) | null>(null)
+  /** Ячейка, на которой рамка стоит на экране. */
+  const shownIndex = useRef(activeIndex)
+  // До отрисовки: рамка стоит на старой ячейке и сразу едет, обводка новой не мелькает.
+  useLayoutEffect(() => {
+    const from = shownIndex.current
+    shownIndex.current = activeIndex
+    if (from !== activeIndex) glideRef.current?.(from, activeIndex)
+  }, [activeIndex])
 
   useEffect(() => {
     const grid = gridRef.current
@@ -66,6 +78,8 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     /** Время переезда рамки, мс — из стилей сетки. */
     const slideMs = cssDurationMs(getComputedStyle(grid).getPropertyValue(FRAME_MOVE_VAR))
     const cellOf = (index: number | null) => (index === null ? null : grid.querySelector<HTMLElement>(`[data-item-index="${index}"]`))
+    /** Ячейка позиции — бирки или пустая («плюс»): ячейки идут по порядку. */
+    const cellAt = (index: number) => Array.from(grid.children).filter((child) => child !== frame)[index] as HTMLElement | undefined
 
     /**
      * Область ячейки в сетке (`grid-area`): рамка — абсолютный элемент сетки и встаёт ровно в эту область, тех же
@@ -104,7 +118,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
       dragging = true
       armed = null
       frame.style.gridArea = cellArea(start)
-      grid.classList.add(DRAGGING_CLASS)
+      grid.classList.add(MOVING_CLASS)
       navigator.vibrate?.(DRAG_START_VIBRATION_MS)
       moveTo(to)
     }
@@ -120,7 +134,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     const finish = () => {
       slide = null
       grid.classList.add(SETTLING_CLASS)
-      grid.classList.remove(DRAGGING_CLASS)
+      grid.classList.remove(MOVING_CLASS)
       frame.style.gridArea = ''
       requestAnimationFrame(() => grid.classList.remove(SETTLING_CLASS))
     }
@@ -133,6 +147,23 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
       // Рамка доезжает до ячейки и сменяется обводкой самой ячейки на том же месте.
       if (slide) slide.finished.then(finish, () => {})
       else finish()
+    }
+
+    /**
+     * Открытая бирка сменилась не пальцем: рамка встаёт на старую ячейку (или едет оттуда, где она сейчас, если
+     * прошлый переезд не закончен) и доезжает до новой, затем сменяется обводкой ячейки.
+     */
+    glideRef.current = (from, to) => {
+      const start = cellAt(from)
+      const end = cellAt(to)
+      if (dragging || !start || !end || prefersReducedMotion()) return
+      if (!grid.classList.contains(MOVING_CLASS)) {
+        frame.style.gridArea = cellArea(start)
+        grid.classList.add(MOVING_CLASS)
+      }
+      slideTo(end)
+      // Новый переезд или перенос пальцем отменяет этот — тогда рамку снимает он.
+      slide?.finished.then(finish, () => {})
     }
 
     const onTouchStart = (event: TouchEvent) => {
@@ -175,6 +206,7 @@ export function useGridDragSelect({ gridRef, frameRef, activeIndex, enabled, onS
     grid.addEventListener('touchcancel', stop)
     grid.addEventListener('click', onClick, { capture: true })
     return () => {
+      glideRef.current = null
       slide?.cancel()
       finish()
       grid.removeEventListener('touchstart', onTouchStart)

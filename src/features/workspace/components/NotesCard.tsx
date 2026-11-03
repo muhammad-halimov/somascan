@@ -8,7 +8,7 @@ import { useLongPress } from '@/hooks/useLongPress'
 import type { LabelKey } from '@/features/recognition/label/labelFields'
 import { MAX_SCAN_ITEMS, type RecognitionStatus } from '../hooks/useScanSession'
 import type { HeatDuplicate } from '../utils/sendReadiness'
-import { needsAttention, type TagState } from '../utils/tagState'
+import { attentionTone, type TagState } from '../utils/tagState'
 import { LabelFields, LabelFieldsSkeleton } from './LabelFields'
 import './NotesCard.css'
 
@@ -79,7 +79,8 @@ function CardNotice({ text }: { text: string }) {
 /** Значок у номера бирки по её состоянию или `null`, если значка нет. */
 function itemMark(state: TagState): ReactNode {
   if (state === 'busy') return <span className="notes-item-mark skeleton" />
-  if (needsAttention(state)) return <span className="notes-item-mark is-attention"><ExclamationIcon /></span>
+  const tone = attentionTone(state)
+  if (tone) return <span className={`notes-item-mark is-${tone}`}><ExclamationIcon /></span>
   if (state === 'done') return <span className="notes-item-mark is-done"><CheckIcon /></span>
   return null
 }

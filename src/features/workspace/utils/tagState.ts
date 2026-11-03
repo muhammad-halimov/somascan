@@ -33,5 +33,15 @@ export function tagState(item: ScanItem, fields: readonly LabelFieldDefinition[]
   return 'done'
 }
 
-/** Бирка ждёт действий пользователя (оранжевый «!»): нет фото, формы или обязательных полей, плавка повторяется. */
-export const needsAttention = (state: TagState) => state === 'noPhoto' || state === 'noForm' || state === 'incomplete'
+/** Тон «!» у бирки, которая ждёт действий пользователя (`attentionTone`). */
+export type AttentionTone = 'danger' | 'warning'
+
+/**
+ * Тон «!» у бирки, которая ждёт действий пользователя: красный — не выбрана форма; жёлтый — не распознаны (пусты)
+ * обязательные поля, плавка повторяется или нет фото. Остальным состояниям «!» не нужен — null.
+ */
+export function attentionTone(state: TagState): AttentionTone | null {
+  if (state === 'noForm') return 'danger'
+  if (state === 'incomplete' || state === 'noPhoto') return 'warning'
+  return null
+}

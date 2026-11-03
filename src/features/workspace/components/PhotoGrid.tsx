@@ -6,7 +6,7 @@ import { useGridDragSelect } from '../hooks/useGridDragSelect'
 import { useHeatDuplicates } from '../hooks/useHeatDuplicates'
 import { MAX_SCAN_ITEMS, type ScanItem } from '../hooks/useScanSession'
 import { motionTiming, prefersReducedMotion } from '../utils/motion'
-import { tagState } from '../utils/tagState'
+import { attentionTone, tagState } from '../utils/tagState'
 import './PhotoGrid.css'
 
 /** Свойства `PhotoGrid`. */
@@ -35,8 +35,8 @@ export interface PhotoGridProps {
  *
  * Выбор для отправки — флажок в левом нижнем углу (у выбранной бирки — с галочкой, у остальных миниатюра притушена),
  * открытая бирка — в акцентной обводке. Состояние — в правом нижнем:
- * спиннер (распознаётся), галочка (готова), оранжевый «!» (не выбрана форма, не заполнены обязательные поля
- * или плавка повторяется), красный знак (ошибка).
+ * спиннер (распознаётся), галочка (готова), красный «!» (не выбрана форма), жёлтый «!» (не распознаны обязательные
+ * поля, плавка повторяется или нет фото), красный знак (ошибка).
  * Нажатие на бирку под рамкой открывает её (карточка увеличивает ячейку до одной бирки), на другую бирку — переносит
  * на неё рамку, не выходя из сетки (карточка результата показывает её данные); «плюс» открывается нажатием. Рамку можно
  * вести пальцем по ячейкам сетки (`useGridDragSelect`). Когда бирки уходят
@@ -95,6 +95,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, hidden, interactive, on
           )
         }
         const state = tagState(item, advanced.labelFields, duplicates)
+        const tone = attentionTone(state)
         const stateText = state === 'none' ? '' : t(`grid.state.${state}`)
         const name = item.manual ? `${t('grid.item', { number })}, ${t('grid.manual')}` : t('grid.item', { number })
         const classes = ['photo-grid-cell', 'has-photo', item.manual && 'is-manual', isActive && 'is-active', item.selected && 'is-selected', state === 'busy' && 'is-busy'].filter(Boolean).join(' ')
@@ -124,8 +125,8 @@ export function PhotoGrid({ gridRef, items, activeIndex, hidden, interactive, on
               {state === 'busy' && <span className="photo-grid-spinner" aria-hidden="true" />}
               {/* Ждёт фото — «плюс» на месте миниатюры. */}
               {state === 'noPhoto' && <span className="photo-grid-plus" aria-hidden="true" />}
-              {(state === 'failed' || state === 'noPhoto' || state === 'noForm' || state === 'incomplete' || state === 'done') && (
-                <span className={`photo-grid-badge is-${state === 'incomplete' || state === 'noPhoto' ? 'noForm' : state}`} aria-hidden="true">
+              {(state === 'failed' || state === 'done' || tone) && (
+                <span className={`photo-grid-badge is-${tone ?? state}`} aria-hidden="true">
                   {state === 'failed' ? <AlertIcon /> : state === 'done' ? <CheckIcon /> : <ExclamationIcon />}
                 </span>
               )}
