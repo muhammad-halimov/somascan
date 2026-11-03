@@ -3,7 +3,7 @@
  * и недоступные ячейки (заполняются только по порядку).
  * Карточка анимирует переход между сеткой и одной биркой (transform от левого верхнего угла).
  *
- * Отметки: выбранная для отправки — заполненная точка-переключатель и неприглушённая миниатюра (номер нейтральный),
+ * Отметки: выбранная для отправки — флажок с галочкой и неприглушённая миниатюра (номер нейтральный),
  * открытая — сплошная акцентная обводка с тенью и номер того же цвета: сразу видно, на какой бирке стоишь.
  */
 
@@ -138,7 +138,7 @@
 
 /*
  * Открытая бирка — сплошная акцентная обводка снаружи ячейки, без свечения, и тень под ней: ячейка приподнята
- * над соседними. От точки выбранных отличается формой, от цветов состояний — цветом. Та же обводка — у рамки,
+ * над соседними. От флажка выбранных отличается формой, от цветов состояний — цветом. Та же обводка — у рамки,
  * которую ведёт палец (`.photo-grid-frame`).
  */
 .photo-grid-cell.is-active {
@@ -300,44 +300,44 @@
 }
 
 /*
- * Выбор — «радиокнопка», как в системных диалогах: светлое кольцо, у выбранной бирки — акцентная точка.
- * В тёмной теме — тёмный круг со светлым кольцом.
+ * Выбор для отправки — флажок (скруглённый квадрат), как в Material: у выбранной бирки — акцентный с галочкой,
+ * у остальных — пустой со светлой кромкой на полупрозрачной подложке (виден на любом фото). Не кольцо с точкой:
+ * девять одинаковых «радиокнопок» смотрели с сетки, как глаза; и не круг — круг с галочкой у готовой бирки
+ * (зелёный, в правом нижнем углу).
  */
-.photo-grid-radio {
-  --radio-bg: #fff;
-  --radio-ring: rgb(0 0 0 / 28%);
-  --radio-dot: #536dfe;
-  position: relative;
-  display: block;
-  width: 26px;
-  height: 26px;
-  background: var(--radio-bg);
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1.5px var(--radio-ring), 0 1px 3px rgb(0 0 0 / 30%);
+.photo-grid-check {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  color: var(--on-accent);
+  background: rgb(0 0 0 / 28%);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 85%), 0 1px 3px rgb(0 0 0 / 30%);
+  transition: background-color 160ms ease, box-shadow 160ms ease;
 }
 
-:root[data-theme='dark'] .photo-grid-radio {
-  --radio-bg: #26282e;
-  --radio-ring: rgb(255 255 255 / 45%);
-  --radio-dot: var(--accent);
+.photo-grid-check svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transform: scale(.6);
+  transition: opacity 160ms ease, transform 160ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.photo-grid-radio::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  background: var(--radio-dot);
-  border-radius: 50%;
-  transform: scale(0);
-  transition: transform 160ms cubic-bezier(.2, 0, 0, 1);
+.photo-grid-cell.is-selected .photo-grid-check {
+  background: var(--accent);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
 }
 
-.photo-grid-cell.is-selected .photo-grid-radio {
-  --radio-ring: var(--radio-dot);
-}
-
-.photo-grid-cell.is-selected .photo-grid-radio::after {
-  transform: scale(1);
+.photo-grid-cell.is-selected .photo-grid-check svg {
+  opacity: 1;
+  transform: none;
 }
 
 /* Пустые ячейки: следующая свободная — тональная с «плюсом», дальше — недоступные. */
