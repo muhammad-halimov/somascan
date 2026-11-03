@@ -360,6 +360,18 @@
   color: var(--photo-empty-text);
 }
 
+/*
+ * Material Design: «Без фото» / «С фото» — как кнопки панели листания, а не светлый круг стекла: тональный круг
+ * с ободком в круглой «пилюле» оттенка плашки-примечания, с тенью парящих.
+ */
+:root:not([data-platform='ios']) .photo-card:not(.has-photo) .photo-corner .action-button.is-overlay .action-button-icon {
+  background: color-mix(in srgb, var(--photo-empty-plus) 14%, var(--notice-bg));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 16%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--notice-bg) 86%, transparent),
+    var(--floating-shadow);
+}
+
 /* iOS 26+: без фото кнопки — светлое стекло с бликом, как «плюс» пустой карточки. */
 :root[data-platform='ios'][data-ios-design='glass'] .photo-card:not(.has-photo) .photo-corner .action-button.is-overlay .action-button-icon {
   color: var(--photo-empty-plus);
