@@ -306,24 +306,34 @@
 }
 
 /*
- * Выбор для отправки — флажок (скруглённый квадрат), как в Material: у выбранной бирки — акцентный с галочкой,
- * у остальных — пустой со светлой кромкой на полупрозрачной подложке (виден на любом фото). Не кольцо с точкой:
- * девять одинаковых «радиокнопок» смотрели с сетки, как глаза; и не круг — круг с галочкой у готовой бирки
- * (зелёный, в правом нижнем углу).
+ * Выбор для отправки — флажок Material 3 (18 px, скругление 2 px, обводка 2 px; у выбранной бирки — залит акцентом,
+ * с галочкой) на круглой подложке — слое состояния M3. В Material он виден только при нажатии, здесь — всегда:
+ * так флажок читается как кнопка, которую можно нажать и снять (или вернуть) галочку, а не как значок состояния.
+ * Не кольцо с точкой: девять одинаковых «радиокнопок» смотрели с сетки, как глаза; и не круг с галочкой — такой
+ * у готовой бирки (зелёный, в правом нижнем углу).
  */
 .photo-grid-check {
   display: grid;
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
   place-items: center;
-  color: var(--on-accent);
-  background: rgb(0 0 0 / 28%);
-  border-radius: 6px;
-  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 85%), 0 1px 3px rgb(0 0 0 / 30%);
-  transition: background-color 160ms ease, box-shadow 160ms ease;
+  background: rgb(0 0 0 / 34%);
+  border-radius: 50%;
 }
 
-.photo-grid-check svg {
+.photo-grid-check-box {
+  display: grid;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  color: var(--on-accent);
+  border: 2px solid rgb(255 255 255 / 92%);
+  border-radius: 2px;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.photo-grid-check-box svg {
   width: 14px;
   height: 14px;
   fill: none;
@@ -336,12 +346,12 @@
   transition: opacity 160ms ease, transform 160ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.photo-grid-cell.is-selected .photo-grid-check {
+.photo-grid-cell.is-selected .photo-grid-check-box {
   background: var(--accent);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+  border-color: var(--accent);
 }
 
-.photo-grid-cell.is-selected .photo-grid-check svg {
+.photo-grid-cell.is-selected .photo-grid-check-box svg {
   opacity: 1;
   transform: none;
 }
