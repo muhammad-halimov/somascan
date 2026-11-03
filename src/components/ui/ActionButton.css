@@ -146,10 +146,9 @@
   stroke: none;
 }
 
-/* tonal: приглушённый круг без рамки (тональная кнопка Material 3). */
+/* tonal: круг с подложкой; подложка — по оформлению: Material — ниже (`--button-tonal-bg`), iOS — по месту (platform-ios.css, SlideBar.css). */
 .action-button.is-tonal .action-button-icon {
   color: var(--text-h);
-  background: var(--social-bg);
 }
 
 .action-button.is-tonal.is-active .action-button-icon {

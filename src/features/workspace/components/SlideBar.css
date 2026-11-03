@@ -96,16 +96,9 @@
   display: none;
 }
 
-/* Кнопки — как «плюс» пустой карточки: светлые круги на рамке блока. */
+/* Кнопки — цвета «плюса» пустой карточки; подложка и тень — по оформлению (Material — ActionButton.css, iOS — ниже). */
 .slide-bar .action-button.is-tonal .action-button-icon {
   color: var(--photo-empty-plus);
-  background: var(--photo-empty-plus-bg);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
-}
-
-/* Парящие кнопки отбрасывают тень на фото — они «в воздухе» над ним. */
-.slide-bar.is-floating .action-button.is-tonal .action-button-icon {
-  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
 }
 
 /*
@@ -138,8 +131,14 @@
   margin-left: 4px;
 }
 
-:root[data-platform='ios'] .slide-bar .action-button.is-tonal .action-button-icon {
+/* iOS classic: светлые полупрозрачные круги с лёгкой тенью; парящие над фото отбрасывают тень на него — они «в воздухе». */
+:root[data-platform='ios'][data-ios-design='classic'] .slide-bar .action-button.is-tonal .action-button-icon {
   background: color-mix(in srgb, var(--photo-empty-plus-bg) 80%, transparent);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+}
+
+:root[data-platform='ios'][data-ios-design='classic'] .slide-bar.is-floating .action-button.is-tonal .action-button-icon {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
 }
 
 /* iOS 26+: «пилюля» из стекла с бликом по кромке — часть блока фото. */
