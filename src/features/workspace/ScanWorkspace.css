@@ -76,6 +76,15 @@
   box-shadow: var(--block-shadow);
 }
 
+/* Liquid Glass: блок — стекло с кромкой, бликом и мягкой тенью, как окна и кнопки (и карточка результата). */
+:root[data-platform='ios'][data-ios-design='glass'] .photo-block {
+  box-shadow: var(--glass-block-shadow);
+}
+
+:root[data-platform='ios'][data-ios-design='glass'] .photo-block::after {
+  border-color: var(--glass-border);
+}
+
 .photo-block > .photo-card {
   width: 100%;
 }

@@ -23,6 +23,12 @@
   box-shadow: var(--block-shadow);
 }
 
+/* Liquid Glass: карточка — стекло с кромкой, бликом и мягкой тенью, как окна и кнопки (и блок фото). */
+:root[data-platform='ios'][data-ios-design='glass'] .notes-card:not(.is-text-editing) {
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-block-shadow);
+}
+
 /*
  * Режим правки: карточка на всю высоту области и прилипает к верху. Не ниже, чем нужно, чтобы прокрутка могла
  * остановиться на её верхе: высота области (100 %, под клавиатурой тоже) плюс отступ области сверху минус место

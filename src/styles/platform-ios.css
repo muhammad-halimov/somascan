@@ -92,6 +92,14 @@
     inset 0 1px 0 rgb(255 255 255 / 80%),
     inset 0 -1px 0 rgb(0 0 0 / 3%),
     0 10px 30px rgb(0 0 0 / 10%);
+  /*
+   * Блоки главного экрана (фото, результат) — та же кромка и блик, тень короче: шире бокового отступа рабочей
+   * области (16 px) её бы обрезало.
+   */
+  --glass-block-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 80%),
+    inset 0 -1px 0 rgb(0 0 0 / 3%),
+    0 4px 12px rgb(0 0 0 / 10%);
   --glass-control: rgb(0 0 0 / 5%);
 }
 
@@ -114,6 +122,10 @@
     inset 0 1px 0 rgb(255 255 255 / 22%),
     inset 0 -1px 0 rgb(255 255 255 / 6%),
     0 10px 30px rgb(0 0 0 / 40%);
+  --glass-block-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 22%),
+    inset 0 -1px 0 rgb(255 255 255 / 6%),
+    0 4px 12px rgb(0 0 0 / 40%);
   --glass-control: rgb(255 255 255 / 10%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 88%, transparent);
   --glass-sheet-dimmed-bg: color-mix(in srgb, var(--bg) 83%, transparent);
@@ -261,7 +273,8 @@
 
 /*
  * «Пилюли» в шапке карточки («Правка», «Готово»): classic — тонированная капсула UIKit
- * (акцентная подпись на светлом акценте), включённая — залитая акцентом; glass — та же капсула с бликом стекла по кромке.
+ * (акцентная подпись на светлом акценте), включённая — залитая акцентом; glass — та же капсула стеклом с кромкой,
+ * бликом и тенью (ниже).
  */
 :root[data-platform='ios'] .action-button.is-inline.is-tonal .action-button-icon {
   color: var(--accent);
@@ -271,10 +284,6 @@
 :root[data-platform='ios'] .action-button.is-inline.is-tonal.is-active .action-button-icon {
   color: var(--on-accent);
   background: var(--accent);
-}
-
-:root[data-platform='ios'][data-ios-design='glass'] .action-button.is-inline .action-button-icon {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), inset 0 0 0 .5px var(--glass-border);
 }
 
 /* Кнопки поверх фото — стеклянные круги с бликом. */
@@ -394,13 +403,19 @@
 }
 
 /*
- * Круги кнопок строки («Повтор», «Отмена», «Удалить») — стекло на подложке списка, как «таблетки» окна: сплошной
- * тональный круг того же тона, что подложка (`--social-bg`), сливался с ней.
+ * Кнопки-круги и «пилюли» (тональные и главная) — стекло с кромкой, бликом и мягкой тенью, как «таблетки» окна:
+ * в Liquid Glass — везде (полоса листания, панель действий, шапка карточки), в строках «Загрузок» — в обоих
+ * оформлениях iOS (окно стеклянное всегда). Отделены и от стеклянной панели, и от фона под ней.
  */
+:root[data-platform='ios'][data-ios-design='glass'] .action-button:is(.is-tonal, .is-accent) .action-button-icon,
 :root[data-platform='ios'] .uploads-list .action-button.is-tonal .action-button-icon {
-  background: var(--glass-control);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
+}
+
+/* Круги строк «Загрузок» — полупрозрачные: сплошной тональный круг того же тона, что подложка списка, сливался с ней. */
+:root[data-platform='ios'] .uploads-list .action-button.is-tonal .action-button-icon {
+  background: var(--glass-control);
 }
 
 /* ---------- Списки и поля в стиле iOS ---------- */

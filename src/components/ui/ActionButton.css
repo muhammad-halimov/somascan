@@ -272,11 +272,20 @@
 /*
  * Material Design: кнопки приподняты тенью, как блоки, шапка и панели (`--button-shadow`, `--icon-shadow`
  * в tokens.css): у кнопки с кругом — тень под кругом, у кнопки без подложки — под значком. На главном экране,
- * в «Настройках» и «Загрузках». Слабее любого правила по месту (`:where`): у кнопок в «пилюлях» панели листания
- * и у светлых кругов пустой карточки фото своя тень — с ободком.
+ * в «Настройках» и «Загрузках». Слабее любого правила по месту (`:where`): у светлых кругов пустой карточки фото
+ * своя тень — с ободком.
  */
 :where(:root:not([data-platform='ios'])) :where(.action-button:is(.is-tonal, .is-accent, .is-overlay)) .action-button-icon {
   box-shadow: var(--button-shadow);
+}
+
+/*
+ * Material Design: тональные кнопки — круги и «пилюли» везде как в «пилюлях» панели листания: полупрозрачный
+ * тональный круг с тонким ободком и тенью кнопок (`--button-tonal-bg`, `--button-ring`). Включённая — своим цветом.
+ */
+:root:not([data-platform='ios']) .action-button.is-tonal:not(.is-active) .action-button-icon {
+  background: var(--button-tonal-bg);
+  box-shadow: var(--button-ring), var(--button-shadow);
 }
 
 :where(:root:not([data-platform='ios'])) :where(.action-button.is-ghost) .action-button-icon svg {
