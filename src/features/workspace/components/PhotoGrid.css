@@ -3,7 +3,7 @@
  * и недоступные ячейки (заполняются только по порядку).
  * Карточка анимирует переход между сеткой и одной биркой (transform от левого верхнего угла).
  *
- * Отметки: выбранная для отправки — флажок с галочкой и неприглушённая миниатюра (номер нейтральный),
+ * Отметки: выбранная для отправки — «радиокнопка» с точкой и неприглушённая миниатюра (номер нейтральный),
  * открытая — сплошная акцентная обводка с тенью и номер того же цвета: сразу видно, на какой бирке стоишь.
  */
 
@@ -13,6 +13,8 @@
    * с зазором 1 px) помещается в промежуток и в поле.
    */
   --photo-grid-gap: 4px;
+  /* Отступ значков в нижних углах ячейки (выбор слева, состояние справа) от её краёв: почти в самом углу. */
+  --photo-grid-corner-inset: 3px;
   /* Ячейки концентричны блоку фото: его скругление минус поле сетки (на iOS блок круглее — и ячейки тоже). */
   --photo-grid-radius: calc(var(--photo-radius) - var(--photo-grid-gap));
   /*
@@ -138,7 +140,7 @@
 
 /*
  * Открытая бирка — сплошная акцентная обводка снаружи ячейки, без свечения, и тень под ней: ячейка приподнята
- * над соседними. От флажка выбранных отличается формой, от цветов состояний — цветом. Та же обводка — у рамки,
+ * над соседними. От отметки выбранных отличается формой, от цветов состояний — цветом. Та же обводка — у рамки,
  * которую ведёт палец (`.photo-grid-frame`).
  */
 .photo-grid-cell.is-active {
@@ -242,8 +244,8 @@
 .photo-grid-badge {
   position: absolute;
   z-index: 2;
-  right: 3px;
-  bottom: 3px;
+  right: var(--photo-grid-corner-inset);
+  bottom: var(--photo-grid-corner-inset);
   display: grid;
   width: 22px;
   height: 22px;
@@ -287,7 +289,7 @@
   stroke-width: 3;
 }
 
-/* Значок выбора для отправки — в левом нижнем углу (область нажатия больше значка). */
+/* Значок выбора для отправки — в левом нижнем углу, почти в самом углу (область нажатия больше значка). */
 .photo-grid-select {
   position: absolute;
   z-index: 4;
@@ -296,8 +298,8 @@
   display: grid;
   width: 44px;
   height: 44px;
-  place-items: center;
-  padding: 0;
+  place-items: end start;
+  padding: 0 0 var(--photo-grid-corner-inset) var(--photo-grid-corner-inset);
   background: transparent;
   border: 0;
   border-radius: 0 50% 0 0;
@@ -306,46 +308,45 @@
 }
 
 /*
- * Выбор для отправки — флажок в духе Material (скруглённый квадрат с галочкой) с белой кромкой в обоих состояниях:
- * так он читается как флажок, который ставят и снимают нажатием, а не как значок. У выбранной бирки — залит
- * акцентом, с галочкой; у остальных пустой на полупрозрачной подложке (миниатюра притушена). Не кольцо с точкой:
- * девять одинаковых «радиокнопок» смотрели с сетки, как глаза; и не круг с галочкой — такой у готовой бирки
- * (зелёный, в правом нижнем углу).
+ * Выбор — «радиокнопка», как в системных диалогах: светлое кольцо, у выбранной бирки — акцентная точка.
+ * В тёмной теме — тёмный круг со светлым кольцом. Почти в самом углу ячейки — напротив значка состояния, с тем же
+ * отступом от краёв (`--photo-grid-corner-inset`).
  */
-.photo-grid-check {
-  display: grid;
-  box-sizing: border-box;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  color: var(--on-accent);
-  background: rgb(0 0 0 / 28%);
-  border: 2px solid rgb(255 255 255 / 92%);
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
-  transition: background-color 160ms ease;
+.photo-grid-radio {
+  --radio-bg: #fff;
+  --radio-ring: rgb(0 0 0 / 28%);
+  --radio-dot: #536dfe;
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  background: var(--radio-bg);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--radio-ring), 0 1px 3px rgb(0 0 0 / 30%);
 }
 
-.photo-grid-check svg {
-  width: 13px;
-  height: 13px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0;
-  transform: scale(.6);
-  transition: opacity 160ms ease, transform 160ms cubic-bezier(.2, 0, 0, 1);
+:root[data-theme='dark'] .photo-grid-radio {
+  --radio-bg: #26282e;
+  --radio-ring: rgb(255 255 255 / 45%);
+  --radio-dot: var(--accent);
 }
 
-.photo-grid-cell.is-selected .photo-grid-check {
-  background: var(--accent);
+.photo-grid-radio::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  background: var(--radio-dot);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 160ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.photo-grid-cell.is-selected .photo-grid-check svg {
-  opacity: 1;
-  transform: none;
+.photo-grid-cell.is-selected .photo-grid-radio {
+  --radio-ring: var(--radio-dot);
+}
+
+.photo-grid-cell.is-selected .photo-grid-radio::after {
+  transform: scale(1);
 }
 
 /* Пустые ячейки: следующая свободная — тональная с «плюсом», дальше — недоступные. */

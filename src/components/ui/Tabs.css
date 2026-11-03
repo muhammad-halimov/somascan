@@ -71,6 +71,12 @@
   background: var(--accent);
   border-radius: 3px 3px 0 0;
   pointer-events: none;
+  /*
+   * Постоянный слой композитора: иначе браузер заводит его только на время переезда, и в начале (пока слой ещё не
+   * отрисован — в то же время монтируется новая вкладка) и в конце переезда полоска на кадр-два пропадала.
+   * Liquid Glass переопределяет (platform-ios.css).
+   */
+  will-change: translate;
 }
 
 .tabs-indicator.is-animated {
