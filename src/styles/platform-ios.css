@@ -351,7 +351,7 @@
  * Под открытыми «Настройками» стекло главного экрана не видно (оно под затемнением и окном) — не размываем его:
  * иначе GPU пересчитывал бы и его на каждом кадре движения окна. Стеклянная панель в шапке видна — она остаётся.
  */
-:root:has(.settings-backdrop) :is(.notes-actions, .action-button.is-overlay .action-button-icon, .retake-hint, .photo-grid-number) {
+:root:has(.settings-backdrop) :is(.notes-actions, .action-button.is-overlay .action-button-icon, .retake-hint) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }

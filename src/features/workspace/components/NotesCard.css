@@ -226,9 +226,11 @@
   /*
    * Карточка тянется до панели внизу и не сжимается (прокручивается экран). Свободное место под полями делят
    * строки — поровну, как силуэты до фото (`useSkeletonFill`): под последним полем не остаётся пустой полосы.
+   * Отступ от блока фото меньше обычного: в сетке блок выше на полосу листания, и экран помещается без прокрутки.
    */
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .notes-card {
     flex: 1 0 auto;
+    margin-top: 8px;
   }
 
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) :is(.label-fields, .notes-message) {
@@ -236,9 +238,14 @@
     overflow: visible;
   }
 
-  /* Под последним полем — тот же отступ, что у каждой строки, без поля списка снизу: короче «подбородок» карточки. */
+  /*
+   * Под последним полем — тот же отступ, что у каждой строки, без поля списка снизу: короче «подбородок» карточки.
+   * Отступ строки меньше обычного: у одной бирки строки и так делят свободное место, а в сетке (блок фото выше
+   * на полосу листания) поля помещаются на экран без прокрутки.
+   */
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields {
     --label-fields-pad-bottom: 0px;
+    --label-field-pad: 8px;
   }
 
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields:not(.is-skeleton) {

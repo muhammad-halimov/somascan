@@ -3,29 +3,23 @@
  * и недоступные ячейки (заполняются только по порядку).
  * Карточка анимирует переход между сеткой и одной биркой (transform от левого верхнего угла).
  *
- * Кольца: выбранная для отправки — тонкое акцентное внутри ячейки, открытая — тонкая бирюзовая обводка снаружи
- * со сдержанным свечением (у выбранной открытой — оба).
+ * Отметки нейтральные: выбранная для отправки — заполненная точка-переключатель и неприглушённая миниатюра, открытая —
+ * контрастная обводка цвета текста с тенью и такой же номер: сразу видно, на какой бирке стоишь.
  */
 
 .photo-grid {
   /*
-   * Ячейки крупные: промежутки между ними и поле у краёв карточки минимальные. Обводка открытой ячейки (2 px вплотную
-   * к ней) помещается в поле, свечение ложится поверх соседних ячеек.
+   * Ячейки крупные: промежутки между ними и поле у краёв карточки минимальные. Обводка открытой ячейки (2,5 px
+   * с зазором 1 px) помещается в поле.
    */
   --photo-grid-gap: 4px;
   /* Ячейки концентричны блоку фото: его скругление минус поле сетки (на iOS блок круглее — и ячейки тоже). */
   --photo-grid-radius: calc(var(--photo-radius) - var(--photo-grid-gap));
-  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина и зазор от ячейки. */
-  --photo-grid-frame-width: 2px;
-  --photo-grid-frame-offset: 0px;
-  --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--focus);
-  /*
-   * Свечение открытой ячейки — сдержанное: снаружи короткий приглушённый ореол сразу за обводкой (размах тени =
-   * зазор + толщина), внутри — лёгкая подсветка по краю миниатюры, так что ячейка отмечена и при узких промежутках.
-   */
-  --photo-grid-frame-glow-spread: calc(var(--photo-grid-frame-offset) + var(--photo-grid-frame-width));
-  --photo-grid-frame-glow: 0 0 8px var(--photo-grid-frame-glow-spread) color-mix(in srgb, var(--focus) 35%, transparent);
-  --photo-grid-frame-inner-glow: inset 0 0 6px color-mix(in srgb, var(--focus) 30%, transparent);
+  /* Обводка открытой бирки и рамки, которую ведёт палец (см. ниже): толщина, зазор от ячейки и тень, приподнимающая её. */
+  --photo-grid-frame-width: 2.5px;
+  --photo-grid-frame-offset: 1px;
+  --photo-grid-frame-outline: var(--photo-grid-frame-width) solid var(--text-h);
+  --photo-grid-frame-shadow: 0 4px 14px rgb(0 0 0 / 30%);
   /* Сколько рамка переноса переезжает с ячейки на ячейку. */
   --photo-grid-frame-move: 260ms;
   position: absolute;
@@ -138,34 +132,16 @@
   opacity: .45;
 }
 
-/* Кольца выбора и открытой бирки — поверх миниатюры, под значками. */
-.photo-grid-cell::after {
-  content: '';
-  position: absolute;
-  z-index: 3;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  /* Кольцо выбранной (акцентное) и свечение открытой — внутри ячейки, поверх миниатюры. */
-  box-shadow: var(--photo-grid-cell-ring, 0 0 #0000), var(--photo-grid-cell-glow, 0 0 #0000);
-}
-
-.photo-grid-cell.is-selected {
-  --photo-grid-cell-ring: inset 0 0 0 2px color-mix(in srgb, var(--accent) 80%, transparent);
-}
-
 /*
- * Открытая бирка — фирменный бирюзовый (цвет логотипа): тонкая обводка снаружи ячейки и сдержанное свечение вокруг неё.
- * Не путается ни с акцентным кольцом выбранных (внутри ячейки),
- * ни с цветами состояний. Та же обводка — у рамки, которую ведёт палец (`.photo-grid-frame`).
+ * Открытая бирка — контрастная обводка цвета текста снаружи ячейки (в тёмной теме светлая, в светлой — тёмная)
+ * и тень под ней: ячейка приподнята над соседними. Не путается ни с акцентной точкой выбранных, ни с цветами
+ * состояний. Та же обводка — у рамки, которую ведёт палец (`.photo-grid-frame`).
  */
-/* Над кольцами соседних ячеек: свечение ложится и на них. */
 .photo-grid-cell.is-active {
-  --photo-grid-cell-glow: var(--photo-grid-frame-inner-glow);
   z-index: 4;
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
-  box-shadow: var(--photo-grid-frame-glow);
+  box-shadow: var(--photo-grid-frame-shadow);
 }
 
 /*
@@ -181,7 +157,7 @@
   border-radius: var(--photo-grid-radius);
   outline: var(--photo-grid-frame-outline);
   outline-offset: var(--photo-grid-frame-offset);
-  box-shadow: var(--photo-grid-frame-glow), var(--photo-grid-frame-inner-glow);
+  box-shadow: var(--photo-grid-frame-shadow);
 }
 
 .photo-grid.is-dragging .photo-grid-frame {
@@ -189,19 +165,14 @@
 }
 
 .photo-grid.is-dragging .photo-grid-cell.is-active {
-  --photo-grid-cell-glow: 0 0 #0000;
   outline-color: transparent;
   box-shadow: none;
 }
 
 /*
- * Во время перехода между сеткой и одной биркой колец нет: увеличенные вместе с ячейкой втрое, они
- * выглядели бы толстой светящейся рамкой по краю карточки. После перехода кольца проявляются.
+ * Во время перехода между сеткой и одной биркой обводки нет: увеличенная вместе с ячейкой втрое, она
+ * выглядела бы толстой рамкой по краю карточки. После перехода обводка проявляется.
  */
-.photo-grid-cell::after {
-  transition: opacity 200ms ease;
-}
-
 .photo-grid-cell.is-active {
   transition: box-shadow 200ms ease;
 }
@@ -211,18 +182,13 @@
   transition: none;
 }
 
-.photo-card.is-zooming .photo-grid-cell::after {
-  opacity: 0;
-  transition: none;
-}
-
 .photo-card.is-zooming .photo-grid-cell.is-active {
   outline-color: transparent;
   box-shadow: none;
   transition: none;
 }
 
-/* Номер бирки — в левом верхнем углу: у выбранной акцентный, у открытой — бирюзовый. */
+/* Номер бирки — в левом верхнем углу: нейтральный, у открытой — цвета её обводки. */
 .photo-grid-number {
   position: absolute;
   z-index: 2;
@@ -242,14 +208,9 @@
   line-height: 1;
 }
 
-.photo-grid-cell.is-selected .photo-grid-number {
-  color: var(--on-accent);
-  background: var(--accent);
-}
-
 .photo-grid-cell.is-active .photo-grid-number {
-  color: var(--on-focus);
-  background: var(--focus);
+  color: var(--bg);
+  background: var(--text-h);
 }
 
 /* Распознаётся: миниатюра притушена, по центру — спиннер. */
@@ -451,18 +412,16 @@
   --ripple-color: var(--accent);
 }
 
-/* iOS: значки на миниатюрах — материал UIKit (iOS 18) или стекло с бликом (iOS 26+). */
-:root[data-platform='ios'] .photo-grid-cell:not(.is-selected, .is-active) .photo-grid-number {
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
-  backdrop-filter: saturate(180%) blur(12px);
-}
-
 :root[data-platform='ios'][data-ios-design='glass'] .photo-grid {
   --photo-grid-radius: 16px;
 }
 
-:root[data-platform='ios'][data-ios-design='glass'] .photo-grid-cell:not(.is-selected, .is-active) .photo-grid-number {
-  background: rgb(30 32 38 / 38%);
+/*
+ * iOS 26+: номер на миниатюре — стеклянная плашка с бликом, без размытия: девять размытий GPU пересчитывал бы
+ * на каждом кадре движения сетки.
+ */
+:root[data-platform='ios'][data-ios-design='glass'] .photo-grid-cell:not(.is-active) .photo-grid-number {
+  background: rgb(30 32 38 / 55%);
   box-shadow: inset 0 0 0 .5px rgb(255 255 255 / 45%), inset 0 1px 0 rgb(255 255 255 / 40%);
 }
 
