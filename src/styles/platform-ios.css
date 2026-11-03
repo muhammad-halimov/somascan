@@ -75,6 +75,8 @@
     inset 0 1px 0 rgb(255 255 255 / 70%),
     inset 0 -1px 0 rgb(255 255 255 / 18%),
     var(--glass-drop);
+  --glass-accent-rim: color-mix(in srgb, #fff 28%, var(--accent));
+  --glass-accent-highlight: rgb(255 255 255 / 40%);
   --glass-control: rgb(255 255 255 / 35%);
   --glass-sheet-bg: color-mix(in srgb, var(--bg) 90%, transparent);
   /* Окно над затемнённым экраном («Настройки»): прозрачнее на затемнение (28%) — экран сквозь стекло виден так же, как у «Загрузок». */
@@ -95,6 +97,9 @@
     inset 0 1px 0 rgb(255 255 255 / 80%),
     inset 0 -1px 0 rgb(0 0 0 / 3%),
     var(--glass-drop);
+  /* Кромка и блик главной кнопки: светлее её заливки. */
+  --glass-accent-rim: color-mix(in srgb, #fff 28%, var(--accent));
+  --glass-accent-highlight: rgb(255 255 255 / 40%);
   /*
    * Блоки главного экрана (фото, результат) — та же кромка и блик, тень короче: шире бокового отступа рабочей
    * области (16 px) её бы обрезало.
@@ -126,6 +131,8 @@
     inset 0 1px 0 rgb(255 255 255 / 22%),
     inset 0 -1px 0 rgb(255 255 255 / 6%),
     var(--glass-drop);
+  --glass-accent-rim: color-mix(in srgb, #fff 35%, var(--accent));
+  --glass-accent-highlight: rgb(255 255 255 / 55%);
   --glass-block-shadow:
     inset 0 1px 0 rgb(255 255 255 / 22%),
     inset 0 -1px 0 rgb(255 255 255 / 6%),
@@ -418,11 +425,16 @@
 }
 
 /*
- * Главная (акцентная) кнопка — только тень стекла, без кромки и блика: на цветной заливке блик виден лишь
- * по верхнему краю, и круг казался сдвинутым вниз внутри своей обводки.
+ * Главная (акцентная) кнопка — то же выпуклое стекло, что у тональных: кромка, блик по верхнему краю, лёгкая
+ * тень по нижнему и тень под кругом. Кромка и блик — светлее самой заливки, а не кромка стекла (`--glass-border`):
+ * тёмная кромка на цветном круге с белым бликом сверху делала круг «сдвинутым вниз» внутри обводки.
  */
 :root[data-platform='ios'][data-ios-design='glass'] .action-button.is-accent .action-button-icon {
-  box-shadow: var(--glass-drop);
+  border: 1px solid var(--glass-accent-rim);
+  box-shadow:
+    inset 0 1px 0 var(--glass-accent-highlight),
+    inset 0 -1px 0 rgb(0 0 0 / 10%),
+    var(--glass-drop);
 }
 
 /* Круги строк «Загрузок» — полупрозрачные: сплошной тональный круг того же тона, что подложка списка, сливался с ней. */
