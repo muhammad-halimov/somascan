@@ -248,6 +248,11 @@
     --label-field-pad: 8px;
   }
 
+  /* Над первым полем — тот же отступ, что под последним: только отступ строки, без поля под номерами бирок. */
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .notes-items {
+    padding-bottom: 0;
+  }
+
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields:not(.is-skeleton) {
     display: flex;
     flex-direction: column;

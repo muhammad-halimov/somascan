@@ -33,7 +33,7 @@ export interface PhotoGridProps {
  * Сетка 3 × 3 в карточке фото: бирки по порядку (миниатюра или, у бирки без фото, перечёркнутая картинка; номер, состояние),
  * следующая свободная ячейка — «плюс», дальше — недоступные ячейки: заполнять можно только по порядку.
  *
- * Выбор для отправки — флажок Material 3 на круглой подложке в левом нижнем углу (у выбранной бирки — с галочкой,
+ * Выбор для отправки — флажок с белой кромкой в левом нижнем углу (у выбранной бирки — с галочкой,
  * у остальных пустой, миниатюра притушена),
  * открытая бирка — в акцентной обводке. Состояние — в правом нижнем:
  * спиннер (распознаётся), галочка (готова), красный «!» (не выбрана форма), жёлтый «!» (не распознаны обязательные
@@ -140,9 +140,7 @@ export function PhotoGrid({ gridRef, items, activeIndex, hidden, interactive, on
               aria-label={t('grid.select', { number })}
               onClick={() => onToggleSelected(index)}
             >
-              <span className="photo-grid-check" aria-hidden="true">
-                <span className="photo-grid-check-box"><CheckIcon /></span>
-              </span>
+              <span className="photo-grid-check" aria-hidden="true"><CheckIcon /></span>
             </button>
           </div>
         )

@@ -238,12 +238,12 @@
   animation: photo-spin 750ms linear infinite;
 }
 
-/* Состояние — в правом нижнем углу: галочка, красный или жёлтый «!» или знак ошибки. */
+/* Состояние — почти в самом правом нижнем углу: галочка, красный или жёлтый «!» или знак ошибки. */
 .photo-grid-badge {
   position: absolute;
   z-index: 2;
-  right: 6px;
-  bottom: 6px;
+  right: 3px;
+  bottom: 3px;
   display: grid;
   width: 22px;
   height: 22px;
@@ -306,36 +306,29 @@
 }
 
 /*
- * Выбор для отправки — флажок Material 3 (18 px, скругление 2 px, обводка 2 px; у выбранной бирки — залит акцентом,
- * с галочкой) на круглой подложке — слое состояния M3. В Material он виден только при нажатии, здесь — всегда:
- * так флажок читается как кнопка, которую можно нажать и снять (или вернуть) галочку, а не как значок состояния.
- * Не кольцо с точкой: девять одинаковых «радиокнопок» смотрели с сетки, как глаза; и не круг с галочкой — такой
- * у готовой бирки (зелёный, в правом нижнем углу).
+ * Выбор для отправки — флажок в духе Material (скруглённый квадрат с галочкой) с белой кромкой в обоих состояниях:
+ * так он читается как флажок, который ставят и снимают нажатием, а не как значок. У выбранной бирки — залит
+ * акцентом, с галочкой; у остальных пустой на полупрозрачной подложке (миниатюра притушена). Не кольцо с точкой:
+ * девять одинаковых «радиокнопок» смотрели с сетки, как глаза; и не круг с галочкой — такой у готовой бирки
+ * (зелёный, в правом нижнем углу).
  */
 .photo-grid-check {
   display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  background: rgb(0 0 0 / 34%);
-  border-radius: 50%;
-}
-
-.photo-grid-check-box {
-  display: grid;
   box-sizing: border-box;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   place-items: center;
   color: var(--on-accent);
+  background: rgb(0 0 0 / 28%);
   border: 2px solid rgb(255 255 255 / 92%);
-  border-radius: 2px;
-  transition: background-color 160ms ease, border-color 160ms ease;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+  transition: background-color 160ms ease;
 }
 
-.photo-grid-check-box svg {
-  width: 14px;
-  height: 14px;
+.photo-grid-check svg {
+  width: 13px;
+  height: 13px;
   fill: none;
   stroke: currentColor;
   stroke-width: 3;
@@ -346,12 +339,11 @@
   transition: opacity 160ms ease, transform 160ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.photo-grid-cell.is-selected .photo-grid-check-box {
+.photo-grid-cell.is-selected .photo-grid-check {
   background: var(--accent);
-  border-color: var(--accent);
 }
 
-.photo-grid-cell.is-selected .photo-grid-check-box svg {
+.photo-grid-cell.is-selected .photo-grid-check svg {
   opacity: 1;
   transform: none;
 }
