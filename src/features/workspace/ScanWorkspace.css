@@ -113,7 +113,7 @@
   }
 
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) {
-    padding-bottom: calc(var(--notes-toolbar-space) + 16px);
+    padding-bottom: calc(var(--notes-toolbar-space) + 12px);
     scroll-padding-bottom: calc(var(--notes-toolbar-space) + 12px);
   }
 }

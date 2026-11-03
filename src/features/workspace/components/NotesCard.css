@@ -236,6 +236,11 @@
     overflow: visible;
   }
 
+  /* Под последним полем — тот же отступ, что у каждой строки, без поля списка снизу: короче «подбородок» карточки. */
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields {
+    --label-fields-pad-bottom: 0px;
+  }
+
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields:not(.is-skeleton) {
     display: flex;
     flex-direction: column;
