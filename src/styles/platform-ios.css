@@ -79,6 +79,24 @@
   --glass-sheet-dimmed-bg: color-mix(in srgb, var(--bg) 86%, transparent);
 }
 
+/*
+ * Liquid Glass, светлая тема: белое стекло на белом фоне сливалось в плоскую белую плашку — белые кромка и блики
+ * на белом не видны. Как у стекла iOS на светлом: сверху блик, к низу гаснет, под ним — лёгкий холодный оттенок;
+ * яркая кромка внутри и тонкий тёмный контур снаружи, мягкая тень; круги кнопок на стекле — светло-серые (заливка
+ * iOS). У окон «Настройки» и «Загрузки» своё стекло (выше), оно не меняется.
+ */
+:root[data-platform='ios'][data-ios-design='glass']:not([data-theme='dark']) {
+  --glass-bg: linear-gradient(to bottom, rgb(255 255 255 / 60%), rgb(255 255 255 / 15%)), rgb(232 235 242 / 45%);
+  --glass-border: rgb(255 255 255 / 90%);
+  --glass-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 95%),
+    inset 0 -1px 0 rgb(0 0 0 / 4%),
+    0 0 0 .5px rgb(0 0 0 / 12%),
+    0 1px 3px rgb(0 0 0 / 6%),
+    0 8px 24px rgb(0 0 0 / 10%);
+  --glass-control: rgb(120 120 128 / 12%);
+}
+
 :root[data-platform='ios'][data-theme='dark'] {
   --ios-segment-track: rgb(118 118 128 / 24%);
   --ios-segment-thumb: #636366;

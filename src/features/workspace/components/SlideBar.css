@@ -113,7 +113,7 @@
  * полупрозрачный контейнер без размытия оттенка плашки-примечания (`--notice-bg`, «Проверьте данные перед
  * отправкой»), с тенью подъёма (плавающая панель инструментов Material 3); у каждой
  * кнопки — свой тональный круг с тонким ободком и своей тенью, чтобы кнопки не сливались ни с контейнером, ни
- * с фото. Над фото тень глубже — панель парит; в полосе сетки — мягкая.
+ * с фото. Над фото — короткая тень парящих (`--floating-shadow`), в полосе сетки — мягкая.
  */
 :root:not([data-platform='ios']) :is(.slide-bar-pill, .slide-bar-tools) {
   gap: 4px;
@@ -124,14 +124,14 @@
 }
 
 :root:not([data-platform='ios']) .slide-bar.is-floating :is(.slide-bar-pill, .slide-bar-tools) {
-  box-shadow: 0 4px 14px rgb(0 0 0 / 38%), 0 1px 4px rgb(0 0 0 / 28%);
+  box-shadow: var(--floating-shadow);
 }
 
 :root:not([data-platform='ios']) .slide-bar .action-button.is-tonal .action-button-icon {
   background: color-mix(in srgb, var(--photo-empty-plus) 14%, transparent);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--photo-empty-plus) 16%, transparent),
-    0 1px 3px rgb(0 0 0 / 28%);
+    var(--button-shadow);
 }
 
 /* Уголок влево — тот же уголок вправо, развёрнутый. */
