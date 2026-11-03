@@ -90,12 +90,12 @@
   background: transparent;
 }
 
-/* «Без фото» — в правом нижнем углу пустой ячейки, напротив «Сетки»: тот же размер и вид. */
+/* «Без фото» и «С фото» — в правом верхнем углу (где раньше была «Сетка»): панель листания парит внизу фото. */
 .photo-corner {
   position: absolute;
   z-index: 4;
+  top: 10px;
   right: var(--corner-inset);
-  bottom: calc(10px + var(--photo-bottom-inset, 0px));
   animation: backdrop-enter 200ms ease-out backwards;
 }
 

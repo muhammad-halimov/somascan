@@ -224,16 +224,33 @@
  */
 @media not all and (orientation: landscape) and (max-height: 600px) {
   /*
-   * Карточка — по высоте полей: не сжимается (прокручивается экран) и не растягивается до панели внизу — иначе,
-   * когда полей меньше, чем места, под последним полем оставалась пустая полоса.
+   * Карточка тянется до панели внизу и не сжимается (прокручивается экран). Свободное место под полями делят
+   * строки — поровну, как силуэты до фото (`useSkeletonFill`): под последним полем не остаётся пустой полосы.
    */
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .notes-card {
-    flex: 0 0 auto;
+    flex: 1 0 auto;
   }
 
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) :is(.label-fields, .notes-message) {
     flex: 1 0 auto;
     overflow: visible;
+  }
+
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields:not(.is-skeleton) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields:not(.is-skeleton) > .label-fields-list {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+  }
+
+  /* Строка растёт на свою долю свободного места, содержимое — по её центру. */
+  :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .label-fields:not(.is-skeleton) .label-field {
+    flex: 1 0 auto;
+    align-content: center;
   }
 
   :root:is([data-platform='ios'], [data-platform='android']) .scan-workspace:not(.is-text-editing) .notes-actions {

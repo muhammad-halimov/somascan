@@ -68,7 +68,7 @@ export function SlideBar({ activeIndex, positions, isGrid, onPrevious, onNext, o
   const liftRef = useRef<Animation | null>(null)
 
   // Высота панели — блоку фото: на столько парящая панель поднята над низом фото, и столько места над ней
-  // оставляют кнопки внизу фото («Без фото», кнопки масштаба поверх фото).
+  // оставляют кнопки внизу фото (масштаб и поворот поверх фото).
   useLayoutEffect(() => {
     const bar = barRef.current
     const block = bar?.parentElement
