@@ -68,6 +68,14 @@
   z-index: 1;
 }
 
+/*
+ * Волна вкладки — слой внутри самой вкладки: иначе её появление и исчезновение (как раз к концу переезда полоски)
+ * заново раскладывало по слоям весь ряд, и полоска могла мигнуть.
+ */
+:root[data-platform='android'] .tab {
+  isolation: isolate;
+}
+
 :root[data-platform='android'] .tab {
   --ripple-color: var(--accent);
 }

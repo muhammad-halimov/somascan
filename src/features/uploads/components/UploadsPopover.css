@@ -26,6 +26,11 @@
   flex: 0 0 auto;
 }
 
+/* Постоянный слой ряда вкладок — как у окна настроек (SettingsSheet.css): содержимое под ним сменяется со своим слоем. */
+.uploads-tabs > .tabs {
+  will-change: transform;
+}
+
 :root[data-platform='ios'] .uploads-tabs {
   padding: 2px 16px 8px;
 }

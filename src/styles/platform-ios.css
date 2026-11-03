@@ -671,7 +671,11 @@
 }
 
 :root[data-platform='ios'] .tabs-indicator.is-animated {
-  transition: translate 300ms var(--ios-segment-ease), width 300ms var(--ios-segment-ease), scale 160ms ease-out;
+  /*
+   * Только положение (его ведёт композитор) и сжатие под пальцем. Ширина не анимируется: сегменты равной ширины,
+   * а анимация ширины меняла размер слоя плашки на каждом кадре в основном потоке.
+   */
+  transition: translate 300ms var(--ios-segment-ease), scale 160ms ease-out;
 }
 
 /* Разделы настроек: переключатель с отступами под заголовком окна. */

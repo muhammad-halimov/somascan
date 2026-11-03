@@ -145,11 +145,16 @@ export function Tabs<T extends string | number | null>({ options, value, onChang
       const rowBox = row.getBoundingClientRect()
       const box = content.getBoundingClientRect()
       const scale = row.offsetWidth > 0 ? rowBox.width / row.offsetWidth : 1
-      // Округляем до физических пикселей экрана: дробная позиция по-разному округляется во время
-      // анимации и после неё, и плашка в конце переезда «вздрагивала».
+      // Края плашки — на целых точках экрана: дробный край по-разному сглаживается до переезда, во время
+      // и после него, и плашка «вздрагивала» или мерцала на кадр. Округляем в координатах экрана, а не ряда:
+      // сам ряд стоит на дробной точке (поля окна и ряда), и округление относительно него края не выравнивало.
       const pixel = window.devicePixelRatio || 1
       const snap = (value: number) => Math.round(value * pixel) / pixel
-      const next = { left: snap((box.left - rowBox.left) / scale - row.clientLeft + row.scrollLeft), width: snap(box.width / scale) }
+      // Начало координат плашки (внутренний край ряда) на экране и её края относительно него.
+      const origin = rowBox.left / scale + row.clientLeft - row.scrollLeft
+      const start = (box.left - rowBox.left) / scale - row.clientLeft + row.scrollLeft
+      const left = snap(origin + start) - origin
+      const next = { left, width: snap(origin + start + box.width / scale) - origin - left }
       // Без изменений не обновляем состояние, чтобы не вызывать лишний рендер.
       setIndicator((current) => (current && current.left === next.left && current.width === next.width ? current : next))
     }

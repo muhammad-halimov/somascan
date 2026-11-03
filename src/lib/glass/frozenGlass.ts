@@ -170,8 +170,13 @@ export function useFrozenGlass(ref: RefObject<HTMLElement | null>, glass: Frozen
     const host = ref.current
     if (!host || !active) return
     // Слой снимка внутри окна стоит от края его рамки — туда, где на экране начало снимка.
+    // Окно меняет высоту на каждом кадре перехода между вкладками: пока его начало на месте, стиль не трогаем.
+    let placed = ''
     const place = () => {
       const { x, y } = layoutOrigin(host)
+      const key = `${x + host.clientLeft} ${y + host.clientTop}`
+      if (key === placed) return
+      placed = key
       host.style.setProperty('--frozen-glass-x', `${-(x + host.clientLeft)}px`)
       host.style.setProperty('--frozen-glass-y', `${-(y + host.clientTop)}px`)
     }
