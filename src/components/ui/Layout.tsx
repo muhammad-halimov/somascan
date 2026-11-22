@@ -39,11 +39,17 @@ export function FormSection({ title, icon, action, hint, children }: FormSection
   )
 }
 
-/** Поле формы: подпись сверху, элемент управления снизу (`<label>` связывает их). */
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+/**
+ * Поле формы: подпись сверху, элемент управления снизу (`<label>` связывает их).
+ * Обязательное (`required`) — со звёздочкой у подписи; пустое обязательное поле подсвечивает само поле (`is-invalid`).
+ */
+export function Field({ label, required = false, children }: { label: string; required?: boolean; children: ReactNode }) {
   return (
     <label className="field">
-      <span className="field-label">{label}</span>
+      <span className="field-label">
+        {label}
+        {required && <span className="field-required" aria-hidden="true"> *</span>}
+      </span>
       {children}
     </label>
   )
@@ -54,10 +60,13 @@ export function FieldRow({ children }: { children: ReactNode }) {
   return <div className="field-row">{children}</div>
 }
 
-/** Плашка-пояснение с иконкой «i». */
-export function Notice({ children }: { children: ReactNode }) {
+/**
+ * Плашка-пояснение с иконкой «i». С `full` — в одну строку: текст со списком переменной длины (имена блоков)
+ * обрезается многоточием, целиком — во всплывающей подсказке.
+ */
+export function Notice({ children, full }: { children: ReactNode; full?: string }) {
   return (
-    <p className="notice">
+    <p className={`notice${full ? ' is-one-line' : ''}`} title={full}>
       <InfoIcon />
       <span>{children}</span>
     </p>
@@ -67,7 +76,14 @@ export function Notice({ children }: { children: ReactNode }) {
 /** Цвет статуса: успех, информация, нейтральный, внимание, ошибка. */
 export type StatusTone = 'success' | 'info' | 'neutral' | 'attention' | 'danger'
 
-/** Метка статуса: цветная точка и подпись. */
+/**
+ * Метка статуса: цветная точка и подпись в одну строку. Не помещается (длинная ошибка системы или сети) —
+ * обрезается многоточием, целиком — во всплывающей подсказке.
+ */
 export function StatusBadge({ tone, children }: { tone: StatusTone; children: ReactNode }) {
-  return <span className={`status-badge is-${tone}`}>{children}</span>
+  return (
+    <span className={`status-badge is-${tone}`} title={typeof children === 'string' ? children : undefined}>
+      <span className="status-badge-text">{children}</span>
+    </span>
+  )
 }

@@ -1,7 +1,11 @@
 /**
- * Слежение за Consum: раз в `intervalSec` секунд сравнивает время изменения и размер каждого Consum.
+ * Слежение за таблицами рабочего места: раз в `intervalSec` секунд сравнивает время изменения и размер.
  *
- * Изменился — пауза `settleSec` (редактор дописывает файл), затем прогон по этому Consum.
+ *   цех          — каждый Consum: изменился — прогон синхронизации по нему;
+ *   лаборатория  — таблица коэффициентов (`Laborator.xlsx`): изменилась — чтение последней записи (`readLaborator`);
+ *   качество     — пока следить не за чем: слежение не включается.
+ *
+ * Изменился — пауза `settleSec` (редактор дописывает файл), затем прогон.
  * Отложенная запись (`pending`: файл был открыт в редакторе) повторяется, когда замки редакторов исчезнут.
  * «Слежение включено» хранится в настройках (`running`): после перезапуска программа продолжает с того же места.
  *
@@ -12,13 +16,15 @@
  * не совпал с прогоном по Consum.
  *
  * Файлы проверяются асинхронно (`./files`): медленный сетевой диск не останавливает программу.
+ * Рабочее место во время слежения не меняется (вкладки на «Главной» недоступны): слежение — за его таблицами.
  *
  * РИСК: на медленном сетевом диске `settleSec` может не хватить — движок прочтёт недописанный Consum.
  * Прогон запускают только изменения Consum: правки Sarjele или Probe сами прогон не запускают.
  */
 import path from 'node:path'
 import { message } from '@/shared/messages'
-import type { ActionResult } from '@/shared/protocol'
+import type { ActionResult, RunTrigger } from '@/shared/protocol'
+import { deskFile, deskOf } from '@/shared/settings'
 import { fileStamp, openInEditor } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
@@ -74,9 +80,20 @@ export class ConsumWatcher {
     this.lastSnap = await this.snapAll()
   }
 
+  /** Цех (Consum → Sarjele и Probe): Google Drive, отложенная запись и мост с телефонами — только у него. */
+  private get atelier(): boolean {
+    return this.settings.getSnapshot().workplace === 'atelier'
+  }
+
   /** Включает слежение. */
   async start(): Promise<ActionResult> {
     if (this.watching) return { ok: true }
+    if (this.settings.getSnapshot().workplace === 'calitate') {
+      const error = message('event.noRun')
+      this.journal.event('warn', error)
+      this.settings.update({ running: false })
+      return { ok: false, error }
+    }
     const bad = await this.sync.readyToRead()
     if (bad) {
       this.journal.event('err', bad)
@@ -87,9 +104,10 @@ export class ConsumWatcher {
     this.watching = true
     this.settings.update({ running: true })
     this.sync.patch({ status: 'watching', nextCheckAt: null })
-    this.journal.event('info', message(s.write ? 'event.watchWrite' : 'event.watchDry', { seconds: s.intervalSec }))
+    const watch = this.atelier ? (s.write ? 'event.watchWrite' : 'event.watchDry') : 'event.watchLab'
+    this.journal.event('info', message(watch, { seconds: s.intervalSec }))
     this.lastSnap = await this.snapAll()
-    await this.sync.syncOnce({ apply: s.write, trigger: 'first' })
+    await this.runOnce('first')
     if (this.watching) this.scheduleNext()
     else this.finishStop() // «Стоп» нажали во время первого прогона
     return { ok: true }
@@ -141,9 +159,24 @@ export class ConsumWatcher {
     if (this.timer) clearTimeout(this.timer)
   }
 
-  /** Снимок всех Consum: файл → «время:размер» (`null` — недоступен). */
+  /** Таблицы, за которыми следим: Consum цеха или таблица лаборатории. */
+  private watchedFiles(): string[] {
+    const s = this.settings.getSnapshot()
+    const desk = deskOf(s.workplace)
+    if (!desk) return this.settings.consumFiles()
+    const file = desk === 'laborator' ? deskFile(s, desk) : ''
+    return file ? [file] : []
+  }
+
+  /** Прогон по изменившимся таблицам: синхронизация цеха или чтение таблицы лаборатории. */
+  private runOnce(trigger: RunTrigger, only?: string[]): Promise<ActionResult> {
+    if (this.atelier) return this.sync.syncOnce({ apply: this.settings.getSnapshot().write, trigger, only })
+    return this.sync.readLaborator(trigger === 'changed' ? 'tableChanged' : trigger)
+  }
+
+  /** Снимок таблиц: файл → «время:размер» (`null` — недоступен). */
   private async snapAll(): Promise<Record<string, string | null>> {
-    const files = this.settings.consumFiles()
+    const files = this.watchedFiles()
     const stamps = await Promise.all(files.map(fileStamp))
     return Object.fromEntries(files.map((f, i) => [f, stamps[i] ?? null]))
   }
@@ -161,10 +194,11 @@ export class ConsumWatcher {
     else this.finishStop()
   }
 
-  /** Сравнивает Consum со снимком, запускает прогоны, затем мост с телефонами. */
+  /** Сравнивает таблицы со снимком, запускает прогоны, затем (у цеха) мост с телефонами. */
   private async check(): Promise<void> {
     this.sync.patch({ lastCheckAt: Date.now() })
-    if (this.remote?.active() && !this.sync.getSnapshot().busy) await this.remote.refreshConsums()
+    const atelier = this.atelier
+    if (atelier && this.remote?.active() && !this.sync.getSnapshot().busy) await this.remote.refreshConsums()
     if (!this.watching) return
     const cur = await this.snapAll()
     const changed: string[] = []
@@ -187,8 +221,9 @@ export class ConsumWatcher {
     if (changed.length) {
       await sleep(this.settings.getSnapshot().settleSec * 1000)
       Object.assign(this.lastSnap, await this.snapAll())
-      if (this.watching) await this.sync.syncOnce({ apply: write(), trigger: 'changed', only: changed })
+      if (this.watching) await this.runOnce('changed', changed)
     }
+    if (!atelier) return
     const pending = this.sync.getSnapshot().pending.filter((f) => !changed.includes(f))
     if (this.watching && pending.length && write() && (await this.editorsClosed(pending))) {
       await this.sync.syncOnce({ apply: true, trigger: 'retry', only: pending })

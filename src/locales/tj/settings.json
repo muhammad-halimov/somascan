@@ -2,6 +2,8 @@
   "timer": {
     "title": "Таймер",
     "hint": "Ҳар чанд вақт санҷида шавад, ки Consum тағйир ёфтааст ё не.",
+    "hint_laborator": "Ҳар чанд вақт санҷида шавад, ки Laborator.xlsx тағйир ёфтааст ё не.",
+    "hint_calitate": "Ҳар чанд вақт санҷида шавад, ки Calitate.xlsx тағйир ёфтааст ё не.",
     "interval": "Фосилаи санҷиш",
     "settle": "Таваққуф пас аз тағйири файл",
     "seconds": "{{n}} с"
@@ -13,25 +15,47 @@
     "latest": "Аз гудохти охирини истифодашуда",
     "oldest": "Гудохти кушодаи аз ҳама кӯҳна"
   },
+  "signature": {
+    "title": "Имзои мастер",
+    "title_laborator": "Имзои лаборант",
+    "title_calitate": "Имзои назоратчӣ",
+    "hint": "PNG бо заминаи шаффоф — болои матни ҳуҷҷат гузошта мешавад.",
+    "pick": "Интихоби тасвир",
+    "replace": "Иваз кардани тасвир",
+    "remove": "Бардоштан",
+    "removeLabel": "Бардоштани имзо",
+    "removeTitle": "Имзоро бардоред?",
+    "removeMessage": "Имзо аз барнома нест карда мешавад. Файле, ки аз он интихоб шуда буд, тағйир намеёбад.",
+    "empty": "Имзо интихоб нашудааст",
+    "alt": "Имзо"
+  },
   "backups": {
     "title": "Нусхаҳои эҳтиётӣ",
     "keep": "Нусхаҳои ҷадвалҳоро нигоҳ доред",
     "days": "{{count}} рӯз",
-    "hint": "Нусхаҳо — дар ҷузвдони «backups» назди ҷадвалҳо."
+    "hint": "Нусхаҳо — дар ҷузвдони «backup/Atelier» назди ҷадвалҳо.",
+    "hint_laborator": "Нусхаҳо — дар ҷузвдони «backup/Laborator» назди ҷадвал.",
+    "hint_calitate": "Нусхаҳо — дар ҷузвдони «backup/Calitate» назди ҷадвал."
   },
   "actions": {
     "title": "Амалҳо",
     "hint": "Натиҷа дар журнали бахши «Асосӣ» нишон дода мешавад.",
     "plan": "Иҷрои санҷишӣ",
+    "plan_laborator": "Хондани ҷадвал",
     "planHint": "Нақшаро нишон додан, ҳеҷ чиз сабт накардан",
+    "planHint_laborator": "Сабти охирини Laborator.xlsx — ба журнал, бо нусха",
     "write": "Иҷрои воқеӣ",
     "writeHint": "Ба Sarjele ва Probe сабт кардан, бо нусхаи эҳтиётӣ",
     "migratePlan": "Миграцияи санҷишӣ",
     "migratePlanHint": "Нишон додан, ки кадом блокҳо ID мегиранд",
+    "migratePlanHint_laborator": "Нишон додан, ки кадом ҳуҷайраҳо ба Nr.bul. ва Data ҷудо мешаванд",
     "migrateWrite": "Миграцияи воқеӣ",
     "migrateWriteHint": "ID-ҳоро ба Sarjele ва Consum сабт кардан, бо нусхаи эҳтиётӣ",
+    "migrateWriteHint_laborator": "Nr.bul. ва Data — ба сутунҳои худ; асл — Laborator Orig.xlsx",
     "guard": "Ба файлҳои кушода сабт накардан",
     "guardHint": "То Sarjele ё Probe кушода аст, сабт интизор мешавад",
+    "guardHint_laborator": "То Laborator.xlsx кушода аст, сабт интизор мешавад",
+    "guardHint_calitate": "То Calitate.xlsx кушода аст, сабт интизор мешавад",
     "guardUnlock": "Қулфро кушоед, то танзимотро иваз кунед",
     "guardLock": "Танзимотро қулф кардан",
     "autoProjects": "Лоиҳаҳои навро худкор пайваст кардан",
@@ -48,9 +72,12 @@
     "confirmWriteTitle": "Сабт ба файлҳо",
     "confirmWrite": "Тағйирот ба Sarjele ва Probe сабт мешаванд. Пеш аз сабт нусхаи эҳтиётӣ сохта мешавад.",
     "confirmMigrate": "ID-ҳо ба Sarjele ва ба сутуни хидматии Consum сабт мешаванд. Пеш аз сабт нусхаи эҳтиётӣ сохта мешавад.",
+    "confirmMigrate_laborator": "Рақами бюллетен ва сана ба сутунҳои худи Laborator.xlsx гузаронида мешаванд. Асл дар паҳлӯ ҳамчун «Laborator Orig.xlsx» мемонад; пеш аз сабт нусхаи эҳтиётӣ сохта мешавад.",
     "confirmWriteOk": "Сабт кардан",
     "confirmRestoreTitle": "Барқарорсозӣ аз нусхаи эҳтиётӣ",
     "confirmRestore": "Sarjele, Probe ва Consum ба ҳолати {{stamp}} баргардонида шаванд? Ҳолати ҷорӣ низ дар нусхаи эҳтиётӣ нигоҳ дошта мешавад.",
+    "confirmRestore_laborator": "Laborator.xlsx ба ҳолати {{stamp}} баргардонида шавад? Ҳолати ҷорӣ низ дар нусхаи эҳтиётӣ нигоҳ дошта мешавад.",
+    "confirmRestore_calitate": "Calitate.xlsx ба ҳолати {{stamp}} баргардонида шавад? Ҳолати ҷорӣ низ дар нусхаи эҳтиётӣ нигоҳ дошта мешавад.",
     "confirmRestoreOk": "Баргардонидан"
   },
   "system": {

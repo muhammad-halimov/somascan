@@ -1,9 +1,10 @@
 /**
  * Журнал на главной: события программы одной строкой и карточки прогонов.
  *
- * Карточка прогона — что запустило, по какому Consum, итог (записано / только план / изменений нет / отложено /
- * ошибка) и по разделам: бирки с телефонов, перенесённые в Probe, блоки Sarjele, ID, закраска плавок в Probe,
- * нехватка стали, что требует внимания, проверка после записи, бэкап. «Подробно» — технический вывод движка (он же в `log.txt`).
+ * Карточка прогона — что запустило, по какому файлу, итог (записано / только план / прочитано / изменений нет /
+ * отложено / ошибка) и по разделам: последняя запись таблицы лаборатории, бирки с телефонов, перенесённые в Probe,
+ * разделённые колонки таблицы лаборатории, блоки Sarjele, ID, закраска плавок в Probe, нехватка стали, что требует
+ * внимания, проверка после записи, бэкап. «Подробно» — технический вывод движка (он же в `log.txt`).
  */
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -19,7 +20,17 @@ import type { JournalEntry, JournalEvent, JournalRun, RunOutcome, RunSummary } f
 const SHOWN = 5
 
 /** Цвет итога прогона. */
-const OUTCOME_TONE: Record<RunOutcome, StatusTone> = { running: 'info', wrote: 'success', planned: 'info', nothing: 'neutral', deferred: 'attention', failed: 'danger' }
+const OUTCOME_TONE: Record<RunOutcome, StatusTone> = { running: 'info', wrote: 'success', planned: 'info', read: 'success', nothing: 'neutral', deferred: 'attention', failed: 'danger' }
+
+/** Строка «изменений нет» по команде прогона. */
+const NOTHING = {
+  sync: 'journal.nothing',
+  'create-sheets': 'journal.nothingSheets',
+  restore: 'journal.nothingSheets',
+  bridge: 'journal.nothingBridge',
+  'lab-migrate': 'journal.nothingLab',
+  'lab-read': 'journal.nothingLabRead',
+} as const satisfies Record<RunSummary['command'], string>
 
 /** Метка бэкапа → время: «2026-10-19T14-02-11-123Z» → дата. */
 const stampTime = (stamp: string): number => Date.parse(stamp.replace(/T(\d\d)-(\d\d)-(\d\d)-(\d+)Z$/, 'T$1:$2:$3.$4Z'))
@@ -198,20 +209,38 @@ function RunBody({ run, s }: { run: JournalRun; s: RunSummary }) {
       {b.item !== null && <>, {t('journal.bridgedItem', { item: b.item })}</>}
     </>
   ))
+  const split = (s.split ?? []).map((x) => (
+    <>
+      <b>{x.column}</b> — {t('journal.splitItem', { n: x.cells })}
+    </>
+  ))
+  // последняя запись таблицы лаборатории: поля как в шапке таблицы, пустое — прочерк
+  const lab = s.lab
+    ? [
+        ...([['Rc decofr.', s.lab.value], ['Nr.bul.', s.lab.bulletin], ['Data', s.lab.date]] as const).map(([name, value]) => (
+          <>
+            {name}: <b>{value ?? '—'}</b>
+          </>
+        )),
+        s.lab.signature ? t('journal.labSignature', { file: s.lab.signature }) : <span className="run-warn">{t('journal.labNoSignature')}</span>,
+      ]
+    : []
   const skipped = s.skipped.map((x) => (
     <>
       <b>{x.element}</b>
       {x.project && <span className="run-dim"> · {x.project}</span>} — {format(x.reason)}
     </>
   ))
-  const nothing = !s.error && !s.blocks.length && !s.ids.length && !s.closed.length && !s.reopened.length && !s.skipped.length && !s.shortages.length && !s.restored && !s.sheets.length && !s.deferred.length && !bridged.length
+  const nothing = !s.error && !s.lab && !s.blocks.length && !s.ids.length && !s.closed.length && !s.reopened.length && !s.skipped.length && !s.shortages.length && !s.restored && !s.sheets.length && !s.deferred.length && !bridged.length && !split.length
   return (
     <div className="run-body">
       {s.error && <Line tone="err">{format(s.error)}</Line>}
       {s.restored && <Line tone="ok">{t('journal.restored', { time: dateTime(stampTime(s.restored.stamp)) })}</Line>}
       {s.deferred.length > 0 && <Line tone="warn">{t('journal.deferred', { list: list(s.deferred.map((d) => d.file)) })}</Line>}
-      {nothing && run.outcome !== 'running' && <Line>{s.command === 'bridge' ? t('journal.nothingBridge') : s.command === 'sync' ? t('journal.nothing') : t('journal.nothingSheets')}</Line>}
+      {nothing && run.outcome !== 'running' && <Line>{t(NOTHING[s.command])}</Line>}
+      {s.lab && <Section title={t('journal.labLatest', { row: s.lab.row })} items={lab} />}
       <Section title={done ? t('journal.bridgedDone', { n: bridged.length }) : t('journal.bridgedPlan', { n: bridged.length })} items={bridged} />
+      <Section title={done ? t('journal.splitDone') : t('journal.splitPlan')} items={split} />
       <Section title={done ? t('journal.blocksDone', { n: blocks.length }) : t('journal.blocksPlan', { n: blocks.length })} items={blocks} />
       <Section title={t('journal.ids')} items={ids} />
       <Section title={done ? t('journal.closedDone') : t('journal.closedPlan')} items={s.closed.length ? [list(s.closed)] : []} />
@@ -225,6 +254,7 @@ function RunBody({ run, s }: { run: JournalRun; s: RunSummary }) {
       <Section title={t('journal.notes')} items={s.notes.map(format)} />
       <Section title={t('journal.problems')} tone="err" items={s.problems.map(format)} />
       {s.verified === true && <Line tone="ok">{t('journal.verified')}</Line>}
+      {s.original && <Line>{t('journal.original', { file: s.original })}</Line>}
       {s.backup && <Line>{t('journal.backup', { time: dateTime(stampTime(s.backup)) })}</Line>}
     </div>
   )

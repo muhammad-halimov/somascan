@@ -83,6 +83,16 @@ export function MoonIcon() {
   )
 }
 
+/** Монитор: тема как в системе. */
+export function MonitorIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
+  )
+}
+
 /** Цилиндр базы данных: хранилище. */
 export function DatabaseIcon() {
   return (
@@ -219,6 +229,28 @@ export function TableIcon() {
   )
 }
 
+/** Перо над строкой: подпись лаборанта. */
+export function SignatureIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 17c2.5-4 4.5-6 6-6 2 0 .5 5 2.5 5 1.2 0 2.2-1.6 3-3" />
+      <path d="M14.5 9.5l5-5a1.4 1.4 0 0 1 2 2l-5 5-2.7.7z" />
+      <path d="M3 21h18" />
+    </svg>
+  )
+}
+
+/** Картинка: выбрать изображение. */
+export function ImageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="M21 15l-5-5L5 21" />
+    </svg>
+  )
+}
+
 /** Список: списки моделей. */
 export function ListIcon() {
   return (
@@ -285,6 +317,27 @@ export function FactoryIcon() {
       <path d="M2 20V9l6 4V9l6 4V4h6v16Z" />
       <path d="M2 20h20" />
       <path d="M7 16h1M12 16h1M17 16h1" />
+    </svg>
+  )
+}
+
+/** Колба: лаборатория. */
+export function FlaskIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 3h6M10 3v6l-5.6 9.4A2 2 0 0 0 6.1 21.5h11.8a2 2 0 0 0 1.7-3.1L14 9V3" />
+      <path d="M7 15h10" />
+    </svg>
+  )
+}
+
+/** Знак качества: контроль качества. */
+export function QualityIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="9" r="6" />
+      <path d="m9.5 9 1.8 1.8L14.8 7.3" />
+      <path d="M8.5 14 7 21l5-2.5 5 2.5-1.5-7" />
     </svg>
   )
 }

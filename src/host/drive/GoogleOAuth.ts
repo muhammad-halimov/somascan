@@ -25,6 +25,9 @@ export const CLIENT_FILE = 'google-oauth.json'
 /** Сколько ждать входа в браузере, мс. */
 const SIGN_IN_TIMEOUT_MS = 5 * 60_000
 
+/** Через сколько секунд страница после входа закрывается, а программа выходит на передний план. */
+export const RETURN_SECONDS = 5
+
 /** Клиент OAuth. */
 export interface OAuthClient {
   clientId: string
@@ -141,23 +144,41 @@ export async function revoke(token: string, fetcher: typeof fetch = fetch): Prom
   await fetcher(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, { method: 'POST' }).catch(() => undefined)
 }
 
-/** Страница, которую браузер показывает после входа. */
-export interface SignInPages {
-  /** Вход выполнен — можно вернуться в программу. */
-  done: string
-  /** Вход не выполнен (отказ или ошибка). */
-  failed: string
-}
+/** Тексты страницы после входа — по-английски: браузер не знает языка программы. */
+const PAGE_TEXT = {
+  done: { title: 'Signed in to Google', note: 'Somasync has access to Google Drive.' },
+  failed: { title: 'Sign-in was not completed', note: 'Return to Somasync and try again.' },
+} as const
 
-/** Простая страница с одной строкой. */
-const page = (text: string) => `<!doctype html><meta charset="utf-8"><title>Somasync</title><body style="font:16px system-ui;padding:48px;text-align:center">${text.replace(/</g, '&lt;')}</body>`
+/**
+ * Страница, которую браузер показывает после входа: итог и обратный отсчёт; через `RETURN_SECONDS` с вкладка
+ * закрывается. Браузер может не дать скрипту закрыть вкладку, открытую не им, — тогда просит закрыть её вручную.
+ */
+export function resultPage(ok: boolean): string {
+  const { title, note } = PAGE_TEXT[ok ? 'done' : 'failed']
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Somasync</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f7f9;--card:#fff;--text:#1f2328;--dim:#5b6470;--accent:${ok ? '#1e8e3e' : '#c5221f'}}
+@media (prefers-color-scheme:dark){:root{--bg:#141619;--card:#1e2126;--text:#e7e9ec;--dim:#a2a9b3;--accent:${ok ? '#5bb974' : '#f28b82'}}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:420px;margin:24px;padding:32px;text-align:center;background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.mark{width:48px;height:48px;margin:0 auto 12px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;line-height:1}
+h1{margin:0 0 6px;font-size:20px}p{margin:0;color:var(--dim)}#count{margin-top:16px;font-size:14px}
+</style>
+<main><div class="mark" aria-hidden="true">${ok ? '&#10003;' : '!'}</div><h1>${title}</h1><p>${note}</p><p id="count" role="status">Returning to Somasync in <b id="s">${RETURN_SECONDS}</b> s…</p></main>
+<script>
+let left=${RETURN_SECONDS};const s=document.getElementById('s'),count=document.getElementById('count');
+const tick=setInterval(()=>{left-=1;if(left>0){s.textContent=left;return}clearInterval(tick);window.close();setTimeout(()=>{count.textContent='You can close this tab now.'},300)},1000);
+</script></html>`
+}
 
 /**
  * Вход в браузере: слушает `127.0.0.1` на свободном порту, открывает страницу входа, ждёт ответа Google
  * с кодом и меняет код на токены.
  * @param open Открывает адрес в браузере системы.
+ * @param back Возврат в программу: через `RETURN_SECONDS` с после страницы итога (когда она закрывается).
  */
-export function signIn(client: OAuthClient, open: (url: string) => void, pages: SignInPages, fetcher: typeof fetch = fetch): Promise<OAuthTokens> {
+export function signIn(client: OAuthClient, open: (url: string) => void, back: () => void = () => {}, fetcher: typeof fetch = fetch): Promise<OAuthTokens> {
   const { verifier, challenge } = pkcePair()
   const state = base64url(crypto.randomBytes(16))
   return new Promise((resolve, reject) => {
@@ -176,7 +197,8 @@ export function signIn(client: OAuthClient, open: (url: string) => void, pages: 
       }
       const code = url.searchParams.get('code')
       const ok = !!code && url.searchParams.get('state') === state
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(page(ok ? pages.done : pages.failed))
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(resultPage(ok))
+      setTimeout(back, RETURN_SECONDS * 1000).unref()
       if (!ok) {
         finish(new OAuthError(url.searchParams.get('error') === 'access_denied' ? 'cancelled' : 'failed', url.searchParams.get('error') ?? 'state'))
         return

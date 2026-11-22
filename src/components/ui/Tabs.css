@@ -22,6 +22,10 @@
 .tab:active { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .tab.is-active, .tab.is-active:hover { color: var(--accent); }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Выбор недоступен: невыбранные вкладки приглушены, выбранная не реагирует на наведение. */
+.tabs.is-disabled .tab { cursor: default; }
+.tabs.is-disabled .tab:disabled { opacity: .45; }
+.tabs.is-disabled .tab:hover, .tabs.is-disabled .tab:active { background: transparent; }
 
 /* Индикатор рисуется под содержимым и совпадает с ним по ширине. */
 .tab-content { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 12px 2px; }

@@ -1,4 +1,10 @@
 {
+  "workplace": {
+    "label": "Loc de muncă",
+    "atelier": "Atelier",
+    "laborator": "Laborator",
+    "calitate": "Calitate"
+  },
   "status": {
     "watching": "Rulează",
     "stopping": "Se oprește…",
@@ -10,24 +16,26 @@
   },
   "start": "Pornește",
   "stop": "Oprește",
+  "noWatch": "Monitorizarea pentru Calitate nu este încă configurată.",
   "mode": {
     "title": "Mod",
     "write": "Scrie în fișiere",
     "writeOn": "Scrie în Sarjele, Probe și Consum, cu copie de rezervă.",
     "writeOff": "Mod de test: fișierele nu se modifică.",
-    "lockedWhileRunning": "Modul se poate schimba doar când monitorizarea este oprită."
+    "lockedWhileRunning": "Modul și locul de muncă se schimbă doar cu monitorizarea oprită."
   },
   "journal": {
     "title": "Jurnal",
     "copy": "Copiază",
     "clear": "Golește",
-    "empty": "Jurnalul este gol. Apăsați „Pornește” sau rulați o acțiune din fila „Avansate”.",
+    "empty": "Jurnalul e gol. Apăsați „Pornește” sau rulați o acțiune din „Avansate”.",
     "modeWrite": "scriere",
     "modeDry": "test",
     "outcome": {
       "running": "În curs",
       "wrote": "Scris",
       "planned": "Doar plan",
+      "read": "Citit",
       "nothing": "Fără modificări",
       "deferred": "Amânat",
       "failed": "Eroare"
@@ -85,6 +93,15 @@
     "bridgedPlan": "Vor fi transferate în Probe: {{n}}",
     "bridgedRow": "foaia {{sheet}}, rândul {{row}}",
     "bridgedItem": "elem. {{item}}",
-    "nothingBridge": "Nicio etichetă nouă de pe telefoane."
+    "nothingBridge": "Nicio etichetă nouă de pe telefoane.",
+    "splitDone": "Separat în tabelul laboratorului",
+    "splitPlan": "Va fi separat în tabelul laboratorului",
+    "splitItem": "Nr.bul. și Data în coloane proprii, celule: {{n}}",
+    "original": "Originalul este păstrat ca „{{file}}”",
+    "nothingLab": "Tabelul este deja separat: Nr.bul. și Data sunt în coloane proprii.",
+    "labLatest": "Ultima înregistrare · rândul {{row}}",
+    "labSignature": "Semnătura laborantului: {{file}}",
+    "labNoSignature": "Semnătura laborantului: nealeasă",
+    "nothingLabRead": "Tabelul nu are Rc decofr., Nr.bul. și Data completate."
   }
 }

@@ -9,6 +9,9 @@
  * Таблицы в Google Drive (`remote`): перед прогоном они скачиваются в локальную копию (с записью — под
  * блокировкой), движок работает с копией, после прогона с записью изменённое выгружается. Таблицу пишет
  * другое устройство или нет связи — Consum попадает в `pending`, прогон повторится при следующей проверке.
+ *
+ * У рабочих мест с одной таблицей (лаборатория, контроль качества) прогоны — с их таблицей (чтение и миграция
+ * таблицы лаборатории, откат): Google Drive у них нет, сетевой диск подключается так же, если таблица на нём недоступна.
  */
 import fs from 'node:fs'
 import os from 'node:os'
@@ -16,6 +19,8 @@ import path from 'node:path'
 import { Store } from '@/shared/Store'
 import { message, triggerMessage, type Message } from '@/shared/messages'
 import { ENGINE_EXIT, runOutcome, type ActionResult, type RunState, type RunSummary, type RunTrigger } from '@/shared/protocol'
+import { deskFile, deskOf, type Desk } from '@/shared/settings'
+import type { BackupFile } from '@/engine/FileGuard'
 import type { EngineRunner } from './EngineRunner'
 import { backupStamps, exists } from './files'
 import type { Journal } from './Journal'
@@ -90,19 +95,40 @@ export class SyncService extends Store<RunState> {
     return bad.length ? message('event.missingFiles', { files: bad.join(', ') }) : null
   }
 
-  /** Метки бэкапов рядом с Sarjele, новые сверху. */
+  /** Таблица текущего рабочего места с одной таблицей или `null` (цех). */
+  private deskTable(): (BackupFile & { kind: Desk }) | null {
+    const s = this.settings.getSnapshot()
+    const desk = deskOf(s.workplace)
+    return desk ? { file: deskFile(s, desk), kind: desk } : null
+  }
+
+  /**
+   * Почему прогон с таблицей рабочего места невозможен (таблица не задана или не найдена) или `null`.
+   * Таблица на сетевом диске недоступна — сначала подключается общая папка.
+   */
+  private async deskProblem(table: BackupFile & { kind: Desk }): Promise<Message | null> {
+    const missing = message('event.missingFiles', { files: table.file ? path.basename(table.file) : `${table.kind[0]!.toUpperCase()}${table.kind.slice(1)}` })
+    if (!table.file) return missing
+    if (await exists(table.file)) return null
+    if (this.share && this.settings.getSnapshot().desks[table.kind].target === 'smb') await this.share.mount()
+    return (await exists(table.file)) ? null : missing
+  }
+
+  /** Метки бэкапов текущего рабочего места (цех — по Sarjele), новые сверху. */
   async backups(): Promise<string[]> {
-    const file = this.settings.files().sarjele
-    return file ? backupStamps(file, MAX_STAMPS) : []
+    const table = this.deskTable() ?? { file: this.settings.files().sarjele, kind: 'sarjele' as const }
+    return table.file ? backupStamps(table, MAX_STAMPS) : []
   }
 
   /**
    * Готовы ли файлы к чтению (вкладка «Связи», начало слежения): у Google Drive — скачивает свежие таблицы,
    * у сетевого диска — подключает общую папку, если таблицы на ней недоступны (после перезапуска системы
-   * подключение без сохранённых учётных данных теряется).
+   * подключение без сохранённых учётных данных теряется). У рабочего места с одной таблицей — его таблица.
    * @returns Причина, по которой читать нельзя, или `null`.
    */
   async readyToRead(): Promise<Message | null> {
+    const desk = this.deskTable()
+    if (desk) return this.deskProblem(desk)
     const remote = this.remote?.active() && !this.getSnapshot().busy ? this.remote : null
     if (remote) {
       const problem = await remote.prepare(false)
@@ -142,13 +168,45 @@ export class SyncService extends Store<RunState> {
     })
   }
 
-  /** Откатывает файлы к бэкапу. */
+  /** Откатывает к бэкапу таблицы текущего рабочего места. */
   restore(stamp: string): Promise<ActionResult> {
+    const desk = this.deskTable()
+    if (desk) {
+      return this.exclusive('restore', true, [], async () => {
+        const { code } = await this.engine('restore', path.basename(desk.file), true, ['--restore', stamp, `--${desk.kind}`, desk.file])
+        return code === ENGINE_EXIT.ok
+      }, desk)
+    }
     return this.exclusive('restore', true, [], async () => {
       const s = this.settings.files()
       const { code } = await this.engine('restore', null, true, ['--restore', stamp, s.sarjele, s.probe, ...this.settings.consumFiles()])
       return code === ENGINE_EXIT.ok
     })
+  }
+
+  /** Миграция таблицы лаборатории: бюллетень и дата — в свои колонки (`engine/laborator`). */
+  migrateLaborator(apply: boolean): Promise<ActionResult> {
+    const s = this.settings.getSnapshot()
+    const table = { file: deskFile(s, 'laborator'), kind: 'laborator' as const }
+    const trigger: RunTrigger = apply ? 'migrateWrite' : 'migratePlan'
+    return this.exclusive(trigger, apply, [], async () => {
+      const { code } = await this.engine(trigger, path.basename(table.file), apply, ['--laborator', '--migrate', table.file, ...(apply ? ['--apply'] : [])])
+      return code === ENGINE_EXIT.ok
+    }, table)
+  }
+
+  /**
+   * Чтение таблицы лаборатории (`engine/laborator/LaboratorReader`): последняя запись «Rc decofr.», «Nr.bul.», «Data»
+   * и подпись лаборанта — в журнал. Таблица не меняется, копия — в любом случае.
+   */
+  readLaborator(trigger: RunTrigger): Promise<ActionResult> {
+    const s = this.settings.getSnapshot()
+    const table = { file: deskFile(s, 'laborator'), kind: 'laborator' as const }
+    const signature = s.signatures.laborator
+    return this.exclusive(trigger, false, [], async () => {
+      const { code } = await this.engine(trigger, path.basename(table.file), false, ['--laborator', '--read', table.file], signature ? { SIGNATURE: signature } : {})
+      return code === ENGINE_EXIT.ok
+    }, table)
   }
 
   /**
@@ -169,11 +227,12 @@ export class SyncService extends Store<RunState> {
   /**
    * Выполняет `fn` как единственный прогон; у Google Drive — между скачиванием и выгрузкой.
    * @param consums Consum прогона: если таблицы сейчас недоступны на время (блокировка, связь), они ждут повтора.
+   * @param desk Таблица рабочего места с одной таблицей, если прогон — с ней (иначе — с таблицами цеха).
    */
-  private async exclusive(trigger: RunTrigger, apply: boolean, consums: readonly string[], fn: () => Promise<boolean>): Promise<ActionResult> {
-    const remote = this.remote?.active() ? this.remote : null
+  private async exclusive(trigger: RunTrigger, apply: boolean, consums: readonly string[], fn: () => Promise<boolean>, desk: (BackupFile & { kind: Desk }) | null = null): Promise<ActionResult> {
+    const remote = !desk && this.remote?.active() ? this.remote : null
     if (!remote) {
-      const bad = await this.pathsProblem()
+      const bad = desk ? await this.deskProblem(desk) : await this.pathsProblem()
       if (bad) {
         this.journal.event('err', bad)
         return { ok: false, error: bad }
@@ -206,10 +265,10 @@ export class SyncService extends Store<RunState> {
   }
 
   /** Один запуск движка как прогон журнала: итог из `JSON_OUT`, технический вывод — в прогон. */
-  private async engine(trigger: RunTrigger, file: string | null, apply: boolean, args: string[]): Promise<{ code: number; summary: RunSummary | null }> {
+  private async engine(trigger: RunTrigger, file: string | null, apply: boolean, args: string[], env: Record<string, string> = {}): Promise<{ code: number; summary: RunSummary | null }> {
     const run = this.journal.beginRun(trigger, file, apply)
     const out = path.join(os.tmpdir(), `somasync-run-${process.pid}-${run.id}.json`)
-    const { code, err } = await this.runner.run(args, { JSON_OUT: out }, run)
+    const { code, err } = await this.runner.run(args, { ...env, JSON_OUT: out }, run)
     let summary: RunSummary | null = null
     try {
       summary = JSON.parse(fs.readFileSync(out, 'utf8')) as RunSummary

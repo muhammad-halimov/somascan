@@ -1,5 +1,6 @@
 /**
  * Окно: заголовок (только macOS — место под кнопки окна и переключатель темы), вкладки, содержимое вкладки.
+ * У лаборатории и контроля качества (рабочее место на «Главной») вкладки «Связи» нет.
  */
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -46,7 +47,10 @@ function useDarkTheme(theme: ThemePreference): boolean {
 export function App() {
   const { t } = useTranslation()
   const settings = useSettings()
-  const [tab, setTab] = useState<TabId>('home')
+  const [selected, setTab] = useState<TabId>('home')
+  const tabs = settings.workplace === 'atelier' ? TABS : TABS.filter((id) => id !== 'links')
+  // вкладка, которой у рабочего места нет, — «Главная»
+  const tab = tabs.includes(selected) ? selected : 'home'
   const dark = useDarkTheme(settings.theme)
   // заголовок нужен только на macOS (место под кнопки окна); в Windows у окна своя рамка, тема — в «Расширенных»
   const mac = useStore(appInfoStore).platform === 'darwin'
@@ -61,7 +65,7 @@ export function App() {
           </button>
         </header>
       )}
-      <Tabs role="tablist" label={t('sections')} panelIdPrefix="panel" value={tab} options={TABS.map((id) => ({ value: id, label: t(`tabs.${id}`), icon: ICONS[id] }))} onChange={setTab} />
+      <Tabs role="tablist" label={t('sections')} panelIdPrefix="panel" value={tab} options={tabs.map((id) => ({ value: id, label: t(`tabs.${id}`), icon: ICONS[id] }))} onChange={setTab} />
       <main key={tab} className="content anim-enter" role="tabpanel" id={`panel-${tab}`} aria-label={t(`tabs.${tab}`)}>
         <div className={`content-inner${tab === 'home' ? ' is-fill' : ''}`}>
           {tab === 'home' && <RunScreen />}

@@ -80,9 +80,10 @@ function InputActions({ actions }: { actions: readonly InputAction[] }) {
   )
 }
 
-/** Текстовое поле с кнопками-значками справа внутри. */
+/** Текстовое поле с кнопками-значками справа внутри. Недоступное поле (`disabled`) — вместе с кнопками. */
 export function ActionTextInput({ action, locked = false, className = '', ...inputProps }: ActionTextInputProps) {
-  const actions = Array.isArray(action) ? action : [action as InputAction]
+  const own = Array.isArray(action) ? action : [action as InputAction]
+  const actions = inputProps.disabled ? own.map((a) => ({ ...a, disabled: true })) : own
   return (
     <div className={`input-with-action${actions.length > 1 ? ` has-actions-${actions.length}` : ''}`}>
       <TextInput {...inputProps} readOnly={locked || inputProps.readOnly} className={`${className}${locked ? ' is-locked' : ''}`.trim()} />

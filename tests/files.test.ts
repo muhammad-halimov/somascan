@@ -31,11 +31,14 @@ test('замок редактора рядом с таблицей: Excel и Lib
   fs.rmSync(path.join(dir, '.~lock.Probe otel.xlsx#'))
 })
 
-test('метки бэкапов: новые сверху; нет папки — пусто', async () => {
-  assert.deepEqual(await backupStamps(table, 5), [])
+test('метки бэкапов: новые сверху, своя папка и общая папка прежних версий; нет папок — пусто', async () => {
+  const probe = { file: table, kind: 'probe' as const }
+  assert.deepEqual(await backupStamps(probe, 5), [])
+  fs.mkdirSync(path.join(dir, 'backup', 'Atelier', 'Probe'), { recursive: true })
+  for (const name of ['2026-10-02T08-00-00-000Z_Probe otel.xlsx', 'чужой.txt']) fs.writeFileSync(path.join(dir, 'backup', 'Atelier', 'Probe', name), '')
   fs.mkdirSync(path.join(dir, 'backups'))
-  for (const name of ['2026-10-01T08-00-00-000Z_Probe otel.xlsx', '2026-10-02T08-00-00-000Z_Probe otel.xlsx', 'чужой.txt']) fs.writeFileSync(path.join(dir, 'backups', name), '')
-  assert.deepEqual(await backupStamps(table, 5), ['2026-10-02T08-00-00-000Z', '2026-10-01T08-00-00-000Z'])
+  for (const name of ['2026-10-01T08-00-00-000Z_Probe otel.xlsx', '2026-09-01T08-00-00-000Z_Sarjele.xlsx']) fs.writeFileSync(path.join(dir, 'backups', name), '')
+  assert.deepEqual(await backupStamps(probe, 5), ['2026-10-02T08-00-00-000Z', '2026-10-01T08-00-00-000Z'])
 })
 
 test('ответ за отведённое время, иначе — запасной (диск не отвечает)', async () => {

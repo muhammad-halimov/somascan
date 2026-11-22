@@ -111,7 +111,8 @@ export class TrayMenu {
     const run = this.sync.getSnapshot()
     if (run.status === 'stopping') return this.t('stopping')
     if (run.busy) return this.t('busy', { what: this.settings.text(triggerMessage(run.busy)) })
-    if (run.status === 'watching') return this.t(this.settings.getSnapshot().write ? 'watchingWrite' : 'watchingDry')
+    const { write, workplace } = this.settings.getSnapshot()
+    if (run.status === 'watching') return this.t(workplace !== 'atelier' ? 'watchingLab' : write ? 'watchingWrite' : 'watchingDry')
     return this.t('idle')
   }
 
@@ -127,7 +128,11 @@ export class TrayMenu {
     const run = this.sync.getSnapshot()
     const on = run.status === 'watching'
     const stopping = run.status === 'stopping'
-    const locale = LOCALES[this.settings.getSnapshot().language]
+    const { language, workplace, write } = this.settings.getSnapshot()
+    const locale = LOCALES[language]
+    // как на «Главной»: запись — только у цеха, у контроля качества слежения пока нет
+    const atelier = workplace === 'atelier'
+    const idle = workplace === 'calitate'
     const recent = this.journal.entries.slice(-RECENT_ENTRIES).reverse()
     const hhmm = (t: number) => new Date(t).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     const template: MenuItemConstructorOptions[] = [
@@ -135,8 +140,8 @@ export class TrayMenu {
       { label: this.statusText(), enabled: false },
       ...(run.pending.length ? [{ label: this.t('pending', { files: run.pending.map((f) => path.basename(f)).join(', ') }), enabled: false }] : []),
       { type: 'separator' },
-      { label: on || stopping ? this.t('stop') : this.t('start'), enabled: !stopping, click: () => (on ? this.actions.stop() : this.actions.start()) },
-      { label: this.t('write'), type: 'checkbox', checked: this.settings.getSnapshot().write, enabled: !on && !stopping, click: (item) => this.settings.update({ write: item.checked }) },
+      { label: on || stopping ? this.t('stop') : this.t('start'), enabled: !stopping && (on || !idle), click: () => (on ? this.actions.stop() : this.actions.start()) },
+      ...(atelier ? [{ label: this.t('write'), type: 'checkbox' as const, checked: write, enabled: !on && !stopping, click: (item: Electron.MenuItem) => this.settings.update({ write: item.checked }) }] : []),
       { type: 'separator' },
       { label: this.t('journal'), enabled: false },
       ...(recent.length ? recent.map((e) => ({ label: `${hhmm(e.t)}  ${this.entryText(e)}`, enabled: false })) : [{ label: this.t('empty'), enabled: false }]),

@@ -2,6 +2,8 @@
   "timer": {
     "title": "Таймер",
     "hint": "Как часто проверять, не изменился ли Consum.",
+    "hint_laborator": "Как часто проверять, не изменился ли Laborator.xlsx.",
+    "hint_calitate": "Как часто проверять, не изменился ли Calitate.xlsx.",
     "interval": "Интервал проверки",
     "settle": "Пауза после изменения файла",
     "seconds": "{{n}} с"
@@ -13,25 +15,47 @@
     "latest": "С последней использованной",
     "oldest": "Самая старая незакрытая"
   },
+  "signature": {
+    "title": "Подпись мастера",
+    "title_laborator": "Подпись лаборанта",
+    "title_calitate": "Подпись контролёра",
+    "hint": "PNG с прозрачным фоном — накладывается поверх текста документа.",
+    "pick": "Выбрать изображение",
+    "replace": "Заменить изображение",
+    "remove": "Убрать",
+    "removeLabel": "Убрать подпись",
+    "removeTitle": "Убрать подпись?",
+    "removeMessage": "Подпись будет удалена из программы. Файл, из которого её выбрали, не изменится.",
+    "empty": "Подпись не выбрана",
+    "alt": "Подпись"
+  },
   "backups": {
     "title": "Резервные копии",
     "keep": "Хранить копии таблиц",
     "days": "{{count}} дн.",
-    "hint": "Копии — в папке «backups» рядом с таблицами."
+    "hint": "Копии — в папке «backup/Atelier» рядом с таблицами.",
+    "hint_laborator": "Копии — в папке «backup/Laborator» рядом с таблицей.",
+    "hint_calitate": "Копии — в папке «backup/Calitate» рядом с таблицей."
   },
   "actions": {
     "title": "Действия",
     "hint": "Результат — в журнале на главной вкладке.",
     "plan": "Демонстрационный прогон",
+    "plan_laborator": "Прочитать таблицу",
     "planHint": "Показать план, ничего не записывать",
+    "planHint_laborator": "Последняя запись Laborator.xlsx — в журнал, с копией",
     "write": "Фактический прогон",
     "writeHint": "Записать в Sarjele и Probe, с копией",
     "migratePlan": "Демонстрационная миграция",
     "migratePlanHint": "Показать, какие блоки получат ID",
+    "migratePlanHint_laborator": "Показать, какие ячейки разделятся на Nr.bul. и Data",
     "migrateWrite": "Фактическая миграция",
     "migrateWriteHint": "Записать ID в Sarjele и Consum, с копией",
+    "migrateWriteHint_laborator": "Nr.bul. и Data — в свои колонки; оригинал — Laborator Orig.xlsx",
     "guard": "Не писать в открытые файлы",
     "guardHint": "Пока Sarjele или Probe открыт, запись ждёт",
+    "guardHint_laborator": "Пока Laborator.xlsx открыт, запись ждёт",
+    "guardHint_calitate": "Пока Calitate.xlsx открыт, запись ждёт",
     "guardUnlock": "Открыть замок: изменить настройку",
     "guardLock": "Закрыть настройку замком",
     "autoProjects": "Новые проекты подключать сами",
@@ -48,9 +72,12 @@
     "confirmWriteTitle": "Запись в файлы",
     "confirmWrite": "Изменения будут записаны в Sarjele и Probe. Перед записью создаётся копия.",
     "confirmMigrate": "ID будут записаны в Sarjele и в служебный столбец Consum. Перед записью создаётся копия.",
+    "confirmMigrate_laborator": "Номер бюллетеня и дата будут перенесены в свои колонки Laborator.xlsx. Оригинал останется рядом как «Laborator Orig.xlsx», перед записью создаётся копия.",
     "confirmWriteOk": "Записать",
     "confirmRestoreTitle": "Откат из копии",
     "confirmRestore": "Вернуть Sarjele, Probe и Consum к состоянию {{stamp}}? Текущее состояние тоже сохранится в копию.",
+    "confirmRestore_laborator": "Вернуть Laborator.xlsx к состоянию {{stamp}}? Текущее состояние тоже сохранится в копию.",
+    "confirmRestore_calitate": "Вернуть Calitate.xlsx к состоянию {{stamp}}? Текущее состояние тоже сохранится в копию.",
     "confirmRestoreOk": "Откатить"
   },
   "system": {

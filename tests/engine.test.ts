@@ -35,7 +35,7 @@ test('план без --apply ничего не меняет', async () => {
   assert.match(r.text, /■ PROIECT TEST \/ EL-2 \(Buc 4\) — СОЗДАТЬ блок/)
   assert.match(r.text, /пробный прогон: ничего не записано/)
   assert.deepEqual(fs.readFileSync(ws.sarjele), before)
-  assert.ok(!fs.existsSync(path.join(ws.dir, 'backups')))
+  assert.ok(!fs.existsSync(path.join(ws.dir, 'backup')))
 })
 
 test('«Подробно» — кодами сообщений: на английском интерфейсе ни строки по-русски', async () => {
@@ -65,7 +65,7 @@ test('запись: блоки, ID в Consum, плавки, проверка п�
   assert.deepEqual(r.json?.closed, ['H300'])
   assert.ok(r.json?.backup, 'метка бэкапа в итоге')
   assert.ok(r.json?.consumAfter, 'Consum после записи ID — для слежения')
-  assert.ok(fs.readdirSync(path.join(ws.dir, 'backups')).length >= 3, 'бэкапы всех трёх файлов')
+  for (const kind of ['Consum', 'Probe', 'Sarjele']) assert.equal(fs.readdirSync(path.join(ws.dir, 'backup', 'Atelier', kind)).length, 1, `бэкап в backup/Atelier/${kind}`)
 
   const sj = await SarjeleBook.read(ws.sarjele)
   assert.equal(sj.used.get('H100'), 300)
@@ -86,12 +86,12 @@ test('повторный прогон без изменений Consum ниче�
   const ws = await makeWorkspace()
   await run(ws, ['--apply'])
   const before = fs.statSync(ws.sarjele).mtimeMs
-  const backups = fs.readdirSync(path.join(ws.dir, 'backups')).length
+  const backups = fs.readdirSync(path.join(ws.dir, 'backup', 'Atelier', 'Sarjele')).length
   const r = await run(ws, ['--apply'])
   assert.equal(r.code, ENGINE_EXIT.ok)
   assert.doesNotMatch(r.text, /Копия:/)
   assert.equal(fs.statSync(ws.sarjele).mtimeMs, before)
-  assert.equal(fs.readdirSync(path.join(ws.dir, 'backups')).length, backups)
+  assert.equal(fs.readdirSync(path.join(ws.dir, 'backup', 'Atelier', 'Sarjele')).length, backups)
 })
 
 test('расход в Consum вырос — блок дописывается, остаток пересчитывается', async () => {
@@ -150,7 +150,7 @@ test('откат возвращает файлы к бэкапу', async () => {
   const ws = await makeWorkspace()
   const original = fs.readFileSync(ws.sarjele)
   await run(ws, ['--apply'])
-  const stamp = fs.readdirSync(path.join(ws.dir, 'backups'))[0]!.split('_')[0]!
+  const stamp = fs.readdirSync(path.join(ws.dir, 'backup', 'Atelier', 'Sarjele'))[0]!.split('_')[0]!
   const reporter = new MemorySink()
   const code = await new SyncEngine(parseEngineOptions(['--restore', stamp, ws.sarjele, ws.probe, ws.consum], ws.env), reporter).run()
   assert.equal(code, ENGINE_EXIT.ok)

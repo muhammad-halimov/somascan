@@ -24,10 +24,12 @@ export interface TabsProps<T> {
   role?: 'radiogroup' | 'tablist'
   /** Для `tablist`: префикс id управляемых панелей (`<префикс>-<значение>`). */
   panelIdPrefix?: string
+  /** Выбор недоступен (выбранная вкладка остаётся выделенной). */
+  disabled?: boolean
 }
 
 /** Вкладки с полоской-индикатором. */
-export function Tabs<T extends string | number>({ options, value, onChange, label, role = 'radiogroup', panelIdPrefix }: TabsProps<T>) {
+export function Tabs<T extends string | number>({ options, value, onChange, label, role = 'radiogroup', panelIdPrefix, disabled = false }: TabsProps<T>) {
   const isTabList = role === 'tablist'
   const rowRef = useRef<HTMLDivElement>(null)
   const activeRef = useRef<HTMLButtonElement>(null)
@@ -72,7 +74,7 @@ export function Tabs<T extends string | number>({ options, value, onChange, labe
   }, [value])
 
   return (
-    <div ref={rowRef} className="tabs" role={role} aria-label={label}>
+    <div ref={rowRef} className={`tabs${disabled ? ' is-disabled' : ''}`} role={role} aria-label={label} aria-disabled={disabled || undefined}>
       {options.map((option) => {
         const selected = option.value === value
         return (
@@ -85,7 +87,10 @@ export function Tabs<T extends string | number>({ options, value, onChange, labe
             aria-checked={isTabList ? undefined : selected}
             aria-controls={isTabList && panelIdPrefix ? `${panelIdPrefix}-${String(option.value)}` : undefined}
             className={`tab${selected ? ' is-active' : ''}`}
-            onClick={() => onChange(option.value)}
+            disabled={disabled && !selected}
+            onClick={() => {
+              if (!disabled) onChange(option.value)
+            }}
           >
             <span className="tab-content">
               {option.icon && <span className="tab-icon" aria-hidden="true">{option.icon}</span>}

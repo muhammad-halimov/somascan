@@ -4,7 +4,7 @@
  * на проверке таблиц). Движок работает в отдельном процессе и читает файлы как обычно.
  */
 import fs from 'node:fs/promises'
-import { Backups, EditorLock } from '@/engine/FileGuard'
+import { Backups, EditorLock, type BackupFile } from '@/engine/FileGuard'
 
 /** «Время:размер» файла или `null`, если файл недоступен. */
 export async function fileStamp(file: string): Promise<string | null> {
@@ -31,13 +31,11 @@ export async function openInEditor(file: string): Promise<boolean> {
   return (await Promise.all(EditorLock.candidates(file).map(exists))).includes(true)
 }
 
-/** Метки бэкапов рядом с файлом, новые сверху (как `Backups.stamps`). */
-export async function backupStamps(file: string, limit: number): Promise<string[]> {
-  try {
-    return Backups.stampsOf(await fs.readdir(Backups.dir(file)), limit)
-  } catch {
-    return []
-  }
+/** Метки бэкапов таблицы, новые сверху (как `Backups.stamps`: своя папка и общая папка прежних версий). */
+export async function backupStamps(table: BackupFile, limit: number): Promise<string[]> {
+  const read = (dir: string) => fs.readdir(dir).catch((): string[] => [])
+  const [own, legacy] = await Promise.all([read(Backups.dir(table)), read(Backups.legacyDir(table.file))])
+  return Backups.stampsOf([...own, ...Backups.legacyOf(table, legacy)], limit)
 }
 
 /** Ответ `promise` или `fallback()`, если его нет за `ms` (сетевой диск не отвечает). */

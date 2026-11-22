@@ -2,6 +2,7 @@
   "trigger": {
     "first": "Prima rulare",
     "changed": "Consum s-a schimbat",
+    "tableChanged": "Tabelul s-a schimbat",
     "retry": "Reluarea scrierii amânate",
     "plan": "Rulare de test",
     "write": "Rulare reală",
@@ -15,6 +16,7 @@
     "running": "{{trigger}} · în curs",
     "wrote": "{{trigger}} · scris",
     "planned": "{{trigger}} · doar plan",
+    "read": "{{trigger}} · citit",
     "nothing": "{{trigger}} · fără modificări",
     "deferred": "{{trigger}} · scriere amânată",
     "failed": "{{trigger}} · eroare"
@@ -24,6 +26,7 @@
     "resume": "Monitorizarea era pornită la ultima închidere — o reiau",
     "watchWrite": "Monitorizare pornită: scriere în fișiere, verificare la fiecare {{seconds}} s",
     "watchDry": "Monitorizare pornită: mod de test, verificare la fiecare {{seconds}} s",
+    "watchLab": "Monitorizare pornită: citirea tabelului laboratorului, verificare la fiecare {{seconds}} s",
     "watchStopped": "Monitorizare oprită",
     "stopping": "Oprire: aștept să se termine rularea curentă",
     "fileGone": "{{file}} nu este disponibil: fișierul lipsește sau nu există rețea",
@@ -33,6 +36,10 @@
     "smbMounted": "Partajare rețea conectată: {{mount}}",
     "smbFailed": "Partajarea de rețea nu a putut fi conectată: {{error}}",
     "settingsNotSaved": "Setările nu au putut fi salvate: {{error}}",
+    "smbPasswordLocked": "Parola partajării de rețea nu a putut fi decriptată: depozitul sistemului (keychain macOS / Windows) a refuzat accesul sau aplicația a fost semnată din nou. Permiteți accesul la următoarea pornire sau introduceți din nou parola în fila Stocare",
+    "driveTokenLocked": "Conectarea Google nu a putut fi decriptată: depozitul sistemului (keychain macOS / Windows) a refuzat accesul sau aplicația a fost semnată din nou. Permiteți accesul la următoarea pornire sau conectați-vă din nou la Google în fila Stocare",
+    "signatureSet": "Semnătura a fost actualizată: {{file}}",
+    "signatureRemoved": "Semnătura a fost eliminată",
     "error": "Eroare: {{error}}",
     "processGone": "Procesul auxiliar {{type}} s-a încheiat: {{reason}} (cod {{code}})",
     "windowNotLoaded": "Fereastra nu s-a încărcat: {{error}}",
@@ -40,7 +47,8 @@
     "trayUnavailable": "Pictograma din bara de sistem nu este disponibilă: {{error}}",
     "engineNotStarted": "Motorul nu a putut porni: {{error}}",
     "engineExit": "Motorul s-a oprit cu codul {{code}}",
-    "startFailed": "Pornirea a eșuat: {{error}}"
+    "startFailed": "Pornirea a eșuat: {{error}}",
+    "noRun": "Pentru acest loc de muncă rularea nu este încă configurată"
   },
   "skip": {
     "projectNotConfigured": "proiectul „{{project}}” nu este configurat (fila „Legături”)",
@@ -53,7 +61,7 @@
     "blockNotFound": "blocul cu ID {{id}} nu a fost găsit în Sarjele",
     "blockTaken": "blocul {{id}} este deja legat de alt rând",
     "ambiguous": "mai multe blocuri potrivite: {{blocks}} — alegeți-l pe cel corect în fila „Legături”",
-    "sharedBlock": "blocul „{{title}}” este comun pentru mai multe rânduri — legați-l manual în fila „Legături”",
+    "sharedBlock": "blocul „{{title}}” e comun pentru mai multe rânduri — legați-l manual",
     "migrateNoBlock": "blocul nu a fost găsit (migrarea nu creează blocuri noi)",
     "noRoom": "sub bloc nu e loc pentru {{n}} rânduri noi (consumul este împărțit pe șarje) — eliberați celulele de sub bloc pe foaia „{{sheet}}”",
     "linkNotFound": "în links.json este ales blocul „{{title}}”, dar foaia „{{sheet}}” nu are un asemenea bloc fără ID — verificați titlul",
@@ -113,13 +121,17 @@
     "other": "{{error}}",
     "linksBroken": "links.json nu poate fi citit: {{error}}. Corectați fișierul (Avansate → Legături manuale) sau ștergeți-l — cât timp este stricat, rulările sunt oprite",
     "linksNotObject": "links.json trebuie să fie un obiect { \"PROIECT|element\": \"titlul blocului\" } — rulările sunt oprite până la corectarea fișierului",
-    "bridgeUsage": "Nu sunt setate copia Probe și Probe"
+    "bridgeUsage": "Nu sunt setate copia Probe și Probe",
+    "labUsage": "Tabelul laboratorului nu este setat"
   },
   "check": {
     "noPath": "Calea nu este setată",
     "notFound": "Fișierul nu a fost găsit",
     "ok": "Găsit · foi: {{n}} · modificat {{date}}",
     "okOpen": "Găsit · foi: {{n}} · modificat {{date}} · deschis într-un editor",
+    "labOk": "Găsit · Rc decofr. în {{columns}} · modificat {{date}}",
+    "labOkOpen": "Găsit · coloanele {{columns}} · modificat {{date}} · deschis în editor",
+    "labNotSplit": "Tabelul nu e separat — rulați „Migrare reală” din Avansate",
     "noConsumSheet": "Lipsește foaia „Decont Lunar”",
     "noYearSheet": "Lipsește foaia {{year}} — alegeți foaia manual",
     "noProjectSheets": "Lipsesc foile proiectelor: {{sheets}}",
@@ -127,17 +139,25 @@
     "timeout": "Niciun răspuns în {{seconds}} s — unitatea nu este disponibilă"
   },
   "smb": {
-    "noHost": "Introduceți serverul și folderul partajat",
+    "noHost": "Introduceți serverul",
+    "noAccount": "Introduceți utilizatorul și parola sau activați „Fără autentificare”",
+    "serverDown": "Serverul {{host}} nu răspunde — verificați adresa, portul și rețeaua",
+    "refused": "Serverul a refuzat conexiunea — verificați adresa, portul și folderul",
     "unsupported": "Conectați partajarea de rețea din sistem și alegeți fișierele de pe ea",
     "unreachable": "Folderul {{mount}} nu se deschide: nu există acces",
-    "systemError": "Eroare de sistem {{code}}",
-    "failed": "Folderul partajat nu a putut fi conectat",
+    "systemError": "Folderul partajat nu a putut fi conectat (eroare Windows {{code}})",
+    "macError": "Folderul partajat nu a putut fi conectat (eroare macOS {{code}})",
+    "failed": "Conectare eșuată — verificați serverul, folderul și contul",
     "timeout": "Serverul nu a răspuns într-un minut",
+    "cancelled": "Conectarea a fost anulată",
+    "connectionLost": "Legătura cu serverul s-a întrerupt — încercați din nou",
     "accessDenied": "Nu există acces la folderul partajat",
     "notFound": "Serverul sau folderul partajat nu a fost găsit",
     "badCredentials": "Nume de utilizator sau parolă greșită",
     "needsAccount": "Sunt necesare numele de utilizator și parola",
-    "accountLocked": "Contul este blocat"
+    "guestBlocked": "Windows blochează accesul fără parolă — introduceți utilizator și parolă",
+    "accountLocked": "Contul este blocat sau dezactivat",
+    "passwordExpired": "Parola a expirat — schimbați-o și introduceți-o pe cea nouă"
   },
   "scan": {
     "busy": "Citirea este deja în curs",
@@ -146,6 +166,7 @@
   "tray": {
     "watchingWrite": "Rulează · scriere în fișiere",
     "watchingDry": "Rulează · mod de test",
+    "watchingLab": "Rulează · citirea tabelului laboratorului",
     "stopping": "Se oprește…",
     "idle": "Oprit",
     "busy": "{{what}}…",
@@ -228,23 +249,32 @@
     "bridgeLine": "  ■ șarja {{heat}} → foaia {{sheet}}, rândul {{row}}",
     "bridgeSkipped": "  ! {{element}}: {{why}}",
     "bridgeNothing": "Nicio etichetă nouă de pe telefoane",
-    "bridgeSaved": "Transferate în Probe: {{n}}"
+    "bridgeSaved": "Transferate în Probe: {{n}}",
+    "labRead": "Tabelul laboratorului: foaia „{{sheet}}”, antetul pe rândul {{row}}, rânduri sub el: {{rows}}",
+    "labColumn": "  ■ {{column}} ({{cell}}) → „Nr.bul.” și „Data” în coloane proprii: {{cells}} celule",
+    "labSkipped": "  ! {{cell}}: {{why}}",
+    "labAlready": "„{{file}}” este deja separat: „Nr.bul.” și „Data” sunt în coloane proprii",
+    "labSaved": "„{{file}}” separat; originalul este „{{original}}”",
+    "labHeader": "Tabelul laboratorului: foaia „{{sheet}}”, antetul pe rândul {{row}}, Rc decofr. / Nr.bul. / Data — coloanele {{columns}}",
+    "labLatest": "  ■ Ultima înregistrare — rândul {{row}} ({{cell}}): Rc decofr. {{value}} · Nr.bul. {{bulletin}} · Data {{date}}",
+    "labNone": "—",
+    "labEmpty": "„{{file}}” nu are Rc decofr. / Nr.bul. / Data completate",
+    "labSignature": "  ■ Semnătura laborantului: {{file}}",
+    "labNoSignature": "  ■ Semnătura laborantului nu este aleasă (fila Avansate)"
   },
   "drive": {
-    "badFolder": "Folderul Google Drive nu este recunoscut: {{folder}} — lipiți linkul folderului sau ID-ul lui",
-    "notXlsx": "{{file}} din Google Drive nu este un tabel .xlsx (un document Google Sheets nu merge)",
+    "badFolder": "Folder nerecunoscut: {{folder}} — lipiți linkul sau ID-ul",
+    "notXlsx": "{{file}} din Google Drive nu e .xlsx (Google Sheets nu merge)",
     "busy": "{{file}} este scris acum de alt dispozitiv ({{owner}}) — rularea se va repeta",
     "verifyFailed": "{{file}}: ce s-a încărcat în Google Drive nu corespunde cu ce s-a scris",
     "folderNotFound": "Folderul Google Drive nu a fost găsit: {{folder}}",
-    "notConfigured": "Google Drive nu este configurat: puneți fișierul clientului OAuth {{file}} în folderul de date al aplicației",
-    "authRequired": "Accesul la Google Drive a fost revocat sau a expirat — conectați-vă din nou la Google în fila „Stocare”",
+    "notConfigured": "Google Drive nu e configurat: lipsește {{file}} din folderul de date",
+    "authRequired": "Accesul la Google Drive a fost revocat sau a expirat — reconectați-vă",
     "network": "Nu există conexiune cu Google Drive: {{error}}",
     "error": "Eroare Google Drive: {{error}}",
-    "accessDenied": "Nu există acces la tabelele din Google Drive: {{error}}",
+    "accessDenied": "Fără acces la tabelele din Google Drive: {{error}}",
     "rateLimited": "Google Drive cere să așteptați: {{error}}",
     "signedOut": "Nu sunteți conectat la Google — conectați-vă în fila „Stocare”",
-    "pageDone": "Conectat. Reveniți în Somasync — puteți închide această fereastră.",
-    "pageFailed": "Conectarea a eșuat. Reveniți în Somasync și încercați din nou.",
     "accountUnknown": "cont Google",
     "signedIn": "Conectat la Google: {{account}}",
     "signInFailed": "Conectarea cu Google a eșuat: {{error}}",
@@ -268,5 +298,26 @@
     "created": "Copia {{file}} creată în Google Drive",
     "failed": "Dispozitive (Google Drive): {{error}}",
     "bellFailed": "Firestore indisponibil: {{error}}. Transfer — la verificarea copiei"
+  },
+  "laborator": {
+    "noHeader": "Antetul cu „Rc decofr.” nu a fost găsit în tabelul laboratorului (primele {{rows}} rânduri)",
+    "no28": "Antetul (rândul {{row}}) nu are „Rc 28 zile” cu „Nr.bul./Data” la dreapta",
+    "layout": "Antetul (rândul {{row}}) nu e nici în forma veche, nici în cea separată",
+    "formulas": "Tabelul laboratorului conține formule ({{cell}}): mutarea coloanelor le-ar strica referințele — tabelul nu a fost modificat",
+    "unparsed": "nerecunoscut: „{{text}}” — celula rămâne cum este, separați-o manual",
+    "merged": "celula este îmbinată cu vecinele — rămâne cum este",
+    "origExists": "„{{file}}” există deja — migrarea nu s-a făcut, ca să nu-l suprascrie. Redenumiți sau ștergeți acel fișier",
+    "open": "„{{file}}” este deschis într-un editor — închideți-l și porniți migrarea din nou",
+    "busy": "Migrarea nu s-a făcut: {{reason}}",
+    "changed": "„{{file}}” a fost salvat în timpul migrării — porniți-o din nou",
+    "integrity": "Verificarea dinaintea scrierii nu a trecut (celula {{cell}}) — „{{file}}” nu a fost modificat",
+    "notSplit": "„{{file}}” nu e separat — rulați „Migrare reală” din Avansate",
+    "signatureMissing": "Fișierul semnăturii laborantului nu a fost găsit — alegeți semnătura din nou în fila Avansate"
+  },
+  "signature": {
+    "notImage": "Fișierul nu se deschide ca imagine — alegeți un PNG",
+    "noAlpha": "Fără fundal transparent — e nevoie de un PNG cu canal alfa",
+    "blank": "Imaginea este goală: nu are semnătură",
+    "saveFailed": "Semnătura nu a putut fi salvată: {{error}}"
   }
 }

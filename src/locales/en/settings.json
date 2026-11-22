@@ -2,6 +2,8 @@
   "timer": {
     "title": "Timer",
     "hint": "How often to check whether Consum has changed.",
+    "hint_laborator": "How often to check whether Laborator.xlsx has changed.",
+    "hint_calitate": "How often to check whether Calitate.xlsx has changed.",
     "interval": "Check interval",
     "settle": "Pause after the file changes",
     "seconds": "{{n}} s"
@@ -13,25 +15,47 @@
     "latest": "From the last one used",
     "oldest": "Oldest open heat"
   },
+  "signature": {
+    "title": "Foreman’s signature",
+    "title_laborator": "Lab technician’s signature",
+    "title_calitate": "Inspector’s signature",
+    "hint": "A PNG with a transparent background, placed over the document text.",
+    "pick": "Choose an image",
+    "replace": "Replace the image",
+    "remove": "Remove",
+    "removeLabel": "Remove the signature",
+    "removeTitle": "Remove the signature?",
+    "removeMessage": "The signature will be deleted from the program. The file it was chosen from does not change.",
+    "empty": "No signature chosen",
+    "alt": "Signature"
+  },
   "backups": {
     "title": "Backups",
     "keep": "Keep table backups for",
     "days": "{{count}} d",
-    "hint": "Backups go to the “backups” folder by the tables."
+    "hint": "Backups go to the “backup/Atelier” folder by the tables.",
+    "hint_laborator": "Backups go to the “backup/Laborator” folder by the table.",
+    "hint_calitate": "Backups go to the “backup/Calitate” folder by the table."
   },
   "actions": {
     "title": "Actions",
     "hint": "Results appear in the journal on the Home tab.",
     "plan": "Trial run",
+    "plan_laborator": "Read the table",
     "planHint": "Show the plan, write nothing",
+    "planHint_laborator": "The latest entry of Laborator.xlsx — to the journal, with a backup",
     "write": "Actual run",
     "writeHint": "Write to Sarjele and Probe, with a backup",
     "migratePlan": "Trial migration",
     "migratePlanHint": "Show which blocks will get IDs",
+    "migratePlanHint_laborator": "Show which cells will be split into Nr.bul. and Data",
     "migrateWrite": "Actual migration",
     "migrateWriteHint": "Write IDs to Sarjele and Consum, with a backup",
+    "migrateWriteHint_laborator": "Nr.bul. and Data in own columns; original: Laborator Orig.xlsx",
     "guard": "Do not write to open files",
     "guardHint": "While Sarjele or Probe is open, the write waits",
+    "guardHint_laborator": "While Laborator.xlsx is open, the write waits",
+    "guardHint_calitate": "While Calitate.xlsx is open, the write waits",
     "guardUnlock": "Open the lock to change this setting",
     "guardLock": "Lock this setting",
     "autoProjects": "Connect new projects automatically",
@@ -48,9 +72,12 @@
     "confirmWriteTitle": "Write to files",
     "confirmWrite": "Changes will be written to Sarjele and Probe. A backup is made first.",
     "confirmMigrate": "IDs will be written to Sarjele and to the service column of Consum. A backup is made first.",
+    "confirmMigrate_laborator": "The bulletin number and the date will be moved into their own columns of Laborator.xlsx. The original stays next to it as “Laborator Orig.xlsx”; a backup is made first.",
     "confirmWriteOk": "Write",
     "confirmRestoreTitle": "Restore from backup",
     "confirmRestore": "Return Sarjele, Probe and Consum to the state of {{stamp}}? The current state is backed up too.",
+    "confirmRestore_laborator": "Return Laborator.xlsx to the state of {{stamp}}? The current state is backed up too.",
+    "confirmRestore_calitate": "Return Calitate.xlsx to the state of {{stamp}}? The current state is backed up too.",
     "confirmRestoreOk": "Restore"
   },
   "system": {

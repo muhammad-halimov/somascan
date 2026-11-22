@@ -36,3 +36,25 @@ test('испорченный JSON в окружении — значения п�
   assert.deepEqual(o.projects, [])
   assert.deepEqual([...o.activeSources!], [])
 })
+
+test('таблица лаборатории: миграция и откат с --laborator / --calitate', () => {
+  const m = parseEngineOptions(['--laborator', '--migrate', '--apply', 'L.xlsx'], {})
+  assert.equal(m.command, 'lab-migrate')
+  assert.equal(m.apply, true)
+  assert.equal(m.migrateOnly, true)
+  assert.deepEqual(m.desk, { kind: 'laborator', file: 'L.xlsx' })
+  const r = parseEngineOptions(['--restore', '2026-11-15T10-00-00-000Z', '--calitate', 'Q.xlsx'], {})
+  assert.equal(r.command, 'restore')
+  assert.deepEqual(r.restore, { stamp: '2026-11-15T10-00-00-000Z', consums: [] })
+  assert.deepEqual(r.desk, { kind: 'calitate', file: 'Q.xlsx' })
+  assert.equal(parseEngineOptions(['C', 'S', 'P'], {}).desk, null)
+})
+
+test('чтение таблицы лаборатории: --laborator --read, подпись — из SIGNATURE', () => {
+  const o = parseEngineOptions(['--laborator', '--read', 'L.xlsx'], { SIGNATURE: '/data/signatures/laborator-1.png' })
+  assert.equal(o.command, 'lab-read')
+  assert.equal(o.apply, false)
+  assert.deepEqual(o.desk, { kind: 'laborator', file: 'L.xlsx' })
+  assert.equal(o.signature, '/data/signatures/laborator-1.png')
+  assert.equal(parseEngineOptions(['--laborator', '--read', 'L.xlsx'], {}).signature, '')
+})

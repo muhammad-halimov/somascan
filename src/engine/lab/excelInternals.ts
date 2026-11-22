@@ -1,5 +1,5 @@
 /**
- * Недокументированные места ExcelJS, на которые опирается журнал, — все в одном файле.
+ * Недокументированные места ExcelJS, на которые опираются журнал проб и таблица лаборатории, — все в одном файле.
  *
  * РИСК: это не публичный API библиотеки (`exceljs` 4.x). После обновления ExcelJS первым делом
  * прогнать `npm test` (labelWorkbook: шапка без «расписывания» пустых ячеек, новый лист года первым,
@@ -41,3 +41,17 @@ export function keepDefaultWidths(workbook: Workbook) {
 
 /** Объединённые ячейки листа (`A1:B2`): в публичном API ExcelJS их списка нет, только в модели. */
 export const mergedRanges = (sheet: Worksheet): string[] => (sheet.model as { merges?: string[] }).merges ?? []
+
+/**
+ * Заменяет диапазоны имени книги (`_xlnm._FilterDatabase` — диапазон фильтра листа). ExcelJS хранит имя по ячейкам
+ * (`matrixMap`), а публичный `definedNames.remove` снимает его только с одной ячейки — имя собирается заново.
+ */
+export function replaceDefinedName(workbook: Workbook, name: string, ranges: readonly string[]): void {
+  const names = workbook.definedNames as unknown as { matrixMap: Record<string, unknown>; add(range: string, name: string): void }
+  delete names.matrixMap[name]
+  for (const range of ranges) names.add(range, name)
+}
+
+/** Диапазоны имени книги (`Sheet1!$A$5:$N$3901`); нет имени — пусто. */
+export const definedNameRanges = (workbook: Workbook, name: string): string[] =>
+  (workbook.definedNames as unknown as { getRanges(name: string): { ranges: string[] } }).getRanges(name).ranges

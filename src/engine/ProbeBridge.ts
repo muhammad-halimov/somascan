@@ -131,7 +131,7 @@ export class ProbeBridge {
       }
       const bytes = await book.toBytes()
       this.verify(await LabelWorkbook.open(bytes, path.basename(probe)), original, summary.bridged)
-      new Backups(this.options.backupDays).save([probe], this.stamp)
+      new Backups(this.options.backupDays).save([{ file: probe, kind: 'probe' }], this.stamp)
       summary.backup = this.stamp
       report.say('tech.backup', { stamp: this.stamp, files: `"${probe}"` }, 'ok')
       await SafeSave.bytes(probe, bytes)

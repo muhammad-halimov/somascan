@@ -9,11 +9,11 @@
   "smb": {
     "account": "Account",
     "location": "Location",
-    "hint": "After connecting, pick the tables below with the folder icon.",
+    "hint": "The shared folder is optional. Pick the tables below with the folder icon.",
     "host": "Server",
     "hostPlaceholder": "server, 10.0.0.5 or 10.0.0.5:445",
     "share": "Shared folder",
-    "sharePlaceholder": "Atelier",
+    "sharePlaceholder": "Optional",
     "domain": "Domain",
     "domainPlaceholder": "Optional",
     "username": "User",
@@ -22,9 +22,11 @@
     "hidePassword": "Hide password",
     "mount": "Test connection",
     "mounting": "Connecting…",
+    "checking": "Checking the connection…",
     "anonymous": "Without authorization",
     "anonymousHint": "Sign-in with the current system account",
-    "connected": "Connected: {{mount}}"
+    "connected": "Connected: {{mount}}",
+    "notConnected": "Not connected"
   },
   "googleDrive": {
     "account": "Google account",
@@ -42,10 +44,13 @@
   "files": {
     "title": "Tables",
     "hint": "The tables must already exist.",
+    "needsShare": "Tables become available once the share is connected.",
     "consum": "Consum (steel consumption)",
     "consumN": "Consum #{{n}} (steel consumption)",
     "sarjele": "Sarjele din elemente",
     "probe": "Probe otel (sample log)",
+    "laborator": "Coefficient table",
+    "calitate": "Quality table",
     "unlock": "Unlock the table path to edit it",
     "lock": "Lock the table path",
     "pick": "Choose file",

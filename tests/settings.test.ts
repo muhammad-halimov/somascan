@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { activeFiles, DEFAULT_SETTINGS, mergeSettings, parseSettings, uncPath } from '../src/shared/settings'
+import { activeFiles, DEFAULT_SETTINGS, deskFile, mergeSettings, parseSettings, uncPath } from '../src/shared/settings'
 
 test('пустой или испорченный файл — значения по умолчанию', () => {
   assert.deepEqual(parseSettings(null), DEFAULT_SETTINGS)
@@ -67,12 +67,48 @@ test('сетевой диск: «Без авторизации» по умолч
   assert.equal(mergeSettings(DEFAULT_SETTINGS, { smb: { anonymous: true } }).smb.anonymous, true)
 })
 
-test('сетевой путь общей папки в Windows: \\\\сервер\\папка', () => {
+test('сетевой путь общей папки в Windows: \\\\сервер\\папка, без папки — сервер', () => {
   assert.equal(uncPath({ host: '10.0.0.5', share: 'Atelier' }), '\\\\10.0.0.5\\Atelier')
+  assert.equal(uncPath({ host: '10.0.0.5', share: '' }), '\\\\10.0.0.5')
+})
+
+test('подписи рабочих мест: по умолчанию нет; сохранённые разбираются, испорченные — пусто', () => {
+  assert.deepEqual(DEFAULT_SETTINGS.signatures, { atelier: '', laborator: '', calitate: '' })
+  const s = parseSettings({ signatures: { atelier: '/data/signatures/atelier-1.png', calitate: 5 } })
+  assert.deepEqual(s.signatures, { atelier: '/data/signatures/atelier-1.png', laborator: '', calitate: '' })
+  // подпись лаборатории сначала хранилась в её настройках
+  assert.equal(parseSettings({ desks: { laborator: { signature: '/data/signatures/laborator-1.png' } } }).signatures.laborator, '/data/signatures/laborator-1.png')
+  assert.equal(parseSettings({ signatures: { laborator: '/new.png' }, desks: { laborator: { signature: '/old.png' } } }).signatures.laborator, '/new.png')
+  assert.deepEqual(mergeSettings(s, { signatures: { laborator: '/l.png' } }).signatures, { atelier: '/data/signatures/atelier-1.png', laborator: '/l.png', calitate: '' })
 })
 
 test('замок на копии Probe для телефонов: по умолчанию открыт, сохранённый разбирается', () => {
   assert.equal(DEFAULT_SETTINGS.locked.copy, false)
   assert.equal(parseSettings({ locked: { copy: true } }).locked.copy, true)
   assert.equal(parseSettings({ locked: { folder: true } }).locked.copy, false)
+})
+
+test('рабочее место: по умолчанию цех; сохранённое разбирается, испорченное — по умолчанию', () => {
+  assert.equal(DEFAULT_SETTINGS.workplace, 'atelier')
+  assert.equal(parseSettings({ workplace: 'laborator' }).workplace, 'laborator')
+  assert.equal(parseSettings({ workplace: 'calitate' }).workplace, 'calitate')
+  assert.equal(parseSettings({ workplace: 'склад' }).workplace, 'atelier')
+})
+
+test('лаборатория и контроль качества: своё место хранения без Google Drive и своя таблица у каждого места', () => {
+  const empty = { target: 'local', files: { local: '', smb: '' } }
+  assert.deepEqual(DEFAULT_SETTINGS.desks, { laborator: empty, calitate: empty })
+  const lab = '\\\\srv\\Lab\\Laborator.xlsx'
+  const s = parseSettings({ target: 'googleDrive', desks: { laborator: { target: 'smb', files: { smb: lab, local: 5 } }, calitate: { files: { local: '/q/Calitate.xlsx' } } } })
+  assert.equal(s.target, 'googleDrive', 'место хранения цеха не тронуто')
+  assert.equal(s.desks.laborator.target, 'smb')
+  assert.equal(deskFile(s, 'laborator'), lab)
+  assert.equal(s.desks.laborator.files.local, '', 'испорченный путь — пусто')
+  assert.equal(deskFile(s, 'calitate'), '/q/Calitate.xlsx')
+  assert.equal(parseSettings({ desks: { laborator: { target: 'googleDrive' } } }).desks.laborator.target, 'local', 'Google Drive у лаборатории нет')
+  const merged = mergeSettings(s, { desks: { laborator: { ...s.desks.laborator, target: 'local' } } })
+  assert.equal(merged.desks.laborator.files.smb, lab, 'смена места не стирает таблицы')
+  assert.equal(merged.desks.calitate.files.local, '/q/Calitate.xlsx', 'другое рабочее место не тронуто')
+  assert.deepEqual(parseSettings({ laborator: { target: 'smb', files: { smb: lab } } }).desks.laborator.files.smb, lab, 'поле первой версии')
+  assert.equal(parseSettings({ locked: { laborator: true, calitate: true } }).locked.calitate, true)
 })

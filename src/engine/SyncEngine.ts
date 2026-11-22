@@ -6,6 +6,8 @@
  *   create-sheets  создать недостающие листы проектов в Sarjele
  *   restore        откатить файлы к бэкапу
  *   bridge         перенести бирки с телефонов из копии Probe в Google Drive в Probe (`ProbeBridge`)
+ *   lab-migrate    разделить бюллетень и дату в таблице лаборатории (`laborator/LaboratorMigration`)
+ *   lab-read       последняя запись таблицы лаборатории — в итог, таблица не меняется (`laborator/LaboratorReader`)
  *
  * Итог прогона (`RunSummary`) пишется в JSON_OUT и при ошибке. Код выхода: 0 — готово, 1 — ошибка,
  * 3 — запись отложена (файл открыт в редакторе или занят другим прогоном).
@@ -16,7 +18,9 @@ import { message, MessageError } from '@/shared/messages'
 import { ENGINE_EXIT, type RunSummary } from '@/shared/protocol'
 import { SarjeleWriter } from './books/SarjeleWriter'
 import type { EngineOptions } from './EngineOptions'
-import { Backups } from './FileGuard'
+import { Backups, type BackupFile } from './FileGuard'
+import { LaboratorMigration } from './laborator/LaboratorMigration'
+import { LaboratorReader } from './laborator/LaboratorReader'
 import { hasChanges, Planner } from './planning/Planner'
 import { ProbeBridge } from './ProbeBridge'
 import { consoleSink, RunReport, type TextSink } from './RunReport'
@@ -56,11 +60,13 @@ export class SyncEngine {
         return ENGINE_EXIT.error
       }
     }
-    const command: RunSummary['command'] = options.command === 'restore' || options.command === 'create-sheets' || options.command === 'bridge' ? options.command : 'sync'
+    const command: RunSummary['command'] = options.command
     const report = new RunReport(this.out, command, options.apply)
     try {
       if (command === 'restore') return this.restore(report)
       if (command === 'bridge') return await this.bridge(report)
+      if (command === 'lab-migrate') return await this.labMigrate(report)
+      if (command === 'lab-read') return await this.labRead(report)
       if (!this.filesGiven()) {
         report.summary.error = message('error.usage')
         return ENGINE_EXIT.error
@@ -128,6 +134,30 @@ export class SyncEngine {
     return new ProbeBridge(options, report, this.stamp).run()
   }
 
+  /** Миграция таблицы лаборатории (`--laborator --migrate [--apply] <Laborator.xlsx>`). */
+  private async labMigrate(report: RunReport): Promise<number> {
+    const { options } = this
+    const desk = options.desk
+    if (desk?.kind !== 'laborator' || !desk.file || !options.migrateOnly) {
+      report.summary.error = message('error.labUsage')
+      return ENGINE_EXIT.error
+    }
+    report.say('tech.engine', { version: ENGINE_VERSION })
+    return new LaboratorMigration({ file: desk.file, apply: options.apply, guardOpenFiles: options.guardOpenFiles, backupDays: options.backupDays }, report, this.stamp).run()
+  }
+
+  /** Последняя запись таблицы лаборатории (`--laborator --read <Laborator.xlsx>`); таблица не меняется. */
+  private async labRead(report: RunReport): Promise<number> {
+    const { options } = this
+    const desk = options.desk
+    if (desk?.kind !== 'laborator' || !desk.file) {
+      report.summary.error = message('error.labUsage')
+      return ENGINE_EXIT.error
+    }
+    report.say('tech.engine', { version: ENGINE_VERSION })
+    return new LaboratorReader({ file: desk.file, signature: options.signature, backupDays: options.backupDays }, report, this.stamp).run()
+  }
+
   /** Создаёт недостающие листы проектов (`--create-sheets [--apply]`). */
   private async createSheets(report: RunReport): Promise<number> {
     const { options } = this
@@ -146,7 +176,7 @@ export class SyncEngine {
       report.say('tech.dryRunCreate')
       return ENGINE_EXIT.ok
     }
-    new Backups(options.backupDays).save([options.sarjele], this.stamp)
+    new Backups(options.backupDays).save([{ file: options.sarjele, kind: 'sarjele' }], this.stamp)
     report.summary.backup = this.stamp
     report.say('tech.backup', { stamp: this.stamp, files: `"${options.sarjele}"` }, 'ok')
     new SarjeleWriter(wb, { heats: new Map(), journal: new Set() }).createSheets(missing, (name) => report.say('tech.sheetCreated', { name }, 'ok'))
@@ -155,18 +185,23 @@ export class SyncEngine {
     return ENGINE_EXIT.ok
   }
 
-  /** Откат к бэкапу (`--restore [метка] …`); без метки — список меток. */
+  /**
+   * Откат к бэкапу (`--restore [метка] …`); без метки — список меток. Цех — Sarjele и Probe (Consum — если есть копия),
+   * рабочее место с одной таблицей — его таблица.
+   */
   private restore(report: RunReport): number {
     const { options } = this
     const { stamp, consums } = options.restore!
+    const desk = options.desk
+    const required: BackupFile[] = desk ? [{ file: desk.file, kind: desk.kind }] : [{ file: options.sarjele, kind: 'sarjele' }, { file: options.probe, kind: 'probe' }]
     if (!stamp) {
-      const stamps = Backups.stamps(options.sarjele)
+      const stamps = Backups.stamps(required[0]!)
       report.say('tech.backupsTitle', { list: stamps.length ? '' : message('tech.none') })
       for (const s of stamps) report.line(`  ${s}`)
       return ENGINE_EXIT.ok
     }
     try {
-      const r = Backups.restore(stamp, options.sarjele, options.probe, consums)
+      const r = Backups.restore(stamp, required, consums.map((file) => ({ file, kind: 'consum' as const })))
       report.summary.restored = { stamp, savedAs: r.savedAs }
       report.summary.wrote = true
       report.say('tech.restored', { stamp, savedAs: r.savedAs }, 'ok')

@@ -1,3 +1,27 @@
 /* Список бэкапов прокручивается сам; версия внизу. */
 .backup-list { max-height: 240px; overflow-y: auto; }
 .app-version { margin: 0; color: var(--text); font-size: 13px; }
+
+/*
+ * Подпись лаборанта: превью — небольшой белый «лист» в светлую клетку в любой теме (тёмная подпись не сливается
+ * с тёмным окном, клетка показывает прозрачный фон). Изображение вписывается в лист целиком (`contain`);
+ * без подписи — пунктирная рамка.
+ */
+.signature-preview {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 140px;
+  box-sizing: border-box;
+  place-items: center;
+  overflow: hidden;
+  background-color: #fff;
+  background-image: conic-gradient(#e8eaed 25%, transparent 0 50%, #e8eaed 0 75%, transparent 0);
+  background-size: 16px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .08);
+}
+.signature-preview img { position: absolute; inset: 12px; width: calc(100% - 24px); height: calc(100% - 24px); object-fit: contain; }
+.signature-preview.is-empty { color: var(--text); background: var(--field-bg); border: 1px dashed var(--field-line); box-shadow: none; font-size: 13px; }
+.signature-status { min-height: 4px; }

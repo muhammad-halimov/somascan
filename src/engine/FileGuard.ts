@@ -4,12 +4,14 @@
  *
  *   FileLock    папка `<файл>.lock`: два прогона (две программы с общим сетевым диском) не пишут один файл разом
  *   EditorLock  файл открыт в редакторе таблиц — писать нельзя, запись откладывается
- *   Backups     копии файлов в папке `backups` рядом с ними под одной меткой прогона, откат к метке
+ *   Backups     копии файлов в папке `backup` рядом с ними (у каждого рабочего места и вида таблицы — своя папка)
+ *               под одной меткой прогона, откат к метке
  */
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { message, MessageError, type Message } from '@/shared/messages'
+import type { FileKind } from '@/shared/settings'
 
 // ── Блокировка записи ───────────────────────────────────────────────────────
 
@@ -201,13 +203,39 @@ export interface RestoreResult {
   savedAs: string
 }
 
+/** Таблица для копии: путь и вид (по виду выбирается папка копий). */
+export interface BackupFile {
+  file: string
+  kind: FileKind
+}
+
 /**
- * Бэкапы: копия — `backups/<метка>_<имя файла>` рядом с файлом. Метка — время прогона (`2026-10-19T14-02-11-123Z`).
- * Все файлы прогона копируются с одной меткой и откатываются вместе. Копии старше срока удаляются при следующем бэкапе.
+ * Папки копий внутри `backup` по видам таблиц — у каждого рабочего места своя:
+ *
+ *     backup/
+ *       Atelier/Consum, Atelier/Probe, Atelier/Sarjele
+ *       Laborator/
+ *       Calitate/
+ */
+export const BACKUP_FOLDERS: Record<FileKind, readonly string[]> = {
+  consum: ['Atelier', 'Consum'],
+  probe: ['Atelier', 'Probe'],
+  sarjele: ['Atelier', 'Sarjele'],
+  laborator: ['Laborator'],
+  calitate: ['Calitate'],
+}
+
+/**
+ * Бэкапы: копия — `backup/<папка вида>/<метка>_<имя файла>` рядом с файлом (см. `BACKUP_FOLDERS`). Метка — время
+ * прогона (`2026-10-19T14-02-11-123Z`). Все файлы прогона копируются с одной меткой и откатываются вместе. Копии
+ * старше срока удаляются при следующем бэкапе. Копии прежних версий (общая папка `backups`) по-прежнему видны
+ * в списке и годятся для отката.
  */
 export class Backups {
   /** Имя папки бэкапов рядом с файлами. */
-  static readonly FOLDER = 'backups'
+  static readonly FOLDER = 'backup'
+  /** Общая папка бэкапов прежних версий. */
+  static readonly LEGACY_FOLDER = 'backups'
 
   /** Сколько дней хранить копии. */
   private readonly retentionDays: number
@@ -221,11 +249,10 @@ export class Backups {
     return at.toISOString().replace(/[:.]/g, '-')
   }
 
-  /** Метки бэкапов рядом с `file`, новые сверху. */
-  static stamps(file: string, limit = 30): string[] {
-    const dir = Backups.dir(file)
-    if (!fs.existsSync(dir)) return []
-    return Backups.stampsOf(fs.readdirSync(dir), limit)
+  /** Метки бэкапов таблицы, новые сверху. */
+  static stamps(table: BackupFile, limit = 30): string[] {
+    const read = (dir: string) => (fs.existsSync(dir) ? fs.readdirSync(dir) : [])
+    return Backups.stampsOf([...read(Backups.dir(table)), ...Backups.legacyOf(table, read(Backups.legacyDir(table.file)))], limit)
   }
 
   /** Метки бэкапов по именам файлов в папке бэкапов, новые сверху. */
@@ -233,28 +260,37 @@ export class Backups {
     return [...new Set(names.map((x) => x.split('_')[0]!))].filter((s) => /^(\d{4}-|before-restore)/.test(s)).sort().reverse().slice(0, limit)
   }
 
-  /**
-   * Возвращает файлы к состоянию `stamp`. Текущее состояние сначала сохраняется под меткой `before-restore-…`.
-   * Sarjele и Probe обязательны; Consum — если его копия есть.
-   * @throws {MessageError} Нет копий Sarjele или Probe под этой меткой.
-   */
-  static restore(stamp: string, sarjele: string, probe: string, consums: readonly string[], at = new Date()): RestoreResult {
-    const targets = [sarjele, probe, ...consums].filter(Boolean).filter((f) => fs.existsSync(Backups.copy(f, stamp)))
-    if (!targets.length || !fs.existsSync(Backups.copy(sarjele, stamp)) || !fs.existsSync(Backups.copy(probe, stamp))) throw new MessageError(message('error.noCopies', { stamp }))
-    const savedAs = `before-restore-${Backups.stamp(at)}`
-    for (const file of targets) {
-      fs.copyFileSync(file, path.join(Backups.dir(file), `${savedAs}_${path.basename(file)}`))
-      fs.copyFileSync(Backups.copy(file, stamp), file)
-    }
-    return { restored: targets, savedAs }
+  /** Копии этой таблицы среди имён общей папки прежних версий (там лежат копии всех таблиц). */
+  static legacyOf(table: BackupFile, names: readonly string[]): string[] {
+    const suffix = `_${path.basename(table.file)}`
+    return names.filter((name) => name.endsWith(suffix))
   }
 
-  /** Делает копии файлов под меткой и чистит просроченные. */
-  save(files: readonly string[], stamp: string, now = Date.now()): void {
-    for (const file of files) {
-      const dir = Backups.dir(file)
+  /**
+   * Возвращает файлы к состоянию `stamp`. Текущее состояние сначала сохраняется под меткой `before-restore-…`.
+   * @param required Таблицы, без копий которых откат не выполняется (цех — Sarjele и Probe).
+   * @param optional Таблицы, которые откатываются, если их копия есть (цех — Consum).
+   * @throws {MessageError} Нет копий обязательных таблиц под этой меткой.
+   */
+  static restore(stamp: string, required: readonly BackupFile[], optional: readonly BackupFile[] = [], at = new Date()): RestoreResult {
+    const tables = [...required, ...optional].filter((t) => t.file && Backups.existing(t, stamp))
+    if (!required.length || required.some((t) => !Backups.existing(t, stamp))) throw new MessageError(message('error.noCopies', { stamp }))
+    const savedAs = `before-restore-${Backups.stamp(at)}`
+    for (const table of tables) {
+      const from = Backups.existing(table, stamp)!
+      fs.mkdirSync(Backups.dir(table), { recursive: true })
+      fs.copyFileSync(table.file, Backups.copy(table, savedAs))
+      fs.copyFileSync(from, table.file)
+    }
+    return { restored: tables.map((t) => t.file), savedAs }
+  }
+
+  /** Делает копии таблиц под меткой и чистит просроченные. */
+  save(tables: readonly BackupFile[], stamp: string, now = Date.now()): void {
+    for (const table of tables) {
+      const dir = Backups.dir(table)
       fs.mkdirSync(dir, { recursive: true })
-      fs.copyFileSync(file, Backups.copy(file, stamp))
+      fs.copyFileSync(table.file, Backups.copy(table, stamp))
       for (const name of fs.readdirSync(dir)) {
         const p = path.join(dir, name)
         if (now - fs.statSync(p).mtimeMs > this.retentionDays * DAY_MS) fs.unlinkSync(p)
@@ -262,13 +298,24 @@ export class Backups {
     }
   }
 
-  /** Папка бэкапов для файла. */
-  static dir(file: string): string {
-    return path.join(path.dirname(file), Backups.FOLDER)
+  /** Папка бэкапов таблицы: `backup/<папка вида>` рядом с ней. */
+  static dir(table: BackupFile): string {
+    return path.join(path.dirname(table.file), Backups.FOLDER, ...BACKUP_FOLDERS[table.kind])
   }
 
-  /** Путь копии файла под меткой. */
-  private static copy(file: string, stamp: string): string {
-    return path.join(Backups.dir(file), `${stamp}_${path.basename(file)}`)
+  /** Общая папка бэкапов прежних версий рядом с файлом. */
+  static legacyDir(file: string): string {
+    return path.join(path.dirname(file), Backups.LEGACY_FOLDER)
+  }
+
+  /** Путь новой копии таблицы под меткой. */
+  private static copy(table: BackupFile, stamp: string): string {
+    return path.join(Backups.dir(table), `${stamp}_${path.basename(table.file)}`)
+  }
+
+  /** Копия таблицы под меткой (своя папка, иначе общая папка прежних версий) или `null`. */
+  private static existing(table: BackupFile, stamp: string): string | null {
+    const legacy = path.join(Backups.legacyDir(table.file), `${stamp}_${path.basename(table.file)}`)
+    return [Backups.copy(table, stamp), legacy].find((p) => fs.existsSync(p)) ?? null
   }
 }

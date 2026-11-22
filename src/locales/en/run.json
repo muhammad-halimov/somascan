@@ -1,4 +1,10 @@
 {
+  "workplace": {
+    "label": "Workplace",
+    "atelier": "Workshop",
+    "laborator": "Laboratory",
+    "calitate": "Quality"
+  },
   "status": {
     "watching": "Running",
     "stopping": "Stopping…",
@@ -10,24 +16,26 @@
   },
   "start": "Start",
   "stop": "Stop",
+  "noWatch": "Watching is not set up for Quality yet.",
   "mode": {
     "title": "Mode",
     "write": "Write to files",
     "writeOn": "Writes to Sarjele, Probe and Consum, with a backup.",
     "writeOff": "Trial mode: files stay unchanged.",
-    "lockedWhileRunning": "The mode can only be changed while watching is stopped."
+    "lockedWhileRunning": "Mode and workplace can be changed only while stopped."
   },
   "journal": {
     "title": "Journal",
     "copy": "Copy",
     "clear": "Clear",
-    "empty": "The journal is empty. Press “Start” or run an action on the Advanced tab.",
+    "empty": "The journal is empty. Press “Start” or run an action in Advanced.",
     "modeWrite": "write",
     "modeDry": "trial",
     "outcome": {
       "running": "Running",
       "wrote": "Written",
       "planned": "Plan only",
+      "read": "Read",
       "nothing": "No changes",
       "deferred": "Postponed",
       "failed": "Error"
@@ -85,6 +93,15 @@
     "bridgedPlan": "Will be transferred to Probe: {{n}}",
     "bridgedRow": "sheet {{sheet}}, row {{row}}",
     "bridgedItem": "item {{item}}",
-    "nothingBridge": "No new tags from phones."
+    "nothingBridge": "No new tags from phones.",
+    "splitDone": "Split in the laboratory table",
+    "splitPlan": "Will be split in the laboratory table",
+    "splitItem": "Nr.bul. and Data into their own columns, cells: {{n}}",
+    "original": "The original is kept as “{{file}}”",
+    "nothingLab": "The table is already split: Nr.bul. and Data are in their own columns.",
+    "labLatest": "Latest entry · row {{row}}",
+    "labSignature": "Lab technician’s signature: {{file}}",
+    "labNoSignature": "Lab technician’s signature: not chosen",
+    "nothingLabRead": "The table has no filled Rc decofr., Nr.bul. and Data."
   }
 }

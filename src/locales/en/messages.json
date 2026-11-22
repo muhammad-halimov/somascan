@@ -2,6 +2,7 @@
   "trigger": {
     "first": "First run",
     "changed": "Consum changed",
+    "tableChanged": "Table changed",
     "retry": "Retry of a postponed write",
     "plan": "Trial run",
     "write": "Actual run",
@@ -15,6 +16,7 @@
     "running": "{{trigger}} · running",
     "wrote": "{{trigger}} · written",
     "planned": "{{trigger}} · plan only",
+    "read": "{{trigger}} · read",
     "nothing": "{{trigger}} · no changes",
     "deferred": "{{trigger}} · write postponed",
     "failed": "{{trigger}} · error"
@@ -24,6 +26,7 @@
     "resume": "Watching was on when the app was last closed — resuming",
     "watchWrite": "Watching started: writing to files, checking every {{seconds}} s",
     "watchDry": "Watching started: trial mode, checking every {{seconds}} s",
+    "watchLab": "Watching started: reading the laboratory table, checking every {{seconds}} s",
     "watchStopped": "Watching stopped",
     "stopping": "Stopping: waiting for the current run to finish",
     "fileGone": "{{file}} is unavailable: the file is missing or the network is down",
@@ -33,6 +36,10 @@
     "smbMounted": "Network share connected: {{mount}}",
     "smbFailed": "Could not connect the network share: {{error}}",
     "settingsNotSaved": "Could not save the settings: {{error}}",
+    "smbPasswordLocked": "The network drive password could not be decrypted: the system store (macOS keychain / Windows) denied access or the app was signed again. Allow access at the next start or enter the password again on the Storage tab",
+    "driveTokenLocked": "The Google sign-in could not be decrypted: the system store (macOS keychain / Windows) denied access or the app was signed again. Allow access at the next start or sign in to Google again on the Storage tab",
+    "signatureSet": "Signature updated: {{file}}",
+    "signatureRemoved": "Signature removed",
     "error": "Error: {{error}}",
     "processGone": "Helper process {{type}} exited: {{reason}} (code {{code}})",
     "windowNotLoaded": "The window did not load: {{error}}",
@@ -40,7 +47,8 @@
     "trayUnavailable": "The tray icon is unavailable: {{error}}",
     "engineNotStarted": "Could not start the engine: {{error}}",
     "engineExit": "The engine exited with code {{code}}",
-    "startFailed": "Could not start: {{error}}"
+    "startFailed": "Could not start: {{error}}",
+    "noRun": "No run is set up for this workplace yet"
   },
   "skip": {
     "projectNotConfigured": "project “{{project}}” is not set up (Links tab)",
@@ -53,7 +61,7 @@
     "blockNotFound": "block with ID {{id}} not found in Sarjele",
     "blockTaken": "block {{id}} is already linked to another row",
     "ambiguous": "several matching blocks: {{blocks}} — choose one on the Links tab",
-    "sharedBlock": "block “{{title}}” is shared by several rows — link it by hand on the Links tab",
+    "sharedBlock": "block “{{title}}” is shared by several rows — link it by hand",
     "migrateNoBlock": "block not found (migration does not create new blocks)",
     "noRoom": "no room under the block for {{n}} new rows (consumption split over heats) — free the cells under the block on sheet “{{sheet}}”",
     "linkNotFound": "links.json points to block “{{title}}”, but sheet “{{sheet}}” has no such block without an ID — check the title",
@@ -113,13 +121,17 @@
     "other": "{{error}}",
     "linksBroken": "links.json cannot be read: {{error}}. Fix the file (Advanced → Manual links) or delete it — runs are stopped while it is broken",
     "linksNotObject": "links.json must be an object { \"PROJECT|element\": \"block title\" } — runs are stopped until the file is fixed",
-    "bridgeUsage": "The Probe copy and Probe are not set"
+    "bridgeUsage": "The Probe copy and Probe are not set",
+    "labUsage": "The laboratory table is not set"
   },
   "check": {
     "noPath": "No path set",
     "notFound": "File not found",
     "ok": "Found · sheets: {{n}} · changed {{date}}",
     "okOpen": "Found · sheets: {{n}} · changed {{date}} · open in an editor",
+    "labOk": "Found · Rc decofr. in {{columns}} · changed {{date}}",
+    "labOkOpen": "Found · columns {{columns}} · changed {{date}} · open in an editor",
+    "labNotSplit": "The table is not split — run “Actual migration” in Advanced",
     "noConsumSheet": "No “Decont Lunar” sheet",
     "noYearSheet": "No {{year}} sheet — choose the sheet by hand",
     "noProjectSheets": "Project sheets missing: {{sheets}}",
@@ -127,17 +139,25 @@
     "timeout": "No answer within {{seconds}} s — the drive is unavailable"
   },
   "smb": {
-    "noHost": "Enter the server and the shared folder",
+    "noHost": "Enter the server",
+    "noAccount": "Enter the user name and the password, or turn on “Without authorization”",
+    "serverDown": "Server {{host}} does not respond — check the address, port and network",
+    "refused": "The server refused the connection — check the address, port and share",
     "unsupported": "Connect the network share with system tools and choose the files on it",
     "unreachable": "The folder {{mount}} does not open: no access",
-    "systemError": "System error {{code}}",
-    "failed": "The shared folder could not be connected",
+    "systemError": "The shared folder could not be connected (Windows error {{code}})",
+    "macError": "The shared folder could not be connected (macOS error {{code}})",
+    "failed": "Could not connect — check the server, the folder and the account",
     "timeout": "The server did not respond within a minute",
+    "cancelled": "Connecting was cancelled",
+    "connectionLost": "The connection to the server was lost — try again",
     "accessDenied": "No access to the shared folder",
     "notFound": "The server or the shared folder was not found",
     "badCredentials": "Wrong user name or password",
     "needsAccount": "A user name and a password are required",
-    "accountLocked": "The account is locked"
+    "guestBlocked": "Windows blocks sign-in without a password — enter a user and password",
+    "accountLocked": "The account is locked or disabled",
+    "passwordExpired": "The password has expired — change it and enter the new one"
   },
   "scan": {
     "busy": "Reading is already in progress",
@@ -146,6 +166,7 @@
   "tray": {
     "watchingWrite": "Running · writing to files",
     "watchingDry": "Running · trial mode",
+    "watchingLab": "Running · reading the laboratory table",
     "stopping": "Stopping…",
     "idle": "Stopped",
     "busy": "{{what}}…",
@@ -228,23 +249,32 @@
     "bridgeLine": "  ■ heat {{heat}} → sheet {{sheet}}, row {{row}}",
     "bridgeSkipped": "  ! {{element}}: {{why}}",
     "bridgeNothing": "No new tags from phones",
-    "bridgeSaved": "Transferred to Probe: {{n}}"
+    "bridgeSaved": "Transferred to Probe: {{n}}",
+    "labRead": "Laboratory table: sheet “{{sheet}}”, header in row {{row}}, rows below it: {{rows}}",
+    "labColumn": "  ■ {{column}} ({{cell}}) → “Nr.bul.” and “Data” into their own columns: {{cells}} cells",
+    "labSkipped": "  ! {{cell}}: {{why}}",
+    "labAlready": "“{{file}}” is already split: “Nr.bul.” and “Data” are in their own columns",
+    "labSaved": "“{{file}}” split; the original is “{{original}}”",
+    "labHeader": "Laboratory table: sheet “{{sheet}}”, header in row {{row}}, Rc decofr. / Nr.bul. / Data — columns {{columns}}",
+    "labLatest": "  ■ Latest entry — row {{row}} ({{cell}}): Rc decofr. {{value}} · Nr.bul. {{bulletin}} · Data {{date}}",
+    "labNone": "—",
+    "labEmpty": "“{{file}}” has no filled Rc decofr. / Nr.bul. / Data",
+    "labSignature": "  ■ Lab technician’s signature: {{file}}",
+    "labNoSignature": "  ■ No lab technician’s signature chosen (Advanced tab)"
   },
   "drive": {
-    "badFolder": "The Google Drive folder is not recognised: {{folder}} — paste a folder link or its ID",
-    "notXlsx": "{{file}} in Google Drive is not an .xlsx table (a Google Sheets document will not do)",
+    "badFolder": "Folder not recognised: {{folder}} — paste a link or an ID",
+    "notXlsx": "{{file}} in Google Drive is not .xlsx (Google Sheets will not do)",
     "busy": "{{file}} is being written by another device ({{owner}}) — the run will be retried",
     "verifyFailed": "{{file}}: what was uploaded to Google Drive does not match what was written",
     "folderNotFound": "Google Drive folder not found: {{folder}}",
-    "notConfigured": "Google Drive is not set up: put the OAuth client file {{file}} into the app data folder",
-    "authRequired": "Access to Google Drive was revoked or has expired — sign in to Google again on the Storage tab",
+    "notConfigured": "Google Drive is not set up: no {{file}} in the app data folder",
+    "authRequired": "Google Drive access was revoked or expired — sign in to Google again",
     "network": "No connection to Google Drive: {{error}}",
     "error": "Google Drive error: {{error}}",
     "accessDenied": "No access to the tables in Google Drive: {{error}}",
     "rateLimited": "Google Drive asks to wait: {{error}}",
     "signedOut": "Not signed in to Google — sign in on the Storage tab",
-    "pageDone": "Signed in. Go back to Somasync — you can close this window.",
-    "pageFailed": "Sign-in failed. Go back to Somasync and try again.",
     "accountUnknown": "Google account",
     "signedIn": "Signed in to Google: {{account}}",
     "signInFailed": "Couldn’t sign in with Google: {{error}}",
@@ -268,5 +298,26 @@
     "created": "Copy {{file}} created in Google Drive",
     "failed": "Devices (Google Drive): {{error}}",
     "bellFailed": "Firestore unavailable: {{error}}. Transfer — by the copy check"
+  },
+  "laborator": {
+    "noHeader": "No header with “Rc decofr.” found in the laboratory table (first {{rows}} rows)",
+    "no28": "Header row {{row}} has no “Rc 28 zile” with “Nr.bul./Data” to its right",
+    "layout": "Header row {{row}} matches neither the old nor the split layout",
+    "formulas": "The laboratory table contains formulas ({{cell}}): moving columns would break their references — the table is unchanged",
+    "unparsed": "not recognised: “{{text}}” — the cell is left as it is, split it by hand",
+    "merged": "the cell is merged with its neighbours — left as it is",
+    "origExists": "“{{file}}” already exists — the migration was not run so as not to overwrite it. Rename or delete that file",
+    "open": "“{{file}}” is open in an editor — close it and run the migration again",
+    "busy": "Migration not run: {{reason}}",
+    "changed": "“{{file}}” was saved during the migration — run it again",
+    "integrity": "The check before writing failed (cell {{cell}}) — “{{file}}” is unchanged",
+    "notSplit": "“{{file}}” is not split — run “Actual migration” in Advanced",
+    "signatureMissing": "The lab technician’s signature file was not found — choose the signature again on the Advanced tab"
+  },
+  "signature": {
+    "notImage": "The file does not open as an image — choose a PNG",
+    "noAlpha": "No transparent background — a PNG with an alpha channel is needed",
+    "blank": "The image is empty: there is no signature on it",
+    "saveFailed": "The signature could not be saved: {{error}}"
   }
 }

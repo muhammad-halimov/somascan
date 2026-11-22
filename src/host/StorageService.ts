@@ -1,78 +1,51 @@
 /**
- * Вкладка «Хранилище»: проверка файлов и подключение сетевого диска Windows (SMB). Таблицы в Google Drive
- * проверяет `DriveService` (есть ли в папке), листы — эта же проверка по скачанной копии.
+ * Вкладка «Хранилище»: проверка таблиц и сетевой диск (`SmbShare`). Таблицы в Google Drive проверяет
+ * `DriveService` (есть ли в папке), листы — эта же проверка по скачанной копии.
  *
- * Проверка: есть ли файл, какие в нём листы, нужные ли. Листы читаются из `xl/workbook.xml` без разбора всей
- * книги — быстро даже для большого файла на сетевом диске. Файлы читаются асинхронно (`./files`): медленный
- * сетевой диск не останавливает программу; не ответил за `CHECK_TIMEOUT_MS` — проверка сообщает об этом.
+ * Проверка: есть ли файл и совпадает ли его строение с тем, что программа из него читает и куда пишет:
+ *   цех          — листы: «Decont Lunar» в Consum, лист года в Probe, листы проектов в Sarjele;
+ *   лаборатория  — шапка с «Rc decofr.», «Nr.bul.», «Data» (таблица разделена миграцией) и «Rc 28 zile»;
+ *   качество     — пока только что файл есть и читается (полей у программы ещё нет).
+ * Листы читаются из `xl/workbook.xml`, шапка — из первых строк листов (`./workbookHead`), без разбора всей книги:
+ * быстро даже для большого файла на сетевом диске. Файлы читаются асинхронно (`./files`): медленный сетевой диск
+ * не останавливает программу; не ответил за `CHECK_TIMEOUT_MS` — проверка сообщает об этом.
  *
- * Подключение:
- *   macOS   — `osascript … mount volume smb://…`: диск появляется в /Volumes, пути к таблицам берутся оттуда;
- *   Windows — `net use \\сервер\папка`: пути к таблицам — прямо `\\сервер\папка\…` (букву диска можно не назначать).
- * Таблицы читаются средствами системы, как обычные файлы: если у Windows уже есть доступ к папке (вход в домен,
- * сохранённые учётные данные, доступ открыт всем), подключение не нужно. Учётная запись нужна, когда папка требует
- * другого входа; без авторизации — подключение без имени и пароля, под текущей учётной записью системы.
- * Перед работой программа подключает папку сама, если таблицы на ней недоступны (`SyncService.readyToRead`).
+ * Таблицы на сетевом диске читаются средствами системы, как обычные файлы; перед работой программа подключает
+ * общую папку сама, если таблицы на ней недоступны (`SyncService.readyToRead`).
  */
-import { execFile } from 'node:child_process'
 import fs from 'node:fs'
 import JSZip from 'jszip'
-import { message, type Message, type MessageCode } from '@/shared/messages'
-import type { ActionResult, CheckResult } from '@/shared/protocol'
-import { activeFiles, uncPath, type FileKind, type SmbSettings } from '@/shared/settings'
+import { columnLetters } from '@/engine/Cells'
+import { findHeader, HEADER_ROWS } from '@/engine/laborator/LabHeader'
+import { message, MessageError, type Message } from '@/shared/messages'
+import type { CheckResult, ShareResult } from '@/shared/protocol'
+import { activeFiles, deskFile, DESKS, isOneOf, type FileKind } from '@/shared/settings'
 import type { DriveService } from './drive/DriveService'
-import { exists, openInEditor, withTimeout } from './files'
+import { openInEditor, withTimeout } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
-
-/** Сколько ждать подключения диска, мс. */
-const MOUNT_TIMEOUT_MS = 60_000
+import { SmbShare } from './SmbShare'
+import { workbookHead } from './workbookHead'
 
 /** Сколько ждать проверки таблицы, мс: дольше — сетевой диск не отвечает. */
 const CHECK_TIMEOUT_MS = 20_000
-
-/** Системные ошибки Windows, которые `net use` сообщает чаще всего. */
-const NET_ERROR = {
-  accessDenied: 5,
-  pathNotFound: 53,
-  nameNotFound: 67,
-  badPassword: 86,
-  alreadyConnected: 1219,
-  cancelled: 1223,
-  logonFailure: 1326,
-  accountLocked: 1909,
-} as const
-
-/** Понятное сообщение для системной ошибки `net use`. */
-const NET_ERROR_MESSAGES: Partial<Record<number, MessageCode>> = {
-  [NET_ERROR.accessDenied]: 'smb.accessDenied',
-  [NET_ERROR.pathNotFound]: 'smb.notFound',
-  [NET_ERROR.nameNotFound]: 'smb.notFound',
-  [NET_ERROR.badPassword]: 'smb.badCredentials',
-  [NET_ERROR.logonFailure]: 'smb.badCredentials',
-  // ввода нет (`net` спросил имя и пароль): текущей учётной записи системы недостаточно
-  [NET_ERROR.cancelled]: 'smb.needsAccount',
-  [NET_ERROR.accountLocked]: 'smb.accountLocked',
-}
-
-/** Последняя содержательная строка ошибки. */
-const lastLine = (text: string) => text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).pop() ?? text
 
 /** Проверка файлов и сетевой диск. */
 export class StorageService {
   private readonly settings: SettingsStore
   private readonly drive: DriveService
-  private readonly journal: Journal
+  /** Сетевой диск. */
+  readonly smb: SmbShare
 
   constructor(settings: SettingsStore, drive: DriveService, journal: Journal) {
     this.settings = settings
     this.drive = drive
-    this.journal = journal
+    this.smb = new SmbShare(settings, journal)
   }
 
   /** Видимые листы книги. */
-  static async visibleSheets(file: string): Promise<string[]> {
-    const zip = await JSZip.loadAsync(await fs.promises.readFile(file))
+  static async visibleSheets(file: string | JSZip): Promise<string[]> {
+    const zip = typeof file === 'string' ? await JSZip.loadAsync(await fs.promises.readFile(file)) : file
     const xml = await zip.file('xl/workbook.xml')!.async('string')
     const hidden = (tag: string) => /state="(hidden|veryHidden)"/.test(tag)
     return [...xml.matchAll(/<sheet\b[^>]*>/g)]
@@ -84,25 +57,28 @@ export class StorageService {
   /** Проверяет файл вида `kind` (по умолчанию — путь из настроек; у Google Drive — имя в папке). */
   check(kind: FileKind, fileArg?: string): Promise<CheckResult> {
     const settings = this.settings.getSnapshot()
+    // таблица лаборатории или контроля качества — только на этом компьютере или сетевом диске
+    if (isOneOf(DESKS)(kind)) return this.checkFile(kind, fileArg ?? deskFile(settings, kind))
     const file = fileArg ?? (kind === 'consum' ? '' : activeFiles(settings)[kind])
     if (this.drive.active()) return this.drive.check(kind, file, (k, local) => this.checkFile(k, local))
     return this.checkFile(kind, file)
   }
 
-  /** Проверяет файл на этом компьютере (или на подключённом диске): есть ли, какие листы, нужные ли. */
+  /** Проверяет файл на этом компьютере (или на подключённом диске): есть ли, совпадает ли строение. */
   checkFile(kind: FileKind, file: string): Promise<CheckResult> {
     if (!file) return Promise.resolve({ ok: false, msg: message('check.noPath') })
     const timeout = (): CheckResult => ({ ok: false, msg: message('check.timeout', { seconds: CHECK_TIMEOUT_MS / 1000 }) })
     return withTimeout(this.readCheck(kind, file), CHECK_TIMEOUT_MS, timeout)
   }
 
-  /** Проверка файла: чтение листов и сверка с настройками. */
+  /** Проверка файла: чтение листов (и шапки) и сверка с тем, что программа из него читает. */
   private async readCheck(kind: FileKind, file: string): Promise<CheckResult> {
     const settings = this.settings.getSnapshot()
     const st = await fs.promises.stat(file).catch(() => null)
     if (!st) return { ok: false, msg: message('check.notFound') }
     try {
-      const sheets = await StorageService.visibleSheets(file)
+      const bytes = await fs.promises.readFile(file)
+      const sheets = await StorageService.visibleSheets(await JSZip.loadAsync(bytes))
       if (kind === 'consum' && !sheets.includes('Decont Lunar')) return { ok: false, msg: message('check.noConsumSheet'), sheets }
       if (kind === 'probe') {
         const year = new Date().getFullYear()
@@ -112,84 +88,40 @@ export class StorageService {
         const missing = settings.projects.filter((p) => p.enabled !== false && p.sheet && !p.create && !sheets.includes(p.sheet)).map((p) => p.sheet)
         if (missing.length) return { ok: false, msg: message('check.noProjectSheets', { sheets: missing.join(', ') }), sheets }
       }
-      return { ok: true, msg: message((await openInEditor(file)) ? 'check.okOpen' : 'check.ok', { n: sheets.length, date: st.mtimeMs }), sheets }
+      const open = await openInEditor(file)
+      if (kind === 'laborator') {
+        const header = await StorageService.labHeader(bytes)
+        if ('error' in header) return { ok: false, msg: header.error, sheets }
+        return { ok: true, msg: message(open ? 'check.labOkOpen' : 'check.labOk', { columns: header.columns, date: st.mtimeMs }), sheets }
+      }
+      return { ok: true, msg: message(open ? 'check.okOpen' : 'check.ok', { n: sheets.length, date: st.mtimeMs }), sheets }
     } catch (e) {
       return { ok: false, msg: message('check.unreadable', { error: (e as Error).message }) }
     }
   }
 
-  /** Таблицы на сетевом диске: выбран ли он местом хранения. */
+  /**
+   * Шапка таблицы лаборатории (как её ищет движок): разделена ли таблица и где «Rc decofr.», «Nr.bul.», «Data».
+   * @returns Строка шапки и колонки («H–J») или почему таблица не подходит.
+   */
+  static async labHeader(bytes: Uint8Array): Promise<{ row: number; columns: string } | { error: Message }> {
+    try {
+      const header = findHeader(await workbookHead(bytes, HEADER_ROWS))
+      if (header.splits.length) return { error: message('check.labNotSplit') }
+      return { row: header.header, columns: `${columnLetters(header.decofr)}–${columnLetters(header.decofr + 2)}` }
+    } catch (e) {
+      if (e instanceof MessageError) return { error: e.msg }
+      throw e
+    }
+  }
+
+  /** Таблицы цеха на сетевом диске: выбран ли он местом хранения. */
   active(): boolean {
     return this.settings.getSnapshot().target === 'smb'
   }
 
-  /**
-   * Подключает общую папку средствами системы и проверяет, что она открывается; итог — в журнал.
-   * @returns Куда подключено (`mount`) или ошибка.
-   */
-  async mount(): Promise<ActionResult & { mount?: string }> {
-    const smb = this.settings.getSnapshot().smb
-    if (!smb.host || !smb.share) return { ok: false, error: message('smb.noHost') }
-    const connected = await this.connect(smb)
-    // подключение прошло, но папка не открывается (нет прав на неё) — это тоже ошибка
-    const result = connected.ok && connected.mount && !(await exists(connected.mount))
-      ? { ok: false, error: message('smb.unreachable', { mount: connected.mount }) }
-      : connected
-    if (result.ok) this.journal.event('ok', message('event.smbMounted', { mount: result.mount || smb.share }))
-    else if (result.error) this.journal.event('err', message('event.smbFailed', { error: result.error }))
-    return result
-  }
-
-  /**
-   * Аргументы `net use`: с учётной записью пароль передаётся всегда (пустой — тоже), иначе `net` спросил бы его
-   * в консоли и ждал ответа; без авторизации — без имени и пароля (под текущей учётной записью системы).
-   */
-  static netUseArgs(smb: SmbSettings, password: string): string[] {
-    const username = smb.anonymous ? '' : smb.username
-    const account = username ? [password, `/user:${smb.domain ? `${smb.domain}\\` : ''}${username}`] : []
-    return ['use', uncPath(smb), ...account, '/persistent:no']
-  }
-
-  /**
-   * Ошибка `net use` по номеру системной ошибки: текст `net` — на языке и в кодировке консоли Windows (в окне читался
-   * бы искажённым), номер — нет. Неизвестный номер — «Системная ошибка N».
-   * @returns `null`, если ошибки нет (1219 — к серверу уже подключены: папка доступна).
-   */
-  static netUseError(output: string): Message | null {
-    const code = Number(output.match(/\b(\d{1,5})\b/)?.[1] ?? NaN)
-    if (code === NET_ERROR.alreadyConnected) return null
-    const known = NET_ERROR_MESSAGES[code]
-    if (known) return message(known)
-    return Number.isFinite(code) ? message('smb.systemError', { code }) : message('smb.failed')
-  }
-
-  /** Подключение средствами системы: `net use` в Windows, `mount volume` в macOS. */
-  private connect(smb: SmbSettings): Promise<ActionResult & { mount?: string }> {
-    const { host, share, domain, anonymous } = smb
-    // без авторизации учётная запись не передаётся, даже если заполнена
-    const username = anonymous ? '' : smb.username
-    const password = username ? this.settings.smbPassword() : ''
-    if (process.platform === 'win32') {
-      const unc = uncPath(smb)
-      return new Promise((resolve) => {
-        const child = execFile('net', StorageService.netUseArgs(smb, password), { timeout: MOUNT_TIMEOUT_MS, windowsHide: true }, (err, out, stderr) => {
-          // текст ошибки — только из вывода `net`: в `err.message` — вся команда, вместе с паролем
-          if (err?.killed) return resolve({ ok: false, error: message('smb.timeout') })
-          const error = err ? StorageService.netUseError(`${stderr}\n${out}`) : null
-          resolve(error ? { ok: false, error } : { ok: true, mount: unc })
-        })
-        // `net` не должен ждать ввода с клавиатуры (имя, пароль): ввода нет — сразу ошибка вместо минуты ожидания
-        child.stdin?.end()
-      })
-    }
-    if (process.platform !== 'darwin') return Promise.resolve({ ok: false, error: message('smb.unsupported') })
-    const credentials = username ? `${domain ? encodeURIComponent(domain) + ';' : ''}${encodeURIComponent(username)}${password ? ':' + encodeURIComponent(password) : ''}@` : ''
-    const url = `smb://${credentials}${host}/${encodeURIComponent(share)}`
-    return new Promise((resolve) =>
-      execFile('osascript', ['-e', 'on run argv', '-e', 'mount volume (item 1 of argv)', '-e', 'end run', url], { timeout: MOUNT_TIMEOUT_MS }, (err, out, stderr) => {
-        // текст ошибки — только из вывода: в `err.message` — адрес вместе с паролем
-        if (err) resolve({ ok: false, error: err.killed ? message('smb.timeout') : message('error.other', { error: lastLine(String(stderr)) || String(err.code ?? '') }) })
-        else resolve({ ok: true, mount: String(out).trim() })
-      }))
+  /** Подключает общую папку (итог — в журнал). */
+  mount(): Promise<ShareResult> {
+    return this.smb.mount()
   }
 }

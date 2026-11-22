@@ -2,6 +2,8 @@
   "timer": {
     "title": "Temporizator",
     "hint": "Cât de des se verifică dacă s-a schimbat Consum.",
+    "hint_laborator": "Cât de des se verifică dacă s-a schimbat Laborator.xlsx.",
+    "hint_calitate": "Cât de des se verifică dacă s-a schimbat Calitate.xlsx.",
     "interval": "Interval de verificare",
     "settle": "Pauză după modificarea fișierului",
     "seconds": "{{n}} s"
@@ -13,25 +15,47 @@
     "latest": "Din ultima folosită",
     "oldest": "Cea mai veche șarjă deschisă"
   },
+  "signature": {
+    "title": "Semnătura maistrului",
+    "title_laborator": "Semnătura laborantului",
+    "title_calitate": "Semnătura controlorului",
+    "hint": "PNG cu fundal transparent, aplicat peste textul documentului.",
+    "pick": "Alegeți o imagine",
+    "replace": "Înlocuiți imaginea",
+    "remove": "Eliminați",
+    "removeLabel": "Eliminați semnătura",
+    "removeTitle": "Eliminați semnătura?",
+    "removeMessage": "Semnătura va fi ștearsă din program. Fișierul din care a fost aleasă nu se schimbă.",
+    "empty": "Nicio semnătură aleasă",
+    "alt": "Semnătura"
+  },
   "backups": {
     "title": "Copii de rezervă",
     "keep": "Păstrați copiile tabelelor",
     "days": "{{count}} zile",
-    "hint": "Copiile — în folderul „backups” lângă tabele."
+    "hint": "Copiile — în folderul „backup/Atelier” lângă tabele.",
+    "hint_laborator": "Copiile — în folderul „backup/Laborator” lângă tabel.",
+    "hint_calitate": "Copiile — în folderul „backup/Calitate” lângă tabel."
   },
   "actions": {
     "title": "Acțiuni",
     "hint": "Rezultatul apare în jurnal, pe fila „Acasă”.",
     "plan": "Rulare de test",
+    "plan_laborator": "Citiți tabelul",
     "planHint": "Arată planul, nu scrie nimic",
+    "planHint_laborator": "Ultima înregistrare din Laborator.xlsx — în jurnal, cu copie",
     "write": "Rulare reală",
     "writeHint": "Scrie în Sarjele și Probe, cu copie de rezervă",
     "migratePlan": "Migrare de test",
     "migratePlanHint": "Arată ce blocuri vor primi ID",
+    "migratePlanHint_laborator": "Arată ce celule vor fi separate în Nr.bul. și Data",
     "migrateWrite": "Migrare reală",
     "migrateWriteHint": "Scrie ID-urile în Sarjele și Consum, cu copie de rezervă",
+    "migrateWriteHint_laborator": "Nr.bul. și Data în coloane proprii; originalul devine Laborator Orig.xlsx",
     "guard": "Nu scrie în fișiere deschise",
     "guardHint": "Cât Sarjele sau Probe e deschis, scrierea așteaptă",
+    "guardHint_laborator": "Cât Laborator.xlsx e deschis, scrierea așteaptă",
+    "guardHint_calitate": "Cât Calitate.xlsx e deschis, scrierea așteaptă",
     "guardUnlock": "Deschide lacătul ca să schimbi setarea",
     "guardLock": "Închide setarea cu lacătul",
     "autoProjects": "Conectează automat proiectele noi",
@@ -48,9 +72,12 @@
     "confirmWriteTitle": "Scriere în fișiere",
     "confirmWrite": "Modificările vor fi scrise în Sarjele și Probe. Înainte se face o copie de rezervă.",
     "confirmMigrate": "ID-urile vor fi scrise în Sarjele și în coloana de serviciu din Consum. Înainte se face o copie de rezervă.",
+    "confirmMigrate_laborator": "Numărul buletinului și data vor fi mutate în coloane proprii în Laborator.xlsx. Originalul rămâne alături ca „Laborator Orig.xlsx”; înainte se face o copie de rezervă.",
     "confirmWriteOk": "Scrie",
     "confirmRestoreTitle": "Restaurare din copie",
     "confirmRestore": "Readuceți Sarjele, Probe și Consum la starea din {{stamp}}? Starea actuală se salvează și ea într-o copie de rezervă.",
+    "confirmRestore_laborator": "Readuceți Laborator.xlsx la starea din {{stamp}}? Starea actuală se salvează și ea într-o copie de rezervă.",
+    "confirmRestore_calitate": "Readuceți Calitate.xlsx la starea din {{stamp}}? Starea actuală se salvează și ea într-o copie de rezervă.",
     "confirmRestoreOk": "Restaurează"
   },
   "system": {

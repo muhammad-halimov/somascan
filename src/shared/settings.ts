@@ -78,8 +78,30 @@ export type HeatRule = (typeof RULES)[number]
 /** Самый длинный интервал проверки и пауза после изменения, с. */
 export const MAX_INTERVAL_SEC = 10
 
-/** Вид файла в «Хранилище». */
-export type FileKind = 'consum' | 'sarjele' | 'probe'
+/**
+ * Рабочие места: цех (Consum → Sarjele и Probe), лаборатория (таблица коэффициентов) и контроль качества
+ * (пока без обработки).
+ */
+export const WORKPLACES = ['atelier', 'laborator', 'calitate'] as const
+/** Рабочее место: вкладки вверху «Главной», от него зависят «Хранилище», «Связи» и «Расширенные». */
+export type Workplace = (typeof WORKPLACES)[number]
+
+/** Рабочие места с одной таблицей (лаборатория, контроль качества): «Связей», Google Drive и правил цеха у них нет. */
+export const DESKS = ['laborator', 'calitate'] as const
+/** Рабочее место с одной таблицей. */
+export type Desk = (typeof DESKS)[number]
+/** Рабочее место с одной таблицей или `null` (цех). */
+export const deskOf = (workplace: Workplace): Desk | null => (workplace === 'atelier' ? null : workplace)
+
+/** Где лежит таблица рабочего места с одной таблицей: Google Drive у неё нет. */
+export const DESK_TARGETS = ['local', 'smb'] as const
+/** Место хранения таблицы рабочего места с одной таблицей. */
+export type DeskTarget = (typeof DESK_TARGETS)[number]
+
+/** Вид файла в «Хранилище»: таблицы цеха и таблица рабочего места с одной таблицей (вид — его имя). */
+export type FileKind = 'consum' | 'sarjele' | 'probe' | Desk
+/** Таблицы цеха (набор `FileSet`). */
+export type AtelierFileKind = Exclude<FileKind, Desk>
 
 /** Маска пароля для окна: сам пароль окно получает только по нажатию на «глазок». */
 export const PASSWORD_MASK = '••••••••'
@@ -101,8 +123,8 @@ export interface SmbSettings {
 /** Куда macOS подключает сетевые диски. */
 export const MAC_VOLUMES = '/Volumes'
 
-/** Сетевой путь общей папки в Windows: `\\\\сервер\\папка`. */
-export const uncPath = (smb: Pick<SmbSettings, 'host' | 'share'>): string => `\\\\${smb.host}\\${smb.share}`
+/** Сетевой путь общей папки в Windows: `\\\\сервер\\папка`; без папки — сам сервер (`\\\\сервер`). */
+export const uncPath = (smb: Pick<SmbSettings, 'host' | 'share'>): string => `\\\\${smb.host}${smb.share ? `\\${smb.share}` : ''}`
 
 /**
  * Google Drive: вошедший аккаунт, папка таблиц (ссылка или id; пусто — «Мой диск») и ключ доступа.
@@ -127,6 +149,15 @@ export interface FirestoreSettings {
   apiKey: string
 }
 
+/**
+ * Рабочее место с одной таблицей: своё место хранения (этот компьютер или сетевой диск — учётная запись
+ * и расположение у сетевого диска общие с цехом) и таблица (`Laborator.xlsx`, `Calitate.xlsx`) — своя у каждого места.
+ */
+export interface DeskSettings {
+  target: DeskTarget
+  files: Record<DeskTarget, string>
+}
+
 /** Файлы одного места хранения (в Google Drive — имена файлов в папке). */
 export interface FileSet {
   /** Consum (обычно один). */
@@ -141,6 +172,8 @@ export interface AppSettings {
   running: boolean
   /** Записывать в файлы (иначе — пробный режим: только план). */
   write: boolean
+  /** Последнее выбранное рабочее место. */
+  workplace: Workplace
   language: Language
   theme: ThemePreference
   target: StorageTarget
@@ -148,6 +181,12 @@ export interface AppSettings {
   files: Record<StorageTarget, FileSet>
   /** Замки на путях (и на папке Google Drive, и на копии Probe для телефонов) от случайной правки. */
   locked: Record<FileKind | 'folder' | 'copy', boolean>
+  desks: Record<Desk, DeskSettings>
+  /**
+   * Подписи рабочих мест (мастер цеха, лаборант, контролёр качества): PNG с прозрачным фоном в папке данных
+   * программы (`host/SignatureService`) или пусто — не выбрана.
+   */
+  signatures: Record<Workplace, string>
   /** Лист Probe; пусто — лист текущего года. */
   sheet: string
   smb: SmbSettings
@@ -183,6 +222,7 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   running: false,
   write: false,
+  workplace: 'atelier',
   language: 'en',
   theme: 'system',
   target: 'local',
@@ -191,7 +231,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
     smb: { consums: [''], sarjele: '', probe: '' },
     googleDrive: { consums: [''], sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx' },
   },
-  locked: { consum: false, sarjele: false, probe: false, folder: false, copy: false },
+  locked: { consum: false, sarjele: false, probe: false, laborator: false, calitate: false, folder: false, copy: false },
+  desks: {
+    laborator: { target: 'local', files: { local: '', smb: '' } },
+    calitate: { target: 'local', files: { local: '', smb: '' } },
+  },
+  signatures: { atelier: '', laborator: '', calitate: '' },
   sheet: '',
   smb: { host: '', share: '', anonymous: false, domain: '', username: '', password: '' },
   googleDrive: { account: '', folder: '', token: '' },
@@ -238,6 +283,19 @@ function parseFileSet(raw: unknown, fallback: FileSet = { consums: [''], sarjele
 /** Файлы текущего места хранения. */
 export const activeFiles = (s: AppSettings): FileSet => s.files[s.target]
 
+/** Таблица рабочего места `desk` в его текущем месте хранения. */
+export const deskFile = (s: AppSettings, desk: Desk): string => s.desks[desk].files[s.desks[desk].target]
+
+/** Разбирает место хранения и таблицы рабочего места с одной таблицей. */
+function parseDesk(raw: unknown, fallback: DeskSettings): DeskSettings {
+  const src = isRecord(raw) ? raw : {}
+  const files = isRecord(src.files) ? src.files : {}
+  return {
+    target: isOneOf(DESK_TARGETS)(src.target) ? src.target : fallback.target,
+    files: { local: readString(files, 'local', ''), smb: readString(files, 'smb', '') },
+  }
+}
+
 /** Разбирает сохранённые настройки поле за полем, подставляя значения по умолчанию. */
 export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETTINGS): AppSettings {
   const src = isRecord(raw) ? raw : {}
@@ -245,6 +303,10 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
   const smb = isRecord(src.smb) ? src.smb : {}
   const drive = isRecord(src.googleDrive) ? src.googleDrive : {}
   const firestore = isRecord(src.firestore) ? src.firestore : {}
+  const desks = isRecord(src.desks) ? src.desks : {}
+  const signatures = isRecord(src.signatures) ? src.signatures : {}
+  // подпись лаборатории сначала хранилась в её настройках (`desks.laborator.signature`)
+  const signature = (w: Workplace) => readString(signatures, w, isOneOf(DESKS)(w) ? readString(desks[w], 'signature', '') : '')
   const target = isOneOf(TARGETS)(src.target) ? src.target : defaults.target
   const files = isRecord(src.files) ? src.files : {}
   const parsed = { local: parseFileSet(files.local), smb: parseFileSet(files.smb), googleDrive: parseFileSet(files.googleDrive, defaults.files.googleDrive) }
@@ -255,6 +317,7 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
   return {
     running: readBoolean(src, 'running', defaults.running),
     write: readBoolean(src, 'write', defaults.write),
+    workplace: isOneOf(WORKPLACES)(src.workplace) ? src.workplace : defaults.workplace,
     language: isOneOf(LANGUAGES)(src.language) ? src.language : defaults.language,
     theme: isOneOf(THEMES)(src.theme) ? src.theme : defaults.theme,
     target,
@@ -263,9 +326,17 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
       consum: readBoolean(locked, 'consum', defaults.locked.consum),
       sarjele: readBoolean(locked, 'sarjele', defaults.locked.sarjele),
       probe: readBoolean(locked, 'probe', defaults.locked.probe),
+      laborator: readBoolean(locked, 'laborator', defaults.locked.laborator),
+      calitate: readBoolean(locked, 'calitate', defaults.locked.calitate),
       folder: readBoolean(locked, 'folder', defaults.locked.folder),
       copy: readBoolean(locked, 'copy', defaults.locked.copy),
     },
+    desks: {
+      // первая версия хранила лабораторию отдельным полем `laborator`
+      laborator: parseDesk(desks.laborator ?? src.laborator, defaults.desks.laborator),
+      calitate: parseDesk(desks.calitate, defaults.desks.calitate),
+    },
+    signatures: { atelier: signature('atelier'), laborator: signature('laborator'), calitate: signature('calitate') },
     sheet: readString(src, 'sheet', defaults.sheet),
     smb: {
       host: readString(smb, 'host', ''),

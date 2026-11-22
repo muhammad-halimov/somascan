@@ -5,7 +5,7 @@
  * события главного процесса — подписки `on*`. Тексты передаются кодами (`Message`), окно переводит их само.
  */
 import type { Message } from './messages'
-import type { AppSettings, FileKind, SettingsPatch } from './settings'
+import type { AppSettings, FileKind, SettingsPatch, Workplace } from './settings'
 
 /** Каналы IPC. */
 export const IPC = {
@@ -23,7 +23,11 @@ export const IPC = {
   restore: 'restore',
   confirm: 'confirm',
   mountSmb: 'smb:mount',
+  smbStatus: 'smb:status',
   smbPassword: 'smb:password',
+  signature: 'signature',
+  pickSignature: 'signature:pick',
+  removeSignature: 'signature:remove',
   driveSignIn: 'drive:signIn',
   driveSignOut: 'drive:signOut',
   bridgeBell: 'bridge:bell',
@@ -53,7 +57,7 @@ export const ENGINE_EXIT = {
 // ── Прогоны ─────────────────────────────────────────────────────────────────
 
 /** Что запустило прогон (подпись в журнале и в трее: `messages.trigger.*`). */
-export type RunTrigger = 'first' | 'changed' | 'retry' | 'plan' | 'write' | 'migratePlan' | 'migrateWrite' | 'createSheets' | 'restore' | 'bridge'
+export type RunTrigger = 'first' | 'changed' | 'tableChanged' | 'retry' | 'plan' | 'write' | 'migratePlan' | 'migrateWrite' | 'createSheets' | 'restore' | 'bridge'
 
 /** Что слушать в Firestore: документ канала копии Probe (`somascan-bells/<канал>`). */
 export interface BellConfig {
@@ -155,9 +159,33 @@ export interface SummaryBridged {
   item: number | null
 }
 
+/** Колонка таблицы лаборатории, разделённая миграцией на прочность, «Nr.bul.» и «Data». */
+export interface SummaryLabSplit {
+  /** Название: «Rc decofr.», «Rc 28 zile». */
+  column: string
+  /** Сколько ячеек разделено. */
+  cells: number
+}
+
+/**
+ * Последняя запись таблицы лаборатории (чтение при слежении): «Rc decofr.», «Nr.bul.», «Data» — как в ячейках
+ * (дата — «09.01.2026»), пустое поле — `null` — и подпись лаборанта.
+ */
+export interface SummaryLabEntry {
+  /** Строка таблицы. */
+  row: number
+  /** Ячейка «Rc decofr.» этой строки: «H3651». */
+  cell: string
+  value: string | null
+  bulletin: string | null
+  date: string | null
+  /** Подпись лаборанта (имя файла) или `null` — не выбрана. */
+  signature: string | null
+}
+
 /** Итог одного прогона движка (`JSON_OUT`): из него окно строит карточку журнала. */
 export interface RunSummary {
-  command: 'sync' | 'create-sheets' | 'restore' | 'bridge'
+  command: 'sync' | 'create-sheets' | 'restore' | 'bridge' | 'lab-migrate' | 'lab-read'
   /** Запуск с записью (`--apply`). */
   applied: boolean
   /** Файлы изменены. */
@@ -195,6 +223,12 @@ export interface RunSummary {
   consumAfter: string | null
   /** Мост с телефонами: перенесённые в Probe бирки (не перенесённые — в `skipped`). */
   bridged: SummaryBridged[]
+  /** Миграция таблицы лаборатории: разделённые колонки (оставленные как были ячейки — в `skipped`). */
+  split: SummaryLabSplit[]
+  /** Миграция таблицы лаборатории: имя файла, под которым остался оригинал («Laborator Orig.xlsx»), или `null`. */
+  original: string | null
+  /** Чтение таблицы лаборатории: последняя запись или `null` (записей нет). */
+  lab: SummaryLabEntry | null
 }
 
 /** Пустой итог. */
@@ -223,6 +257,9 @@ export const emptySummary = (command: RunSummary['command'], applied: boolean): 
   error: null,
   consumAfter: null,
   bridged: [],
+  split: [],
+  original: null,
+  lab: null,
 })
 
 // ── Журнал ──────────────────────────────────────────────────────────────────
@@ -248,8 +285,8 @@ export interface JournalEvent {
   msg: Message
 }
 
-/** Итог прогона: выполняется, готов, отложен или с ошибкой. */
-export type RunOutcome = 'running' | 'wrote' | 'planned' | 'nothing' | 'deferred' | 'failed'
+/** Итог прогона: выполняется, записано, только план, прочитано (таблица лаборатории), без изменений, отложен или с ошибкой. */
+export type RunOutcome = 'running' | 'wrote' | 'planned' | 'read' | 'nothing' | 'deferred' | 'failed'
 
 /** Прогон движка. */
 export interface JournalRun {
@@ -275,10 +312,11 @@ export function runOutcome(summary: RunSummary | null, code: number): RunOutcome
   if (code === ENGINE_EXIT.deferred) return 'deferred'
   if (code !== ENGINE_EXIT.ok || summary?.error) return 'failed'
   if (!summary) return 'nothing'
+  if (summary.command === 'lab-read') return summary.lab ? 'read' : 'nothing'
   if (summary.wrote) return 'wrote'
   if (summary.command === 'restore') return summary.restored ? 'wrote' : 'nothing'
   if (summary.applied) return 'nothing'
-  return summary.blocks.length || summary.ids.length || summary.closed.length || summary.reopened.length || summary.sheets.length || summary.bridged?.length ? 'planned' : 'nothing'
+  return summary.blocks.length || summary.ids.length || summary.closed.length || summary.reopened.length || summary.sheets.length || summary.bridged?.length || summary.split?.length ? 'planned' : 'nothing'
 }
 
 // ── Хранилище и «Связи» ─────────────────────────────────────────────────────
@@ -383,6 +421,21 @@ export interface ActionResult {
   error?: Message
 }
 
+/**
+ * Подключение сетевого диска: подключено (`ok`, `mount` — куда: `/Volumes/папка`, `\\сервер\папка`), не подключено
+ * (без `error`) или почему не удалось.
+ */
+export interface ShareResult extends ActionResult {
+  mount?: string
+}
+
+/** Подпись лаборанта для превью: PNG как `data:`-адрес и размер в пикселях. */
+export interface SignatureImage {
+  dataUrl: string
+  width: number
+  height: number
+}
+
 /** API главного процесса, доступный окну (`window.api`). */
 export interface Api {
   init(): Promise<InitData>
@@ -398,9 +451,17 @@ export interface Api {
   backups(): Promise<string[]>
   restore(stamp: string): Promise<ActionResult>
   confirm(options: { title: string; message: string; ok?: string; cancel?: string }): Promise<boolean>
-  mountSmb(): Promise<ActionResult & { mount?: string }>
+  /** Подключает сетевой диск («Проверить подключение»). */
+  mountSmb(): Promise<ShareResult>
+  /** Подключён ли сетевой диск сейчас (без попытки подключить): от этого зависит, доступны ли таблицы на нём. */
+  smbStatus(): Promise<ShareResult>
   /** Сохранённый пароль сетевого диска (по нажатию на «глазок»). */
   smbPassword(): Promise<string>
+  /** Подпись рабочего места для превью или `null`, если не выбрана. */
+  signature(place: Workplace): Promise<SignatureImage | null>
+  /** Выбор изображения подписи (PNG с прозрачным фоном). @returns `null` — выбор отменён. */
+  pickSignature(place: Workplace): Promise<ActionResult | null>
+  removeSignature(place: Workplace): Promise<void>
   /** Вход в Google в браузере системы (доступ к Drive); почта аккаунта приходит в настройках. */
   driveSignIn(): Promise<ActionResult>
   /** Выход из Google: доступ отзывается, папка и имена файлов остаются. */

@@ -56,14 +56,15 @@ test('вход: браузер возвращает код на 127.0.0.1, ко�
     const url = new URL(address)
     // «браузер» после входа открывает адрес возврата с кодом
     void fetch(`${url.searchParams.get('redirect_uri')}/?code=c0de&state=${url.searchParams.get('state')}`).then(async (r) => { page = await r.text() })
-  }, { done: 'Вход выполнен', failed: 'Не выполнен' }, fetcher)
+  }, () => {}, fetcher)
   assert.equal(tokens.accessToken, 'at')
   assert.equal(tokens.refreshToken, 'rt')
   assert.equal(exchanged!.get('code'), 'c0de')
   assert.equal(exchanged!.get('grant_type'), 'authorization_code')
   assert.ok(exchanged!.get('code_verifier'))
   await new Promise((r) => setTimeout(r, 50))
-  assert.match(page, /Вход выполнен/)
+  assert.match(page, /Signed in to Google/)
+  assert.match(page, /Returning to Somasync in/)
 })
 
 test('вход: чужой state — отказ', async () => {
@@ -71,7 +72,7 @@ test('вход: чужой state — отказ', async () => {
   await assert.rejects(signIn({ clientId: 'id', clientSecret: '' }, (address) => {
     const url = new URL(address)
     void fetch(`${url.searchParams.get('redirect_uri')}/?code=c0de&state=other`)
-  }, { done: '', failed: '' }, fetcher), { name: 'OAuthError' })
+  }, () => {}, fetcher), { name: 'OAuthError' })
 })
 
 test('папка: ссылка, id, пусто — «Мой диск»; неразборчивое — ошибка', () => {

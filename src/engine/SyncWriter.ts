@@ -22,7 +22,7 @@ import { patchIds } from './books/ConsumIdPatcher'
 import { ProbeBook } from './books/ProbeBook'
 import { SarjeleBook } from './books/SarjeleBook'
 import { SarjeleWriter } from './books/SarjeleWriter'
-import { Backups, EditorLock, FileBusyError, FileLock } from './FileGuard'
+import { Backups, EditorLock, FileBusyError, FileLock, type BackupFile } from './FileGuard'
 import type { ChangeSet, PlanResult } from './planning/Planner'
 import type { RunReport } from './RunReport'
 import type { Workspace } from './Workspace'
@@ -71,6 +71,24 @@ export class SafeSave {
     fs.writeFileSync(tmp, bytes)
     await SafeSave.assertReadable(tmp)
     fs.renameSync(tmp, file)
+  }
+
+  /**
+   * Записывает готовые байты на место `file`, а прежний файл оставляет рядом под именем `keep` (миграция таблицы
+   * лаборатории: «Laborator.xlsx» → «Laborator Orig.xlsx»). Не удалась подмена — прежний файл возвращается на место.
+   * Блокировку берёт вызывающий; файла `keep` быть не должно.
+   */
+  static async bytesKeeping(file: string, bytes: Uint8Array, keep: string): Promise<void> {
+    const tmp = `${file}.tmp`
+    fs.writeFileSync(tmp, bytes)
+    await SafeSave.assertReadable(tmp)
+    fs.renameSync(file, keep)
+    try {
+      fs.renameSync(tmp, file)
+    } catch (error) {
+      fs.renameSync(keep, file)
+      throw error
+    }
   }
 
   /**
@@ -168,10 +186,10 @@ export class SyncWriter {
       }
 
       // 3. бэкап
-      const backed = [options.sarjele, options.probe, ...(changes.consum ? [options.consum] : [])]
+      const backed: BackupFile[] = [{ file: options.sarjele, kind: 'sarjele' }, { file: options.probe, kind: 'probe' }, ...(changes.consum ? [{ file: options.consum, kind: 'consum' as const }] : [])]
       new Backups(options.backupDays).save(backed, this.stamp)
       report.summary.backup = this.stamp
-      report.say('tech.backup', { stamp: this.stamp, files: backed.map((f) => `"${f}"`).join(' ') }, 'ok')
+      report.say('tech.backup', { stamp: this.stamp, files: backed.map((t) => `"${t.file}"`).join(' ') }, 'ok')
 
       // 4. запись
       const verify: VerifyInput = {}

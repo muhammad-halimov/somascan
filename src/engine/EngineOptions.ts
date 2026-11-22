@@ -4,6 +4,9 @@
  *   sync.mjs [--apply] [--migrate] [--scan] [--create-sheets] <Consum.xlsx> <Sarjele.xlsx> <Probe.xlsx>
  *   sync.mjs --restore [метка] <Sarjele.xlsx> <Probe.xlsx> [Consum.xlsx…]
  *   sync.mjs --bridge [--apply] <копия Probe.xlsx> <Probe.xlsx>   (бирки с телефонов, см. `ProbeBridge`)
+ *   sync.mjs --laborator --migrate [--apply] <Laborator.xlsx>     (миграция таблицы лаборатории, см. `laborator/`)
+ *   sync.mjs --laborator --read <Laborator.xlsx>                  (последняя запись таблицы лаборатории — в журнал)
+ *   sync.mjs --restore [метка] --laborator|--calitate <таблица>   (откат таблицы рабочего места с одной таблицей)
  *
  * Окружение задаёт главный процесс (`host/EngineRunner`):
  *   PROJECTS_CFG   проекты программы (JSON: name, aliases, sheet, prefix, enabled, create)
@@ -15,9 +18,10 @@
  *   LINKS          путь к links.json (ручные привязки)
  *   JSON_OUT       куда записать итог в JSON
  *   GUARD_OPEN_FILES «0» — писать и в файлы, открытые в редакторе
+ *   SIGNATURE      подпись лаборанта (PNG) — для чтения таблицы лаборатории
  */
 import path from 'node:path'
-import { isRecord, type HeatRule } from '@/shared/settings'
+import { DESKS, isRecord, type Desk, type HeatRule } from '@/shared/settings'
 
 /** Проект в настройках движка. */
 export interface EngineProject {
@@ -32,7 +36,13 @@ export interface EngineProject {
 }
 
 /** Что делает прогон. */
-export type EngineCommand = 'sync' | 'scan' | 'create-sheets' | 'restore' | 'bridge'
+export type EngineCommand = 'sync' | 'scan' | 'create-sheets' | 'restore' | 'bridge' | 'lab-migrate' | 'lab-read'
+
+/** Таблица рабочего места с одной таблицей (`--laborator <файл>`, `--calitate <файл>`). */
+export interface DeskTable {
+  kind: Desk
+  file: string
+}
 
 /** Параметры прогона. */
 export interface EngineOptions {
@@ -48,6 +58,10 @@ export interface EngineOptions {
   restore: { stamp: string | null; consums: string[] } | null
   /** Для моста с телефонами: скачанная копия Probe с Google Drive. */
   copy: string
+  /** Таблица рабочего места с одной таблицей (миграция и чтение таблицы лаборатории, откат) или `null` — таблицы цеха. */
+  desk: DeskTable | null
+  /** Подпись лаборанта (PNG) или пусто. */
+  signature: string
   projects: EngineProject[]
   autoProjects: boolean
   /** Имена активных Consum или `null` (не задано). */
@@ -64,7 +78,10 @@ export interface EngineOptions {
 }
 
 /** Флаги, которые не являются путями. */
-const FLAGS = new Set(['--apply', '--migrate', '--create-sheets', '--scan', '--bridge'])
+const FLAGS = new Set(['--apply', '--migrate', '--read', '--create-sheets', '--scan', '--bridge', ...DESKS.map((d) => `--${d}`)])
+
+/** Рабочее место с одной таблицей по флагу `--laborator` / `--calitate` или `null`. */
+const deskFlag = (argv: readonly string[]): Desk | null => DESKS.find((d) => argv.includes(`--${d}`)) ?? null
 
 /** Разбирает проекты из PROJECTS_CFG. */
 function parseProjects(raw: string | undefined): EngineProject[] {
@@ -113,20 +130,28 @@ export function parseEngineOptions(argv: readonly string[], env: NodeJS.ProcessE
     linksFile: env.LINKS || 'links.json',
     jsonOut: env.JSON_OUT || null,
     guardOpenFiles: env.GUARD_OPEN_FILES !== '0',
+    signature: env.SIGNATURE || '',
   }
+  const desk = deskFlag(argv)
   if (argv.includes('--restore')) {
     const pos = argv.filter((a) => !a.startsWith('--'))
     const stamp = /^(\d{4}-|before-restore)/.test(pos[0] ?? '') ? pos.shift()! : null
+    if (desk) return { ...base, command: 'restore', consum: '', sarjele: '', probe: '', restore: { stamp, consums: [] }, copy: '', desk: { kind: desk, file: pos[0] ?? '' } }
     const [sarjele = '', probe = '', ...consums] = pos
-    return { ...base, command: 'restore', consum: '', sarjele, probe, restore: { stamp, consums }, copy: '' }
+    return { ...base, command: 'restore', consum: '', sarjele, probe, restore: { stamp, consums }, copy: '', desk: null }
   }
   if (argv.includes('--bridge')) {
     const [copy = '', probe = ''] = argv.filter((a) => !FLAGS.has(a))
-    return { ...base, command: 'bridge', consum: '', sarjele: '', probe, restore: null, copy }
+    return { ...base, command: 'bridge', consum: '', sarjele: '', probe, restore: null, copy, desk: null }
+  }
+  if (desk) {
+    const [file = ''] = argv.filter((a) => !FLAGS.has(a))
+    const command: EngineCommand = argv.includes('--read') ? 'lab-read' : 'lab-migrate'
+    return { ...base, command, consum: '', sarjele: '', probe: '', restore: null, copy: '', desk: { kind: desk, file } }
   }
   const [consum = '', sarjele = '', probe = ''] = argv.filter((a) => !FLAGS.has(a))
   const command: EngineCommand = argv.includes('--create-sheets') ? 'create-sheets' : argv.includes('--scan') ? 'scan' : 'sync'
-  return { ...base, command, consum, sarjele, probe, restore: null, copy: '' }
+  return { ...base, command, consum, sarjele, probe, restore: null, copy: '', desk: null }
 }
 
 /** Имя Consum-файла — источник для реестра ID. */

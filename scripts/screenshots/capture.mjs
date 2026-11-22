@@ -51,13 +51,18 @@ const PROJECTS = ['PETRA DATE', 'NORD INFRA', 'LACUL VERDE']
 function settings(language, target) {
   const unc = (name) => `\\\\192.168.1.20\\Atelier\\${name}`
   return {
-    running: true, write: true, language, theme: 'dark', target,
+    running: true, write: true, workplace: 'atelier', language, theme: 'dark', target,
     files: {
       local: { consums: [''], sarjele: '', probe: '' },
       smb: { consums: [unc(CONSUM)], sarjele: unc('Sarjele din elemente.xlsx'), probe: unc('Probe otel.xlsx') },
       googleDrive: { consums: [CONSUM], sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx' },
     },
-    locked: { consum: true, sarjele: true, probe: true, folder: true, copy: true },
+    locked: { consum: true, sarjele: true, probe: true, laborator: true, calitate: true, folder: true, copy: true },
+    desks: {
+      laborator: { target: 'smb', files: { local: '', smb: unc('Laborator.xlsx') } },
+      calitate: { target: 'smb', files: { local: '', smb: unc('Calitate.xlsx') } },
+    },
+    signatures: { atelier: '', laborator: '', calitate: '' },
     sheet: '',
     smb: { host: '192.168.1.20', share: 'Atelier', anonymous: false, domain: '', username: 'operator', password: '••••••••' },
     googleDrive: { account: 'user@example.com', folder: '', token: '' },
@@ -162,7 +167,8 @@ function stub(language, target) {
       check: async (kind) => ({ ok: true, msg: { code: 'check.ok', params: { n: kind === 'probe' ? 2 : 3, date: ${AT} } }, sheets: kind === 'probe' ? sheets : ['PETRA DATE', 'NORD INFRA', 'LACUL VERDE'] }),
       scan: async () => data.scan, setLink: async () => ({}), createSheets: async () => ({ ok: true }),
       action: async () => ({ ok: true }), backups: async () => [], restore: async () => ({ ok: true }), confirm: async () => false,
-      mountSmb: async () => ({ ok: true, mount: '\\\\\\\\192.168.1.20\\\\Atelier' }), smbPassword: async () => '', driveSignIn: async () => ({ ok: true }), driveSignOut: async () => {}, bridgeBell: async () => {},
+      mountSmb: async () => ({ ok: true, mount: '\\\\\\\\192.168.1.20\\\\Atelier' }), smbStatus: async () => ({ ok: true, mount: '\\\\\\\\192.168.1.20\\\\Atelier' }), smbPassword: async () => '',
+      signature: async () => null, pickSignature: async () => null, removeSignature: async () => {}, driveSignIn: async () => ({ ok: true }), driveSignOut: async () => {}, bridgeBell: async () => {},
       clearJournal: async () => {}, open: async () => {},
       onJournal: noop, onNavigate: noop, onRun: noop, onSettings: noop,
     }

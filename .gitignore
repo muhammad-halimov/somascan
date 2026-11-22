@@ -13,3 +13,6 @@ _to_delete/
 *.xls
 ~$*
 .~lock.*#
+
+# клиент OAuth Google Drive — встраивается в сборку (vite.host.config.ts), в репозиторий не попадает
+/google-oauth.json

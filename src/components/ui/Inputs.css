@@ -22,6 +22,9 @@
 .text-input:focus { background: color-mix(in srgb, var(--accent) 6%, var(--field-bg)); box-shadow: inset 0 -2px 0 var(--accent); }
 .text-input:disabled { opacity: .6; cursor: default; }
 
+/* Пустое обязательное поле: линия снизу — цвета ошибки (и при фокусе). */
+.text-input.is-invalid, .text-input.is-invalid:focus { box-shadow: inset 0 -2px 0 var(--danger); }
+
 /* Поле под замком: текст приглушён, линия не загорается. */
 .text-input.is-locked { color: var(--text); cursor: default; }
 .input-with-action .text-input.is-locked:focus { background: var(--field-bg); box-shadow: inset 0 -1px 0 var(--field-line); }

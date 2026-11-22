@@ -10,7 +10,7 @@ import path from 'node:path'
 import { Backups } from '@/engine/FileGuard'
 import { message, MessageError, type Message } from '@/shared/messages'
 import type { ActionResult, CheckResult } from '@/shared/protocol'
-import { activeFiles, type FileKind } from '@/shared/settings'
+import { activeFiles, type AtelierFileKind, type FileKind } from '@/shared/settings'
 import type { AppPaths } from '../AppPaths'
 import type { Journal } from '../Journal'
 import type { SettingsStore } from '../SettingsStore'
@@ -53,17 +53,20 @@ export class DriveService {
   private readonly journal: Journal
   /** Открывает адрес в браузере системы. */
   private readonly open: (url: string) => void
+  /** Возвращает в программу (окно — на передний план) после входа в браузере. */
+  private readonly back: () => void
   readonly mirror: DriveMirror
   /** Access-токен в памяти. */
   private access: { token: string; expiresAt: number } | null = null
   /** Код последней ошибки слежения за Consum (пишется в журнал один раз). */
   private refreshError: string | null = null
 
-  constructor(paths: AppPaths, settings: SettingsStore, journal: Journal, open: (url: string) => void) {
+  constructor(paths: AppPaths, settings: SettingsStore, journal: Journal, open: (url: string) => void, back: () => void = () => {}) {
     this.paths = paths
     this.settings = settings
     this.journal = journal
     this.open = open
+    this.back = back
     this.mirror = new DriveMirror(path.join(paths.data, 'drive'), () => this.client(), `somasync:${os.hostname()}`)
   }
 
@@ -98,8 +101,7 @@ export class DriveService {
   async signIn(): Promise<ActionResult> {
     try {
       const client = this.oauthClient()
-      const pages = { done: this.settings.text(message('drive.pageDone')), failed: this.settings.text(message('drive.pageFailed')) }
-      const tokens = await signIn(client, this.open, pages)
+      const tokens = await signIn(client, this.open, this.back)
       if (!tokens.refreshToken) throw new OAuthError('failed', 'no refresh token')
       this.access = { token: tokens.accessToken, expiresAt: tokens.expiresAt }
       const account = (await new DriveClient(tokens.accessToken).userEmail()) || this.settings.text(message('drive.accountUnknown'))
@@ -124,7 +126,7 @@ export class DriveService {
   }
 
   /** Имена таблиц текущего набора (без пустых). */
-  private names(kinds: readonly FileKind[] = ['consum', 'sarjele', 'probe']): string[] {
+  private names(kinds: readonly AtelierFileKind[] = ['consum', 'sarjele', 'probe']): string[] {
     const set = activeFiles(this.settings.getSnapshot())
     const names = kinds.flatMap((kind) => (kind === 'consum' ? set.consums : [set[kind]]))
     return [...new Set(names.map((name) => path.basename(name.trim())).filter(Boolean))]

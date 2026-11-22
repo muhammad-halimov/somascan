@@ -57,7 +57,7 @@ export function ElementsSection({ scan, onLink }: { scan: ScanData; onLink: (e: 
         </div>
       ))}
       {scan.orphans.length > 0 && (
-        <Notice>
+        <Notice full={t('elements.orphans', { n: scan.orphans.length, list: scan.orphans.map((o) => `«${o.title}»`).join(', ') })}>
           {t('elements.orphans', {
             n: scan.orphans.length,
             list: scan.orphans.slice(0, ORPHANS_SHOWN).map((o) => `«${o.title}»`).join(', ') + (scan.orphans.length > ORPHANS_SHOWN ? '…' : ''),

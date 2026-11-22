@@ -1,17 +1,24 @@
 /**
- * Вкладка «Главная»: состояние слежения, «Старт / Стоп», режим записи и журнал.
+ * Вкладка «Главная»: рабочее место (цех / лаборатория / контроль качества — запоминается; во время слежения
+ * не меняется), состояние слежения, «Старт / Стоп», режим записи (у цеха: лаборатория таблицу только читает,
+ * у контроля качества слежения пока нет) и журнал.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ClockIcon, PlayIcon, StopIcon } from '@/components/icons/Icons'
+import { ClockIcon, FactoryIcon, FlaskIcon, PlayIcon, QualityIcon, StopIcon } from '@/components/icons/Icons'
 import { Button } from '@/components/ui/Button'
 import { Notice, StatusBadge } from '@/components/ui/Layout'
 import { List, ListItem, Switch } from '@/components/ui/List'
+import { Tabs } from '@/components/ui/Tabs'
 import { useLocale, useMessages } from '@/app/i18n'
 import { api, runStore, settingsStore, useSettings, useStore } from '@/app/state'
 import { triggerMessage } from '@/shared/messages'
+import { WORKPLACES, type Workplace } from '@/shared/settings'
 import { Journal } from './Journal'
 import './run.css'
+
+/** Значки рабочих мест. */
+const WORKPLACE_ICONS: Record<Workplace, ReactNode> = { atelier: <FactoryIcon />, laborator: <FlaskIcon />, calitate: <QualityIcon /> }
 
 /** Секунды до `until` (обновляется дважды в секунду) или `null`, если срока нет. */
 function useCountdown(until: number | null): number | null {
@@ -35,9 +42,20 @@ export function RunScreen() {
   const stopping = run.status === 'stopping'
   const left = useCountdown(on ? run.nextCheckAt : null)
   const tone = on ? 'success' : stopping ? 'info' : 'neutral'
+  const atelier = settings.workplace === 'atelier'
+  // у контроля качества следить пока не за чем
+  const idle = settings.workplace === 'calitate'
 
   return (
     <>
+      <Tabs
+        label={t('workplace.label')}
+        value={settings.workplace}
+        options={WORKPLACES.map((w) => ({ value: w, label: t(`workplace.${w}`), icon: WORKPLACE_ICONS[w] }))}
+        disabled={on || stopping}
+        onChange={(workplace) => settingsStore.update({ workplace })}
+      />
+
       <section className="hero">
         <div className="hero-state">
           <StatusBadge tone={tone}>{on ? t('status.watching') : stopping ? t('status.stopping') : t('status.idle')}</StatusBadge>
@@ -51,7 +69,7 @@ export function RunScreen() {
             {!on && !stopping && run.lastRunAt && t('status.lastRun', { time: time(run.lastRunAt) })}
           </span>
         </div>
-        <Button variant="tonal" className={`hero-button${on ? ' is-stop' : ''}`} icon={on || stopping ? <StopIcon /> : <PlayIcon />} disabled={stopping} onClick={() => void (on || stopping ? api.stop() : api.start())}>
+        <Button variant="tonal" className={`hero-button${on ? ' is-stop' : ''}`} icon={on || stopping ? <StopIcon /> : <PlayIcon />} disabled={stopping || (idle && !on)} onClick={() => void (on || stopping ? api.stop() : api.start())}>
           {on || stopping ? t('stop') : t('start')}
         </Button>
         {run.pending.length > 0 && (
@@ -61,17 +79,20 @@ export function RunScreen() {
         )}
       </section>
 
-      <List label={t('mode.title')}>
-        <ListItem
-          itemRole="checkbox"
-          primary={t('mode.write')}
-          secondary={settings.write ? t('mode.writeOn') : t('mode.writeOff')}
-          selected={settings.write}
-          disabled={on || stopping}
-          trailing={<Switch on={settings.write} />}
-          onClick={() => settingsStore.update({ write: !settings.write })}
-        />
-      </List>
+      {idle && <Notice>{t('noWatch')}</Notice>}
+      {atelier && (
+        <List label={t('mode.title')}>
+          <ListItem
+            itemRole="checkbox"
+            primary={t('mode.write')}
+            secondary={settings.write ? t('mode.writeOn') : t('mode.writeOff')}
+            selected={settings.write}
+            disabled={on || stopping}
+            trailing={<Switch on={settings.write} />}
+            onClick={() => settingsStore.update({ write: !settings.write })}
+          />
+        </List>
+      )}
       {(on || stopping) && <Notice>{t('mode.lockedWhileRunning')}</Notice>}
 
       <div className="journal-section">

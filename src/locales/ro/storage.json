@@ -9,11 +9,11 @@
   "smb": {
     "account": "Cont",
     "location": "Locație",
-    "hint": "După conectare, alegeți tabelele de mai jos cu pictograma de folder.",
+    "hint": "Folderul partajat e opțional. Tabelele — mai jos, cu pictograma de folder.",
     "host": "Server",
     "hostPlaceholder": "server, 10.0.0.5 sau 10.0.0.5:445",
     "share": "Folder partajat",
-    "sharePlaceholder": "Atelier",
+    "sharePlaceholder": "Opțional",
     "domain": "Domeniu",
     "domainPlaceholder": "Opțional",
     "username": "Utilizator",
@@ -22,9 +22,11 @@
     "hidePassword": "Ascunde parola",
     "mount": "Testează conexiunea",
     "mounting": "Se conectează…",
+    "checking": "Se verifică conexiunea…",
     "anonymous": "Fără autentificare",
     "anonymousHint": "Conectare cu contul curent al sistemului",
-    "connected": "Conectat: {{mount}}"
+    "connected": "Conectat: {{mount}}",
+    "notConnected": "Neconectat"
   },
   "googleDrive": {
     "account": "Cont Google",
@@ -42,10 +44,13 @@
   "files": {
     "title": "Tabele",
     "hint": "Tabelele trebuie să existe deja.",
+    "needsShare": "Tabelele devin disponibile după conectarea partajării.",
     "consum": "Consum (consumul de metal)",
     "consumN": "Consum nr. {{n}} (consumul de metal)",
     "sarjele": "Sarjele din elemente",
     "probe": "Probe otel (registrul de probe)",
+    "laborator": "Tabelul de coeficienți",
+    "calitate": "Tabelul de calitate",
     "unlock": "Deblocați calea tabelului pentru editare",
     "lock": "Blocați calea tabelului",
     "pick": "Alege fișierul",
