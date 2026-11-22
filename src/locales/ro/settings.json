@@ -16,7 +16,7 @@
     "oldest": "Cea mai veche șarjă deschisă"
   },
   "signature": {
-    "title": "Semnătura maistrului",
+    "title": "Semnătura inginerului coordonator",
     "title_laborator": "Semnătura laborantului",
     "title_calitate": "Semnătura controlorului",
     "hint": "PNG cu fundal transparent, aplicat peste textul documentului.",

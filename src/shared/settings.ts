@@ -183,7 +183,7 @@ export interface AppSettings {
   locked: Record<FileKind | 'folder' | 'copy', boolean>
   desks: Record<Desk, DeskSettings>
   /**
-   * Подписи рабочих мест (мастер цеха, лаборант, контролёр качества): PNG с прозрачным фоном в папке данных
+   * Подписи рабочих мест (инженер-координатор цеха, лаборант, контролёр качества): PNG с прозрачным фоном в папке данных
    * программы (`host/SignatureService`) или пусто — не выбрана.
    */
   signatures: Record<Workplace, string>

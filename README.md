@@ -70,7 +70,7 @@ Tabs at the top of Home (the selected one is remembered): **Atelier**, **Laborat
 | Tables | Consum, Sarjele, Probe | Laborator.xlsx (coefficient table) | Calitate.xlsx (no processing yet) |
 | Storage | this computer, network drive, Google Drive, Devices | this computer, network drive | this computer, network drive |
 | Links, rules, manual links | yes | no | no |
-| Signature (Advanced) | foreman | lab technician | inspector |
+| Signature (Advanced) | coordinating engineer | lab technician | inspector |
 | Watching (Start) | Consum → Sarjele and Probe | reading the latest entry of Laborator.xlsx | not yet |
 | Migration | IDs of Sarjele blocks | Nr.bul. and Data into their own columns | no |
 | Table check in Storage | sheets: Decont Lunar, the year sheet, project sheets | header: Rc decofr., Nr.bul., Data (table split) | the file exists and reads |
@@ -79,7 +79,7 @@ Laborator and Calitate have their own storage and table; the network drive accou
 
 **Laborator watching** (`engine/laborator/LaboratorReader.ts`): on Start and on every change of `Laborator.xlsx` the table is copied to `backup/Laborator` (always, although it is not changed), then the journal gets the latest entry — the bottom row below the header with “Rc decofr.”, “Nr.bul.” or “Data” filled (pre-filled rows below without results are skipped) — and the lab technician’s signature. A table in the old layout (not split by the migration) is an error with a hint. Once — Advanced → “Read the table”.
 
-**Signatures** (Advanced of each workplace — foreman, lab technician, inspector; `host/SignatureService.ts`): a PNG with a transparent background; an image without transparency is rejected. Transparent margins around the signature are trimmed, an oversized image is scaled down, the copy is kept in the app data folder (`signatures/`). The preview is on a white checkered sheet in any theme. The lab technician’s signature is passed to the engine when the table is read (`SIGNATURE`).
+**Signatures** (Advanced of each workplace — coordinating engineer, lab technician, inspector; `host/SignatureService.ts`): a PNG with a transparent background; an image without transparency is rejected. Transparent margins around the signature are trimmed, an oversized image is scaled down, the copy is kept in the app data folder (`signatures/`). The preview is on a white checkered sheet in any theme. The lab technician’s signature is passed to the engine when the table is read (`SIGNATURE`).
 
 **Laborator migration** (`engine/laborator/`, Advanced → “Trial / Actual migration”): the bulletin number and the date from the “Rc decofr.” cells (`32.8↵1B/09.01.2026`) and from the “Nr.bul./Data” column to the right of “Rc 28 zile” (`1B/05.02.2026`) move into new “Nr.bul.” and “Data” columns; the strength becomes a number, the date an Excel date (`dd.mm.yyyy`). Merges, widths, the filter and the print area move with the columns. Cells with typos (“37..5”, “18.08.02026”) stay as they are and are listed under “Need attention”. The new workbook is checked before writing; the original stays next to it as `Laborator Orig.xlsx` (if that file already exists, the migration is not run), a backup goes to `backup/Laborator`. A table that is already split is not changed again.
 

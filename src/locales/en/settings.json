@@ -16,7 +16,7 @@
     "oldest": "Oldest open heat"
   },
   "signature": {
-    "title": "Foreman’s signature",
+    "title": "Coordinating engineer’s signature",
     "title_laborator": "Lab technician’s signature",
     "title_calitate": "Inspector’s signature",
     "hint": "A PNG with a transparent background, placed over the document text.",
