@@ -136,7 +136,7 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 ### Подпись
 
-Debug и release подписываются ключом проекта `android/keystore/somascan.jks`, пароли хранятся в `android/keystore.properties`. Оба файла **не входят в git**: они переносятся вручную и требуют резервной копии — без ключа обновление установленного приложения невозможно. SHA-1: `AA:67:2E:F2:C4:DB:4C:CD:2A:EB:78:15:64:C5:C6:2A:FD:88:87:88`.
+Debug и release подписываются ключом проекта `android/keystore/somascan.jks`, пароли хранятся в `android/keystore.properties`. Оба файла **не входят в git**: они переносятся вручную и требуют резервной копии — без ключа обновление установленного приложения невозможно. SHA-1: `07:71:E2:02:BC:E6:9C:4B:ED:68:E5:61:97:21:7E:67:06:16:2F:23`.
 
 ### iOS
 
