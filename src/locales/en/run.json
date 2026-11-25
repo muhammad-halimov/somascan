@@ -16,6 +16,15 @@
   },
   "start": "Start",
   "stop": "Stop",
+  "write": "Write",
+  "writeHint": "Write to the Betsy report",
+  "writeConfirm": {
+    "title": "Write to the Betsy report?",
+    "dir": "Rc decofr., Data and the lab technician’s signature will be written to row 6 of the latest report in {{path}}. A copy of the report is kept in backup/Betsy.",
+    "file": "Rc decofr., Data and the lab technician’s signature will be written to row 6 of the report {{path}}. A copy of the report is kept in backup/Betsy.",
+    "ok": "Write",
+    "cancel": "Cancel"
+  },
   "noWatch": "Watching is not set up for Quality yet.",
   "mode": {
     "title": "Mode",
@@ -102,6 +111,11 @@
     "labLatest": "Latest entry · row {{row}}",
     "labSignature": "Lab technician’s signature: {{file}}",
     "labNoSignature": "Lab technician’s signature: not chosen",
-    "nothingLabRead": "The table has no filled Rc decofr., Nr.bul. and Data."
+    "nothingLabRead": "The table has no filled Rc decofr., Nr.bul. and Data.",
+    "betsy": "Betsy report · row 6",
+    "betsyElement": "Element {{code}} · series {{serie}} · TURNAT LA {{cast}}",
+    "betsyLab": "Laboratory table: row {{row}}, Nr.bul. {{bulletin}}",
+    "betsyOthers": "{{n}} more rows matched",
+    "nothingBetsy": "Nothing was written to the report."
   }
 }

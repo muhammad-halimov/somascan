@@ -16,6 +16,15 @@
   },
   "start": "Старт",
   "stop": "Стоп",
+  "write": "Запись",
+  "writeHint": "Записать в рапорт Betsy",
+  "writeConfirm": {
+    "title": "Записать в рапорт Betsy?",
+    "dir": "Rc decofr., Data и подпись лаборанта будут записаны в строку 6 последнего рапорта директории {{path}}. Копия рапорта сохранится в backup/Betsy.",
+    "file": "Rc decofr., Data и подпись лаборанта будут записаны в строку 6 рапорта {{path}}. Копия рапорта сохранится в backup/Betsy.",
+    "ok": "Записать",
+    "cancel": "Отмена"
+  },
   "noWatch": "Для «Качества» слежение пока не настроено.",
   "mode": {
     "title": "Режим",
@@ -102,6 +111,11 @@
     "labLatest": "Последняя запись · строка {{row}}",
     "labSignature": "Подпись лаборанта: {{file}}",
     "labNoSignature": "Подпись лаборанта: не выбрана",
-    "nothingLabRead": "В таблице нет заполненных Rc decofr., Nr.bul. и Data."
+    "nothingLabRead": "В таблице нет заполненных Rc decofr., Nr.bul. и Data.",
+    "betsy": "Рапорт Betsy · строка 6",
+    "betsyElement": "Элемент {{code}} · серия {{serie}} · TURNAT LA {{cast}}",
+    "betsyLab": "Таблица лаборатории: строка {{row}}, Nr.bul. {{bulletin}}",
+    "betsyOthers": "подходили ещё строк: {{n}}",
+    "nothingBetsy": "В рапорт ничего не записано."
   }
 }

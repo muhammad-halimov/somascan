@@ -8,6 +8,7 @@
  *   bridge         перенести бирки с телефонов из копии Probe в Google Drive в Probe (`ProbeBridge`)
  *   lab-migrate    разделить бюллетень и дату в таблице лаборатории (`laborator/LaboratorMigration`)
  *   lab-read       последняя запись таблицы лаборатории — в итог, таблица не меняется (`laborator/LaboratorReader`)
+ *   betsy-write    результат лаборатории элемента рапорта Betsy — в строку 6 рапорта (`betsy/BetsyWriter`)
  *
  * Итог прогона (`RunSummary`) пишется в JSON_OUT и при ошибке. Код выхода: 0 — готово, 1 — ошибка,
  * 3 — запись отложена (файл открыт в редакторе или занят другим прогоном).
@@ -18,6 +19,7 @@ import { message, MessageError } from '@/shared/messages'
 import { ENGINE_EXIT, type RunSummary } from '@/shared/protocol'
 import { SarjeleWriter } from './books/SarjeleWriter'
 import type { EngineOptions } from './EngineOptions'
+import { BetsyWriter } from './betsy/BetsyWriter'
 import { Backups, type BackupFile } from './FileGuard'
 import { LaboratorMigration } from './laborator/LaboratorMigration'
 import { LaboratorReader } from './laborator/LaboratorReader'
@@ -67,6 +69,7 @@ export class SyncEngine {
       if (command === 'bridge') return await this.bridge(report)
       if (command === 'lab-migrate') return await this.labMigrate(report)
       if (command === 'lab-read') return await this.labRead(report)
+      if (command === 'betsy-write') return await this.betsyWrite(report)
       if (!this.filesGiven()) {
         report.summary.error = message('error.usage')
         return ENGINE_EXIT.error
@@ -156,6 +159,19 @@ export class SyncEngine {
     }
     report.say('tech.engine', { version: ENGINE_VERSION })
     return new LaboratorReader({ file: desk.file, signature: options.signature, backupDays: options.backupDays }, report, this.stamp).run()
+  }
+
+  /** Результат лаборатории — в рапорт Betsy (`--laborator --betsy <Laborator.xlsx> <рапорт.docx>`). */
+  private async betsyWrite(report: RunReport): Promise<number> {
+    const { options } = this
+    const desk = options.desk
+    if (desk?.kind !== 'laborator' || !desk.file || !options.betsy) {
+      report.summary.error = message('error.betsyUsage')
+      return ENGINE_EXIT.error
+    }
+    report.say('tech.engine', { version: ENGINE_VERSION })
+    const writer = new BetsyWriter({ lab: desk.file, file: options.betsy, signature: options.signature, backupDays: options.backupDays, guardOpenFiles: options.guardOpenFiles }, report, this.stamp)
+    return writer.run()
   }
 
   /** Создаёт недостающие листы проектов (`--create-sheets [--apply]`). */

@@ -28,6 +28,9 @@ export const IPC = {
   signature: 'signature',
   pickSignature: 'signature:pick',
   removeSignature: 'signature:remove',
+  pickBetsy: 'betsy:pick',
+  checkBetsy: 'betsy:check',
+  writeBetsy: 'betsy:write',
   driveSignIn: 'drive:signIn',
   driveSignOut: 'drive:signOut',
   bridgeBell: 'bridge:bell',
@@ -57,7 +60,7 @@ export const ENGINE_EXIT = {
 // ── Прогоны ─────────────────────────────────────────────────────────────────
 
 /** Что запустило прогон (подпись в журнале и в трее: `messages.trigger.*`). */
-export type RunTrigger = 'first' | 'changed' | 'tableChanged' | 'retry' | 'plan' | 'write' | 'migratePlan' | 'migrateWrite' | 'createSheets' | 'restore' | 'bridge'
+export type RunTrigger = 'first' | 'changed' | 'tableChanged' | 'retry' | 'plan' | 'write' | 'migratePlan' | 'migrateWrite' | 'createSheets' | 'restore' | 'bridge' | 'betsy'
 
 /** Что слушать в Firestore: документ канала копии Probe (`somascan-bells/<канал>`). */
 export interface BellConfig {
@@ -183,9 +186,32 @@ export interface SummaryLabEntry {
   signature: string | null
 }
 
+/**
+ * Запись в рапорт Betsy (кнопка «Запись», у лаборатории): элемент рапорта, его строка в таблице лаборатории
+ * и что записано в строку 6 рапорта. Даты — как в таблице лаборатории («03.11.2026»).
+ */
+export interface SummaryBetsy {
+  /** Рапорт (имя файла). */
+  report: string
+  /** «COD ELEMENT», «Serie» (пусто — нет) и «TURNAT LA» рапорта. */
+  element: string
+  serie: string
+  cast: string
+  /** Строка таблицы лаборатории. */
+  row: number
+  /** «Rc decofr.» (записано), «Nr.bul.» (в рапорт не пишется), «Data» (записано). */
+  value: string
+  bulletin: string
+  date: string
+  /** Подпись лаборанта (имя файла) или `null` — не выбрана, рапорт записан без неё. */
+  signature: string | null
+  /** Сколько ещё строк подходило (взята лучшая, см. `engine/laborator/LabMatch`). */
+  others: number
+}
+
 /** Итог одного прогона движка (`JSON_OUT`): из него окно строит карточку журнала. */
 export interface RunSummary {
-  command: 'sync' | 'create-sheets' | 'restore' | 'bridge' | 'lab-migrate' | 'lab-read'
+  command: 'sync' | 'create-sheets' | 'restore' | 'bridge' | 'lab-migrate' | 'lab-read' | 'betsy-write'
   /** Запуск с записью (`--apply`). */
   applied: boolean
   /** Файлы изменены. */
@@ -229,6 +255,8 @@ export interface RunSummary {
   original: string | null
   /** Чтение таблицы лаборатории: последняя запись или `null` (записей нет). */
   lab: SummaryLabEntry | null
+  /** Запись в рапорт Betsy или `null`. */
+  betsy: SummaryBetsy | null
 }
 
 /** Пустой итог. */
@@ -260,6 +288,7 @@ export const emptySummary = (command: RunSummary['command'], applied: boolean): 
   split: [],
   original: null,
   lab: null,
+  betsy: null,
 })
 
 // ── Журнал ──────────────────────────────────────────────────────────────────
@@ -457,6 +486,18 @@ export interface Api {
   smbStatus(): Promise<ShareResult>
   /** Сохранённый пароль сетевого диска (по нажатию на «глазок»). */
   smbPassword(): Promise<string>
+  /**
+   * Выбор рапорта Betsy: папка рапортов или (`manual` в настройках) сам рапорт `.docx`.
+   * @returns Путь или `null` — выбор отменён.
+   */
+  pickBetsy(): Promise<string | null>
+  /** Проверка рапорта Betsy (`manual`) или директории рапортов — её последнего рапорта: элемент рапорта. */
+  checkBetsy(source: string, manual: boolean): Promise<CheckResult>
+  /**
+   * «Запись» в рапорт Betsy текущего рабочего места (итог — в журнал): у лаборатории — результат «Rc decofr.» элемента
+   * рапорта в строку 6; у цеха и контроля качества пока не настроена.
+   */
+  writeBetsy(): Promise<ActionResult>
   /** Подпись рабочего места для превью или `null`, если не выбрана. */
   signature(place: Workplace): Promise<SignatureImage | null>
   /** Выбор изображения подписи (PNG с прозрачным фоном). @returns `null` — выбор отменён. */

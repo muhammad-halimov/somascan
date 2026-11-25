@@ -16,6 +16,15 @@
   },
   "start": "Оғоз",
   "stop": "Қатъ",
+  "write": "Сабт",
+  "writeHint": "Сабт ба гузориши Betsy",
+  "writeConfirm": {
+    "title": "Ба гузориши Betsy сабт шавад?",
+    "dir": "Rc decofr., Data ва имзои лаборант ба сатри 6-и гузориши охирини директорияи {{path}} сабт мешаванд. Нусхаи гузориш дар backup/Betsy мемонад.",
+    "file": "Rc decofr., Data ва имзои лаборант ба сатри 6-и гузориши {{path}} сабт мешаванд. Нусхаи гузориш дар backup/Betsy мемонад.",
+    "ok": "Сабт кардан",
+    "cancel": "Бекор кардан"
+  },
   "noWatch": "Барои «Сифат» назорат ҳоло танзим нашудааст.",
   "mode": {
     "title": "Реҷа",
@@ -102,6 +111,11 @@
     "labLatest": "Сабти охирин · сатри {{row}}",
     "labSignature": "Имзои лаборант: {{file}}",
     "labNoSignature": "Имзои лаборант: интихоб нашудааст",
-    "nothingLabRead": "Дар ҷадвал Rc decofr., Nr.bul. ва Data-и пуркардашуда нест."
+    "nothingLabRead": "Дар ҷадвал Rc decofr., Nr.bul. ва Data-и пуркардашуда нест.",
+    "betsy": "Гузориши Betsy · сатри 6",
+    "betsyElement": "Элементи {{code}} · серияи {{serie}} · TURNAT LA {{cast}}",
+    "betsyLab": "Ҷадвали лаборатория: сатри {{row}}, Nr.bul. {{bulletin}}",
+    "betsyOthers": "боз сатрҳо мувофиқ буданд: {{n}}",
+    "nothingBetsy": "Ба гузориш чизе сабт нашуд."
   }
 }

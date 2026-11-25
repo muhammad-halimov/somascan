@@ -1,11 +1,12 @@
 /**
  * Вкладка «Главная»: рабочее место (цех / лаборатория / контроль качества — запоминается; во время слежения
- * не меняется), состояние слежения, «Старт / Стоп», режим записи (у цеха: лаборатория таблицу только читает,
- * у контроля качества слежения пока нет) и журнал.
+ * не меняется), состояние слежения, «Старт / Стоп» и справа «Запись» в рапорт Betsy (у каждого рабочего места;
+ * пока пишет только лаборатория — результат таблицы лаборатории, после подтверждения в окне системы), режим записи (у цеха: лаборатория таблицу только
+ * читает, у контроля качества слежения пока нет) и журнал.
  */
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ClockIcon, FactoryIcon, FlaskIcon, PlayIcon, QualityIcon, StopIcon } from '@/components/icons/Icons'
+import { ClockIcon, FactoryIcon, FlaskIcon, PlayIcon, QualityIcon, StopIcon, WriteDocIcon } from '@/components/icons/Icons'
 import { Button } from '@/components/ui/Button'
 import { Notice, StatusBadge } from '@/components/ui/Layout'
 import { List, ListItem, Switch } from '@/components/ui/List'
@@ -13,7 +14,7 @@ import { Tabs } from '@/components/ui/Tabs'
 import { useLocale, useMessages } from '@/app/i18n'
 import { api, runStore, settingsStore, useSettings, useStore } from '@/app/state'
 import { triggerMessage } from '@/shared/messages'
-import { WORKPLACES, type Workplace } from '@/shared/settings'
+import { betsySource, canWriteBetsy, WORKPLACES, type Workplace } from '@/shared/settings'
 import { Journal } from './Journal'
 import './run.css'
 
@@ -46,6 +47,24 @@ export function RunScreen() {
   // у контроля качества следить пока не за чем
   const idle = settings.workplace === 'calitate'
 
+  /**
+   * «Запись» в рапорт Betsy: где она пишет (`canWriteBetsy`) — после подтверждения в окне системы (куда пишется);
+   * рапорт не задан или у рабочего места записи пока нет — сразу (причина — в журнале).
+   */
+  const writeReport = async () => {
+    const source = betsySource(settings)
+    if (canWriteBetsy(settings.workplace) && source) {
+      const ok = await api.confirm({
+        title: t('writeConfirm.title'),
+        message: t(settings.betsy.manual ? 'writeConfirm.file' : 'writeConfirm.dir', { path: source }),
+        ok: t('writeConfirm.ok'),
+        cancel: t('writeConfirm.cancel'),
+      })
+      if (!ok) return
+    }
+    await api.writeBetsy()
+  }
+
   return (
     <>
       <Tabs
@@ -69,9 +88,15 @@ export function RunScreen() {
             {!on && !stopping && run.lastRunAt && t('status.lastRun', { time: time(run.lastRunAt) })}
           </span>
         </div>
-        <Button variant="tonal" className={`hero-button${on ? ' is-stop' : ''}`} icon={on || stopping ? <StopIcon /> : <PlayIcon />} disabled={stopping || (idle && !on)} onClick={() => void (on || stopping ? api.stop() : api.start())}>
-          {on || stopping ? t('stop') : t('start')}
-        </Button>
+        <div className="hero-actions">
+          <Button variant="tonal" className={`hero-button${on ? ' is-stop' : ''}`} icon={on || stopping ? <StopIcon /> : <PlayIcon />} disabled={stopping || (idle && !on)} onClick={() => void (on || stopping ? api.stop() : api.start())}>
+            {on || stopping ? t('stop') : t('start')}
+          </Button>
+          {/* «Запись» — у каждого рабочего места, в любой момент (и во время слежения), но не во время другого прогона */}
+          <Button variant="tonal" className="hero-button is-side" icon={<WriteDocIcon />} title={t('writeHint')} busy={run.busy === 'betsy'} disabled={!!run.busy} onClick={() => void writeReport()}>
+            {t('write')}
+          </Button>
+        </div>
         {run.pending.length > 0 && (
           <div className="hero-pending">
             <StatusBadge tone="attention">{t('status.pending')}</StatusBadge>

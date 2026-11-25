@@ -6,6 +6,7 @@
  *   sync.mjs --bridge [--apply] <копия Probe.xlsx> <Probe.xlsx>   (бирки с телефонов, см. `ProbeBridge`)
  *   sync.mjs --laborator --migrate [--apply] <Laborator.xlsx>     (миграция таблицы лаборатории, см. `laborator/`)
  *   sync.mjs --laborator --read <Laborator.xlsx>                  (последняя запись таблицы лаборатории — в журнал)
+ *   sync.mjs --laborator --betsy <Laborator.xlsx> <рапорт.docx>   (результат лаборатории — в рапорт Betsy, см. `betsy/`)
  *   sync.mjs --restore [метка] --laborator|--calitate <таблица>   (откат таблицы рабочего места с одной таблицей)
  *
  * Окружение задаёт главный процесс (`host/EngineRunner`):
@@ -18,7 +19,7 @@
  *   LINKS          путь к links.json (ручные привязки)
  *   JSON_OUT       куда записать итог в JSON
  *   GUARD_OPEN_FILES «0» — писать и в файлы, открытые в редакторе
- *   SIGNATURE      подпись лаборанта (PNG) — для чтения таблицы лаборатории
+ *   SIGNATURE      подпись лаборанта (PNG) — для чтения таблицы лаборатории и записи в рапорт Betsy
  */
 import path from 'node:path'
 import { DESKS, isRecord, type Desk, type HeatRule } from '@/shared/settings'
@@ -36,7 +37,7 @@ export interface EngineProject {
 }
 
 /** Что делает прогон. */
-export type EngineCommand = 'sync' | 'scan' | 'create-sheets' | 'restore' | 'bridge' | 'lab-migrate' | 'lab-read'
+export type EngineCommand = 'sync' | 'scan' | 'create-sheets' | 'restore' | 'bridge' | 'lab-migrate' | 'lab-read' | 'betsy-write'
 
 /** Таблица рабочего места с одной таблицей (`--laborator <файл>`, `--calitate <файл>`). */
 export interface DeskTable {
@@ -62,6 +63,8 @@ export interface EngineOptions {
   desk: DeskTable | null
   /** Подпись лаборанта (PNG) или пусто. */
   signature: string
+  /** Запись в рапорт Betsy: рапорт; иначе пусто. */
+  betsy: string
   projects: EngineProject[]
   autoProjects: boolean
   /** Имена активных Consum или `null` (не задано). */
@@ -78,7 +81,7 @@ export interface EngineOptions {
 }
 
 /** Флаги, которые не являются путями. */
-const FLAGS = new Set(['--apply', '--migrate', '--read', '--create-sheets', '--scan', '--bridge', ...DESKS.map((d) => `--${d}`)])
+const FLAGS = new Set(['--apply', '--migrate', '--read', '--betsy', '--create-sheets', '--scan', '--bridge', ...DESKS.map((d) => `--${d}`)])
 
 /** Рабочее место с одной таблицей по флагу `--laborator` / `--calitate` или `null`. */
 const deskFlag = (argv: readonly string[]): Desk | null => DESKS.find((d) => argv.includes(`--${d}`)) ?? null
@@ -131,6 +134,7 @@ export function parseEngineOptions(argv: readonly string[], env: NodeJS.ProcessE
     jsonOut: env.JSON_OUT || null,
     guardOpenFiles: env.GUARD_OPEN_FILES !== '0',
     signature: env.SIGNATURE || '',
+    betsy: '',
   }
   const desk = deskFlag(argv)
   if (argv.includes('--restore')) {
@@ -145,7 +149,8 @@ export function parseEngineOptions(argv: readonly string[], env: NodeJS.ProcessE
     return { ...base, command: 'bridge', consum: '', sarjele: '', probe, restore: null, copy, desk: null }
   }
   if (desk) {
-    const [file = ''] = argv.filter((a) => !FLAGS.has(a))
+    const [file = '', betsy = ''] = argv.filter((a) => !FLAGS.has(a))
+    if (argv.includes('--betsy')) return { ...base, command: 'betsy-write', consum: '', sarjele: '', probe: '', restore: null, copy: '', desk: { kind: desk, file }, betsy }
     const command: EngineCommand = argv.includes('--read') ? 'lab-read' : 'lab-migrate'
     return { ...base, command, consum: '', sarjele: '', probe: '', restore: null, copy: '', desk: { kind: desk, file } }
   }

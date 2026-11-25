@@ -16,6 +16,15 @@
   },
   "start": "Pornește",
   "stop": "Oprește",
+  "write": "Scriere",
+  "writeHint": "Scrie în raportul Betsy",
+  "writeConfirm": {
+    "title": "Scrieți în raportul Betsy?",
+    "dir": "Rc decofr., Data și semnătura laborantului vor fi scrise în rândul 6 al celui mai recent raport din {{path}}. O copie a raportului rămâne în backup/Betsy.",
+    "file": "Rc decofr., Data și semnătura laborantului vor fi scrise în rândul 6 al raportului {{path}}. O copie a raportului rămâne în backup/Betsy.",
+    "ok": "Scrie",
+    "cancel": "Anulare"
+  },
   "noWatch": "Monitorizarea pentru Calitate nu este încă configurată.",
   "mode": {
     "title": "Mod",
@@ -102,6 +111,11 @@
     "labLatest": "Ultima înregistrare · rândul {{row}}",
     "labSignature": "Semnătura laborantului: {{file}}",
     "labNoSignature": "Semnătura laborantului: nealeasă",
-    "nothingLabRead": "Tabelul nu are Rc decofr., Nr.bul. și Data completate."
+    "nothingLabRead": "Tabelul nu are Rc decofr., Nr.bul. și Data completate.",
+    "betsy": "Raport Betsy · rândul 6",
+    "betsyElement": "Elementul {{code}} · seria {{serie}} · TURNAT LA {{cast}}",
+    "betsyLab": "Tabelul laboratorului: rândul {{row}}, Nr.bul. {{bulletin}}",
+    "betsyOthers": "s-au mai potrivit rânduri: {{n}}",
+    "nothingBetsy": "Nu s-a scris nimic în raport."
   }
 }

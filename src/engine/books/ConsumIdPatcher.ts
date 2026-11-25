@@ -15,10 +15,11 @@
 import fs from 'node:fs'
 import JSZip from 'jszip'
 import { columnLetters, columnNumber } from '../Cells'
+import { escapeXml } from '../xml'
 import type { IdColumnLook } from './ConsumBook'
 
 /** Экранирование текста для XML. */
-const esc = (s: unknown) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const esc = (s: unknown) => escapeXml(String(s))
 
 /** Путь к XML листа по его имени. */
 async function sheetPath(zip: JSZip, sheetName: string): Promise<string> {

@@ -41,10 +41,25 @@
     "folderPlaceholder": "Link sau ID folder",
     "hint": "Folder: link sau ID, gol — „Drive-ul meu”."
   },
+  "betsy": {
+    "title": "Rapoarte Betsy",
+    "dir": "Folderul rapoartelor Betsy",
+    "file": "Raport Betsy",
+    "manual": "Manual",
+    "manualHint": "Alegeți un raport anume în locul celui mai recent",
+    "pickDir": "Alege folderul",
+    "pickFile": "Alege raportul",
+    "check": "Verifică raportul",
+    "checking": "Se verifică…",
+    "unlock": "Deblocați calea rapoartelor pentru editare",
+    "lock": "Blocați calea rapoartelor",
+    "hint": "„Scriere” — în cel mai recent raport din folder.",
+    "hintManual": "„Scriere” — în raportul ales."
+  },
   "files": {
     "title": "Tabele",
     "hint": "Tabelele trebuie să existe deja.",
-    "needsShare": "Tabelele devin disponibile după conectarea partajării.",
+    "needsShare": "Tabelele și rapoartele devin disponibile după conectarea partajării.",
     "consum": "Consum (consumul de metal)",
     "consumN": "Consum nr. {{n}} (consumul de metal)",
     "sarjele": "Sarjele din elemente",

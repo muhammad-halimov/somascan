@@ -158,6 +158,18 @@ export interface DeskSettings {
   files: Record<DeskTarget, string>
 }
 
+/**
+ * Рапорты Betsy (`engine/betsy`): папка рапортов — пишется последний рапорт в ней — или (`manual`) рапорт,
+ * выбранный вручную. Свои у каждого места хранения (на сетевом диске — путь в общей папке; у Google Drive —
+ * путь на этом компьютере), общие у рабочих мест.
+ */
+export interface BetsySettings {
+  /** Рапорт выбран вручную (иначе — последний в папке). */
+  manual: boolean
+  dirs: Record<StorageTarget, string>
+  files: Record<StorageTarget, string>
+}
+
 /** Файлы одного места хранения (в Google Drive — имена файлов в папке). */
 export interface FileSet {
   /** Consum (обычно один). */
@@ -179,9 +191,10 @@ export interface AppSettings {
   target: StorageTarget
   /** Файлы — свои у каждого места хранения; работает набор текущего. */
   files: Record<StorageTarget, FileSet>
-  /** Замки на путях (и на папке Google Drive, и на копии Probe для телефонов) от случайной правки. */
-  locked: Record<FileKind | 'folder' | 'copy', boolean>
+  /** Замки на путях (и на папке Google Drive, копии Probe для телефонов и рапорте Betsy) от случайной правки. */
+  locked: Record<FileKind | 'folder' | 'copy' | 'betsy', boolean>
   desks: Record<Desk, DeskSettings>
+  betsy: BetsySettings
   /**
    * Подписи рабочих мест (инженер-координатор цеха, лаборант, контролёр качества): PNG с прозрачным фоном в папке данных
    * программы (`host/SignatureService`) или пусто — не выбрана.
@@ -231,11 +244,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
     smb: { consums: [''], sarjele: '', probe: '' },
     googleDrive: { consums: [''], sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx' },
   },
-  locked: { consum: false, sarjele: false, probe: false, laborator: false, calitate: false, folder: false, copy: false },
+  locked: { consum: false, sarjele: false, probe: false, laborator: false, calitate: false, folder: false, copy: false, betsy: false },
   desks: {
     laborator: { target: 'local', files: { local: '', smb: '' } },
     calitate: { target: 'local', files: { local: '', smb: '' } },
   },
+  betsy: { manual: false, dirs: { local: '', smb: '', googleDrive: '' }, files: { local: '', smb: '', googleDrive: '' } },
   signatures: { atelier: '', laborator: '', calitate: '' },
   sheet: '',
   smb: { host: '', share: '', anonymous: false, domain: '', username: '', password: '' },
@@ -286,6 +300,30 @@ export const activeFiles = (s: AppSettings): FileSet => s.files[s.target]
 /** Таблица рабочего места `desk` в его текущем месте хранения. */
 export const deskFile = (s: AppSettings, desk: Desk): string => s.desks[desk].files[s.desks[desk].target]
 
+/** Место хранения рабочего места: у лаборатории и контроля качества — своё. */
+export function workplaceTarget(s: AppSettings, workplace: Workplace = s.workplace): StorageTarget {
+  const desk = deskOf(workplace)
+  return desk ? s.desks[desk].target : s.target
+}
+
+/** Рабочие места, у которых «Запись» пишет в рапорт Betsy; у остальных она пока не настроена. */
+export const BETSY_WRITERS = ['laborator'] as const satisfies readonly Workplace[]
+/** Пишет ли «Запись» рабочего места в рапорт Betsy. */
+export const canWriteBetsy = isOneOf(BETSY_WRITERS)
+
+/** Рапорт Betsy или папка рапортов рабочего места (`manual` — рапорт); пусто — не задано. */
+export function betsySource(s: AppSettings, workplace: Workplace = s.workplace): string {
+  const target = workplaceTarget(s, workplace)
+  return s.betsy.manual ? s.betsy.files[target] : s.betsy.dirs[target]
+}
+
+/** Разбирает рапорты Betsy. */
+function parseBetsy(raw: unknown): BetsySettings {
+  const src = isRecord(raw) ? raw : {}
+  const paths = (key: string) => Object.fromEntries(TARGETS.map((t) => [t, readString(src[key], t, '')])) as Record<StorageTarget, string>
+  return { manual: readBoolean(src, 'manual', false), dirs: paths('dirs'), files: paths('files') }
+}
+
 /** Разбирает место хранения и таблицы рабочего места с одной таблицей. */
 function parseDesk(raw: unknown, fallback: DeskSettings): DeskSettings {
   const src = isRecord(raw) ? raw : {}
@@ -330,12 +368,14 @@ export function parseSettings(raw: unknown, defaults: AppSettings = DEFAULT_SETT
       calitate: readBoolean(locked, 'calitate', defaults.locked.calitate),
       folder: readBoolean(locked, 'folder', defaults.locked.folder),
       copy: readBoolean(locked, 'copy', defaults.locked.copy),
+      betsy: readBoolean(locked, 'betsy', defaults.locked.betsy),
     },
     desks: {
       // первая версия хранила лабораторию отдельным полем `laborator`
       laborator: parseDesk(desks.laborator ?? src.laborator, defaults.desks.laborator),
       calitate: parseDesk(desks.calitate, defaults.desks.calitate),
     },
+    betsy: parseBetsy(src.betsy),
     signatures: { atelier: signature('atelier'), laborator: signature('laborator'), calitate: signature('calitate') },
     sheet: readString(src, 'sheet', defaults.sheet),
     smb: {

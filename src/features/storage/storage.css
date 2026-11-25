@@ -1,5 +1,10 @@
 /* Поле файла и итог его проверки. */
 .file-field { display: flex; flex-direction: column; gap: 6px; }
+/* «Вручную» у рапортов Betsy: подпись и переключатель справа в заголовке секции. */
+/* подпись — шрифтом строк списков («Фактическая миграция», «Не писать в открытые файлы») */
+.section-switch { display: inline-flex; align-items: center; gap: 10px; padding: 0 0 0 8px; color: var(--text-h); background: none; border: 0; font-size: 15px; font-weight: 500; line-height: 20px; white-space: nowrap; cursor: pointer; }
+.section-switch:disabled { cursor: default; opacity: .5; }
+.section-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 .storage-check { min-height: 4px; }
 /* Формы места хранения: те же отступы между секциями, что у вкладки. */
 .storage-stack { display: flex; flex-direction: column; gap: 24px; }

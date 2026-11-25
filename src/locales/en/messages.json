@@ -10,7 +10,8 @@
     "migrateWrite": "Actual migration",
     "createSheets": "Creating sheets",
     "restore": "Restore from backup",
-    "bridge": "Tags from phones"
+    "bridge": "Tags from phones",
+    "betsy": "Write to the Betsy report"
   },
   "run": {
     "running": "{{trigger}} · running",
@@ -122,7 +123,8 @@
     "linksBroken": "links.json cannot be read: {{error}}. Fix the file (Advanced → Manual links) or delete it — runs are stopped while it is broken",
     "linksNotObject": "links.json must be an object { \"PROJECT|element\": \"block title\" } — runs are stopped until the file is fixed",
     "bridgeUsage": "The Probe copy and Probe are not set",
-    "labUsage": "The laboratory table is not set"
+    "labUsage": "The laboratory table is not set",
+    "betsyUsage": "The laboratory table and the Betsy report are not set"
   },
   "check": {
     "noPath": "No path set",
@@ -136,7 +138,11 @@
     "noYearSheet": "No {{year}} sheet — choose the sheet by hand",
     "noProjectSheets": "Project sheets missing: {{sheets}}",
     "unreadable": "Could not read: {{error}}",
-    "timeout": "No answer within {{seconds}} s — the drive is unavailable"
+    "timeout": "No answer within {{seconds}} s — the drive is unavailable",
+    "betsyLatest": "{{file}} · {{code}} · {{cast}}",
+    "betsyReport": "{{code}} · series {{serie}} · {{cast}}",
+    "betsyNotDir": "This is a file — turn on “Manual” for a report",
+    "betsyNotFile": "This is a folder — choose a report (.docx)"
   },
   "smb": {
     "noHost": "Enter the server",
@@ -260,7 +266,12 @@
     "labNone": "—",
     "labEmpty": "“{{file}}” has no filled Rc decofr. / Nr.bul. / Data",
     "labSignature": "  ■ Lab technician’s signature: {{file}}",
-    "labNoSignature": "  ■ No lab technician’s signature chosen (Advanced tab)"
+    "labNoSignature": "  ■ No lab technician’s signature chosen (Advanced tab)",
+    "betsyReport": "Betsy report: {{file}}",
+    "betsyElement": "Report element: {{code}} · series {{serie}} · project {{project}} · TURNAT LA {{cast}}",
+    "betsyMatch": "  ■ Laboratory table — row {{row}} ({{cell}}): Rc decofr. {{value}} · Nr.bul. {{bulletin}} · Data {{date}}",
+    "betsyOthers": "  • More matching rows ({{n}}): {{rows}} — the best one is used: series, project, latest Data",
+    "betsySaved": "✔ “{{file}}”, row 6: Rc decofr. {{value}} N/mm2 · Data {{date}}"
   },
   "drive": {
     "badFolder": "Folder not recognised: {{folder}} — paste a link or an ID",
@@ -313,6 +324,28 @@
     "integrity": "The check before writing failed (cell {{cell}}) — “{{file}}” is unchanged",
     "notSplit": "“{{file}}” is not split — run “Actual migration” in Advanced",
     "signatureMissing": "The lab technician’s signature file was not found — choose the signature again on the Advanced tab"
+  },
+  "betsy": {
+    "notDocx": "The report does not open as a Word document (.docx)",
+    "noLabRow": "The report has no “Rezistenta betonului la decofrare” row — it is not a Betsy report",
+    "layout": "The report has no “Data” and “Semnatura” columns for row 6",
+    "noValuePlace": "Row 6 of the report has no place for the strength (dots before “N/mm2”)",
+    "notFound": "Not found: {{path}}",
+    "noReports": "No reports (.docx) in {{dir}}",
+    "open": "“{{file}}” is open in Word — close it and retry",
+    "busy": "Not written: {{reason}}",
+    "changed": "“{{file}}” was saved while writing — retry",
+    "noElement": "“COD ELEMENT” is empty in “{{file}}”",
+    "noCast": "“TURNAT LA” in “{{file}}” is not a date: {{text}}",
+    "labColumns": "The laboratory table header has no columns: {{columns}}",
+    "noLabEntry": "The laboratory table has no result for {{code}}: Data from {{from}} to {{to}} with Rc decofr., Nr.bul. and Data filled in",
+    "serieNotFound": "Series {{serie}} is not in row {{row}} of the laboratory table — check that it is the same element",
+    "noSignature": "No lab technician’s signature chosen — the report is written without it (Advanced tab)",
+    "verifyValue": "row 6: strength {{got}} instead of {{want}}",
+    "verifyDate": "row 6: date {{got}} instead of {{want}}",
+    "verifySignature": "row 6: no signature",
+    "noSource": "No Betsy report — set the reports folder on the Storage tab",
+    "notConfigured": "Writing to the Betsy report is not set up for this workplace yet"
   },
   "signature": {
     "notImage": "The file does not open as an image — choose a PNG",

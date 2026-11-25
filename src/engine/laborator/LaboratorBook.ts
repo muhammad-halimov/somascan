@@ -23,7 +23,7 @@ import ExcelJS from 'exceljs'
 import { message, MessageError } from '@/shared/messages'
 import { cellText, cellValue, columnLetters, columnNumber, copyStyle, decodeRange, setStyle } from '../Cells'
 import { definedNameRanges, keepDefaultWidths, mergedRanges, replaceDefinedName } from '../lab/excelInternals'
-import { findHeader, HEADER_ROWS, type SheetHead, type SplitColumn } from './LabHeader'
+import { findHeader, HEADER_ROWS, type ElementColumns, type SheetHead, type SplitColumn } from './LabHeader'
 
 export type { SplitColumn } from './LabHeader'
 
@@ -49,7 +49,7 @@ export interface ParsedResult {
 }
 
 /** Дата «09.01.2026» / «09.01.26» (в UTC, как даты Excel) или `null`, если такого дня нет. */
-function calendarDate(day: string, month: string, year: string): Date | null {
+export function calendarDate(day: string, month: string, year: string): Date | null {
   const y = year.length === 2 ? 2000 + Number(year) : Number(year)
   const date = new Date(Date.UTC(y, Number(month) - 1, Number(day)))
   return date.getUTCDate() === Number(day) && date.getUTCMonth() === Number(month) - 1 ? date : null
@@ -88,9 +88,9 @@ export function parseResult(raw: string, withValue: boolean): ParsedResult | nul
   return { value, bulletin, date }
 }
 
-/** Дата разделённой ячейки текстом, как в таблице: «09.01.2026». */
-export const dateLabel = (date: Date): string =>
-  `${String(date.getUTCDate()).padStart(2, '0')}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${date.getUTCFullYear()}`
+/** Дата текстом, как в таблице: «09.01.2026»; с разделителем «/» — как в рапорте Betsy: «09/01/2026». */
+export const dateLabel = (date: Date, separator = '.'): string =>
+  [String(date.getUTCDate()).padStart(2, '0'), String(date.getUTCMonth() + 1).padStart(2, '0'), date.getUTCFullYear()].join(separator)
 
 /** Сколько колонок вставляется справа от делимой. */
 const inserted = (split: SplitColumn) => (split.withValue ? 2 : 1)
@@ -104,6 +104,8 @@ export interface LabLayout {
   decofr: number
   /** Колонки, которые ещё не разделены, по возрастанию; пусто — таблица уже разделена. */
   splits: SplitColumn[]
+  /** Колонки элемента (название, символ, серия). */
+  element: ElementColumns
 }
 
 /** Ячейка, которая делится. */
@@ -170,8 +172,8 @@ export class LaboratorBook {
       }
       return { name: sheet.name, rows }
     })
-    const { sheet, header, decofr, splits } = findHeader(heads)
-    return { sheet: sheets[sheet]!, header, decofr, splits }
+    const { sheet, header, decofr, splits, element } = findHeader(heads)
+    return { sheet: sheets[sheet]!, header, decofr, splits, element }
   }
 
   /**

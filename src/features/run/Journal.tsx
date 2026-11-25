@@ -2,7 +2,7 @@
  * Журнал на главной: события программы одной строкой и карточки прогонов.
  *
  * Карточка прогона — что запустило, по какому файлу, итог (записано / только план / прочитано / изменений нет /
- * отложено / ошибка) и по разделам: последняя запись таблицы лаборатории, бирки с телефонов, перенесённые в Probe,
+ * отложено / ошибка) и по разделам: последняя запись таблицы лаборатории, запись в рапорт Betsy, бирки с телефонов, перенесённые в Probe,
  * разделённые колонки таблицы лаборатории, блоки Sarjele, ID, закраска плавок в Probe, нехватка стали, что требует
  * внимания, проверка после записи, бэкап. «Подробно» — технический вывод движка (он же в `log.txt`).
  */
@@ -30,6 +30,7 @@ const NOTHING = {
   bridge: 'journal.nothingBridge',
   'lab-migrate': 'journal.nothingLab',
   'lab-read': 'journal.nothingLabRead',
+  'betsy-write': 'journal.nothingBetsy',
 } as const satisfies Record<RunSummary['command'], string>
 
 /** Метка бэкапа → время: «2026-10-19T14-02-11-123Z» → дата. */
@@ -214,15 +215,27 @@ function RunBody({ run, s }: { run: JournalRun; s: RunSummary }) {
       <b>{x.column}</b> — {t('journal.splitItem', { n: x.cells })}
     </>
   ))
-  // последняя запись таблицы лаборатории: поля как в шапке таблицы, пустое — прочерк
-  const lab = s.lab
+  // поля таблицы лаборатории — как в её шапке, пустое — прочерк; подпись лаборанта или что её нет
+  const fields = (list: ReadonlyArray<readonly [string, string | null]>) =>
+    list.map(([name, value]) => (
+      <>
+        {name}: <b>{value ?? '—'}</b>
+      </>
+    ))
+  const signature = (file: string | null) => (file ? t('journal.labSignature', { file }) : <span className="run-warn">{t('journal.labNoSignature')}</span>)
+  // последняя запись таблицы лаборатории
+  const lab = s.lab ? [...fields([['Rc decofr.', s.lab.value], ['Nr.bul.', s.lab.bulletin], ['Data', s.lab.date]]), signature(s.lab.signature)] : []
+  // запись в рапорт Betsy: элемент рапорта, его строка в таблице лаборатории и записанное в строку 6
+  const b = s.betsy
+  const betsy = b
     ? [
-        ...([['Rc decofr.', s.lab.value], ['Nr.bul.', s.lab.bulletin], ['Data', s.lab.date]] as const).map(([name, value]) => (
-          <>
-            {name}: <b>{value ?? '—'}</b>
-          </>
-        )),
-        s.lab.signature ? t('journal.labSignature', { file: s.lab.signature }) : <span className="run-warn">{t('journal.labNoSignature')}</span>,
+        t('journal.betsyElement', { code: b.element, serie: b.serie || '—', cast: b.cast }),
+        <>
+          {t('journal.betsyLab', { row: b.row, bulletin: b.bulletin })}
+          {b.others > 0 && <span className="run-dim"> · {t('journal.betsyOthers', { n: b.others })}</span>}
+        </>,
+        ...fields([['Rc decofr.', b.value], ['Data', b.date]]),
+        signature(b.signature),
       ]
     : []
   const skipped = s.skipped.map((x) => (
@@ -231,7 +244,7 @@ function RunBody({ run, s }: { run: JournalRun; s: RunSummary }) {
       {x.project && <span className="run-dim"> · {x.project}</span>} — {format(x.reason)}
     </>
   ))
-  const nothing = !s.error && !s.lab && !s.blocks.length && !s.ids.length && !s.closed.length && !s.reopened.length && !s.skipped.length && !s.shortages.length && !s.restored && !s.sheets.length && !s.deferred.length && !bridged.length && !split.length
+  const nothing = !s.error && !s.lab && !b && !s.blocks.length && !s.ids.length && !s.closed.length && !s.reopened.length && !s.skipped.length && !s.shortages.length && !s.restored && !s.sheets.length && !s.deferred.length && !bridged.length && !split.length
   return (
     <div className="run-body">
       {s.error && <Line tone="err">{format(s.error)}</Line>}
@@ -239,6 +252,7 @@ function RunBody({ run, s }: { run: JournalRun; s: RunSummary }) {
       {s.deferred.length > 0 && <Line tone="warn">{t('journal.deferred', { list: list(s.deferred.map((d) => d.file)) })}</Line>}
       {nothing && run.outcome !== 'running' && <Line>{t(NOTHING[s.command])}</Line>}
       {s.lab && <Section title={t('journal.labLatest', { row: s.lab.row })} items={lab} />}
+      <Section title={t('journal.betsy')} items={betsy} />
       <Section title={done ? t('journal.bridgedDone', { n: bridged.length }) : t('journal.bridgedPlan', { n: bridged.length })} items={bridged} />
       <Section title={done ? t('journal.splitDone') : t('journal.splitPlan')} items={split} />
       <Section title={done ? t('journal.blocksDone', { n: blocks.length }) : t('journal.blocksPlan', { n: blocks.length })} items={blocks} />

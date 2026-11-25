@@ -203,26 +203,32 @@ export interface RestoreResult {
   savedAs: string
 }
 
-/** Таблица для копии: путь и вид (по виду выбирается папка копий). */
+/** Вид копируемого файла: таблица или рапорт Betsy (`engine/betsy`). */
+export type BackupKind = FileKind | 'betsy'
+
+/** Файл для копии: путь и вид (по виду выбирается папка копий). */
 export interface BackupFile {
   file: string
-  kind: FileKind
+  kind: BackupKind
 }
 
 /**
- * Папки копий внутри `backup` по видам таблиц — у каждого рабочего места своя:
+ * Папки копий внутри `backup` по видам файлов — у каждого рабочего места своя, у рапортов Betsy — своя
+ * (рядом с рапортами):
  *
  *     backup/
  *       Atelier/Consum, Atelier/Probe, Atelier/Sarjele
  *       Laborator/
  *       Calitate/
+ *       Betsy/
  */
-export const BACKUP_FOLDERS: Record<FileKind, readonly string[]> = {
+export const BACKUP_FOLDERS: Record<BackupKind, readonly string[]> = {
   consum: ['Atelier', 'Consum'],
   probe: ['Atelier', 'Probe'],
   sarjele: ['Atelier', 'Sarjele'],
   laborator: ['Laborator'],
   calitate: ['Calitate'],
+  betsy: ['Betsy'],
 }
 
 /**

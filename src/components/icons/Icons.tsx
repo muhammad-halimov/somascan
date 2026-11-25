@@ -270,6 +270,17 @@ export function FileIcon() {
   )
 }
 
+/** Документ с пером: запись в рапорт. */
+export function WriteDocIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
+      <path d="M14 3v5h5v2" />
+      <path d="M18.4 13.6a1.9 1.9 0 0 1 2.7 2.7L16 21.4l-3.4.8.8-3.4z" />
+    </svg>
+  )
+}
+
 /** Закрытый замок: поле защищено от случайной правки. */
 export function LockIcon() {
   return (

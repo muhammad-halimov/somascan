@@ -35,6 +35,26 @@ export interface SplitColumn {
   withValue: boolean
 }
 
+/**
+ * Колонки элемента (номер колонки, 0 — нет): по ним запись лаборатории находится для рапорта Betsy
+ * (`laborator/LabMatch`).
+ */
+export interface ElementColumns {
+  /** «Denum elem. pref.»: «PREDALE POD PO 08». */
+  name: number
+  /** «Simbol Element Prefabricat»: «TIP 1». */
+  symbol: number
+  /** «Seria elem Prefabricat»: «92/8752-P-1-628÷650». */
+  series: number
+}
+
+/** Колонки элемента: слово шапки, по которому колонка находится, и её название (для журнала). */
+export const ELEMENT_HEADERS: Record<keyof ElementColumns, { word: string; title: string }> = {
+  name: { word: 'denum', title: 'Denum elem. pref.' },
+  symbol: { word: 'simbol', title: 'Simbol Element Prefabricat' },
+  series: { word: 'seria', title: 'Seria elem Prefabricat' },
+}
+
 /** Где шапка и колонки таблицы. */
 export interface LabHeader {
   /** Номер листа в списке. */
@@ -47,6 +67,8 @@ export interface LabHeader {
   day28: number
   /** Колонки, которые ещё не разделены, по возрастанию; пусто — таблица уже разделена. */
   splits: SplitColumn[]
+  /** Колонки элемента. */
+  element: ElementColumns
 }
 
 /** Текст шапки для сравнения: без регистра и лишних пробелов. */
@@ -78,7 +100,9 @@ export function findHeader(sheets: readonly SheetHead[]): LabHeader {
       // прежний вид: «Nr.bul./Data»; разделённый — «Nr.bul.», справа «Data»
       if (head(day28 + 1).includes('data')) splits.push({ column: day28 + 1, title: firstLine(raw(day28)), withValue: false })
       else if (!head(day28 + 2).startsWith('data')) throw new MessageError(message('laborator.layout', { row: r }))
-      return { sheet: index, header: r, decofr, day28, splits: splits.sort((a, b) => a.column - b.column) }
+      const find = (key: keyof ElementColumns) => columns.find((c) => head(c).includes(ELEMENT_HEADERS[key].word)) ?? 0
+      const element: ElementColumns = { name: find('name'), symbol: find('symbol'), series: find('series') }
+      return { sheet: index, header: r, decofr, day28, splits: splits.sort((a, b) => a.column - b.column), element }
     }
   }
   throw new MessageError(message('laborator.noHeader', { rows: HEADER_ROWS }))

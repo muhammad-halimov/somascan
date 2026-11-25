@@ -41,10 +41,25 @@
     "folderPlaceholder": "Folder link or ID",
     "hint": "Folder: link or ID, empty — “My Drive”."
   },
+  "betsy": {
+    "title": "Betsy reports",
+    "dir": "Betsy reports folder",
+    "file": "Betsy report",
+    "manual": "Manual",
+    "manualHint": "Choose a specific report instead of the latest one",
+    "pickDir": "Choose folder",
+    "pickFile": "Choose report",
+    "check": "Check the report",
+    "checking": "Checking…",
+    "unlock": "Unlock the reports path to edit it",
+    "lock": "Lock the reports path",
+    "hint": "“Write” goes to the latest report in the folder.",
+    "hintManual": "“Write” goes to the chosen report."
+  },
   "files": {
     "title": "Tables",
     "hint": "The tables must already exist.",
-    "needsShare": "Tables become available once the share is connected.",
+    "needsShare": "Tables and reports become available once the share is connected.",
     "consum": "Consum (steel consumption)",
     "consumN": "Consum #{{n}} (steel consumption)",
     "sarjele": "Sarjele din elemente",

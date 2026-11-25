@@ -11,14 +11,12 @@ import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
 import ExcelJS from 'exceljs'
-import { parseEngineOptions } from '../src/engine/EngineOptions'
 import { findHeader } from '../src/engine/laborator/LabHeader'
 import { dateLabel, LaboratorBook, parseResult } from '../src/engine/laborator/LaboratorBook'
-import { MemorySink } from '../src/engine/RunReport'
-import { SyncEngine } from '../src/engine/SyncEngine'
 import { StorageService } from '../src/host/StorageService'
 import { workbookHead } from '../src/host/workbookHead'
-import { ENGINE_EXIT, runOutcome, type RunSummary } from '../src/shared/protocol'
+import { ENGINE_EXIT, runOutcome } from '../src/shared/protocol'
+import { runEngine } from './fixtures'
 
 /** Таблица лаборатории прежнего вида. */
 async function writeLaborator(file: string): Promise<void> {
@@ -65,12 +63,7 @@ async function workspace() {
 }
 
 /** Прогон движка. */
-async function engine(dir: string, argv: string[], env: Record<string, string> = {}) {
-  const jsonOut = path.join(dir, 'out.json')
-  const sink = new MemorySink()
-  const code = await new SyncEngine(parseEngineOptions(argv, { ...env, JSON_OUT: jsonOut, BACKUP_DAYS: '30' }), sink).run()
-  return { code, text: [...sink.lines, ...sink.warnings].join('\n'), summary: JSON.parse(fs.readFileSync(jsonOut, 'utf8')) as RunSummary }
-}
+const engine = runEngine
 
 const migrate = (f: { dir: string; file: string }, apply = true) => engine(f.dir, ['--laborator', '--migrate', ...(apply ? ['--apply'] : []), f.file])
 

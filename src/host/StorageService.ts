@@ -12,23 +12,31 @@
  *
  * Таблицы на сетевом диске читаются средствами системы, как обычные файлы; перед работой программа подключает
  * общую папку сама, если таблицы на ней недоступны (`SyncService.readyToRead`).
+ *
+ * Рапорты Betsy (`checkBetsy`): у директории — её последний рапорт, у рапорта, выбранного вручную, — он сам;
+ * рапорт читается как для записи (`engine/betsy/BetsyReport`): элемент и строка 6 на месте.
  */
 import fs from 'node:fs'
+import path from 'node:path'
 import JSZip from 'jszip'
+import { BetsyReport } from '@/engine/betsy/BetsyReport'
 import { columnLetters } from '@/engine/Cells'
 import { findHeader, HEADER_ROWS } from '@/engine/laborator/LabHeader'
 import { message, MessageError, type Message } from '@/shared/messages'
 import type { CheckResult, ShareResult } from '@/shared/protocol'
 import { activeFiles, deskFile, DESKS, isOneOf, type FileKind } from '@/shared/settings'
 import type { DriveService } from './drive/DriveService'
-import { openInEditor, withTimeout } from './files'
+import { openInEditor, resolveBetsyReport, withTimeout } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 import { SmbShare } from './SmbShare'
 import { workbookHead } from './workbookHead'
 
-/** Сколько ждать проверки таблицы, мс: дольше — сетевой диск не отвечает. */
+/** Сколько ждать проверки таблицы или рапорта, мс: дольше — сетевой диск не отвечает. */
 const CHECK_TIMEOUT_MS = 20_000
+
+/** Итог проверки, которая не ответила вовремя. */
+const timedOut = (): CheckResult => ({ ok: false, msg: message('check.timeout', { seconds: CHECK_TIMEOUT_MS / 1000 }) })
 
 /** Проверка файлов и сетевой диск. */
 export class StorageService {
@@ -67,8 +75,7 @@ export class StorageService {
   /** Проверяет файл на этом компьютере (или на подключённом диске): есть ли, совпадает ли строение. */
   checkFile(kind: FileKind, file: string): Promise<CheckResult> {
     if (!file) return Promise.resolve({ ok: false, msg: message('check.noPath') })
-    const timeout = (): CheckResult => ({ ok: false, msg: message('check.timeout', { seconds: CHECK_TIMEOUT_MS / 1000 }) })
-    return withTimeout(this.readCheck(kind, file), CHECK_TIMEOUT_MS, timeout)
+    return withTimeout(this.readCheck(kind, file), CHECK_TIMEOUT_MS, timedOut)
   }
 
   /** Проверка файла: чтение листов (и шапки) и сверка с тем, что программа из него читает. */
@@ -112,6 +119,29 @@ export class StorageService {
     } catch (e) {
       if (e instanceof MessageError) return { error: e.msg }
       throw e
+    }
+  }
+
+  /**
+   * Проверяет рапорт Betsy (`manual`) или директорию рапортов — её последний рапорт (`resolveBetsyReport`, как
+   * у «Записи»). Итог — элемент рапорта: код, серия, «TURNAT LA».
+   */
+  checkBetsy(source: string, manual: boolean): Promise<CheckResult> {
+    if (!source) return Promise.resolve({ ok: false, msg: message('check.noPath') })
+    return withTimeout(this.readBetsy(source, manual), CHECK_TIMEOUT_MS, timedOut)
+  }
+
+  /** Проверка рапорта: какой рапорт и его элемент. */
+  private async readBetsy(source: string, manual: boolean): Promise<CheckResult> {
+    const found = await resolveBetsyReport(source, manual)
+    if ('error' in found) return { ok: false, msg: found.error }
+    try {
+      const { element } = await BetsyReport.open(await fs.promises.readFile(found.file))
+      const params = { file: path.basename(found.file), code: element.code || '—', serie: element.serie || '—', cast: element.castText || '—' }
+      return { ok: true, msg: message(manual ? 'check.betsyReport' : 'check.betsyLatest', params) }
+    } catch (e) {
+      if (e instanceof MessageError) return { ok: false, msg: e.msg }
+      return { ok: false, msg: message('check.unreadable', { error: (e as Error).message }) }
     }
   }
 

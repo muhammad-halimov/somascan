@@ -3,7 +3,10 @@
 .hero-state { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 10px; }
 .hero-meta { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
 .hero-meta svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
-.hero-button { width: auto; min-width: 140px; }
+.hero-actions { display: flex; flex: 1 1 100%; gap: 10px; }
+.hero-button { width: auto; min-width: 0; flex: 4 1 0; }
+/* «Запись» рядом со «Старт»: примерно 80/20, но не уже своей подписи */
+.hero-button.is-side { flex: 1 1 0; min-width: max-content; }
 .hero-button.is-stop { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
 .hero-pending { flex-basis: 100%; }
 

@@ -10,6 +10,10 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import ExcelJS from 'exceljs'
+import { parseEngineOptions } from '../src/engine/EngineOptions'
+import { MemorySink } from '../src/engine/RunReport'
+import { SyncEngine } from '../src/engine/SyncEngine'
+import type { RunSummary } from '../src/shared/protocol'
 
 /** Название проекта и листа. */
 export const PROJECT = 'PROIECT TEST'
@@ -152,4 +156,12 @@ export async function cellAt(file: string, sheet: string, address: string): Prom
   await wb.xlsx.readFile(file)
   const v = wb.getWorksheet(sheet)!.getCell(address).value
   return v == null ? '' : String(v)
+}
+
+/** Прогон движка в папке `dir`: код выхода, технический текст и итог (`JSON_OUT`). */
+export async function runEngine(dir: string, argv: string[], env: Record<string, string> = {}) {
+  const jsonOut = path.join(dir, 'out.json')
+  const sink = new MemorySink()
+  const code = await new SyncEngine(parseEngineOptions(argv, { ...env, JSON_OUT: jsonOut, BACKUP_DAYS: '30' }), sink).run()
+  return { code, text: [...sink.lines, ...sink.warnings].join('\n'), summary: JSON.parse(fs.readFileSync(jsonOut, 'utf8')) as RunSummary }
 }

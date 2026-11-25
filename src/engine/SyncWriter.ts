@@ -65,11 +65,15 @@ export class SafeSave {
     fs.renameSync(tmp, file)
   }
 
-  /** Записывает готовые байты (Consum правится прямо в XML). Блокировку берёт вызывающий. */
-  static async bytes(file: string, bytes: Uint8Array): Promise<void> {
+  /**
+   * Записывает готовые байты (Consum правится прямо в XML, рапорт Betsy — в XML документа). Блокировку берёт
+   * вызывающий.
+   * @param check Проверка временного файла до подмены (по умолчанию — открывается как книга Excel).
+   */
+  static async bytes(file: string, bytes: Uint8Array, check: (tmp: string) => Promise<unknown> = SafeSave.assertReadable): Promise<void> {
     const tmp = `${file}.tmp`
     fs.writeFileSync(tmp, bytes)
-    await SafeSave.assertReadable(tmp)
+    await check(tmp)
     fs.renameSync(tmp, file)
   }
 

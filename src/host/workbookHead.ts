@@ -8,23 +8,11 @@
  */
 import JSZip from 'jszip'
 import type { SheetHead } from '@/engine/laborator/LabHeader'
-
-/** Сущности XML в тексте ячейки. */
-const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
-
-/** Текст XML без сущностей: «&amp;» → «&», «&#10;» → перенос строки. */
-const unescape = (text: string) =>
-  text.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (all, code: string) => {
-    if (code[0] === '#') return String.fromCodePoint(code[1] === 'x' || code[1] === 'X' ? parseInt(code.slice(2), 16) : Number(code.slice(1)))
-    return ENTITIES[code] ?? all
-  })
+import { unescapeXml as unescape, xmlAttr as attr } from '@/engine/xml'
 
 /** Текст строки с форматированием: все `<t>`, кроме фонетических подсказок (`<rPh>`). */
 const richText = (xml: string) =>
   [...xml.replace(/<rPh\b[\s\S]*?<\/rPh>/g, '').matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((m) => unescape(m[1]!)).join('')
-
-/** Значение атрибута тега. */
-const attr = (tag: string, name: string) => new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1] ?? null
 
 /** Номер колонки по адресу ячейки: «H5» → 8. */
 const columnOf = (ref: string) => [...(/^[A-Z]+/.exec(ref)?.[0] ?? '')].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0)

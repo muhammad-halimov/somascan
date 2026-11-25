@@ -10,7 +10,8 @@
     "migrateWrite": "Migrare reală",
     "createSheets": "Crearea foilor",
     "restore": "Restaurare din backup",
-    "bridge": "Etichete de pe telefoane"
+    "bridge": "Etichete de pe telefoane",
+    "betsy": "Scriere în raportul Betsy"
   },
   "run": {
     "running": "{{trigger}} · în curs",
@@ -122,7 +123,8 @@
     "linksBroken": "links.json nu poate fi citit: {{error}}. Corectați fișierul (Avansate → Legături manuale) sau ștergeți-l — cât timp este stricat, rulările sunt oprite",
     "linksNotObject": "links.json trebuie să fie un obiect { \"PROIECT|element\": \"titlul blocului\" } — rulările sunt oprite până la corectarea fișierului",
     "bridgeUsage": "Nu sunt setate copia Probe și Probe",
-    "labUsage": "Tabelul laboratorului nu este setat"
+    "labUsage": "Tabelul laboratorului nu este setat",
+    "betsyUsage": "Tabelul laboratorului și raportul Betsy nu sunt setate"
   },
   "check": {
     "noPath": "Calea nu este setată",
@@ -136,7 +138,11 @@
     "noYearSheet": "Lipsește foaia {{year}} — alegeți foaia manual",
     "noProjectSheets": "Lipsesc foile proiectelor: {{sheets}}",
     "unreadable": "Nu s-a putut citi: {{error}}",
-    "timeout": "Niciun răspuns în {{seconds}} s — unitatea nu este disponibilă"
+    "timeout": "Niciun răspuns în {{seconds}} s — unitatea nu este disponibilă",
+    "betsyLatest": "{{file}} · {{code}} · {{cast}}",
+    "betsyReport": "{{code}} · seria {{serie}} · {{cast}}",
+    "betsyNotDir": "Este un fișier — pentru un raport bifați „Manual”",
+    "betsyNotFile": "Este un folder — alegeți un raport (.docx)"
   },
   "smb": {
     "noHost": "Introduceți serverul",
@@ -260,7 +266,12 @@
     "labNone": "—",
     "labEmpty": "„{{file}}” nu are Rc decofr. / Nr.bul. / Data completate",
     "labSignature": "  ■ Semnătura laborantului: {{file}}",
-    "labNoSignature": "  ■ Semnătura laborantului nu este aleasă (fila Avansate)"
+    "labNoSignature": "  ■ Semnătura laborantului nu este aleasă (fila Avansate)",
+    "betsyReport": "Raport Betsy: {{file}}",
+    "betsyElement": "Elementul raportului: {{code}} · seria {{serie}} · proiectul {{project}} · TURNAT LA {{cast}}",
+    "betsyMatch": "  ■ Tabelul laboratorului — rândul {{row}} ({{cell}}): Rc decofr. {{value}} · Nr.bul. {{bulletin}} · Data {{date}}",
+    "betsyOthers": "  • Se mai potrivesc rânduri ({{n}}): {{rows}} — se folosește cel mai potrivit: seria, proiectul, cea mai recentă Data",
+    "betsySaved": "✔ „{{file}}”, rândul 6: Rc decofr. {{value}} N/mm2 · Data {{date}}"
   },
   "drive": {
     "badFolder": "Folder nerecunoscut: {{folder}} — lipiți linkul sau ID-ul",
@@ -313,6 +324,28 @@
     "integrity": "Verificarea dinaintea scrierii nu a trecut (celula {{cell}}) — „{{file}}” nu a fost modificat",
     "notSplit": "„{{file}}” nu e separat — rulați „Migrare reală” din Avansate",
     "signatureMissing": "Fișierul semnăturii laborantului nu a fost găsit — alegeți semnătura din nou în fila Avansate"
+  },
+  "betsy": {
+    "notDocx": "Raportul nu se deschide ca document Word (.docx)",
+    "noLabRow": "Raportul nu are rândul „Rezistenta betonului la decofrare” — nu este un raport Betsy",
+    "layout": "Raportul nu are coloanele „Data” și „Semnatura” pentru rândul 6",
+    "noValuePlace": "Rândul 6 al raportului nu are loc pentru rezistență (punctele dinaintea „N/mm2”)",
+    "notFound": "Nu a fost găsit: {{path}}",
+    "noReports": "Nu există rapoarte (.docx) în {{dir}}",
+    "open": "„{{file}}” e deschis în Word — închideți și reluați",
+    "busy": "Nu s-a scris: {{reason}}",
+    "changed": "„{{file}}” a fost salvat în timpul scrierii — reluați",
+    "noElement": "„COD ELEMENT” nu este completat în „{{file}}”",
+    "noCast": "„TURNAT LA” din „{{file}}” nu este o dată: {{text}}",
+    "labColumns": "Antetul tabelului laboratorului nu are coloanele: {{columns}}",
+    "noLabEntry": "Tabelul laboratorului nu are rezultat pentru {{code}}: Data între {{from}} și {{to}}, cu Rc decofr., Nr.bul. și Data completate",
+    "serieNotFound": "Seria {{serie}} nu apare în rândul {{row}} al tabelului laboratorului — verificați dacă este același element",
+    "noSignature": "Semnătura laborantului nu este aleasă — raportul este scris fără ea (fila Avansate)",
+    "verifyValue": "rândul 6: rezistența {{got}} în loc de {{want}}",
+    "verifyDate": "rândul 6: data {{got}} în loc de {{want}}",
+    "verifySignature": "rândul 6: fără semnătură",
+    "noSource": "Raportul Betsy nu este setat — indicați folderul rapoartelor în fila Stocare",
+    "notConfigured": "Scrierea în raportul Betsy nu este încă configurată pentru acest loc de muncă"
   },
   "signature": {
     "notImage": "Fișierul nu se deschide ca imagine — alegeți un PNG",

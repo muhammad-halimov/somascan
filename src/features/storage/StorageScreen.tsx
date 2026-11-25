@@ -8,16 +8,19 @@
  * диск (учётная запись и расположение — общие с цехом) и одна таблица (таблица коэффициентов, таблица качества);
  * Google Drive и «Устройств» нет.
  *
+ * Над таблицами у всех рабочих мест и мест хранения — рапорты Betsy: директория рапортов («Запись» пишет
+ * в последний рапорт в ней) или, с переключателем «Вручную» в заголовке, конкретный рапорт.
+ *
  * Сетевой диск: пока он не подключён (состояние проверяется при открытии и после правки сервера или папки),
- * таблицы на нём недоступны — пути, выбор файла и проверка. Обязательные поля (сервер, учётная запись без
+ * таблицы и рапорты на нём недоступны — пути, выбор файла и проверка. Обязательные поля (сервер, учётная запись без
  * «Без авторизации», пути к таблицам) — со звёздочкой, пустые подсвечены.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { BellIcon, DatabaseIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, LogoutIcon, PhoneIcon, PlugIcon, TableIcon, TrashIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
+import { BellIcon, DatabaseIcon, FileIcon, FolderIcon, GoogleDriveLogo, GoogleLogo, LockIcon, LockOpenIcon, LogoutIcon, PhoneIcon, PlugIcon, TableIcon, TrashIcon, UserIcon, WindowsLogo } from '@/components/icons/Icons'
 import { Button, LockButton } from '@/components/ui/Button'
-import { ActionTextInput, SecretInput, SelectInput, TextInput } from '@/components/ui/Inputs'
+import { ActionTextInput, SecretInput, SelectInput, TextInput, type InputAction } from '@/components/ui/Inputs'
 import { Field, FieldRow, FormSection, Notice, StatusBadge } from '@/components/ui/Layout'
 import { List, ListItem, Switch } from '@/components/ui/List'
 import { Tabs } from '@/components/ui/Tabs'
@@ -25,7 +28,7 @@ import { useLocale, useMessages } from '@/app/i18n'
 import { message } from '@/shared/messages'
 import { api, appInfoStore, runStore, settingsStore, useSettings, useStore } from '@/app/state'
 import type { BridgeState, CheckResult, ShareResult } from '@/shared/protocol'
-import { activeFiles, DESK_TARGETS, deskFile, deskOf, DESKS, isOneOf, MAC_VOLUMES, PASSWORD_MASK, TARGETS, uncPath, type AppSettings, type FileKind, type FileSet, type GoogleDriveSettings, type SmbSettings, type StorageTarget } from '@/shared/settings'
+import { activeFiles, DESK_TARGETS, deskFile, deskOf, DESKS, isOneOf, MAC_VOLUMES, PASSWORD_MASK, TARGETS, uncPath, workplaceTarget, type AppSettings, type FileKind, type FileSet, type GoogleDriveSettings, type SmbSettings, type StorageTarget } from '@/shared/settings'
 import './storage.css'
 
 /** Поле файла. */
@@ -50,6 +53,10 @@ const SHARE_DELAY_MS = 600
 /** Имена файлов в подсказке пути. */
 const FILE_NAMES: Record<FileKind, string> = { consum: 'Consum otel.xlsx', sarjele: 'Sarjele din elemente.xlsx', probe: 'Probe otel.xlsx', laborator: 'Laborator.xlsx', calitate: 'Calitate.xlsx' }
 
+/** Пример директории и рапорта Betsy в подсказке пути. */
+const BETSY_DIR = 'Betsy'
+const BETSY_REPORT = 'Betsy_report.docx'
+
 /** Пример сервера и общей папки в путях, пока они не заданы. */
 const EXAMPLE_HOST = 'server'
 const EXAMPLE_SHARE = 'Atelier'
@@ -69,16 +76,35 @@ const TARGET_ICONS: Record<StorageTarget, ReactNode> = { local: <FolderIcon />, 
 /** Поле под замком: путь к таблице, папка Google Drive или копия Probe для телефонов. */
 type LockKey = keyof AppSettings['locked']
 
-/** Кнопка замка поля пути: закрыт — правка недоступна; состояние хранится в настройках. */
-function lockAction(settings: AppSettings, key: LockKey, t: TFunction<'storage'>) {
+/**
+ * Кнопка замка поля пути: закрыт — правка недоступна; состояние хранится в настройках.
+ * @param ns Раздел подписей замка («Открыть / Закрыть путь к таблице», у рапортов — к рапортам).
+ */
+function lockAction(settings: AppSettings, key: LockKey, t: TFunction<'storage'>, ns: 'files' | 'betsy' = 'files'): InputAction {
   const locked = settings.locked[key]
   return {
     icon: locked ? <LockIcon /> : <LockOpenIcon />,
-    label: locked ? t('files.unlock') : t('files.lock'),
-    tone: locked ? undefined : ('accent' as const),
+    label: locked ? t(`${ns}.unlock`) : t(`${ns}.lock`),
+    tone: locked ? undefined : 'accent',
     onClick: () => settingsStore.update({ locked: { [key]: !locked } }),
   }
 }
+
+/** Кнопка проверки в поле пути: цвет — итог последней проверки. */
+function checkAction(check: FileCheck, icon: ReactNode, label: string, disabled: boolean, onClick: () => void): InputAction {
+  return { icon, label, busy: check === 'busy', tone: check && check !== 'busy' ? (check.ok ? 'success' : 'danger') : undefined, disabled, onClick }
+}
+
+/** Итог проверки под полем: идёт, найдено или почему нет. */
+function CheckStatus({ check, busyLabel }: { check: FileCheck; busyLabel: string }) {
+  const format = useMessages()
+  if (check === 'busy') return <StatusBadge tone="info">{busyLabel}</StatusBadge>
+  return check ? <StatusBadge tone={check.ok ? 'success' : 'danger'}>{format(check.msg)}</StatusBadge> : null
+}
+
+/** Пример пути в подсказке поля: на сетевом диске — в общей папке, иначе — в «Документах» этого компьютера. */
+const examplePath = (settings: AppSettings, target: StorageTarget, windows: boolean, documents: string, ...names: string[]) =>
+  [target === 'smb' ? sharePath(settings.smb, windows) : documents || ELLIPSIS, ...names].join(windows ? '\\' : '/')
 
 /** Путь без кавычек (Finder и Проводник копируют путь в кавычках). */
 const cleanPath = (v: string) => v.trim().replace(/^['"]|['"]$/g, '')
@@ -91,15 +117,20 @@ const cleanPath = (v: string) => v.trim().replace(/^['"]|['"]$/g, '')
 function useFileChecks(rows: FileRow[], extraKey: string, enabled: boolean) {
   const [checks, setChecks] = useState<Record<string, FileCheck>>({})
   const timers = useRef<Record<string, number>>({})
+  // номер последнего запроса каждой строки: ответ устаревшего (путь успели поменять) отбрасывается
+  const requests = useRef<Record<string, number>>({})
+  const next = (id: string) => (requests.current[id] = (requests.current[id] ?? 0) + 1)
   const run = async (r: FileRow) => {
+    const request = next(r.id)
     setChecks((c) => ({ ...c, [r.id]: 'busy' }))
     const res = await api.check(r.kind, r.file)
-    setChecks((c) => ({ ...c, [r.id]: res }))
+    if (requests.current[r.id] === request) setChecks((c) => ({ ...c, [r.id]: res }))
   }
   const sig = rows.map((r) => `${r.id}=${r.file}`).join('|')
   useEffect(() => {
     for (const r of rows) {
       window.clearTimeout(timers.current[r.id])
+      next(r.id)
       if (!enabled) setChecks((c) => ({ ...c, [r.id]: undefined }))
       else if (!r.file) setChecks((c) => ({ ...c, [r.id]: { ok: false, msg: message('check.noPath') } }))
       else timers.current[r.id] = window.setTimeout(() => void run(r), CHECK_DELAY_MS)
@@ -109,6 +140,33 @@ function useFileChecks(rows: FileRow[], extraKey: string, enabled: boolean) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- строки сравниваются по подписи
   }, [sig, extraKey, enabled])
   return { checks, run }
+}
+
+/**
+ * Проверка рапорта Betsy: при открытии вкладки и после правки пути или флажка «Вручную» (с паузой). Пусто —
+ * без итога (рапорт необязателен); недоступно (`enabled: false`) — не проверяется. Ответ устаревшего запроса
+ * отбрасывается.
+ */
+function useBetsyCheck(source: string, manual: boolean, enabled: boolean) {
+  const [check, setCheck] = useState<FileCheck>()
+  const request = useRef(0)
+  const run = async () => {
+    const id = ++request.current
+    setCheck('busy')
+    const r = await api.checkBetsy(source, manual)
+    if (id === request.current) setCheck(r)
+  }
+  useEffect(() => {
+    ++request.current
+    if (!enabled || !source) {
+      setCheck(undefined)
+      return
+    }
+    const timer = window.setTimeout(() => void run(), CHECK_DELAY_MS)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `run` берёт эти же значения
+  }, [source, manual, enabled])
+  return { check, run }
 }
 
 /** Подключение сетевого диска на экране. */
@@ -171,7 +229,7 @@ export function StorageScreen() {
   const { platform, documents } = useStore(appInfoStore)
   const desk = deskOf(settings.workplace)
   // у лаборатории и контроля качества — своё место хранения
-  const target: StorageTarget = desk ? settings.desks[desk].target : settings.target
+  const target = workplaceTarget(settings)
   const files = activeFiles(settings)
   const drive = target === 'googleDrive'
   const rows: FileRow[] = desk
@@ -206,7 +264,9 @@ export function StorageScreen() {
       <div key={`${settings.workplace}:${target}`} className="storage-stack anim-enter">
         {target === 'smb' && <SmbSection smb={settings.smb} windows={platform === 'win32'} share={share} />}
         {drive && <DriveAccountSection drive={settings.googleDrive} />}
-        <FilesSection settings={settings} target={target} rows={rows} checks={checks} recheck={(r) => void run(r)} windows={platform === 'win32'} documents={documents} offline={offline} waiting={offline && (share.checking || share.mounting)} />
+        {offline && !(share.checking || share.mounting) && <Notice>{t('files.needsShare')}</Notice>}
+        <BetsySection settings={settings} target={target} windows={platform === 'win32'} documents={documents} offline={offline} />
+        <FilesSection settings={settings} target={target} rows={rows} checks={checks} recheck={(r) => void run(r)} windows={platform === 'win32'} documents={documents} offline={offline} />
         {!drive && !desk && <PhonesSection settings={settings} />}
       </div>
 
@@ -498,6 +558,74 @@ function FirestoreBell({ settings, bridge }: { settings: AppSettings; bridge: Br
   )
 }
 
+/** Свойства `BetsySection`. */
+interface BetsySectionProps {
+  settings: AppSettings
+  /** Место хранения на экране (путь свой у каждого). */
+  target: StorageTarget
+  windows: boolean
+  documents: string
+  /** Сетевой диск не подключён: рапорты на нём недоступны. */
+  offline: boolean
+}
+
+/**
+ * Рапорты Betsy: директория рапортов («Запись» пишет в последний рапорт в ней) или, с переключателем
+ * «Вручную» справа в заголовке, конкретный рапорт. Замок, выбор директории (рапорта) и проверка — как у таблиц; итог
+ * проверки — последний рапорт и его элемент (путь пуст — строки итога нет). У Google Drive — путь на этом компьютере.
+ */
+function BetsySection({ settings, target, windows, documents, offline }: BetsySectionProps) {
+  const { t } = useTranslation('storage')
+  const { manual, dirs, files } = settings.betsy
+  const value = manual ? files[target] : dirs[target]
+  const locked = settings.locked.betsy
+  const { check, run } = useBetsyCheck(value, manual, !offline)
+  const setValue = (v: string) => settingsStore.update({ betsy: manual ? { files: { ...files, [target]: v } } : { dirs: { ...dirs, [target]: v } } })
+  const pick = async () => {
+    const p = await api.pickBetsy()
+    if (p) setValue(p)
+  }
+  // пример: директория «Betsy» в общей папке или в «Документах», вручную — рапорт в ней
+  const placeholder = examplePath(settings, target, windows, documents, BETSY_DIR, ...(manual ? [BETSY_REPORT] : []))
+  return (
+    <FormSection
+      title={t('betsy.title')}
+      icon={<FileIcon />}
+      hint={manual ? t('betsy.hintManual') : t('betsy.hint')}
+      action={
+        // переключатель — справа в заголовке, как переключатели «Устройств»
+        <button type="button" role="switch" aria-checked={manual} className="section-switch" title={t('betsy.manualHint')} disabled={offline || locked} onClick={() => settingsStore.update({ betsy: { manual: !manual } })}>
+          <span>{t('betsy.manual')}</span>
+          <Switch on={manual} />
+        </button>
+      }
+    >
+      <div className="file-field">
+        <Field label={manual ? t('betsy.file') : t('betsy.dir')}>
+          <ActionTextInput
+            placeholder={placeholder}
+            value={value}
+            onChange={(v) => setValue(cleanPath(v))}
+            locked={locked}
+            disabled={offline}
+            action={[
+              lockAction(settings, 'betsy', t, 'betsy'),
+              { icon: <FolderIcon />, label: manual ? t('betsy.pickFile') : t('betsy.pickDir'), disabled: locked, onClick: () => void pick() },
+              checkAction(check, <FileIcon />, t('betsy.check'), !value, () => void run()),
+            ]}
+          />
+        </Field>
+        {/* путь пуст — строки итога нет: подсказка сразу под полем */}
+        {check && (
+          <div className="storage-check" role="status">
+            <CheckStatus check={check} busyLabel={t('betsy.checking')} />
+          </div>
+        )}
+      </div>
+    </FormSection>
+  )
+}
+
 /** Свойства `FilesSection`. */
 interface FilesSectionProps {
   settings: AppSettings
@@ -512,8 +640,6 @@ interface FilesSectionProps {
   documents: string
   /** Сетевой диск не подключён: таблицы на нём недоступны. */
   offline: boolean
-  /** Подключение проверяется или идёт: пояснение «подключитесь» пока не показывается. */
-  waiting: boolean
 }
 
 /**
@@ -521,9 +647,8 @@ interface FilesSectionProps {
  * у каждой — замок от случайной правки, выбор файла и проверка, итог — строкой под полем; в конце — лист Probe.
  * У лаборатории — одна таблица коэффициентов, без листа Probe. Сетевой диск не подключён — всё недоступно.
  */
-function FilesSection({ settings, target, rows, checks, recheck, windows, documents, offline, waiting }: FilesSectionProps) {
+function FilesSection({ settings, target, rows, checks, recheck, windows, documents, offline }: FilesSectionProps) {
   const { t } = useTranslation('storage')
-  const format = useMessages()
   const { year } = useStore(appInfoStore)
   const files = activeFiles(settings)
   const drive = target === 'googleDrive'
@@ -544,11 +669,7 @@ function FilesSection({ settings, target, rows, checks, recheck, windows, docume
   }
   const label = (r: FileRow) => (r.kind === 'consum' ? (files.consums.length > 1 ? t('files.consumN', { n: r.index + 1 }) : t('files.consum')) : t(`files.${r.kind}`))
   /** Пример пути: в Google Drive — имя файла, на сетевом диске — в общей папке, на этом компьютере — в «Документах». */
-  const placeholder = (kind: FileKind) => {
-    if (drive) return FILE_NAMES[kind]
-    const folder = target === 'smb' ? sharePath(settings.smb, windows) : documents || ELLIPSIS
-    return [folder, FILE_NAMES[kind]].join(windows ? '\\' : '/')
-  }
+  const placeholder = (kind: FileKind) => (drive ? FILE_NAMES[kind] : examplePath(settings, target, windows, documents, FILE_NAMES[kind]))
 
   const probeCheck = checks[`${settings.target}:probe`]
   const probeSheets = (probeCheck && probeCheck !== 'busy' ? probeCheck.sheets : undefined) ?? []
@@ -560,7 +681,6 @@ function FilesSection({ settings, target, rows, checks, recheck, windows, docume
 
   return (
     <FormSection title={t('files.title')} icon={<TableIcon />} hint={drive ? t('googleDrive.hint') : t('files.hint')}>
-      {offline && !waiting && <Notice>{t('files.needsShare')}</Notice>}
       {drive && (
         <Field label={t('googleDrive.folder')}>
           <ActionTextInput
@@ -576,14 +696,7 @@ function FilesSection({ settings, target, rows, checks, recheck, windows, docume
         const c = checks[r.id]
         const locked = settings.locked[r.kind]
         const removable = r.kind === 'consum' && files.consums.length > 1
-        const check = {
-          icon: <TableIcon />,
-          label: t('files.check'),
-          busy: c === 'busy',
-          tone: c && c !== 'busy' ? (c.ok ? ('success' as const) : ('danger' as const)) : undefined,
-          disabled: !r.file,
-          onClick: () => recheck(r),
-        }
+        const check = checkAction(c, <TableIcon />, t('files.check'), !r.file, () => recheck(r))
         const remove = { icon: <TrashIcon />, label: t('files.remove'), disabled: locked, onClick: () => setConsums(files.consums.filter((_, i) => i !== r.index)) }
         return (
           <div key={r.id} className="file-field">
@@ -605,7 +718,7 @@ function FilesSection({ settings, target, rows, checks, recheck, windows, docume
               />
             </Field>
             <div className="storage-check" role="status">
-              {c === 'busy' ? <StatusBadge tone="info">{t('files.checking')}</StatusBadge> : c ? <StatusBadge tone={c.ok ? 'success' : 'danger'}>{format(c.msg)}</StatusBadge> : null}
+              <CheckStatus check={c} busyLabel={t('files.checking')} />
             </div>
           </div>
         )

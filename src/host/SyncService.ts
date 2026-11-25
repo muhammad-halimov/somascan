@@ -12,6 +12,8 @@
  *
  * У рабочих мест с одной таблицей (лаборатория, контроль качества) прогоны — с их таблицей (чтение и миграция
  * таблицы лаборатории, откат): Google Drive у них нет, сетевой диск подключается так же, если таблица на нём недоступна.
+ * «Запись» в рапорт Betsy (`writeBetsy`) — у лаборатории прогон с её таблицей и рапортом; у цеха и контроля качества
+ * записи в рапорт пока нет.
  */
 import fs from 'node:fs'
 import os from 'node:os'
@@ -19,10 +21,10 @@ import path from 'node:path'
 import { Store } from '@/shared/Store'
 import { message, triggerMessage, type Message } from '@/shared/messages'
 import { ENGINE_EXIT, runOutcome, type ActionResult, type RunState, type RunSummary, type RunTrigger } from '@/shared/protocol'
-import { deskFile, deskOf, type Desk } from '@/shared/settings'
+import { betsySource, canWriteBetsy, deskFile, deskOf, workplaceTarget, type Desk, type StorageTarget } from '@/shared/settings'
 import type { BackupFile } from '@/engine/FileGuard'
 import type { EngineRunner } from './EngineRunner'
-import { backupStamps, exists } from './files'
+import { backupStamps, exists, resolveBetsyReport } from './files'
 import type { Journal } from './Journal'
 import type { SettingsStore } from './SettingsStore'
 
@@ -109,9 +111,14 @@ export class SyncService extends Store<RunState> {
   private async deskProblem(table: BackupFile & { kind: Desk }): Promise<Message | null> {
     const missing = message('event.missingFiles', { files: table.file ? path.basename(table.file) : `${table.kind[0]!.toUpperCase()}${table.kind.slice(1)}` })
     if (!table.file) return missing
-    if (await exists(table.file)) return null
-    if (this.share && this.settings.getSnapshot().desks[table.kind].target === 'smb') await this.share.mount()
-    return (await exists(table.file)) ? null : missing
+    return (await this.reachable(table.file, this.settings.getSnapshot().desks[table.kind].target)) ? null : missing
+  }
+
+  /** Доступен ли файл или папка: на сетевом диске, если недоступен, общая папка сначала подключается. */
+  private async reachable(file: string, target: StorageTarget): Promise<boolean> {
+    if (await exists(file)) return true
+    if (this.share && target === 'smb') await this.share.mount()
+    return exists(file)
   }
 
   /** Метки бэкапов текущего рабочего места (цех — по Sarjele), новые сверху. */
@@ -205,6 +212,36 @@ export class SyncService extends Store<RunState> {
     const signature = s.signatures.laborator
     return this.exclusive(trigger, false, [], async () => {
       const { code } = await this.engine(trigger, path.basename(table.file), false, ['--laborator', '--read', table.file], signature ? { SIGNATURE: signature } : {})
+      return code === ENGINE_EXIT.ok
+    }, table)
+  }
+
+  /**
+   * «Запись» в рапорт Betsy текущего рабочего места (`canWriteBetsy`; у остальных — предупреждение в журнал).
+   * Лаборатория (`engine/betsy/BetsyWriter`): результат «Rc decofr.» элемента рапорта из её таблицы — в строку 6
+   * рапорта, с подписью лаборанта. Рапорт — как у проверки в «Хранилище» (`resolveBetsyReport`); на сетевом диске,
+   * если он недоступен, общая папка подключается.
+   */
+  async writeBetsy(): Promise<ActionResult> {
+    const s = this.settings.getSnapshot()
+    const desk = s.workplace
+    const refuse = (level: 'warn' | 'err', error: Message): ActionResult => {
+      this.journal.event(level, error)
+      return { ok: false, error }
+    }
+    if (!canWriteBetsy(desk)) return refuse('warn', message('betsy.notConfigured'))
+    const source = betsySource(s, desk)
+    if (!source) return refuse('err', message('betsy.noSource'))
+    const table = { file: deskFile(s, desk), kind: desk }
+    const signature = s.signatures[desk]
+    return this.exclusive('betsy', true, [], async () => {
+      await this.reachable(source, workplaceTarget(s, desk))
+      const found = await resolveBetsyReport(source, s.betsy.manual)
+      if ('error' in found) {
+        this.journal.event('err', found.error)
+        return false
+      }
+      const { code } = await this.engine('betsy', path.basename(found.file), true, [`--${desk}`, '--betsy', '--apply', table.file, found.file], signature ? { SIGNATURE: signature } : {})
       return code === ENGINE_EXIT.ok
     }, table)
   }
