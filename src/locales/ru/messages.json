@@ -139,8 +139,8 @@
     "noProjectSheets": "Нет листов проектов: {{sheets}}",
     "unreadable": "Не удалось прочитать: {{error}}",
     "timeout": "Нет ответа за {{seconds}} с — диск недоступен",
-    "betsyLatest": "{{file}} · {{code}} · {{cast}}",
-    "betsyReport": "{{code}} · серия {{serie}} · {{cast}}",
+    "betsyLatest": "Найден: {{file}} · {{code}} · TURNAT LA {{cast}}",
+    "betsyReport": "Найден · {{code}} · серия {{serie}} · TURNAT LA {{cast}}",
     "betsyNotDir": "Это файл — для рапорта включите «Вручную»",
     "betsyNotFile": "Это директория — выберите рапорт (.docx)"
   },

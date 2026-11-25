@@ -139,8 +139,8 @@
     "noProjectSheets": "Варақҳои лоиҳаҳо нестанд: {{sheets}}",
     "unreadable": "Хондан нашуд: {{error}}",
     "timeout": "Дар {{seconds}} с ҷавоб нест — диск дастрас нест",
-    "betsyLatest": "{{file}} · {{code}} · {{cast}}",
-    "betsyReport": "{{code}} · серияи {{serie}} · {{cast}}",
+    "betsyLatest": "Ёфт шуд: {{file}} · {{code}} · TURNAT LA {{cast}}",
+    "betsyReport": "Ёфт шуд · {{code}} · серияи {{serie}} · TURNAT LA {{cast}}",
     "betsyNotDir": "Ин файл аст — барои гузориш «Дастӣ»-ро фаъол кунед",
     "betsyNotFile": "Ин директория аст — гузориш (.docx)-ро интихоб кунед"
   },

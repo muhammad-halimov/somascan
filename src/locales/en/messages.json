@@ -139,8 +139,8 @@
     "noProjectSheets": "Project sheets missing: {{sheets}}",
     "unreadable": "Could not read: {{error}}",
     "timeout": "No answer within {{seconds}} s — the drive is unavailable",
-    "betsyLatest": "{{file}} · {{code}} · {{cast}}",
-    "betsyReport": "{{code}} · series {{serie}} · {{cast}}",
+    "betsyLatest": "Found: {{file}} · {{code}} · TURNAT LA {{cast}}",
+    "betsyReport": "Found · {{code}} · series {{serie}} · TURNAT LA {{cast}}",
     "betsyNotDir": "This is a file — turn on “Manual” for a report",
     "betsyNotFile": "This is a folder — choose a report (.docx)"
   },

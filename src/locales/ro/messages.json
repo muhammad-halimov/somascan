@@ -139,8 +139,8 @@
     "noProjectSheets": "Lipsesc foile proiectelor: {{sheets}}",
     "unreadable": "Nu s-a putut citi: {{error}}",
     "timeout": "Niciun răspuns în {{seconds}} s — unitatea nu este disponibilă",
-    "betsyLatest": "{{file}} · {{code}} · {{cast}}",
-    "betsyReport": "{{code}} · seria {{serie}} · {{cast}}",
+    "betsyLatest": "Găsit: {{file}} · {{code}} · TURNAT LA {{cast}}",
+    "betsyReport": "Găsit · {{code}} · seria {{serie}} · TURNAT LA {{cast}}",
     "betsyNotDir": "Este un fișier — pentru un raport bifați „Manual”",
     "betsyNotFile": "Este un folder — alegeți un raport (.docx)"
   },
